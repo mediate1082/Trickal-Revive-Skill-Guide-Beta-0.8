@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>트릭컬 리바이브 가이드</title>
+    <style>
+        :root { 
+            --bg-main: #f9fdf0; 
+            --card-bg: #ECF7CD; 
+            --accent-green: #BCDD5F; 
+            --text-dark: #2D331D; 
+        }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg-main); color: var(--text-dark); margin: 0; padding: 0; }
+        .hidden { display: none !important; }
+
+        /* 레이아웃 */
+        #main-menu { text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .nav-btn { width: 250px; padding: 20px; font-size: 1.2rem; cursor: pointer; margin: 10px; background: var(--accent-green); border: none; border-radius: 12px; font-weight: bold; }
+        header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .content-container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+
+        /* 카드 디자인 */
+        .card { background: var(--card-bg); border-radius: 15px; padding: 12px; text-align: center; cursor: pointer; position: relative; border: 1px solid #d0e0a0; transition: 0.2s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .image-wrapper { position: relative; width: 100%; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #e6ecd7; }
+        .char-img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* 카드 내 아이콘 */
+        .icon { position: absolute; width: 34px; height: 34px; z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+        .p-icon { top: 5px; right: 5px; } .r-icon { top: 5px; left: 5px; } .l-icon { bottom: 5px; left: 5px; }
+
+        /* 카드 내 추천도 배지 */
+        .grade-info { display: flex; justify-content: center; gap: 8px; margin-top: 8px; font-size: 0.85rem; font-weight: bold; }
+        .grade-item { padding: 2px 8px; border-radius: 6px; background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.05); }
+        .color-O { color: #2ecc71; } .color-delta { color: #f39c12; } .color-X { color: #e74c3c; }
+
+        /* 모달 및 그룹 타이틀 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #fff; width: 90%; max-width: 450px; padding: 25px; border-radius: 20px; max-height: 85vh; overflow-y: auto; position: relative; }
+        .skill-box { background: #f4f9e9; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--accent-green); text-align: left; }
+        .grade-badge { width: 24px; height: 24px; background: var(--accent-green); color: white; display: inline-flex; justify-content: center; align-items: center; border-radius: 50%; margin-right: 8px; font-weight: bold; }
+        .group-title { grid-column: 1 / -1; background: var(--accent-green); padding: 8px 15px; border-radius: 8px; font-weight: bold; margin-top: 15px; }
+        .header-btn { padding: 8px 15px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="view-home">
+        <div id="main-menu">
+            <h1>트릭컬 리바이브 가이드</h1>
+            <p id="loading-text">데이터를 불러오는 중...</p>
+            <div id="menu-buttons" class="hidden">
+                <button class="nav-btn" onclick="switchView('search')">사도 검색</button>
+                <button class="nav-btn" onclick="switchView('list')">사도 목록</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-app" class="hidden">
+        <header>
+            <button class="header-btn" onclick="switchView('home')">🏠 홈으로</button>
+            <h2 id="view-title" style="margin:0;">사도 목록</h2>
+            <button class="header-btn" onclick="openInfoModal()">❓ 범례</button>
+        </header>
+        <div class="content-container">
+            <div id="section-search" class="hidden">
+                <input type="text" id="search-input" placeholder="이름을 입력하세요..." onkeyup="handleSearch()" style="width:100%; padding:15px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box; font-size:1.1rem;">
+                <div id="search-grid" class="grid" style="margin-top:20px;"></div>
+            </div>
+            <div id="section-list" class="hidden">
+                <div class="filter-bar" style="margin-bottom:20px;">
+                    <button class="header-btn" onclick="renderList('name')">가나다순</button>
+                    <button class="header-btn" onclick="renderList('tier')">티어별</button>
+                    <button class="header-btn" onclick="renderList('personality')">성격별</button>
+                    <button class="header-btn" onclick="renderList('role')">보직별</button>
+                </div>
+                <div id="list-grid" class="grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-detail" class="modal-overlay hidden" onclick="closeModal('modal-detail')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div id="detail-body"></div>
+            <button class="nav-btn" style="width:100%; margin-top:15px;" onclick="closeModal('modal-detail')">닫기</button>
+        </div>
+    </div>
+
+    <div id="modal-info" class="modal-overlay hidden" onclick="closeModal('modal-info')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3>도움말 및 범례</h3>
+            <p id="info-content" style="white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6;"></p>
+            <button class="nav-btn" style="width:100%; margin-top:15px;" onclick="closeModal('modal-info')">닫기</button>
+        </div>
+    </div>
+
+    <script>
+        let db = [];
+        let infoText = "";
+
+        async function loadExternalData() {
+            try {
+                const charRes = await fetch('characters.json');
+                db = await charRes.json();
+                const infoRes = await fetch('info.txt');
+                infoText = await infoRes.text();
+                document.getElementById('loading-text').classList.add('hidden');
+                document.getElementById('menu-buttons').classList.remove('hidden');
+            } catch (error) {
+                document.getElementById('loading-text').innerText = "데이터 로드 실패";
+            }
+        }
+
+        function switchView(view) {
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-app').classList.add('hidden');
+            document.getElementById('section-search').classList.add('hidden');
+            document.getElementById('section-list').classList.add('hidden');
+            if (view === 'home') document.getElementById('view-home').classList.remove('hidden');
+            else if (view === 'search') {
+                document.getElementById('view-app').classList.remove('hidden');
+                document.getElementById('section-search').classList.remove('hidden');
+                document.getElementById('view-title').innerText = "사도 검색";
+            } else if (view === 'list') {
+                document.getElementById('view-app').classList.remove('hidden');
+                document.getElementById('section-list').classList.remove('hidden');
+                document.getElementById('view-title').innerText = "사도 목록";
+                renderList('name');
+            }
+        }
+
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            if(!query) { document.getElementById('search-grid').innerHTML = ""; return; }
+            const filtered = db.filter(c => c.name && c.name.toLowerCase().includes(query));
+            displayCards(filtered, 'search-grid');
+        }
+
+        function renderList(criteria) {
+            const container = document.getElementById('list-grid');
+            container.innerHTML = "";
+            let sorted = db.filter(c => c.name); // 이름이 있는 유효 데이터만
+
+            if (criteria === 'name') {
+                sorted.sort((a, b) => a.name.localeCompare(b.name));
+                displayCards(sorted, 'list-grid');
+            } else {
+                const groups = sorted.reduce((acc, obj) => {
+                    const key = obj[criteria];
+                    if (key && key.trim() !== "") { // 키값이 비어있지 않은 경우만 그룹화
+                        if (!acc[key]) acc[key] = [];
+                        acc[key].push(obj);
+                    }
+                    return acc;
+                }, {});
+
+                Object.keys(groups).sort().forEach(key => {
+                    const title = document.createElement('div');
+                    title.className = 'group-title';
+                    title.innerText = key;
+                    container.appendChild(title);
+                    displayCards(groups[key], 'list-grid', true);
+                });
+            }
+        }
+
+        function displayCards(data, targetId, append = false) {
+            const container = document.getElementById(targetId);
+            if (!append) container.innerHTML = "";
+            
+            data.forEach(char => {
+                const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => openDetailModal(char);
+                card.innerHTML = `
+                    <div class="image-wrapper">
+                        <img src="images/${char.name}.webp" class="char-img" onerror="this.src='https://via.placeholder.com/150?text=${char.name}'">
+                        <img src="icons/personality/${char.personality}.webp" class="icon p-icon" onerror="this.style.display='none'">
+                        <img src="icons/role/${char.role}.webp" class="icon r-icon" onerror="this.style.display='none'">
+                        <img src="icons/line/${char.line}.webp" class="icon l-icon" onerror="this.style.display='none'">
+                    </div>
+                    <div style="font-weight:bold; margin-top:10px;">${char.name}</div>
+                    <div class="grade-info">
+                        <span class="grade-item">저: <span class="${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span></span>
+                        <span class="grade-item">고: <span class="${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span></span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openDetailModal(char) {
+            const body = document.getElementById('detail-body');
+            body.innerHTML = `
+                <div style="text-align:center; margin-bottom:20px;">
+                    <img src="images/${char.name}.webp" style="width:100px; height:100px; border-radius:15px; object-fit:cover;" onerror="this.style.display='none'">
+                    <h2 style="margin:10px 0 5px 0;">${char.name}</h2>
+                    <p style="color:#d35400; font-weight:bold; margin:0 0 5px 0;">${char.tier || ''}</p>
+                    <p style="color:#888; font-size:0.85rem; margin:0;">${char.personality} | ${char.role} | ${char.line}</p>
+                </div>
+                <div class="skill-box">
+                    <div class="skill-title"><span class="grade-badge">${char.low_grade || '?'}</span> 저학년 스킬</div>
+                    <div style="font-size:0.9rem;">${char.low_desc || '정보 없음'}</div>
+                </div>
+                <div class="skill-box">
+                    <div class="skill-title"><span class="grade-badge">${char.high_grade || '?'}</span> 고학년 스킬</div>
+                    <div style="font-size:0.9rem;">${char.high_desc || '정보 없음'}</div>
+                </div>
+                ${char.note ? `<div style="margin-top:15px; padding-top:10px; border-top:1px solid #eee; font-size:0.85rem; color:#666;"><strong>💡 비고:</strong> ${char.note}</div>` : ''}
+            `;
+            document.getElementById('modal-detail').classList.remove('hidden');
+        }
+
+        function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        loadExternalData();
+    </script>
+</body>
+</html>
