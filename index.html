@@ -13,11 +13,12 @@
             --color-O: #27ae60;
             --color-delta: #d35400;
             --color-X: #c0392b;
+            --max-width: 1200px; /* 데스크톱 최대 폭 설정 */
         }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg-main); color: var(--text-dark); margin: 0; padding: 0; overflow-x: hidden; }
         .hidden { display: none !important; }
 
-        /* 헤더 모바일 최적화 */
+        /* 헤더 디자인: 데스크톱 여백 추가 */
         header { 
             background: #fff; 
             padding: 15px; 
@@ -25,6 +26,11 @@
             top: 0; 
             z-index: 100; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .header-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -37,7 +43,6 @@
             width: 100%;
         }
 
-        /* 제목 폰트 가변 크기 적용 (줄바꿈 방지) */
         .main-title { 
             font-size: clamp(1.2rem, 5vw, 2.2rem); 
             font-weight: 900;
@@ -50,12 +55,12 @@
         
         .controls-row { 
             display: flex; 
-            flex-direction: column; /* 모바일 우선 세로 배치 */
+            flex-direction: column;
             gap: 10px;
         }
         
         @media (min-width: 768px) {
-            .controls-row { flex-direction: row; justify-content: space-between; }
+            .controls-row { flex-direction: row; justify-content: space-between; align-items: center; }
         }
 
         .filter-bar { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
@@ -73,83 +78,97 @@
         }
 
         .btn { padding: 6px 12px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
-        
-        /* 그리드: 모바일 3열 강제 */
-        .content-container { padding: 10px; width: 100%; box-sizing: border-box; }
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); /* 무조건 3열 */
-            gap: 8px; 
-        }
-        @media (min-width: 768px) {
-            .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
+        .btn:hover { background: var(--accent-green); border-color: var(--accent-green); }
+
+        /* 콘텐츠 컨테이너: 중앙 정렬 및 여백 */
+        .content-container { 
+            padding: 20px; 
+            max-width: var(--max-width); 
+            margin: 0 auto; 
+            box-sizing: border-box; 
         }
 
-        /* 카드 디자인 슬림화 */
-        .card { background: var(--card-bg); border-radius: 12px; padding: 8px; text-align: center; cursor: pointer; border: 1px solid #d0e0a0; }
+        /* 그리드 시스템: 모바일 3열 / 데스크톱 가변열 */
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; 
+        }
+        @media (min-width: 768px) {
+            .grid { 
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+                gap: 20px; 
+            }
+        }
+
+        .card { background: var(--card-bg); border-radius: 12px; padding: 10px; text-align: center; cursor: pointer; border: 1px solid #d0e0a0; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
         .image-wrapper { position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: #e6ecd7; }
         .char-img { width: 100%; height: 100%; object-fit: cover; }
 
-        .icon { position: absolute; width: 22px; height: 22px; z-index: 10; } /* 아이콘 크기 축소 */
+        .icon { position: absolute; width: 22px; height: 22px; z-index: 10; }
         @media (min-width: 768px) { .icon { width: 34px; height: 34px; } }
-        .p-icon { top: 3px; right: 3px; } .r-icon { top: 3px; left: 3px; } .l-icon { bottom: 3px; left: 3px; }
+        .p-icon { top: 4px; right: 4px; } .r-icon { top: 4px; left: 4px; } .l-icon { bottom: 4px; left: 4px; }
 
-        .grade-info { display: flex; justify-content: center; gap: 4px; margin-top: 6px; font-size: 0.7rem; font-weight: 800; }
-        .grade-item { padding: 2px 4px; border-radius: 4px; background: rgba(255,255,255,0.8); }
+        .grade-info { display: flex; justify-content: center; gap: 4px; margin-top: 8px; font-size: 0.75rem; font-weight: 800; }
+        .grade-item { padding: 2px 5px; border-radius: 4px; background: rgba(255,255,255,0.8); }
         .color-O { color: var(--color-O); } .color-delta { color: var(--color-delta); } .color-X { color: var(--color-X); }
 
-        /* 모달 내 스킬 정보 개선 */
+        /* 모달 레이아웃 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: #fff; width: 92%; max-width: 450px; padding: 20px; border-radius: 20px; max-height: 90vh; overflow-y: auto; position: relative; }
-        .group-title { grid-column: 1 / -1; background: var(--accent-green); padding: 8px 15px; border-radius: 8px; font-weight: bold; margin-top: 15px; font-size: 0.9rem; }
+        .modal-content { background: #fff; width: 92%; max-width: 450px; padding: 25px; border-radius: 20px; max-height: 90vh; overflow-y: auto; }
+        .group-title { grid-column: 1 / -1; background: var(--accent-green); padding: 10px 15px; border-radius: 8px; font-weight: bold; margin-top: 20px; }
         
-        .skill-box { padding: 12px; border-radius: 12px; background: #f4f9e9; margin-bottom: 10px; border-left: 5px solid var(--accent-green); text-align: left; }
+        .skill-box { padding: 15px; border-radius: 12px; background: #f4f9e9; margin-bottom: 12px; border-left: 5px solid var(--accent-green); text-align: left; }
         .grade-badge-pop { 
             display: inline-flex; justify-content: center; align-items: center; 
-            width: 28px; height: 28px; border-radius: 50%; 
-            background: #fff; border: 2px solid currentColor; /* 폰트 컬러와 동기화 */
-            margin-right: 8px; font-weight: 900; font-size: 1rem;
+            width: 30px; height: 30px; border-radius: 50%; 
+            background: #fff; border: 2.5px solid currentColor;
+            margin-right: 10px; font-weight: 900; font-size: 1.1rem;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="header-top">
-            <div style="width:40px"></div>
-            <h1 class="main-title">트릭컬 스킬 가이드</h1>
-            <button class="btn" style="border-radius:50%; width:35px; height:35px; padding:0;" onclick="openInfoModal()">❓</button>
-        </div>
-        <div class="controls-row">
-            <div class="filter-bar">
-                <button class="btn" onclick="renderList('tier')">티어</button>
-                <button class="btn" onclick="renderList('personality')">성격</button>
-                <button class="btn" onclick="renderList('role')">역할</button>
-                <button class="btn" onclick="renderList('line')">배치</button>
-                <button id="order-btn" class="btn" onclick="toggleOrder()">▲순</button>
+        <div class="header-container">
+            <div class="header-top">
+                <div style="width:40px"></div>
+                <h1 class="main-title">트릭컬 스킬 가이드</h1>
+                <button class="btn" style="border-radius:50%; width:35px; height:35px; padding:0;" onclick="openInfoModal()">❓</button>
             </div>
-            <div class="search-box">
-                <input type="text" id="search-input" placeholder="사도 이름 검색..." onkeyup="handleSearch()">
+            <div class="controls-row">
+                <div class="filter-bar">
+                    <button class="btn" onclick="renderList('tier')">티어</button>
+                    <button class="btn" onclick="renderList('personality')">성격</button>
+                    <button class="btn" onclick="renderList('role')">역할</button>
+                    <button class="btn" onclick="renderList('line')">배치</button>
+                    <button id="order-btn" class="btn" onclick="toggleOrder()">▲순</button>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="사도 이름 검색..." onkeyup="handleSearch()">
+                </div>
             </div>
         </div>
     </header>
 
     <div class="content-container">
-        <div id="loading-text" style="text-align:center; padding:20px;">불러오는 중...</div>
+        <div id="loading-text" style="text-align:center; padding:50px; font-weight:bold; color:#888;">데이터를 불러오고 있습니다...</div>
         <div id="main-grid" class="grid"></div>
     </div>
 
     <div id="modal-detail" class="modal-overlay hidden" onclick="closeModal('modal-detail')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div id="detail-body"></div>
-            <button class="btn" style="width:100%; margin-top:15px; padding:12px; background:var(--accent-green); border:none;" onclick="closeModal('modal-detail')">닫기</button>
+            <button class="btn" style="width:100%; margin-top:15px; padding:15px; background:var(--accent-green); border:none; border-radius:12px;" onclick="closeModal('modal-detail')">닫기</button>
         </div>
     </div>
 
     <div id="modal-info" class="modal-overlay hidden" onclick="closeModal('modal-info')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h3 style="margin:0 0 15px 0">도움말 및 범례</h3>
-            <p id="info-content" style="white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6; text-align:left;"></p>
+            <h3 style="margin-top:0;">도움말 및 범례</h3>
+            <p id="info-content" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.7; text-align:left; color:#444;"></p>
             <button class="btn" style="width:100%; margin-top:15px;" onclick="closeModal('modal-info')">닫기</button>
         </div>
     </div>
@@ -169,7 +188,7 @@
                 document.getElementById('loading-text').classList.add('hidden');
                 renderList('name');
             } catch (error) {
-                document.getElementById('loading-text').innerText = "데이터 로드 실패";
+                document.getElementById('loading-text').innerText = "데이터 로드에 실패했습니다.";
             }
         }
 
@@ -237,12 +256,12 @@
                 card.onclick = () => openDetailModal(char);
                 card.innerHTML = `
                     <div class="image-wrapper">
-                        <img src="images/${char.name}.webp" class="char-img" onerror="this.src='https://via.placeholder.com/100?text=${char.name}'">
+                        <img src="images/${char.name}.webp" class="char-img" onerror="this.src='https://via.placeholder.com/150?text=${char.name}'">
                         <img src="icons/personality/${char.personality}.webp" class="icon p-icon" onerror="this.style.display='none'">
                         <img src="icons/role/${char.role}.webp" class="icon r-icon" onerror="this.style.display='none'">
                         <img src="icons/line/${char.line}.webp" class="icon l-icon" onerror="this.style.display='none'">
                     </div>
-                    <div style="font-weight:bold; margin-top:5px; font-size:0.85rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${char.name}</div>
+                    <div style="font-weight:bold; margin-top:8px; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${char.name}</div>
                     <div class="grade-info">
                         <span class="grade-item">저:<span class="${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span></span>
                         <span class="grade-item">고:<span class="${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span></span>
@@ -256,25 +275,25 @@
             const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
             const body = document.getElementById('detail-body');
             body.innerHTML = `
-                <div style="text-align:center; margin-bottom:15px;">
-                    <img src="images/${char.name}.webp" style="width:100px; height:100px; border-radius:15px; object-fit:cover;" onerror="this.style.display='none'">
-                    <h2 style="margin:10px 0 5px 0;">${char.name}</h2>
-                    <p style="color:var(--color-delta); font-weight:bold; margin:0 0 5px 0;">${char.tier || ''}</p>
-                    <p style="color:#888; font-size:0.85rem; margin:0;">${char.personality} | ${char.role} | ${char.line}</p>
+                <div style="text-align:center; margin-bottom:20px;">
+                    <img src="images/${char.name}.webp" style="width:120px; height:120px; border-radius:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); object-fit:cover;" onerror="this.style.display='none'">
+                    <h2 style="margin:15px 0 5px 0; font-size:1.6rem;">${char.name}</h2>
+                    <p style="color:#e67e22; font-weight:bold; margin:0 0 10px 0;">${char.tier || ''}</p>
+                    <p style="color:#888; font-size:0.95rem; margin:0;">${char.personality} | ${char.role} | ${char.line}</p>
                 </div>
                 <div class="skill-box">
-                    <div style="font-weight:bold; display:flex; align-items:center;">
+                    <div style="font-weight:bold; display:flex; align-items:center; font-size:1.1rem; color:#4a5a1f;">
                         <span class="grade-badge-pop ${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span> 저학년 스킬
                     </div>
-                    <div style="font-size:0.9rem; margin-top:8px; line-height:1.4;">${char.low_desc || '정보 없음'}</div>
+                    <div style="font-size:1rem; margin-top:10px; line-height:1.6; color:#333;">${char.low_desc || '정보 없음'}</div>
                 </div>
                 <div class="skill-box">
-                    <div style="font-weight:bold; display:flex; align-items:center;">
+                    <div style="font-weight:bold; display:flex; align-items:center; font-size:1.1rem; color:#4a5a1f;">
                         <span class="grade-badge-pop ${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span> 고학년 스킬
                     </div>
-                    <div style="font-size:0.9rem; margin-top:8px; line-height:1.4;">${char.high_desc || '정보 없음'}</div>
+                    <div style="font-size:1rem; margin-top:10px; line-height:1.6; color:#333;">${char.high_desc || '정보 없음'}</div>
                 </div>
-                ${char.note ? `<div style="margin-top:15px; padding-top:10px; border-top:1px solid #eee; font-size:0.8rem; color:#666; text-align:left;"><strong>💡 참고:</strong> ${char.note}</div>` : ''}
+                ${char.note ? `<div style="margin-top:20px; padding-top:15px; border-top:1px solid #eee; font-size:0.9rem; color:#666; line-height:1.6;"><strong>💡 참고사항:</strong><br>${char.note}</div>` : ''}
             `;
             document.getElementById('modal-detail').classList.remove('hidden');
         }
