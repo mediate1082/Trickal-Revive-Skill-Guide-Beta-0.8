@@ -10,127 +10,147 @@
             --card-bg: #ECF7CD; 
             --accent-green: #BCDD5F; 
             --text-dark: #2D331D; 
+            --color-O: #27ae60;
+            --color-delta: #d35400;
+            --color-X: #c0392b;
         }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg-main); color: var(--text-dark); margin: 0; padding: 0; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg-main); color: var(--text-dark); margin: 0; padding: 0; overflow-x: hidden; }
         .hidden { display: none !important; }
 
+        /* 헤더 모바일 최적화 */
         header { 
             background: #fff; 
-            padding: 20px 30px; 
+            padding: 15px; 
             position: sticky; 
             top: 0; 
             z-index: 100; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 12px;
         }
 
-        /* 타이틀 중앙 배치 및 폰트 확대 */
         .header-top { 
-            display: grid;
-            grid-template-columns: 100px 1fr 100px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
+            width: 100%;
         }
+
+        /* 제목 폰트 가변 크기 적용 (줄바꿈 방지) */
         .main-title { 
-            font-size: 2.2rem; /* 폰트 크기 대폭 확대 */
+            font-size: clamp(1.2rem, 5vw, 2.2rem); 
             font-weight: 900;
             color: #4a5a1f;
             margin: 0;
+            flex-grow: 1;
             text-align: center;
-            letter-spacing: -1px;
+            white-space: nowrap;
         }
         
         .controls-row { 
             display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            flex-wrap: wrap; 
-            gap: 15px;
+            flex-direction: column; /* 모바일 우선 세로 배치 */
+            gap: 10px;
         }
-        .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        
+        @media (min-width: 768px) {
+            .controls-row { flex-direction: row; justify-content: space-between; }
+        }
 
-        /* 검색창 돋보기 아이콘 디자인 */
-        .search-box { flex-grow: 1; max-width: 350px; position: relative; }
+        .filter-bar { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+        .search-box { width: 100%; position: relative; }
+        @media (min-width: 768px) { .search-box { max-width: 300px; } }
+
         .search-box input { 
             width: 100%; 
-            padding: 14px 15px 14px 45px; 
-            border-radius: 30px; 
+            padding: 10px 10px 10px 35px; 
+            border-radius: 20px; 
             border: 2px solid #eee; 
             outline: none;
-            font-size: 1rem;
-            transition: 0.3s;
-            background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="%23888" class="bi bi-search" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 18px center;
+            box-sizing: border-box;
+            background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23888" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 12px center;
         }
-        .search-box input:focus { border-color: var(--accent-green); box-shadow: 0 0 8px rgba(188, 221, 95, 0.3); }
 
-        .btn { padding: 10px 20px; border-radius: 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-weight: bold; font-size: 0.95rem; transition: 0.2s; }
-        .btn:hover { background: var(--accent-green); border-color: var(--accent-green); transform: translateY(-2px); }
-        .btn-order { background: #f8f9fa; border-color: #eee; color: #666; }
+        .btn { padding: 6px 12px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
+        
+        /* 그리드: 모바일 3열 강제 */
+        .content-container { padding: 10px; width: 100%; box-sizing: border-box; }
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); /* 무조건 3열 */
+            gap: 8px; 
+        }
+        @media (min-width: 768px) {
+            .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
+        }
 
-        .content-container { padding: 30px; max-width: 1300px; margin: 0 auto; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; }
-        
-        /* 카드 디자인 */
-        .card { background: var(--card-bg); border-radius: 20px; padding: 18px; text-align: center; cursor: pointer; border: 1px solid #d0e0a0; box-shadow: 0 4px 10px rgba(0,0,0,0.03); transition: 0.3s; }
-        .card:hover { transform: translateY(-8px); box-shadow: 0 12px 20px rgba(0,0,0,0.1); }
-        
-        .image-wrapper { position: relative; width: 100%; aspect-ratio: 1; border-radius: 15px; overflow: hidden; background: #e6ecd7; }
+        /* 카드 디자인 슬림화 */
+        .card { background: var(--card-bg); border-radius: 12px; padding: 8px; text-align: center; cursor: pointer; border: 1px solid #d0e0a0; }
+        .image-wrapper { position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: #e6ecd7; }
         .char-img { width: 100%; height: 100%; object-fit: cover; }
 
-        .icon { position: absolute; width: 38px; height: 38px; z-index: 10; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.4)); }
-        .p-icon { top: 8px; right: 8px; } .r-icon { top: 8px; left: 8px; } .l-icon { bottom: 8px; left: 8px; }
+        .icon { position: absolute; width: 22px; height: 22px; z-index: 10; } /* 아이콘 크기 축소 */
+        @media (min-width: 768px) { .icon { width: 34px; height: 34px; } }
+        .p-icon { top: 3px; right: 3px; } .r-icon { top: 3px; left: 3px; } .l-icon { bottom: 3px; left: 3px; }
 
-        .grade-info { display: flex; justify-content: center; gap: 10px; margin-top: 12px; font-size: 0.95rem; font-weight: 800; }
-        .grade-item { padding: 4px 12px; border-radius: 10px; background: rgba(255,255,255,0.8); border: 1px solid rgba(0,0,0,0.03); }
-        .color-O { color: #2ecc71; } .color-delta { color: #f39c12; } .color-X { color: #e74c3c; }
+        .grade-info { display: flex; justify-content: center; gap: 4px; margin-top: 6px; font-size: 0.7rem; font-weight: 800; }
+        .grade-item { padding: 2px 4px; border-radius: 4px; background: rgba(255,255,255,0.8); }
+        .color-O { color: var(--color-O); } .color-delta { color: var(--color-delta); } .color-X { color: var(--color-X); }
 
-        /* 모달 디자인 */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 2000; }
-        .modal-content { background: #fff; width: 90%; max-width: 500px; padding: 35px; border-radius: 30px; max-height: 85vh; overflow-y: auto; position: relative; }
-        .group-title { grid-column: 1 / -1; background: var(--accent-green); padding: 12px 25px; border-radius: 12px; font-weight: 800; margin-top: 30px; font-size: 1.2rem; color: #2D331D; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        /* 모달 내 스킬 정보 개선 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: #fff; width: 92%; max-width: 450px; padding: 20px; border-radius: 20px; max-height: 90vh; overflow-y: auto; position: relative; }
+        .group-title { grid-column: 1 / -1; background: var(--accent-green); padding: 8px 15px; border-radius: 8px; font-weight: bold; margin-top: 15px; font-size: 0.9rem; }
+        
+        .skill-box { padding: 12px; border-radius: 12px; background: #f4f9e9; margin-bottom: 10px; border-left: 5px solid var(--accent-green); text-align: left; }
+        .grade-badge-pop { 
+            display: inline-flex; justify-content: center; align-items: center; 
+            width: 28px; height: 28px; border-radius: 50%; 
+            background: #fff; border: 2px solid currentColor; /* 폰트 컬러와 동기화 */
+            margin-right: 8px; font-weight: 900; font-size: 1rem;
+        }
     </style>
 </head>
 <body>
 
     <header>
         <div class="header-top">
-            <div></div> <h1 class="main-title">트릭컬 스킬 가이드</h1>
-            <div style="text-align: right;">
-                <button class="btn" style="padding: 10px 15px; border-radius: 50px;" onclick="openInfoModal()">❓ 범례</button>
-            </div>
+            <div style="width:40px"></div>
+            <h1 class="main-title">트릭컬 스킬 가이드</h1>
+            <button class="btn" style="border-radius:50%; width:35px; height:35px; padding:0;" onclick="openInfoModal()">❓</button>
         </div>
         <div class="controls-row">
             <div class="filter-bar">
-                <button class="btn" onclick="renderList('tier')">티어별</button>
-                <button class="btn" onclick="renderList('personality')">성격별</button>
-                <button class="btn" onclick="renderList('role')">역할별</button>
-                <button class="btn" onclick="renderList('line')">배치별</button>
-                <button id="order-btn" class="btn btn-order" onclick="toggleOrder()">▲ 오름차순</button>
+                <button class="btn" onclick="renderList('tier')">티어</button>
+                <button class="btn" onclick="renderList('personality')">성격</button>
+                <button class="btn" onclick="renderList('role')">역할</button>
+                <button class="btn" onclick="renderList('line')">배치</button>
+                <button id="order-btn" class="btn" onclick="toggleOrder()">▲순</button>
             </div>
             <div class="search-box">
-                <input type="text" id="search-input" placeholder="사도 이름을 검색하세요..." onkeyup="handleSearch()">
+                <input type="text" id="search-input" placeholder="사도 이름 검색..." onkeyup="handleSearch()">
             </div>
         </div>
     </header>
 
-    <div id="loading-text" style="text-align:center; margin-top:100px; font-size: 1.2rem; color: #aaa;">사도 데이터를 분석하는 중...</div>
     <div class="content-container">
+        <div id="loading-text" style="text-align:center; padding:20px;">불러오는 중...</div>
         <div id="main-grid" class="grid"></div>
     </div>
 
     <div id="modal-detail" class="modal-overlay hidden" onclick="closeModal('modal-detail')">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div id="detail-body"></div>
-            <button class="btn" style="width:100%; margin-top:25px; background: var(--accent-green); border:none; padding: 15px; border-radius: 15px;" onclick="closeModal('modal-detail')">닫기</button>
+            <button class="btn" style="width:100%; margin-top:15px; padding:12px; background:var(--accent-green); border:none;" onclick="closeModal('modal-detail')">닫기</button>
         </div>
     </div>
 
     <div id="modal-info" class="modal-overlay hidden" onclick="closeModal('modal-info')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h3 style="margin-top:0; font-size: 1.5rem; color: #4a5a1f;">도움말 및 범례</h3>
-            <p id="info-content" style="white-space: pre-wrap; font-size: 1rem; line-height: 1.8; color: #444;"></p>
-            <button class="btn" style="width:100%; margin-top:20px; padding: 12px;" onclick="closeModal('modal-info')">닫기</button>
+            <h3 style="margin:0 0 15px 0">도움말 및 범례</h3>
+            <p id="info-content" style="white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6; text-align:left;"></p>
+            <button class="btn" style="width:100%; margin-top:15px;" onclick="closeModal('modal-info')">닫기</button>
         </div>
     </div>
 
@@ -149,14 +169,13 @@
                 document.getElementById('loading-text').classList.add('hidden');
                 renderList('name');
             } catch (error) {
-                document.getElementById('loading-text').innerText = "데이터를 불러오는 데 실패했습니다.";
+                document.getElementById('loading-text').innerText = "데이터 로드 실패";
             }
         }
 
         function toggleOrder() {
             isAscending = !isAscending;
-            const orderBtn = document.getElementById('order-btn');
-            orderBtn.innerText = isAscending ? "▲ 오름차순" : "▼ 내림차순";
+            document.getElementById('order-btn').innerText = isAscending ? "▲순" : "▼순";
             renderList(currentCriteria);
         }
 
@@ -190,21 +209,12 @@
                 }, {});
 
                 let groupKeys = Object.keys(groups);
-                
-                // 배치별 정렬 시 특수 순서 적용
                 if (criteria === 'line') {
                     const lineOrder = ['전열', '중열', '후열', '전체열'];
-                    groupKeys.sort((a, b) => {
-                        let idxA = lineOrder.indexOf(a);
-                        let idxB = lineOrder.indexOf(b);
-                        if (idxA === -1) idxA = 99;
-                        if (idxB === -1) idxB = 99;
-                        return idxA - idxB;
-                    });
+                    groupKeys.sort((a, b) => lineOrder.indexOf(a) - lineOrder.indexOf(b));
                 } else {
                     groupKeys.sort();
                 }
-
                 if (!isAscending) groupKeys.reverse();
 
                 groupKeys.forEach(key => {
@@ -227,15 +237,15 @@
                 card.onclick = () => openDetailModal(char);
                 card.innerHTML = `
                     <div class="image-wrapper">
-                        <img src="images/${char.name}.webp" class="char-img" onerror="this.src='https://via.placeholder.com/150?text=${char.name}'">
+                        <img src="images/${char.name}.webp" class="char-img" onerror="this.src='https://via.placeholder.com/100?text=${char.name}'">
                         <img src="icons/personality/${char.personality}.webp" class="icon p-icon" onerror="this.style.display='none'">
                         <img src="icons/role/${char.role}.webp" class="icon r-icon" onerror="this.style.display='none'">
                         <img src="icons/line/${char.line}.webp" class="icon l-icon" onerror="this.style.display='none'">
                     </div>
-                    <div style="font-weight:bold; margin-top:15px; font-size:1.1rem; color: #333;">${char.name}</div>
+                    <div style="font-weight:bold; margin-top:5px; font-size:0.85rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${char.name}</div>
                     <div class="grade-info">
-                        <span class="grade-item">저: <span class="${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span></span>
-                        <span class="grade-item">고: <span class="${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span></span>
+                        <span class="grade-item">저:<span class="${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span></span>
+                        <span class="grade-item">고:<span class="${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span></span>
                     </div>
                 `;
                 container.appendChild(card);
@@ -243,35 +253,33 @@
         }
 
         function openDetailModal(char) {
+            const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
             const body = document.getElementById('detail-body');
             body.innerHTML = `
-                <div style="text-align:center; margin-bottom:30px;">
-                    <img src="images/${char.name}.webp" style="width:130px; height:130px; border-radius:25px; box-shadow: 0 6px 15px rgba(0,0,0,0.15); object-fit:cover;" onerror="this.style.display='none'">
-                    <h2 style="margin:20px 0 8px 0; font-size:1.8rem; color: #2D331D;">${char.name}</h2>
-                    <p style="color:#e67e22; font-weight:800; margin:0 0 10px 0; font-size:1.2rem; letter-spacing: 1px;">${char.tier || ''}</p>
-                    <p style="color:#999; font-size:1rem; margin:0; background: #f8f9fa; display: inline-block; padding: 5px 15px; border-radius: 50px;">${char.personality} · ${char.role} · ${char.line}</p>
+                <div style="text-align:center; margin-bottom:15px;">
+                    <img src="images/${char.name}.webp" style="width:100px; height:100px; border-radius:15px; object-fit:cover;" onerror="this.style.display='none'">
+                    <h2 style="margin:10px 0 5px 0;">${char.name}</h2>
+                    <p style="color:var(--color-delta); font-weight:bold; margin:0 0 5px 0;">${char.tier || ''}</p>
+                    <p style="color:#888; font-size:0.85rem; margin:0;">${char.personality} | ${char.role} | ${char.line}</p>
                 </div>
-                <div class="skill-box" style="border-left: 6px solid #BCDD5F; padding: 18px; border-radius: 15px; background: #f4f9e9; margin-bottom:15px;">
-                    <div style="font-weight:bold; color:#5a6b2c; font-size:1.1rem; display:flex; align-items:center; margin-bottom: 8px;">
-                        <span style="background:#BCDD5F; color:white; width:28px; height:28px; display:inline-flex; justify-content:center; align-items:center; border-radius:50%; margin-right:12px; font-size: 0.9rem;">${char.low_grade || '?'}</span> 저학년 스킬
+                <div class="skill-box">
+                    <div style="font-weight:bold; display:flex; align-items:center;">
+                        <span class="grade-badge-pop ${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span> 저학년 스킬
                     </div>
-                    <div style="font-size:1rem; line-height:1.6; color: #444;">${char.low_desc || '정보 없음'}</div>
+                    <div style="font-size:0.9rem; margin-top:8px; line-height:1.4;">${char.low_desc || '정보 없음'}</div>
                 </div>
-                <div class="skill-box" style="border-left: 6px solid #BCDD5F; padding: 18px; border-radius: 15px; background: #f4f9e9;">
-                    <div style="font-weight:bold; color:#5a6b2c; font-size:1.1rem; display:flex; align-items:center; margin-bottom: 8px;">
-                        <span style="background:#BCDD5F; color:white; width:28px; height:28px; display:inline-flex; justify-content:center; align-items:center; border-radius:50%; margin-right:12px; font-size: 0.9rem;">${char.high_grade || '?'}</span> 고학년 스킬
+                <div class="skill-box">
+                    <div style="font-weight:bold; display:flex; align-items:center;">
+                        <span class="grade-badge-pop ${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span> 고학년 스킬
                     </div>
-                    <div style="font-size:1rem; line-height:1.6; color: #444;">${char.high_desc || '정보 없음'}</div>
+                    <div style="font-size:0.9rem; margin-top:8px; line-height:1.4;">${char.high_desc || '정보 없음'}</div>
                 </div>
-                ${char.note ? `<div style="margin-top:25px; padding-top:20px; border-top:2px solid #f0f0f0; font-size:0.95rem; color:#666; line-height:1.7;"><strong>💡 참고사항:</strong><br>${char.note}</div>` : ''}
+                ${char.note ? `<div style="margin-top:15px; padding-top:10px; border-top:1px solid #eee; font-size:0.8rem; color:#666; text-align:left;"><strong>💡 참고:</strong> ${char.note}</div>` : ''}
             `;
             document.getElementById('modal-detail').classList.remove('hidden');
         }
 
-        function openInfoModal() { 
-            document.getElementById('info-content').innerText = infoText; 
-            document.getElementById('modal-info').classList.remove('hidden'); 
-        }
+        function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         loadExternalData();
     </script>
