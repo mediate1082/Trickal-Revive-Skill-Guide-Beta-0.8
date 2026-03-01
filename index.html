@@ -24,7 +24,6 @@
             --max-width: 1200px;
         }
 
-        /* [핵심] 모든 요소의 크기 계산 방식 고정 및 가로 스크롤 방지 */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body { 
@@ -33,14 +32,13 @@
             color: var(--text-dark); 
             margin: 0; padding: 0; 
             width: 100%;
-            overflow-x: hidden; /* 가로 스크롤 절대 방지 */
+            overflow-x: hidden;
             font-size: 18px; 
             line-height: 1.5;
         }
 
         .hidden { display: none !important; }
 
-        /* 헤더(상단 UI) 영역 */
         header { 
             background: #fff; 
             padding: 15px; 
@@ -287,31 +285,37 @@
         }
 
         function openDetailModal(char) {
-            const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
-            const body = document.getElementById('detail-body');
-            body.innerHTML = `
-                <div style="text-align:center; margin-bottom:20px;">
-                    <img src="images/${char.name}.webp" style="width:120px; height:120px; border-radius:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); object-fit:cover;" onerror="this.style.display='none'">
-                    <h2 style="margin:15px 0 5px 0; font-size:1.8rem;">${char.name}</h2>
-                    <p style="color:#e67e22; font-size:1.2rem; margin:0 0 10px 0;">${char.tier || ''}</p>
-                    <p style="color:#888; font-size:1rem; margin:0;">${char.personality} | ${char.role} | ${char.line}</p>
-                </div>
-                <div class="skill-box">
-                    <div class="skill-title">
-                        <span class="grade-badge-pop ${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span> 저학년 스킬
-                    </div>
-                    <div class="skill-desc">${char.low_desc || '정보 없음'}</div>
-                </div>
-                <div class="skill-box">
-                    <div class="skill-title">
-                        <span class="grade-badge-pop ${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span> 고학년 스킬
-                    </div>
-                    <div class="skill-desc">${char.high_desc || '정보 없음'}</div>
-                </div>
-                ${char.note ? `<div style="margin-top:20px; padding-top:15px; border-top:1px solid #eee; font-size:1rem; color:#666; line-height:1.6;"><strong>💡 참고사항:</strong><br>${char.note}</div>` : ''}
-            `;
-            document.getElementById('modal-detail').classList.remove('hidden');
-        }
+    const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
+    
+    const formatSkillDesc = (desc) => {
+        if (!desc) return '정보 없음';
+        return desc.replace(/([↑↓])(?!$)/g, '$1<br>');
+    };
+
+    const body = document.getElementById('detail-body');
+    body.innerHTML = `
+        <div style="text-align:center; margin-bottom:20px;">
+            <img src="images/${char.name}.webp" style="width:120px; height:120px; border-radius:20px; box-shadow:0 4px 12px rgba(0,0,0,0.1); object-fit:cover;" onerror="this.src='https://via.placeholder.com/150?text=${char.name}'">
+            <h2 style="margin:15px 0 5px 0; font-size:1.8rem;">${char.name}</h2>
+            <p style="color:#e67e22; font-size:1.2rem; margin:0 0 10px 0;">${char.tier || ''}</p>
+            <p style="color:#888; font-size:1rem; margin:0;">${char.personality} | ${char.role} | ${char.line}</p>
+        </div>
+        <div class="skill-box">
+            <div class="skill-title">
+                <span class="grade-badge-pop ${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span> 저학년 스킬
+            </div>
+            <div class="skill-desc">${formatSkillDesc(char.low_desc)}</div>
+        </div>
+        <div class="skill-box">
+            <div class="skill-title">
+                <span class="grade-badge-pop ${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span> 고학년 스킬
+            </div>
+            <div class="skill-desc">${formatSkillDesc(char.high_desc)}</div>
+        </div>
+        ${char.note ? `<div style="margin-top:20px; padding-top:15px; border-top:1px solid #eee; font-size:1rem; color:#666; line-height:1.6;"><strong>💡 참고사항:</strong><br>${char.note}</div>` : ''}
+    `;
+    document.getElementById('modal-detail').classList.remove('hidden');
+}
 
         function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
