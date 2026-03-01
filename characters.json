@@ -117,7 +117,7 @@
    "line": "후열",
    "personality": "공명",
    "star": 3,
-   "Eldyne": ""
+   "Eldyne": "몽환살"
  },
  {
    "name": "루드",
@@ -168,11 +168,11 @@
    "name": "리츠",
    "role": "딜러",
    "low_grade": "O",
-   "high_grade": "O",
+   "high_grade": "△",
    "low_desc": "딜계수↑",
    "high_desc": "딜계수↑",
    "tier": "[3]메타부적합",
-   "note": "",
+   "note": "고학년 거의 안씀, 애착 아티팩트 필수",
    "image": "images/리츠.png",
    "line": "전열",
    "personality": "광기",
@@ -621,7 +621,7 @@
    "high_grade": "O",
    "low_desc": "적 일반 공격 피해량 감소 디버프계수↑ 딜계수↑",
    "high_desc": "딜계수↑",
-   "tier": "",
+   "tier": "[3]메타부적합",
    "note": "고학년 진형 붕괴 후 범위 딜링이 핵심. 저학년은 A2 달기 전까진 긴 쿨타임으로 비효율적. 고학년 우선",
    "image": "images/샤샤.png",
    "line": "중열",
@@ -1769,4 +1769,5 @@
    "star": 1,
    "Eldyne": ""
  }
+
 ]
