@@ -510,7 +510,7 @@
    "Eldyne": ""
  },
  {
-   "name": "시온더다크불릿",
+   "name": "시온 더 다크불릿",
    "role": "딜러",
    "low_grade": "O",
    "high_grade": "O",
@@ -518,7 +518,7 @@
    "high_desc": "딜계수↑",
    "tier": "[1]메타픽",
    "note": "",
-   "image": "images/시온더다크불릿.png",
+   "image": "images/시온 더 다크불릿.png",
    "line": "후열",
    "personality": "우울",
    "star": 3,
@@ -1771,3 +1771,4 @@
  }
 
 ]
+
