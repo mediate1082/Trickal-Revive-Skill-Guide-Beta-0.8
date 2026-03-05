@@ -1,6 +1,6 @@
 ﻿name,low_debuff,low_cond,high_debuff,high_cond,normal_debuff,normal_cond,power_debuff,power_cond,aside_passive
 가비아,,,,,,,,,
-그윈,기절,동상 상태인 상대,,,,,,,
+그윈,"기절,주는 피해량 감소",동상 상태인 상대,,,,,,,
 나이아,,,,,,,,,
 네르,,,,,,,,,
 네티,,,,,,,,,
@@ -117,4 +117,3 @@
 하이디,,,,,눈가림,저학년 발동 중,,,
 헤일리,쓰라림,,눈가림,,쓰라림,,,,
 힐데,,,주는 물리 피해량 감소,,,,,,
-
