@@ -77,18 +77,45 @@
                 <button class="btn" style="border-radius:50%; width:38px; height:38px; padding:0;" onclick="openInfoModal()">❓</button>
             </div>
             <div class="controls-row">
-                <div class="filter-bar">
-                    <button class="btn" onclick="renderList('tier')">티어</button>
-                    <button class="btn" onclick="renderList('personality')">성격</button>
-                    <button class="btn" onclick="renderList('role')">역할</button>
-                    <button class="btn" onclick="renderList('line')">배치</button>
-                    <button id="order-btn" class="btn" onclick="toggleOrder()">▲순</button>
-                </div>
-                <div class="search-box">
-                    <input type="text" id="search-input" placeholder="사도 이름 검색..." onkeyup="handleSearch()">
-                </div>
-            </div>
+    <div class="filter-bar" style="display: flex; gap: 8px; width: 100%; align-items: center;">
+    <select id="sort-select" class="btn" onchange="handleSortFilter()" style="flex: 2; height: 40px;">
+        <option value="name">이름순</option>
+        <option value="tier">티어순</option>
+        <option value="personality">성격순</option>
+        <option value="role">역할순</option>
+        <option value="line">배치순</option>
+    </select>
+
+    <button id="order-btn" class="btn" onclick="toggleOrder()" style="flex: 0.5; height: 40px; padding: 0;">▲</button>
+
+    <button class="btn" onclick="openFilterModal()" style="flex: 1.5; height: 40px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+        🔍 필터 <span id="filter-count" style="font-size: 0.8rem; color: #e74c3c;"></span>
+    </button>
+</div>
+    
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="사도 이름 검색..." oninput="handleSortFilter()">
+    </div>
+</div>
+
+<div id="modal-filter" class="modal-overlay hidden" onclick="closeFilterModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 style="margin-top: 0;">상태이상 필터</h3>
+        
+        <div style="padding: 10px; background: #f4f9e9; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-around; font-size: 0.9rem;">
+            <label><input type="radio" name="filter-mode" value="OR" checked onchange="handleSortFilter()"> 하나라도 포함(OR)</label>
+            <label><input type="radio" name="filter-mode" value="AND" onchange="handleSortFilter()"> 모두 포함(AND)</label>
         </div>
+
+        <div id="filter-checkbox-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-height: 300px; overflow-y: auto; padding: 5px; border: 1px solid #eee; border-radius: 8px;">
+            </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn" style="flex: 1;" onclick="resetFilters()">초기화</button>
+            <button class="btn" style="flex: 1; background: var(--accent-green);" onclick="closeFilterModal()">닫기</button>
+        </div>
+    </div>
+</div>
     </header>
 
     <div class="content-container">
@@ -112,16 +139,23 @@
     </div>
 
     <script>
-        let db = [];
-        let debuffDB = [];
-        let infoText = "";
-        let debuffDescDB = [];
-        let currentCriteria = 'name';
-        let isAscending = true;
+      let db = [];
+let debuffDB = [];
+let infoText = "";
+let debuffDescDB = [];
+let isAscending = true;
+let selectedStatuses = new Set(); 
 
-        async function loadExternalData() {
-           try {
-        // 3개의 데이터를 병렬로 불러와서 PapaParse로 변환합니다.
+// [수정] 정렬 방향 토글 - 이제 handleSortFilter만 호출합니다.
+function toggleOrder() {
+    isAscending = !isAscending;
+    document.getElementById('order-btn').innerText = isAscending ? "▲" : "▼";
+    handleSortFilter(); 
+}
+
+// 데이터 로드
+async function loadExternalData() {
+    try {
         const [res1, res2, res3, res4] = await Promise.all([
             fetch('./data/DB.csv').then(res => res.text()),
             fetch('./data/debuff_DB.csv').then(res => res.text()),
@@ -134,93 +168,21 @@
         debuffDescDB = Papa.parse(res3, { header: true, skipEmptyLines: true }).data;
         infoText = res4;
 
+        setupFilterModal();
         document.getElementById('loading-text').classList.add('hidden');
-        renderList('name');
+        handleSortFilter(); // 초기 리스트 렌더링
     } catch (error) {
         console.error("데이터 로드 실패:", error);
     }
 }
-        // [기존 정렬 및 검색 로직 유지]
-        function toggleOrder() {
-            isAscending = !isAscending;
-            document.getElementById('order-btn').innerText = isAscending ? "▲순" : "▼순";
-            renderList(currentCriteria);
-        }
 
-        function handleSearch() {
-            const query = document.getElementById('search-input').value.toLowerCase().trim();
-            const filtered = db.filter(c => c.name && c.name.toLowerCase().includes(query));
-            displayCards(filtered, 'main-grid');
-        }
-
-        function renderList(criteria) {
-            currentCriteria = criteria;
-            const container = document.getElementById('main-grid');
-            container.innerHTML = "";
-            let sorted = db.filter(c => c.name);
-            sorted.sort((a, b) => {
-                let res = a.name.localeCompare(b.name);
-                return isAscending ? res : -res;
-            });
-
-            if (criteria === 'name') {
-                displayCards(sorted, 'main-grid');
-            } else {
-                const groups = sorted.reduce((acc, obj) => {
-                    const key = obj[criteria];
-                    if (key && key.trim() !== "") {
-                        if (!acc[key]) acc[key] = [];
-                        acc[key].push(obj);
-                    }
-                    return acc;
-                }, {});
-                let groupKeys = Object.keys(groups);
-                if (criteria === 'line') {
-                    const lineOrder = ['전열', '중열', '후열', '전체열'];
-                    groupKeys.sort((a, b) => lineOrder.indexOf(a) - lineOrder.indexOf(b));
-                } else { groupKeys.sort(); }
-                if (!isAscending) groupKeys.reverse();
-                groupKeys.forEach(key => {
-                    const title = document.createElement('div');
-                    title.className = 'group-title';
-                    title.innerText = key;
-                    container.appendChild(title);
-                    displayCards(groups[key], 'main-grid', true);
-                });
-            }
-        }
-
-        function displayCards(data, targetId, append = false) {
-            const container = document.getElementById(targetId);
-            if (!append) container.innerHTML = "";
-            data.forEach(char => {
-                const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.onclick = () => openDetailModal(char);
-                
-                // 경로 수정: ./assets/ 하위 폴더 및 .webp 확장자 반영
-                card.innerHTML = `
-                    <div class="image-wrapper">
-                        <img src="./assets/images/${char.name}.webp" class="char-img" onerror="this.src='./assets/images/default.webp'">
-                        <img src="./assets/icons/personality/${char.personality}.webp" class="icon p-icon" onerror="this.style.display='none'">
-                        <img src="./assets/icons/role/${char.role}.webp" class="icon r-icon" onerror="this.style.display='none'">
-                        <img src="./assets/icons/line/${char.line}.webp" class="icon l-icon" onerror="this.style.display='none'">
-                    </div>
-                    <div class="char-name">${char.name}</div>
-                    <div class="grade-info">
-                        <span class="grade-item">저:<span class="${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span></span>
-                        <span class="grade-item">고:<span class="${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span></span>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }function cleanStatusName(name) {
+// 헬퍼: 상태이상 이름 정제
+function cleanStatusName(name) {
     if (!name) return "";
     return name.split('(')[0].split('+')[0].trim();
 }
 
-// 2. 특정 스킬의 디버프 HTML을 생성하는 함수
+// 디버프 항목 렌더링
 function renderSkillDebuffs(debuffString, condString, typeLabel = "") {
     if (!debuffString || debuffString === "X" || debuffString.trim() === "") return "";
     
@@ -237,10 +199,7 @@ function renderSkillDebuffs(debuffString, condString, typeLabel = "") {
         
         const cond = conditions[index];
         const hasCond = cond && cond.trim() !== "" && cond !== " ";
-        
-        const condTag = hasCond 
-            ? `<span style="background:#fdf0f0; color:#e74c3c; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-left:6px; border:1px solid #fadbd8; white-space:nowrap;">${cond}</span>` 
-            : "";
+        const condTag = hasCond ? `<span style="background:#fdf0f0; color:#e74c3c; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-left:6px; border:1px solid #fadbd8; white-space:nowrap;">${cond}</span>` : "";
 
         return `
             <div class="debuff-item" style="display:flex; align-items:center; gap:12px; background:#fff; padding:10px; border-radius:12px; border:1px solid #e9f0d5; margin-top:8px;">
@@ -258,7 +217,143 @@ function renderSkillDebuffs(debuffString, condString, typeLabel = "") {
     }).join('');
 }
 
-    function openDetailModal(char) {
+// 필터 모달 설정
+function setupFilterModal() {
+    const group = document.getElementById('filter-checkbox-group');
+    if (!group) return;
+    group.innerHTML = ''; 
+    const sortedList = [...debuffDescDB].sort((a, b) => a.status_name.localeCompare(b.status_name));
+    
+    sortedList.forEach(item => {
+        if (!item.status_name) return;
+        const label = document.createElement('label');
+        label.style.cssText = "display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer;";
+        label.innerHTML = `<input type="checkbox" value="${item.status_name}" onchange="toggleStatusFilter('${item.status_name}')"> ${item.status_name}`;
+        group.appendChild(label);
+    });
+}
+
+function toggleStatusFilter(status) {
+    if (selectedStatuses.has(status)) selectedStatuses.delete(status);
+    else selectedStatuses.add(status);
+    handleSortFilter();
+}
+
+// [핵심] 통합 필터 및 정렬 함수
+function handleSortFilter() {
+    const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+    const sortCriteria = document.getElementById('sort-select').value;
+    const filterMode = document.querySelector('input[name="filter-mode"]:checked').value;
+
+    // 1. 필터링
+    let filtered = db.filter(char => {
+        const nameMatch = char.name.toLowerCase().includes(searchQuery);
+        let statusMatch = true;
+        if (selectedStatuses.size > 0) {
+            const debuffs = debuffDB.find(d => d.name === char.name);
+            if (!debuffs) {
+                statusMatch = false;
+            } else {
+                const allApostleDebuffs = [debuffs.low_debuff, debuffs.high_debuff, debuffs.normal_debuff, debuffs.power_debuff, debuffs.aside_passive].join(',');
+                const selectedArray = Array.from(selectedStatuses);
+                statusMatch = (filterMode === 'AND') 
+                    ? selectedArray.every(s => allApostleDebuffs.includes(s))
+                    : selectedArray.some(s => allApostleDebuffs.includes(s));
+            }
+        }
+        return nameMatch && statusMatch;
+    });
+
+    // 2. 정렬
+    filtered.sort((a, b) => {
+        let res = 0;
+        if (sortCriteria === 'name') {
+            res = a.name.localeCompare(b.name);
+        } else {
+            if (a[sortCriteria] === b[sortCriteria]) {
+                res = a.name.localeCompare(b.name);
+            } else {
+                res = (a[sortCriteria] || "").localeCompare(b[sortCriteria] || "");
+            }
+        }
+        return isAscending ? res : -res;
+    });
+
+    // 3. 렌더링 및 그룹화
+    const container = document.getElementById('main-grid');
+    container.innerHTML = "";
+
+    if (sortCriteria === 'name') {
+        displayCards(filtered, 'main-grid');
+    } else {
+        const groups = filtered.reduce((acc, obj) => {
+            const key = obj[sortCriteria] || "기타";
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(obj);
+            return acc;
+        }, {});
+
+        let groupKeys = Object.keys(groups);
+        if (sortCriteria === 'line') {
+            const lineOrder = ['전열', '중열', '후열', '전체열'];
+            groupKeys.sort((a, b) => lineOrder.indexOf(a) - lineOrder.indexOf(b));
+        } else {
+            groupKeys.sort(); 
+        }
+
+        if (!isAscending) groupKeys.reverse();
+
+        groupKeys.forEach(key => {
+            const title = document.createElement('div');
+            title.className = 'group-title';
+            title.innerText = key;
+            container.appendChild(title);
+            displayCards(groups[key], 'main-grid', true);
+        });
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:50px; color:#888;">조건에 맞는 사도가 없습니다.</div>';
+    }
+    document.getElementById('filter-count').innerText = selectedStatuses.size > 0 ? `(${selectedStatuses.size})` : '';
+}
+
+// 카드 표시
+function displayCards(data, targetId, append = false) {
+    const container = document.getElementById(targetId);
+    if (!append) container.innerHTML = "";
+    data.forEach(char => {
+        const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.onclick = () => openDetailModal(char);
+        card.innerHTML = `
+            <div class="image-wrapper">
+                <img src="./assets/images/${char.name}.webp" class="char-img" onerror="this.src='./assets/images/default.webp'">
+                <img src="./assets/icons/personality/${char.personality}.webp" class="icon p-icon" onerror="this.style.display='none'">
+                <img src="./assets/icons/role/${char.role}.webp" class="icon r-icon" onerror="this.style.display='none'">
+                <img src="./assets/icons/line/${char.line}.webp" class="icon l-icon" onerror="this.style.display='none'">
+            </div>
+            <div class="char-name">${char.name}</div>
+            <div class="grade-info">
+                <span class="grade-item">저:<span class="${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span></span>
+                <span class="grade-item">고:<span class="${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span></span>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// 모달 및 기타
+function openFilterModal() { document.getElementById('modal-filter').classList.remove('hidden'); }
+function closeFilterModal() { document.getElementById('modal-filter').classList.add('hidden'); }
+function resetFilters() {
+    selectedStatuses.clear();
+    document.querySelectorAll('#filter-checkbox-group input').forEach(cb => cb.checked = false);
+    handleSortFilter();
+}
+
+function openDetailModal(char) {
     const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
     const formatSkillDesc = (desc) => { if (!desc) return '정보 없음'; return desc.replace(/([↑↓])(?!$)/g, '$1<br>'); };
     const getTierColor = (tier) => {
@@ -281,37 +376,28 @@ function renderSkillDebuffs(debuffString, condString, typeLabel = "") {
             <p style="color:${tierColor}; font-size:1.2rem; font-weight:bold; margin:0 0 10px 0;">${char.tier || ''}</p>
             <p style="color:#888; font-size:1rem; margin:0;">${char.personality} | ${char.role} | ${char.line}</p>
         </div>
-
         <div class="skill-box">
-            <div class="skill-title">
-                <span class="grade-badge-pop ${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span> 저학년 스킬
-            </div>
+            <div class="skill-title"><span class="grade-badge-pop ${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span> 저학년 스킬</div>
             <div class="skill-desc">${formatSkillDesc(char.low_desc)}</div>
             ${apostleDebuffs ? renderSkillDebuffs(apostleDebuffs.low_debuff, apostleDebuffs.low_cond) : ''}
         </div>
-
         <div class="skill-box">
-            <div class="skill-title">
-                <span class="grade-badge-pop ${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span> 고학년 스킬
-            </div>
+            <div class="skill-title"><span class="grade-badge-pop ${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span> 고학년 스킬</div>
             <div class="skill-desc">${formatSkillDesc(char.high_desc)}</div>
             ${apostleDebuffs ? renderSkillDebuffs(apostleDebuffs.high_debuff, apostleDebuffs.high_cond) : ''}
         </div>
-
         ${apostleDebuffs && apostleDebuffs.normal_debuff && apostleDebuffs.normal_debuff !== 'X' ? `
             <div class="skill-box" style="background: #f0f4f8; border-left-color: #546e7a;">
                 <div class="skill-title" style="color: #37474f;">⚔️ 일반 공격</div>
                 ${renderSkillDebuffs(apostleDebuffs.normal_debuff, apostleDebuffs.normal_cond)}
             </div>
         ` : ''}
-
         ${apostleDebuffs && apostleDebuffs.power_debuff && apostleDebuffs.power_debuff !== 'X' ? `
             <div class="skill-box" style="background: #fff5f5; border-left-color: #ff8a80;">
                 <div class="skill-title" style="color: #d32f2f;">🔥 강화 공격</div>
                 ${renderSkillDebuffs(apostleDebuffs.power_debuff, apostleDebuffs.power_cond)}
             </div>
         ` : ''}
-
         ${apostleDebuffs && apostleDebuffs.aside_passive && apostleDebuffs.aside_passive !== 'X' ? `
             <div class="skill-box" style="border-left-color: #ff9800; background: #fff8e1;">
                 <div class="skill-title" style="color: #e65100;">⭐ 어사이드 추가 효과</div>
@@ -319,15 +405,15 @@ function renderSkillDebuffs(debuffString, condString, typeLabel = "") {
                 ${renderSkillDebuffs(apostleDebuffs.aside_passive, "")}
             </div>
         ` : ''}
-
         ${char.note ? `<div style="margin-top:20px; padding-top:15px; border-top:1px solid #eee; font-size:1rem; color:#666; line-height:1.6;"><strong>💡 참고사항:</strong><br>${char.note}</div>` : ''}
     `;
     document.getElementById('modal-detail').classList.remove('hidden');
 }
 
-        function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        loadExternalData();
+function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+loadExternalData();
     </script>
 </body>
 </html>
