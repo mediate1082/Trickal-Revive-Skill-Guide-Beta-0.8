@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>트릭컬 스킬 가이드</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <style>
+        @font-face {
+            font-family: 'OneMobilePop';
+            /* 경로 수정: .assets -> ./assets/fonts/ */
+            src: url('./assets/fonts/ONEMobilePOP.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root { 
+            --bg-main: #f9fdf0; 
+            --card-bg: #ECF7CD; 
+            --accent-green: #BCDD5F; 
+            --text-dark: #2D331D; 
+            --color-O: #27ae60;
+            --color-delta: #d35400;
+            --color-X: #c0392b;
+            --max-width: 1200px;
+        }
+
+        /* [기존 스타일 유지] */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'OneMobilePop', 'Pretendard', sans-serif; background: var(--bg-main); color: var(--text-dark); margin: 0; padding: 0; width: 100%; overflow-x: hidden; font-size: 18px; line-height: 1.5; }
+        .hidden { display: none !important; }
+        header { background: #fff; padding: 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.08); width: 100%; }
+        .header-container { max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .main-title { font-size: clamp(1.4rem, 6vw, 2.5rem); font-weight: normal; color: #4a5a1f; margin: 0; flex-grow: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .controls-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        @media (min-width: 768px) { .controls-row { flex-direction: row; justify-content: space-between; align-items: center; } }
+        .filter-bar { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+        .btn { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.9rem; font-family: inherit; }
+        .search-box { width: 100%; position: relative; }
+        @media (min-width: 768px) { .search-box { max-width: 300px; } }
+        .search-box input { width: 100%; padding: 12px 12px 12px 40px; border-radius: 20px; border: 2px solid #eee; outline: none; font-family: inherit; font-size: 1rem; background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23888" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 14px center; }
+        .content-container { padding: 15px; max-width: var(--max-width); margin: 0 auto; width: 100%; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+        @media (min-width: 768px) { .grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 20px; } }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 8px; text-align: center; cursor: pointer; border: 1px solid #d0e0a0; width: 100%; min-width: 0; }
+        .char-name { font-weight: normal; margin-top: 8px; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .image-wrapper { position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: #e6ecd7; }
+        .char-img { width: 100%; height: 100%; object-fit: cover; }
+        .icon { position: absolute; width: 22px; height: 22px; z-index: 10; }
+        @media (min-width: 768px) { .icon { width: 34px; height: 34px; } }
+        .p-icon { top: 3px; right: 3px; } .r-icon { top: 3px; left: 3px; } .l-icon { bottom: 3px; left: 3px; }
+        .grade-info { display: flex; justify-content: center; gap: 3px; margin-top: 6px; font-size: 0.75rem; }
+        .grade-item { padding: 1px 3px; border-radius: 4px; background: rgba(255,255,255,0.8); }
+        .color-O { color: var(--color-O); } .color-delta { color: var(--color-delta); } .color-X { color: var(--color-X); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: #fff; width: 92%; max-width: 480px; padding: 25px; border-radius: 20px; max-height: 90vh; overflow-y: auto; font-family: inherit; }
+        .group-title { grid-column: 1 / -1; background: var(--accent-green); padding: 10px 15px; border-radius: 8px; margin-top: 15px; font-size: 1.1rem; }
+        .skill-box { padding: 15px; border-radius: 12px; background: #f4f9e9; margin-bottom: 12px; border-left: 5px solid var(--accent-green); text-align: left; }
+        .skill-title { display: flex; align-items: center; font-size: 1.2rem; margin-bottom: 8px; color: #4a5a1f; }
+        .grade-badge-pop { display: inline-flex; justify-content: center; align-items: center; width: 32px; height: 32px; border-radius: 50%; background: #fff; border: 2.5px solid currentColor; margin-right: 10px; font-size: 1.2rem; }
+        .skill-desc { font-size: 1.1rem; line-height: 1.6; color: #333; }
+        .modal-tabs { 
+    display: flex; 
+    border-bottom: 2px solid #eee; 
+    margin-bottom: 20px; 
+}
+
+.tab-btn { 
+    flex: 1; 
+    padding: 12px; 
+    border: none; 
+    background: none; 
+    cursor: pointer; 
+    font-weight: bold; 
+    font-size: 1rem; 
+    color: #888; 
+    transition: 0.3s;
+    font-family: inherit;
+}
+
+.tab-btn.active { 
+    color: var(--text-dark); 
+    border-bottom: 3px solid var(--accent-green); 
+}
+
+.tab-content.hidden { 
+    display: none !important; 
+}
+
+.skill-box {
+    background: #f9fdf0;
+    border: 1px solid #e0ebc6;
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+    </style>
+</head>
+
+
+<body>
+
+    <header>
+        <div class="header-container">
+            <div class="header-top">
+                <div style="width:40px"></div>
+                <h1 class="main-title">트릭컬 스킬 가이드</h1>
+                <button class="btn" style="border-radius:50%; width:38px; height:38px; padding:0;" onclick="openInfoModal()">❓</button>
+            </div>
+            <div class="controls-row">
+    <div class="filter-bar" style="display: flex; gap: 8px; width: 100%; align-items: center;">
+    <select id="sort-select" class="btn" onchange="handleSortFilter()" style="flex: 2; height: 40px;">
+        <option value="name">이름순</option>
+        <option value="tier">티어순</option>
+        <option value="personality">성격순</option>
+        <option value="role">역할순</option>
+        <option value="line">배치순</option>
+    </select>
+
+    <button id="order-btn" class="btn" onclick="toggleOrder()" style="flex: 0.5; height: 40px; padding: 0;">▲</button>
+
+    <button class="btn" onclick="openFilterModal()" style="flex: 1.5; height: 40px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+        🔍 필터 <span id="filter-count" style="font-size: 0.8rem; color: #e74c3c;"></span>
+    </button>
+</div>
+    
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="사도 이름 검색..." oninput="handleSortFilter()">
+    </div>
+</div>
+
+<div id="modal-filter" class="modal-overlay hidden" onclick="closeFilterModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 style="margin-top: 0;">상태이상 필터</h3>
+        
+        <div style="padding: 10px; background: #f4f9e9; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-around; font-size: 0.9rem;">
+            <label><input type="radio" name="filter-mode" value="OR" checked onchange="handleSortFilter()"> 하나라도 포함(OR)</label>
+            <label><input type="radio" name="filter-mode" value="AND" onchange="handleSortFilter()"> 모두 포함(AND)</label>
+        </div>
+
+        <div id="filter-checkbox-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-height: 300px; overflow-y: auto; padding: 5px; border: 1px solid #eee; border-radius: 8px;">
+            </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn" style="flex: 1;" onclick="resetFilters()">초기화</button>
+            <button class="btn" style="flex: 1; background: var(--accent-green);" onclick="closeFilterModal()">닫기</button>
+        </div>
+    </div>
+</div>
+    </header>
+
+    <div class="content-container">
+        <div id="loading-text" style="text-align:center; padding:50px; color:#888;">데이터 로딩 중...</div>
+        <div id="main-grid" class="grid"></div>
+    </div>
+
+    <div id="modal-detail" class="modal-overlay hidden" onclick="closeModal('modal-detail')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div id="detail-body"></div>
+        
+        <button class="btn" style="width:100%; margin-top:15px; padding:15px; background:var(--accent-green); border:none; border-radius:12px; font-size: 1.1rem;" onclick="closeModal('modal-detail')">닫기</button>
+    </div>
+</div>
+        
+        <div id="detail-body"></div> <button class="btn" style="width:100%; margin-top:15px; padding:15px; background:var(--accent-green); border:none; border-radius:12px; font-size: 1.1rem;" onclick="closeModal('modal-detail')">닫기</button>
+    </div>
+</div>
+
+    <div id="modal-info" class="modal-overlay hidden" onclick="closeModal('modal-info')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 style="margin-top:0; font-size: 1.3rem;">도움말 및 범례</h3>
+            <p id="info-content" style="white-space: pre-wrap; font-size: 1rem; line-height: 1.7; text-align:left; color:#444;"></p>
+            <button class="btn" style="width:100%; margin-top:15px;" onclick="closeModal('modal-info')">닫기</button>
+        </div>
+    </div>
+
+    <script>
+let db = [];
+let debuffDB = [];
+let highSkillDB = []; 
+let debuffDescDB = [];
+let buffDB = [];
+let buffDescDB = [];
+let allStatusDB = []; // 통합 DB
+let infoText = "";
+let isAscending = true;
+let selectedStatuses = new Set();
+let currentLv = 1;
+
+// 1. 데이터 로드 및 초기화
+async function loadExternalData() {
+    try {
+        const [res1, res2, res3, res4, res5, res6, res7] = await Promise.all([
+            fetch('./data/DB.csv').then(res => res.text()),
+            fetch('./data/debuff_DB.csv').then(res => res.text()),
+            fetch('./data/debuff_desc_DB.csv').then(res => res.text()),
+            fetch('./data/high_skill_DB.csv').then(res => res.text()),
+            fetch('./data/info.txt').then(res => res.text()),
+            fetch('./data/buff_DB.csv').then(res => res.text()),
+            fetch('./data/buff_desc_DB.csv').then(res => res.text())
+        ]);
+
+        db = Papa.parse(res1, { header: true, skipEmptyLines: true }).data;
+        debuffDB = Papa.parse(res2, { header: true, skipEmptyLines: true }).data;
+        debuffDescDB = Papa.parse(res3, { header: true, skipEmptyLines: true }).data;
+        highSkillDB = Papa.parse(res4, { header: true, skipEmptyLines: true }).data;
+        infoText = res5;
+        buffDB = Papa.parse(res6, { header: true, skipEmptyLines: true }).data;
+        buffDescDB = Papa.parse(res7, { header: true, skipEmptyLines: true }).data; // res7로 수정 완료
+
+        // 모든 상태이상을 하나로 합쳐서 검색 준비
+        allStatusDB = [...buffDescDB, ...debuffDescDB];
+
+        setupFilterModal();
+        document.getElementById('loading-text').classList.add('hidden');
+        handleSortFilter(); 
+    } catch (error) {
+        console.error("데이터 로드 실패:", error);
+        document.getElementById('loading-text').innerText = "데이터 로드에 실패했습니다. 경로를 확인해주세요.";
+    }
+}
+
+// 2. 필터 모달 설정
+function setupFilterModal() {
+    const group = document.getElementById('filter-checkbox-group');
+    if (!group) return;
+    group.innerHTML = ''; 
+    // 통합 DB(allStatusDB)를 기준으로 필터 리스트 생성
+    const sortedList = [...allStatusDB].sort((a, b) => (a.status_name || "").localeCompare(b.status_name || ""));
+    
+    sortedList.forEach(item => {
+        if (!item.status_name) return;
+        const label = document.createElement('label');
+        label.style.cssText = "display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer;";
+        label.innerHTML = `<input type="checkbox" value="${item.status_name}" onchange="toggleStatusFilter('${item.status_name}')"> ${item.status_name}`;
+        group.appendChild(label);
+    });
+}
+
+// 3. 통합 필터 및 정렬 로직
+function handleSortFilter() {
+    const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+    const sortCriteria = document.getElementById('sort-select').value;
+    const filterMode = document.querySelector('input[name="filter-mode"]:checked').value;
+
+    let filtered = db.filter(char => {
+        const nameMatch = (char.name || "").toLowerCase().includes(searchQuery);
+        let statusMatch = true;
+        if (selectedStatuses.size > 0) {
+            const debuffs = debuffDB.find(d => d.name === char.name);
+            const buffs = buffDB.find(b => b.name === char.name);
+            
+            const allEffects = [
+                ...(debuffs ? [debuffs.low_debuff, debuffs.high_debuff, debuffs.normal_debuff, debuffs.power_debuff, debuffs.aside_passive] : []),
+                ...(buffs ? [buffs.low_buff, buffs.high_buff, buffs.normal_buff, buffs.power_buff, buffs.aside_passive] : [])
+            ].join(',').split(',').map(s => s.split('(')[0].trim()).filter(s => s !== '');
+
+            const selectedArray = Array.from(selectedStatuses);
+            statusMatch = (filterMode === 'AND') 
+                ? selectedArray.every(s => checkTagMatch(allEffects, s))
+                : selectedArray.some(s => checkTagMatch(allEffects, s));
+        }
+        return nameMatch && statusMatch;
+    });
+
+    // 정렬 로직
+    filtered.sort((a, b) => {
+        let res = 0;
+        if (sortCriteria === 'name') {
+            res = a.name.localeCompare(b.name);
+        } else {
+            if (a[sortCriteria] === b[sortCriteria]) res = a.name.localeCompare(b.name);
+            else res = (a[sortCriteria] || "").localeCompare(b[sortCriteria] || "");
+        }
+        return isAscending ? res : -res;
+    });
+
+    const container = document.getElementById('main-grid');
+    container.innerHTML = "";
+
+    if (sortCriteria === 'name') {
+        displayCards(filtered, 'main-grid');
+    } else {
+        const groups = filtered.reduce((acc, obj) => {
+            const key = obj[sortCriteria] || "기타";
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(obj);
+            return acc;
+        }, {});
+
+        let groupKeys = Object.keys(groups);
+        if (sortCriteria === 'line') {
+            const lineOrder = ['전열', '중열', '후열', '전체열'];
+            groupKeys.sort((a, b) => lineOrder.indexOf(a) - lineOrder.indexOf(b));
+        } else {
+            groupKeys.sort(); 
+        }
+        if (!isAscending) groupKeys.reverse();
+
+        groupKeys.forEach(key => {
+            const title = document.createElement('div');
+            title.className = 'group-title';
+            title.innerText = key;
+            container.appendChild(title);
+            displayCards(groups[key], 'main-grid', true);
+        });
+    }
+    if (filtered.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:50px; color:#888;">조건에 맞는 사도가 없습니다.</div>';
+    }
+    document.getElementById('filter-count').innerText = selectedStatuses.size > 0 ? `(${selectedStatuses.size})` : '';
+}
+
+// 4. 모달 및 탭 시스템
+function openDetailModal(char) {
+    const apostleDebuffs = debuffDB.find(d => d.name === char.name);
+    const apostleBuffs = buffDB.find(b => b.name === char.name); // 버프 데이터 추가
+    const skillData = highSkillDB.find(s => s['name']?.trim() === char.name.trim());
+    const body = document.getElementById('detail-body');
+    
+    const getTierColor = (tier) => {
+        if (!tier) return '#888'; 
+        if (tier.includes('메타픽')) return '#E91E63';
+        if (tier.includes('성격덱')) return '#2980B9';
+        if (tier.includes('메타 부적합')) return '#7F8C8D';
+        if (tier.includes('태생 1성')) return '#BCD3C7';
+        return '#e67e22';
+    };
+    
+    const tierColor = getTierColor(char.tier);
+    const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
+
+    body.innerHTML = `
+        <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px; text-align: left;">
+            <img src="./assets/images/${char.name}.webp" style="width: 110px; height: 110px; border-radius: 20px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onerror="this.src='./assets/images/default.webp'">
+            <div>
+                <h2 style="margin: 0; font-size: 1.6rem;">${char.name}</h2>
+                <p style="margin: 5px 0; font-weight: bold; font-size: 1.1rem; color: ${tierColor};">${char.tier || ''}</p>
+                <p style="margin: 0; color: #666; font-size: 0.9rem;">${char.personality} | ${char.role} | ${char.line}</p>
+            </div>
+        </div>
+
+        <div class="modal-tabs">
+            <button class="tab-btn active" onclick="switchTab(0)">강화 추천</button>
+            <button class="tab-btn" onclick="switchTab(1)">부가 효과</button>
+            <button class="tab-btn" onclick="switchTab(2)">상세 설명</button>
+        </div>
+
+        <div id="tab-0" class="tab-content">
+            <div style="text-align: left;">
+                ${(char.recommend_lv || char.recommend_reason) ? `
+                <div class="skill-box" style="border-left: 5px solid #e67e22; background: #fffaf5;">
+                    <div style="color:#e67e22; font-weight:bold; margin-bottom:8px; font-size: 1.05rem;">💡 강화 추천</div>
+                    ${char.recommend_lv ? `<div style="font-weight:bold; margin-bottom:5px; font-size: 0.95rem;">권장 레벨: ${char.recommend_lv}</div>` : ''}
+                    <div style="font-size:0.95rem; color:#444; line-height:1.5;">${(char.recommend_reason || '').split('↑').join('↑<br>')}</div>
+                </div>` : ''}
+                
+                <div class="skill-box" style="border-left: 5px solid var(--accent-green); background: #f9fdf0;">
+                    <div style="display:flex; align-items:center; font-weight:bold; margin-bottom:8px;">
+                        <span class="grade-badge-pop ${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span> 저학년 스킬
+                    </div>
+                    <div style="font-size:0.9rem; color:#555; padding-left:36px; line-height:1.4;">${(char.low_desc || '').split('↑').join('↑<br>')}</div>
+                </div>
+
+                <div class="skill-box" style="border-left: 5px solid var(--accent-green); background: #f9fdf0;">
+                    <div style="display:flex; align-items:center; font-weight:bold; margin-bottom:8px;">
+                        <span class="grade-badge-pop ${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span> 고학년 스킬
+                    </div>
+                    <div style="font-size:0.9rem; color:#555; padding-left:36px; line-height:1.4;">${(char.high_desc || '').split('↑').join('↑<br>')}</div>
+                </div>
+
+                ${char.note ? `
+                <div class="skill-box" style="background:#fffbe6; border: 1px solid #ffe58f; border-left: 5px solid #fadb14;">
+                    <div style="font-weight:bold; color: #856404; margin-bottom:8px; font-size: 1.05rem;">📝 참고사항</div>
+                    <div style="font-size:0.9rem; color:#555; line-height:1.6;">${char.note.split('↑').join('↑<br>')}</div>
+                </div>` : ''}
+            </div>
+        </div>
+
+        <div id="tab-1" class="tab-content hidden">
+            <div style="text-align: left;">
+
+                ${((apostleBuffs && apostleBuffs.low_buff) || (apostleDebuffs && apostleDebuffs.low_debuff)) ? `
+                <div class="skill-box" style="border: 1px solid #eee; border-left: 5px solid var(--accent-green); background: #fdfdfd;">
+                    <div style="font-weight:bold; color:var(--text-dark); margin-bottom:5px; font-size:0.95rem;">🎬 저학년 스킬 효과</div>
+                    ${renderSkillEffects(apostleBuffs?.low_buff, apostleBuffs?.low_cond, apostleBuffs?.low_target)}
+                    ${renderSkillEffects(apostleDebuffs?.low_debuff, apostleDebuffs?.low_cond, apostleDebuffs?.low_target)}
+                </div>` : ''}
+
+                ${((apostleBuffs && apostleBuffs.high_buff) || (apostleDebuffs && apostleDebuffs.high_debuff)) ? `
+                <div class="skill-box" style="border: 1px solid #eee; border-left: 5px solid var(--accent-green); background: #fdfdfd;">
+                    <div style="font-weight:bold; color:var(--text-dark); margin-bottom:5px; font-size:0.95rem;">🌟 고학년 스킬 효과</div>
+                    ${renderSkillEffects(apostleBuffs?.high_buff, apostleBuffs?.high_cond, apostleBuffs?.high_target)}
+                    ${renderSkillEffects(apostleDebuffs?.high_debuff, apostleDebuffs?.high_cond, apostleDebuffs?.high_target)}
+                </div>` : ''}
+
+
+                ${((apostleBuffs && apostleBuffs.normal_buff) || (apostleDebuffs && apostleDebuffs.normal_debuff)) ? `
+                <div class="skill-box" style="border: 1px solid #eee; border-left: 5px solid #607d8b; background: #fafafa;">
+                    <div style="font-weight:bold; color:#455a64; margin-bottom:5px; font-size:0.95rem;">⚔️ 일반 공격 효과</div>
+                    ${renderSkillEffects(apostleBuffs?.normal_buff, apostleBuffs?.normal_cond, apostleBuffs?.normal_target)}
+                    ${renderSkillEffects(apostleDebuffs?.normal_debuff, apostleDebuffs?.normal_cond, apostleDebuffs?.normal_target)}
+                </div>` : ''}
+
+                ${((apostleBuffs && apostleBuffs.power_buff) || (apostleDebuffs && apostleDebuffs.power_debuff)) ? `
+                <div class="skill-box" style="border: 1px solid #eee; border-left: 5px solid #607d8b; background: #fafafa;">
+                    <div style="font-weight:bold; color:#455a64; margin-bottom:5px; font-size:0.95rem;">⚡ 강화 공격 효과</div>
+                    ${renderSkillEffects(apostleBuffs?.power_buff, apostleBuffs?.power_cond, apostleBuffs?.power_target)}
+                    ${renderSkillEffects(apostleDebuffs?.power_debuff, apostleDebuffs?.power_cond, apostleDebuffs?.power_target)}
+                </div>` : ''}
+
+               
+
+                ${((apostleBuffs && apostleBuffs.aside_passive) || (apostleDebuffs && apostleDebuffs.aside_passive)) ? `
+                <div class="skill-box" style="border: 1px solid #eee; border-left: 5px solid #9b59b6; background: #fafafa;">
+                    <div style="font-weight:bold; color:#8e44ad; margin-bottom:5px; font-size:0.95rem;">💎 어사이드 / 패시브 효과</div>
+                    ${renderSkillEffects(apostleBuffs?.aside_passive, apostleBuffs?.aside_cond, apostleBuffs?.aside_target)}
+                    ${renderSkillEffects(apostleDebuffs?.aside_passive, apostleDebuffs?.aside_cond, apostleDebuffs?.aside_target)}
+                </div>` : ''}
+            </div>
+        </div>
+
+        <div id="tab-2" class="tab-content hidden">
+            <div class="skill-box" style="text-align: left;">
+                <div style="font-weight:bold; color:#4a5a1f; margin-bottom:8px; font-size: 1.05rem;">[고학년] ${skillData ? skillData['high_skill_name'] : '정보 없음'}</div>
+                <div id="skill-desc-text" class="skill-desc" style="min-height:60px;">
+                    ${skillData ? parseSkillLevelText(skillData['high_skill_desc'], skillData['Lv.1']) : '수치 데이터가 없습니다.'}
+                </div>
+                ${skillData ? `
+                <div style="margin-top:20px; background:#f4f9e9; padding:15px; border-radius:12px; border:1px solid #e0ebc6;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#666; margin-bottom:10px;">
+                        <span>Lv.1</span> <span id="lv-display" style="font-weight:bold; color:#e74c3c;">현재 레벨: Lv.1</span> <span>Lv.13</span>
+                    </div>
+                    <input type="range" min="1" max="13" value="1" step="1" list="tickmarks" style="width:100%; cursor:pointer;" oninput="updateSkillLv(this.value, '${char.name}')">
+                    <datalist id="tickmarks"><option value="1"></option><option value="10"></option><option value="13"></option></datalist>
+                </div>` : ''}
+            </div>
+        </div>
+    `;
+    document.getElementById('modal-detail').classList.remove('hidden');
+}
+
+// 5. 기타 보조 함수들
+function switchTab(idx) {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
+    tabs.forEach((t, i) => t.classList.toggle('active', i === idx));
+    contents.forEach((c, i) => c.classList.toggle('hidden', i !== idx));
+}
+
+function updateSkillLv(lv, charName) {
+    const skillInfo = highSkillDB.find(s => s['name']?.trim() === charName.trim());
+    if (!skillInfo) return;
+    const lvKeys = ['Lv.1', 'Lv.2', 'Lv.3', 'Lv.4', 'Lv.5', 'Lv.6', 'Lv.7', 'Lv.8', 'Lv.9', 'Lv.10', 'Lv.11', 'Lv.12', 'Lv.13'];
+    const rawVal = skillInfo[lvKeys[lv-1]];
+    document.getElementById('skill-desc-text').innerHTML = parseSkillLevelText(skillInfo['high_skill_desc'], rawVal);
+    document.getElementById('lv-display').innerText = `현재 레벨: Lv.${lv}`;
+}
+
+function parseSkillLevelText(template, rawValue) {
+    if (!template || !rawValue) return template || "정보 없음";
+    let result = String(template).replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+    const values = String(rawValue).split('\n');
+    values.forEach((v, i) => {
+        result = result.split(`{${i}}`).join(`<b style="color:#e74c3c;">${v}</b>`);
+    });
+    return result;
+}
+
+function toggleStatusFilter(status) {
+    if (selectedStatuses.has(status)) selectedStatuses.delete(status);
+    else selectedStatuses.add(status);
+    handleSortFilter();
+}
+
+function toggleOrder() {
+    isAscending = !isAscending;
+    document.getElementById('order-btn').innerText = isAscending ? "▲" : "▼";
+    handleSortFilter();
+}
+
+function displayCards(data, targetId, append = false) {
+    const container = document.getElementById(targetId);
+    if (!append) container.innerHTML = "";
+    data.forEach(char => {
+        const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.onclick = () => openDetailModal(char);
+        card.innerHTML = `
+            <div class="image-wrapper">
+                <img src="./assets/images/${char.name}.webp" class="char-img" onerror="this.src='./assets/images/default.webp'">
+                <img src="./assets/icons/personality/${char.personality}.webp" class="icon p-icon" onerror="this.style.display='none'">
+                <img src="./assets/icons/role/${char.role}.webp" class="icon r-icon" onerror="this.style.display='none'">
+                <img src="./assets/icons/line/${char.line}.webp" class="icon l-icon" onerror="this.style.display='none'">
+            </div>
+            <div class="char-name">${char.name}</div>
+            <div class="grade-info">
+                <span class="grade-item">저:<span class="${getGradeClass(char.low_grade)}">${char.low_grade || '?'}</span></span>
+                <span class="grade-item">고:<span class="${getGradeClass(char.high_grade)}">${char.high_grade || '?'}</span></span>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// 통합 렌더링 함수
+function renderSkillEffects(effectString, condString, targetString) {
+    if (!effectString || effectString === 'X' || effectString === '') return '';
+    
+    const names = effectString.split(',').map(s => s.trim()).filter(s => s !== '');
+    const conds = condString ? condString.split(',').map(s => s.trim()) : [];
+    const targets = targetString ? targetString.split(',').map(s => s.trim()) : [];
+    
+    return names.map((raw, index) => {
+        const pureName = raw.split('(')[0].trim();
+        const info = allStatusDB.find(d => d.status_name === pureName);
+        
+        const bracketMatch = raw.match(/\(([^)]+)\)/);
+        const bracketText = bracketMatch ? bracketMatch[1] : null;
+
+        // [중요] 땜빵 로직: 아이콘이 없으면 바로 '버프_아이콘 없음.webp'를 사용
+        const iconSrc = (info && info.icon_file && info.icon_file !== "") 
+            ? `./assets/icons/status/${info.icon_file}` 
+            : `./assets/icons/status/버프_아이콘 없음.webp`;
+        
+        const currentCond = conds[index] || "";
+        const condBadges = currentCond.split('+').map(c => c.trim()).filter(c => c !== '')
+            .map(c => `<span style="font-size:0.7rem; background:#fff3e0; color:#e65100; padding:2px 6px; border-radius:4px; margin-left:5px; border: 1px solid #ffe0b2;">${c}</span>`).join('');
+        
+        const currentTarget = targets[index] || "";
+        const targetBadge = currentTarget ? `<span style="font-size:0.7rem; background:#e8f5e9; color:#2e7d32; padding:2px 6px; border-radius:4px; margin-left:5px; border: 1px solid #c8e6c9;">${currentTarget}</span>` : '';
+
+        return `
+            <div style="display:flex; align-items:center; gap:10px; background:#fff; padding:10px; border-radius:12px; border:2px solid #BCDD5F; margin-top:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <img src="${iconSrc}" 
+                     style="width:28px; height:28px;" 
+                     onerror="if (this.src != './assets/icons/status/버프_아이콘 없음.webp') this.src='./assets/icons/status/버프_아이콘 없음.webp';">
+                <div style="font-size:0.85rem; text-align: left;">
+                    <strong style="color:var(--text-dark);">
+                        ${pureName}
+                        ${bracketText ? `<span style="font-size:0.7rem; background:#e3f2fd; color:#1565c1; padding:2px 6px; border-radius:4px; margin-left:5px; border: 1px solid #bbdefb;">${bracketText}</span>` : ''}
+                        ${condBadges} ${targetBadge}
+                    </strong><br>
+                    <span style="color:#666; font-size:0.75rem; line-height:1.3;">${info ? info.description : "정보가 없습니다."}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function checkTagMatch(myEffectList, filterKeyword) {
+    return myEffectList.some(effectName => {
+        if (effectName === filterKeyword) return true;
+        const info = allStatusDB.find(d => d.status_name === effectName);
+        return info && info.tag && info.tag.includes(filterKeyword);
+    });
+}
+
+function openFilterModal() { document.getElementById('modal-filter').classList.remove('hidden'); }
+function closeFilterModal() { document.getElementById('modal-filter').classList.add('hidden'); }
+function resetFilters() {
+    selectedStatuses.clear();
+    document.querySelectorAll('#filter-checkbox-group input').forEach(cb => cb.checked = false);
+    handleSortFilter();
+}
+function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// 실행 시작
+loadExternalData();
+</script>
+</body>
+</html>
