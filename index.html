@@ -236,12 +236,12 @@
             width: 8px;
         }
        .modal-content::-webkit-scrollbar-thumb {
-            background: #D1D1D1; /* 차분한 그레이 컬러 */
+            background: #D1D1D1; 
             border-radius: 10px;
-            border: 2px solid #fff; /* 모달 내부로 삽입된 느낌을 주는 여백 */
+            border: 2px solid #fff; 
 }
         .modal-content::-webkit-scrollbar-thumb:hover {
-            background: #A6A6A6; /* 마우스 올렸을 때 살짝 더 진해짐 */
+            background: #A6A6A6; 
         }
         .modal-content::-webkit-scrollbar-track {
             background: transparent;
@@ -258,13 +258,12 @@
             text-align: center;
             cursor: pointer;
             border: 1px solid #d0e0a0;
-            /* [추가] 부드러운 움직임을 위한 설정 */
             transition: all 0.2s ease-out;
         }
         .card:hover {
             transform: translateY(-8px); /* 위로 8px 이동 */
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); /* 그림자로 공중 부양 느낌 강조 */
-            border-color: var(--accent-green); /* 테두리색 강조 */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); 
+            border-color: var(--accent-green); 
         }               
 
 
@@ -634,10 +633,21 @@ function refreshFilterList() {
         .forEach(tagName => {
             const isChecked = selectedStatuses.has(tagName);
             
-            // 팁: 버프/디버프 아이콘은 태그명만으로는 판단이 어려우므로 
-            // 원본 DB에서 해당 태그를 가진 첫 번째 아이템의 타입을 참고하도록 구성할 수 있습니다.
-            const sampleItem = allStatusDB.find(i => i.tag && i.tag.includes(tagName));
-            const isBuff = sampleItem && buffDescDB.some(b => b.status_name === sampleItem.status_name);
+            // [수정된 아이콘 판단 로직]
+            let isBuff = true;
+            
+            if (currentFilterTab === 'debuff') {
+                isBuff = false; // 디버프 탭이면 무조건 빨간색
+            } else if (currentFilterTab === 'buff') {
+                isBuff = true;  // 버프 탭이면 무조건 파란색
+            } else {
+                const isActuallyDebuff = debuffDescDB.some(d => 
+                    d.status_name === tagName || 
+                    (d.tag && d.tag.split(',').map(t => t.trim()).includes(tagName))
+                );
+                isBuff = !isActuallyDebuff;
+            }
+
             const typeIcon = isBuff ? '<span style="color:#3488F0;">▲</span>' : '<span style="color:#FC6881;">▼</span>';
 
             const label = document.createElement('label');
@@ -645,7 +655,7 @@ function refreshFilterList() {
             label.innerHTML = `
                 <input type="checkbox" value="${tagName}" ${isChecked ? 'checked' : ''} 
                        onchange="toggleStatusFilter('${tagName}')">
-                ${typeIcon} <span>${tagName}</span>
+                ${typeIcon} <span style="margin-left:4px;">${tagName}</span>
             `;
             group.appendChild(label);
         });
@@ -696,7 +706,6 @@ function handleSortFilter() {
                     }); 
                 }
 
-                // 성공했던 로직인 checkTagMatch를 그대로 호출 (태그 검색 보장)
                 return checkTagMatch(myEffects, s);
             };
 
@@ -705,7 +714,6 @@ function handleSortFilter() {
         return statusMatch;
     });
 
-    // --- 이하 정렬 및 그리드 출력 로직은 기존과 100% 동일 (생략 가능하나 확인용으로 포함) ---
     filtered.sort((a, b) => {
         let res = (sort === 'name') ? a.name.localeCompare(b.name) : (a[sort] || "").localeCompare(b[sort] || "") || a.name.localeCompare(b.name);
         return isAscending ? res : -res;
@@ -782,11 +790,10 @@ function resetFilters() {
     const searchInput = document.getElementById('filter-search');
     if (searchInput) searchInput.value = '';
     
-    // 체크박스들의 시각적 상태 초기화
     document.querySelectorAll('#filter-checkbox-group input').forEach(cb => cb.checked = false);
     
     setFilterTab('all');
-    handleSortFilter(); // 초기화는 즉시 반영
+    handleSortFilter(); 
 }
 function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); document.body.style.overflow='hidden';}
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.body.style.overflow='auto';}
