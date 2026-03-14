@@ -1,4 +1,4 @@
-let currentSkillMode = 'PvE';
+let currentSkillMode = 'PvE'; // PvE로 고정
 let currentApostle = null;
 let currentDataContext = null;
 
@@ -20,14 +20,14 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
     let iconPath = "", typeLabel = "", skillName = "", themeColor = "";
     
     // 타입 배지 (저학년/고학년 전용 아이콘)
-   let typeBadgeHTML = "";
+    let typeBadgeHTML = "";
     if (type === 'low') {
         typeBadgeHTML = `<img src="./assets/icons/skill_type/저학년_아이콘.webp" style="position: absolute; top: -5px; left: -5px; width: 22px; height: 22px; z-index: 2;">`;
     } else if (type === 'high') {
         typeBadgeHTML = `<img src="./assets/icons/skill_type/고학년_아이콘.webp" style="position: absolute; top: -5px; left: -5px; width: 22px; height: 22px; z-index: 2;">`;
     }
 
-   switch(type) {
+    switch(type) {
         case 'low':
             iconPath = `./assets/icons/low_skill/${skillInfo?.low_skill_icon || 'default.webp'}`;
             typeLabel = "저학년 스킬";
@@ -59,25 +59,38 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
 
     return `
         <div style="background: #ffffff; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px;">
-            <div style="display: flex; gap: 15px; align-items: center; min-height: 58px; margin-bottom: 15px;">
-                <div style="position: relative; flex-shrink: 0;">
-                    ${typeBadgeHTML}
-                    <img src="${iconPath}" 
-                         style="width: 58px; height: 58px; border-radius: 12px; border: 3px solid ${themeColor}; object-fit: cover;" 
-                         onerror="this.src='./assets/icons/skills/default.webp'">
-                    ${(showBadge && (type === 'low' || type === 'high')) ? `<div id="${type}-badge" style="position: absolute; right: -5px; bottom: -5px; background: ${COLORS.badge}; color: white; font-size: 0.75rem; font-weight: bold; padding: 3px 7px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.2); z-index:3;">Lv.1</div>` : ''}
+            <div style="display: flex; justify-content: space-between; align-items: center; min-height: 58px; margin-bottom: 15px;">
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div style="position: relative; flex-shrink: 0;">
+                        ${typeBadgeHTML}
+                        <img src="${iconPath}" 
+                             style="width: 58px; height: 58px; border-radius: 12px; border: 3px solid ${themeColor}; object-fit: cover;" 
+                             onerror="this.src='./assets/icons/skills/default.webp'">
+                        ${(showBadge && (type === 'low' || type === 'high')) ? `<div id="${type}-badge" style="position: absolute; right: -5px; bottom: -5px; background: ${COLORS.badge}; color: white; font-size: 0.75rem; font-weight: bold; padding: 3px 7px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.2); z-index:3;">Lv.1</div>` : ''}
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center; gap: 2px;">
+                        <span style="font-size: 0.85rem; font-weight: bold; color: ${themeColor};">${typeLabel}</span>
+                        <span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain}; line-height: 1.2;">${skillName}</span>
+                    </div>
                 </div>
-                <div style="display: flex; flex-direction: column; justify-content: center; gap: 2px;">
-                    <span style="font-size: 0.85rem; font-weight: bold; color: ${themeColor};">${typeLabel}</span>
-                    <span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain}; line-height: 1.2;">${skillName}</span>
-                </div>
+
+                ${(type === 'high' && showBadge) ? `
+                <div id="mode-toggle-btn" onclick="window.toggleSkillMode()" 
+                     style="display: flex; align-items: center; cursor: pointer; background: ${themeColor}; 
+                            padding: 2px; border-radius: 20px; width: 65px; height: 26px; 
+                            position: relative; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1);">
+                    <div style="position: absolute; left: ${currentSkillMode === 'PvE' ? '4px' : '40px'}; width: 20px; height: 20px; background: rgba(255,255,255,0.85); border-radius: 50%; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 1px 2px rgba(0,0,0,0.15);"></div>
+                    <span style="font-size: 0.72rem; font-weight: 800; color: #020817; width: 100%; text-align: ${currentSkillMode === 'PvE' ? 'right' : 'left'}; padding: 0 9px; pointer-events: none;">
+                        ${currentSkillMode}
+                    </span>
+                </div>` : ''}
             </div>
+            
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${customContent ? customContent : renderEffectItems(buffString, condString, targetString, allStatusDB, debuffDescDB)}
+                ${customContent ? customContent : renderEffectItems(buffString, condString, targetString, ctx.allStatusDB, ctx.debuffDescDB)}
             </div>
         </div>`;
 }
-
 // 상태이상 개별 아이템 음각 박스 (좌측 컬러 바 적용)
 function renderEffectItems(effectString, condString, targetString, allStatusDB, debuffDescDB) {
     if (!effectString || effectString === 'X') return '';
@@ -185,6 +198,42 @@ export function openDetailModal(char, dataContext) {
             </div>`;
     }
 
+    // --- [콘텐츠 준비: Tab 2 - 일반 공격] ---
+    let normalAtkHTML = "";
+    if (normalAtkData) {
+        const statColor = char.atk_type === '마법' ? '#339af0' : '#E63946';
+        
+        // 카드 내부에 모든 텍스트 구성을 다 집어넣습니다.
+        const normalContent = `
+            <div style="margin-bottom: 15px;">
+                <div style="font-size: 0.85rem; font-weight: bold; color: #84CC16; margin-bottom: 2px;">일반 공격</div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain}; margin-bottom: 8px;">기본 공격</div>
+                <div style="font-size: 0.9rem; color: #666; line-height: 1.6; margin-bottom: 12px;">
+                    ${normalAtkData.basic_atk_desc ? normalAtkData.basic_atk_desc.replace(/\\n/g, '<br>') : ''}
+                </div>
+                <div style="background: #f8f9fa; border-radius: 12px; padding: 14px; font-size: 0.95rem; color: #333; line-height: 1.6; box-shadow: inset 0 2px 5px ${COLORS.inset}; border: 1px solid rgba(0,0,0,0.03);">
+                    ${parseSkillLevelText(normalAtkData.basic_stat_template, normalAtkData.basic_atk_value, statColor)}
+                </div>
+            </div>
+            
+            ${(normalAtkData.enhance_atk_desc && normalAtkData.enhance_atk_desc !== 'X') ? `
+                <div style="height: 1px; background: #eee; margin: 10px 0;"></div>
+                
+                <div>
+                    <div style="font-size: 0.85rem; font-weight: bold; color: #84CC16; margin-bottom: 2px;">일반 공격</div>
+                    <div style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain}; margin-bottom: 8px;">강화 공격</div>
+                    <div style="font-size: 0.9rem; color: #666; line-height: 1.6; margin-bottom: 12px;">
+                        ${normalAtkData.enhance_atk_desc.replace(/\\n/g, '<br>')}
+                    </div>
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 14px; font-size: 0.95rem; color: #333; line-height: 1.6; box-shadow: inset 0 2px 5px ${COLORS.inset}; border: 1px solid rgba(0,0,0,0.03);">
+                        ${parseSkillLevelText(normalAtkData.enhance_stat_template, normalAtkData.enhance_atk_value, statColor)}
+                    </div>
+                </div>
+            ` : ''}
+        `;
+        normalAtkHTML = renderEffectCard('normal', { low_skill_name: "" }, null, null, null, dataContext, normalContent, false);
+    }
+
     // --- [메인 렌더링] ---
     body.innerHTML = `
         <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px;">
@@ -234,8 +283,7 @@ export function openDetailModal(char, dataContext) {
         <div id="tab-2" class="tab-content hidden" style="background: #f1f3f5; padding: 15px; border-radius: 20px;">
             ${lowSkillData ? renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowDetail, true) : ''}
             ${skillData ? renderEffectCard('high', skillData, null, null, null, dataContext, highDetail, true) : ''}
-            
-            ${typeof normalAtkHTML !== 'undefined' ? normalAtkHTML : ''}
+            ${normalAtkHTML}
         </div>
     `;
 
