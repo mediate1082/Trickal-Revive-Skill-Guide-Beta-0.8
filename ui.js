@@ -1,4 +1,4 @@
-let currentSkillMode = 'PvE'; // PvE로 고정
+let currentSkillMode = 'PvE';
 let currentApostle = null;
 let currentDataContext = null;
 
@@ -211,7 +211,7 @@ export function openDetailModal(char, dataContext) {
                      <div style="display: flex; flex-direction: column;"><span style="font-size: 0.85rem; font-weight: bold; color: #e67e22;">종합 가이드</span><span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain};">성장 요약</span></div>
                  </div>
                  ${char.recommend_reason ? `<div style="background: #f8f9fa; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #e67e22; margin-bottom: 10px;"><strong style="color:#e67e22;">💡 추천 레벨: ${char.recommend_lv}</strong><div style="font-size:0.88rem;">${char.recommend_reason.split('↑').join('↑<br>')}</div></div>` : ''}
-                 ${char.note ? `<div style="background: #fffbe6; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #fadb14;"><strong style="color:#856404;">📝 참고사항</strong><div style="font-size:0.88rem;">${char.note.split('↑').join('↑<br>')}</div></div>` : ''}
+                 ${char.note ? `<div style="background: #fffbe6; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #fadb14;"><strong style="color:#856404;"> </strong><div style="font-size:0.88rem;">${char.note.split('↑').join('↑<br>')}</div></div>` : ''}
             </div>
         </div>
 
