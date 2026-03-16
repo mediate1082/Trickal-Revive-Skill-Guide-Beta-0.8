@@ -1,0 +1,347 @@
+        @font-face {
+            font-family: 'OneMobilePop';
+            src: url('./assets/fonts/ONEMobilePOP.ttf') format('truetype');
+            font-weight: normal; font-style: normal; font-display: swap;
+        }
+
+        :root { 
+            --bg-main: #f9fdf0; --card-bg: #ECF7CD; --accent-green: #BCDD5F; 
+            --text-dark: #2D331D; --color-O: #27ae60; --color-delta: #d35400;
+            --color-X: #c0392b; --max-width: 1200px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'OneMobilePop', 'Pretendard', sans-serif; background: var(--bg-main); 
+            color: var(--text-dark); margin: 0; padding: 0; width: 100%; 
+            overflow-x: hidden; font-size: 18px; line-height: 1.5; scrollbar-gutter: stable; 
+        }
+        .hidden { display: none !important; }
+        
+        /* 헤더 스타일 */
+        header { 
+            background: #fff; padding: 15px; position: sticky; top: 0; 
+            z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.08); width: 100%; 
+        }
+        .header-container { max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .main-title { font-size: clamp(1.4rem, 6vw, 2.5rem); font-weight: normal; color: #4a5a1f; margin: 0; text-align: center; flex-grow: 1; }
+        
+        .controls-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        @media (min-width: 768px) { .controls-row { flex-direction: row; justify-content: space-between; align-items: center; } }
+        
+        .btn { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: all 0.2s ease-out; }
+        .btn:hover {
+            transform: translateY(-3px); /* 위로 3px 살짝 띄우기 */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 떴을 때 바닥에 생기는 그림자 */
+            border-color: var(--accent-green); /* 테두리를 연두색으로 강조 */
+            background-color: #f9fdf0; /* 배경색도 아주 살짝 연두빛으로 */
+        }
+        .btn:active {
+            transform: translateY(-1px); /* 클릭 시 살짝 눌리는 느낌 */
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 내비게이션 바 전용 스타일 */
+        .nav-select { width: 100px; padding-right: 25px !important; flex-shrink: 0; }
+        .square-btn { width: 40px; height: 40px; padding: 0 !important; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .filter-btn { 
+            min-width: 130px; height: 40px; display: flex; align-items: center; 
+            justify-content: center; gap: 6px; flex-shrink: 0; white-space: nowrap; 
+        }
+        .nav-icon { width: 16px; height: 16px; fill: #2D331D; flex-shrink: 0; }
+        #filter-count:not(:empty) { font-size: 0.8rem; color: #e74c3c; font-weight: bold; margin-left: 2px; }
+
+        .search-box { width: 100%; position: relative; }
+        @media (min-width: 768px) { .search-box { max-width: 300px; } }
+        .search-box input { 
+            width: 100%; padding: 12px 12px 12px 40px; border-radius: 20px; border: 2px solid #eee; 
+            outline: none; font-family: inherit; font-size: 1rem;
+            background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23888" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 14px center;
+        }
+
+        /* 메인 그리드 및 카드 */
+        .content-container { padding: 15px; max-width: var(--max-width); margin: 0 auto; width: 100%; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+        @media (min-width: 768px) { .grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 20px; } }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 8px; text-align: center; cursor: pointer; border: 1px solid #d0e0a0; }
+        .char-name { font-weight: normal; margin-top: 8px; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .image-wrapper { position: relative; width: 100%; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: #e6ecd7; }
+        .char-img { width: 100%; height: 100%; object-fit: cover; }
+        .icon { position: absolute; width: 22px; height: 22px; z-index: 10; }
+        @media (min-width: 768px) { .icon { width: 34px; height: 34px; } }
+        .p-icon { top: 3px; right: 3px; } .r-icon { top: 3px; left: 3px; } .l-icon { bottom: 3px; left: 3px; }
+        .grade-info { display: flex; justify-content: center; gap: 3px; margin-top: 6px; font-size: 0.75rem; }
+        .grade-item { padding: 1px 3px; border-radius: 4px; background: rgba(255,255,255,0.8); }
+        .color-O { color: var(--color-O); } .color-delta { color: var(--color-delta); } .color-X { color: var(--color-X); }
+
+        /* 모달 시스템 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        /* 모달 컨텐츠: 내부 내용이 길어지면 스크롤이 생기도록 수정 */
+        .modal-content {
+            background: #fff;
+            width: 92%;
+            max-width: 500px;
+            padding: 0; /* 패딩을 0으로 하고 내부 영역에서 조절 */
+            border-radius: 20px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column; /* 세로 배치 */
+            overflow: hidden; /* 전체 스크롤은 막음 */
+            position: relative;
+        }
+
+        .modal-fixed-header {
+            padding: 20px 20px 0 20px;
+            background: #fff;
+            z-index: 10;
+            flex-shrink: 0; /* 크기 고정 */
+            border-bottom: 1px solid #eee; /* 탭 하단 경계선 */
+        }
+
+        /* --- 모달 스크롤 영역 최적화 (style.css) --- */
+
+        #detail-body-scroll {
+            flex-grow: 1; /* 남은 공간 차지 */
+            background: #f1f3f5; /* 탭 내부 배경색 */
+            padding: 20px; /* 좌우 여백 */
+            
+            /* [핵심] 스크롤바 유무와 상관없이 우측 여백을 항상 일정하게 유지 */
+            overflow-y: auto; 
+            scrollbar-gutter: stable; /* 스크롤바 자리를 미리 파둡니다. */
+            
+            /* Firefox용 슬림 스크롤바 */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,0,0,0.2) transparent;
+        }
+
+        /* --- Webkit (Chrome, Safari, Edge) 커스텀 스크롤바 디자인 --- */
+
+        /* 1. 스크롤바 전체 너비 설정 */
+        #detail-body-scroll::-webkit-scrollbar {
+            width: 8px; /* 너무 넓지 않게 설정 */
+        }
+
+        /* 2. 스크롤바 트랙 (배경) */
+        #detail-body-scroll::-webkit-scrollbar-track {
+            background: transparent; /* 배경은 투명하게 */
+        }
+
+        /* 3. 스크롤바 핸들 (바) */
+        #detail-body-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15); /* 옅은 회색으로 시각적 부담 축소 */
+            border-radius: 10px; /* 둥근 모서리 */
+            border: 2px solid #f1f3f5; /* 트랙 색상과 같은 테두리를 주어 더 얇게 보이게 함 */
+        }
+
+        /* 4. 스크롤바 핸들 호버 효과 */
+        #detail-body-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3); /* 마우스 올리면 조금 더 진하게 */
+        }
+
+        /* 상단 닫기(X) 버튼 스타일 */
+        .modal-close-x {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 32px;
+            height: 32px;
+            background: #f1f3f5;
+            border: none;
+            border-radius: 50%;
+            font-size: 22px;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: all 0.2s;
+        }
+
+        .modal-close-x:hover {
+            background: #e2e8f0;
+            color: #000;
+        }
+
+        .modal-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: bold; color: #888; font-family: inherit; }
+        .tab-btn.active { color: var(--text-dark); border-bottom: 3px solid var(--accent-green); }
+        .skill-box { background: #f9fdf0; border: 1px solid #e0ebc6; border-radius: 15px; padding: 15px; margin-bottom: 15px; }
+        .skill-effect-container {
+            background: #FDFDFD !important; /* 요청하신 배경색 */
+            border: 1px solid #eee !important;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        /* 섹션별 왼쪽 테두리 컬러 구분 */
+        .border-low-high { border-left: 5px solid #BCDD5F !important; }   /* 저/고학년 */
+        .border-normal-power { border-left: 5px solid #607D8B !important; } /* 일반/강화 */
+        .border-aside { border-left: 5px solid #9B59B6 !important; }        /* 어사이드 */
+
+        /* 섹션 제목 스타일 */
+        .skill-section-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-dark);
+        }
+
+        /* 필터 모달 전용 */
+        .modal-search-box { position: relative; width: 100%; margin-bottom: 15px; }
+        .modal-search-box input { 
+            width: 100%; padding: 12px 12px 12px 40px; border-radius: 20px; border: 2px solid #eee; 
+            outline: none; font-family: inherit;
+            background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23888" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 14px center;
+        }
+        #modal-filter .tab-btn {
+            border: 1px solid #eee;
+            border-bottom: none;
+            background: #f8f8f8;
+            margin-right: 2px;
+            border-radius: 10px 10px 0 0;
+            transition: all 0.2s;}
+
+        #modal-filter .tab-btn.active {
+            background: #fff !important;
+            border-top: 2px solid var(--accent-green) !important;
+            border-left: 1px solid #eee !important;
+            border-right: 1px solid #eee !important;
+            color: var(--text-dark) !important;
+            z-index: 2;
+            margin-bottom: -1px; /* 탭이 박스 테두리를 덮도록 설정 */
+        }
+
+        #filter-checkbox-group {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            grid-auto-rows: min-content !important;
+            align-content: start !important;
+            gap: 8px !important;
+            padding: 10px !important;
+            border: 1px solid #eee !important;
+            border-radius: 12px;
+            background: #fff !important;
+            height: 300px !important; /* 높이 고정 유지 */
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            /* 탭 메뉴(뚜껑)와 이어지도록 설정 */
+            border-top-left-radius: 0 !important;
+            border-top: 2px solid var(--accent-green) !important;
+            margin-top: -1px !important;
+        }
+        /* 체크박스 라벨 스타일링 */
+        .filter-label {
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            font-size: 0.85rem; 
+            cursor: pointer; 
+            padding: 8px; 
+            border: 1px solid #eee; 
+            border-radius: 8px; 
+            background: #fff;
+            transition: all 0.2s ease; /* 부드러운 전환 */
+        }
+
+        .filter-label:hover {
+            background-color: #f9fdf0 !important;
+            border-color: var(--accent-green) !important;
+            transform: translateY(-1px); /* 살짝 떠오르는 효과 */
+        }
+
+        /* 체크박스가 선택된 상태일 때 */
+        .filter-label:has(input:checked) {
+        background-color: #f4f9e9 !important;
+        border-color: var(--accent-green) !important;
+        font-weight: bold;
+        }
+
+        .modal-footer { display: flex; gap: 10px; margin-top: 15px; padding-bottom: 5px; }
+        .group-title { grid-column: 1 / -1; background: var(--accent-green); padding: 10px 15px; border-radius: 8px; margin-top: 15px; font-size: 1.1rem; }
+        
+        /* 스위치 & 슬라이더 */
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent-green); }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        .mode-switch { display: flex; position: relative; background-color: #eee; padding: 4px; border-radius: 12px; width: 100%; }
+        .mode-switch input { display: none; }
+        .mode-switch label { flex: 1; text-align: center; padding: 10px 0; font-size: 0.9rem; cursor: pointer; z-index: 1; transition: color 0.3s; color: #888; }
+        .mode-switch input:checked + label { color: #fff; font-weight: bold; }
+        #mode-or:checked + label { color: var(--text-dark); }
+        .mode-glider { position: absolute; display: flex; height: calc(100% - 8px); width: calc(50% - 4px); background-color: var(--accent-green); border-radius: 10px; transition: transform 0.3s; z-index: 0; }
+        #mode-or:checked ~ .mode-glider { transform: translateX(0); }
+        #mode-and:checked ~ .mode-glider { transform: translateX(100%); background-color: #3488F0; }
+
+        /* Top 버튼 */
+        #top-btn {
+            position: fixed; bottom: 30px; right: 25px; z-index: 999; width: 50px; height: 50px;
+            background-color: #2D331D; color: white; border: none; border-radius: 50%;
+            cursor: pointer; display: none; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s; font-family: 'OneMobilePop', sans-serif;
+        }
+        #top-btn:hover { background-color: var(--accent-green); transform: translateY(-5px); }
+
+        /*상호작용 애니메이션*/
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #d0e0a0;
+            transition: all 0.2s ease-out;
+        }
+        .card:hover {
+            transform: translateY(-8px); /* 위로 8px 이동 */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); 
+            border-color: var(--accent-green); 
+        }               
+.search-box {
+    position: relative; /* 버튼의 기준점 */
+    display: flex;
+    align-items: center;
+}
+
+#search-clear-btn {
+    position: absolute;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    background: #e5e7eb;
+    color: #6b7280;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    padding: 0;
+    z-index: 10;
+}
+
+#search-clear-btn:hover {
+    background: #d1d5db;
+    color: #374151;
+}
+
+/* 텍스트가 X 버튼과 겹치지 않게 */
+#search-input {
+    padding-right: 35px !important;
+}
+
+/* hidden 클래스가 없다면 추가 */
+.hidden {
+    display: none !important;
+}
