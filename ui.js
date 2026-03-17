@@ -14,8 +14,45 @@ const COLORS = {
     textMain: '#020817'
 };
 
+// [추가] 색상 판별 함수 (파일 어디서든 접근 가능하도록 밖으로 추출)
+const getGradeColor = (grade) => {
+    if (!grade || grade === 'X') return '#94a3b8';
+    if (grade.includes('10')) return '#22C55E';
+    if (grade.includes('-')) return '#EF4444';
+    return '#F59E0B';
+};
+
+// [추가] 뱃지 생성 함수 (파일 어디서든 접근 가능하도록 밖으로 추출)
+const makeGradeBadge = (grade) => {
+    if (!grade || grade.trim() === "" || grade === 'X') return '';
+    const bgColor = getGradeColor(grade);
+    return `
+        <span style="
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 2px 10px; border-radius: 12px; background: ${bgColor}; 
+            color: white; font-size: 0.75rem; font-weight: 800; 
+            margin-left: 8px; vertical-align: middle; line-height: 1.2;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        ">${grade}</span>`;
+};
+
+// [1] 자동 불렛 생성 헬퍼 함수
+const formatDescWithBullets = (text) => {
+    if (!text || text === 'X') return '';
+    
+    // 1. \n 또는 <br>로 문장을 나눕니다.
+    const lines = text.split(/\\n|<br>|\n/);
+    
+    // 2. 각 줄 앞에 불렛(•)을 붙이고 다시 합칩니다.
+    return lines
+        .map(line => line.trim())
+        .filter(line => line.length > 0) // 빈 줄 제거
+        .map(line => `• ${line}`)         // 원하는 기호로 변경 가능
+        .join('<br>');
+};
+
 // 개별 스킬별 부가 효과 카드 렌더링 함수
-function renderEffectCard(type, skillInfo, buffString, condString, targetString, ctx, customContent = null, showBadge = false) {
+function renderEffectCard(type, skillInfo, buffString, condString, targetString, ctx, customContent = null, showBadge = false, isRecommend = false) {
     const { allStatusDB, debuffDescDB } = ctx;
     let iconPath = "", typeLabel = "", skillName = "", themeColor = "";
     
@@ -57,7 +94,7 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
             break;
     }
 
-    return `
+        return `
         <div style="background: #ffffff; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px;">
             <div style="display: flex; justify-content: space-between; align-items: center; min-height: 58px; margin-bottom: 15px;">
                 <div style="display: flex; gap: 15px; align-items: center;">
@@ -70,7 +107,12 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
                     </div>
                     <div style="display: flex; flex-direction: column; justify-content: center; gap: 2px;">
                         <span style="font-size: 0.85rem; font-weight: bold; color: ${themeColor};">${typeLabel}</span>
-                        <span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain}; line-height: 1.2;">${skillName}</span>
+                        
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain}; line-height: 1.2;">${skillName}</span>
+                            
+                            ${(isRecommend && (type === 'low' || type === 'high')) ? makeGradeBadge(currentApostle[type === 'low' ? 'low_grade' : 'high_grade']) : ''}
+                        </div>
                     </div>
                 </div>
 
@@ -146,9 +188,7 @@ export function openDetailModal(char, dataContext) {
         if (tier.includes('태생 1성')) return '#BCD3C7';
         return '#e67e22';
     })(char.tier);
-
-   const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
-    const makeBadge = (grade) => `<span style="display: inline-flex; justify-content: center; align-items: center; width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 2px solid currentColor; margin-right: 10px; font-size: 1rem; font-weight: bold;" class="${getGradeClass(grade)}">${grade || '?'}</span>`;
+   
     const getMergedSafe = (nameStr, condStr, targetStr) => {
         if (!nameStr || nameStr === 'X') return { names: [], conds: [], targets: [] };
         const names = nameStr.split(',').map(s => s.trim());
@@ -166,10 +206,23 @@ export function openDetailModal(char, dataContext) {
 
     // 3. 각 탭의 내용물(HTML) 미리 준비하기
     // [Tab 0 준비]
-    const lowRecContent = `<div style="position: relative; background: #f8f9fa; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${char.low_grade === 'O' ? '#22C55E' : char.low_grade === '△' ? '#F59E0B' : '#EF4444'}; border: 1px solid rgba(0,0,0,0.03);"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">${makeBadge(char.low_grade)} <strong style="color: ${COLORS.textMain};">강화 가이드</strong></div><div style="font-size: 0.88rem; color: #555; line-height: 1.6;">${(char.low_desc || '').split('↑').join('↑<br>')}</div></div>`;
-    const highRecContent = `<div style="position: relative; background: #f8f9fa; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${char.high_grade === 'O' ? '#22C55E' : char.high_grade === '△' ? '#F59E0B' : '#EF4444'}; border: 1px solid rgba(0,0,0,0.03);"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">${makeBadge(char.high_grade)} <strong style="color: ${COLORS.textMain};">강화 가이드</strong></div><div style="font-size: 0.88rem; color: #555; line-height: 1.6;">${(char.high_desc || '').split('↑').join('↑<br>')}</div></div>`;
+    const lowRecContent = `
+    <div style="position: relative; background: #f8f9fa; border-radius: 12px; padding: 14px 18px; 
+                box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${getGradeColor(char.low_grade)}; border: 1px solid rgba(0,0,0,0.03);">
+        <div style="font-size: 0.95rem; font-weight: bold; color: ${COLORS.textMain}; margin-bottom: 8px;">강화 시 변경점</div>
+        <div style="font-size: 0.88rem; color: #555; line-height: 1.7; word-break: keep-all;">
+            ${formatDescWithBullets(char.low_desc)} </div>
+    </div>`;
 
+    const highRecContent = `
+    <div style="position: relative; background: #f8f9fa; border-radius: 12px; padding: 14px 18px; 
+                box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${getGradeColor(char.high_grade)}; border: 1px solid rgba(0,0,0,0.03);">
+        <div style="font-size: 0.95rem; font-weight: bold; color: ${COLORS.textMain}; margin-bottom: 8px;">강화 시 변경점</div>
+        <div style="font-size: 0.88rem; color: #555; line-height: 1.7; word-break: keep-all;">
+            ${formatDescWithBullets(char.high_desc)} </div>
+    </div>`;
     // [Tab 2 준비]
+
     let lowDetail = "";
     if (lowSkillData) {
         let maxL = 1; for (let i = 1; i <= 13; i++) { if (lowSkillData[`Lv.${i}`]) maxL = i; }
@@ -239,15 +292,21 @@ export function openDetailModal(char, dataContext) {
 
         <div id="detail-body-scroll">
             <div id="tab-0" class="tab-content">
-                ${renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowRecContent)}
-                ${renderEffectCard('high', skillData, null, null, null, dataContext, highRecContent)}
+                ${renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowRecContent,false,true)}
+                ${renderEffectCard('high', skillData, null, null, null, dataContext, highRecContent,false,true)}
                 <div style="background: #ffffff; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
                      <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
                          <img src="./assets/images/${char.name}.webp" style="width: 58px; height: 58px; border-radius: 12px; border: 3px solid #e67e22; object-fit: cover;">
-                         <div style="display: flex; flex-direction: column;"><span style="font-size: 0.85rem; font-weight: bold; color: #e67e22;">종합 가이드</span><span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain};">성장 요약</span></div>
+                         <div style="display: flex; flex-direction: column;"><span style="font-size: 0.85rem; font-weight: bold; color: #e67e22;">종합</span><span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain};">강화 추천</span></div>
                      </div>
-                     ${char.recommend_reason ? `<div style="background: #f8f9fa; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #e67e22; margin-bottom: 10px;"><strong style="color:#e67e22;">💡 추천 레벨: ${char.recommend_lv}</strong><div style="font-size:0.88rem;">${char.recommend_reason.split('↑').join('↑<br>')}</div></div>` : ''}
-                     ${char.note ? `<div style="background: #fffbe6; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #fadb14;"><strong style="color:#856404;"> </strong><div style="font-size:0.88rem;">${char.note.split('↑').join('↑<br>')}</div></div>` : ''}
+                     ${char.recommend_reason ? `<div style="background: #f8f9fa; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #e67e22; margin-bottom: 10px;"><strong style="color:#e67e22;">💡 추천 레벨: ${char.recommend_lv}</strong><div style="font-size:0.88rem;">${char.recommend_reason}</div></div>` : ''}
+                     ${char.note ? `
+    <div style="background: #fffbe6; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #fadb14;">
+        <strong style="color:#856404;"> </strong>
+        <div style="font-size: 0.88rem; line-height: 1.7; word-break: keep-all;">
+            ${char.note.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}
+        </div>
+    </div>` : ''}
                 </div>
             </div>
 

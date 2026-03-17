@@ -283,6 +283,54 @@
         #mode-or:checked ~ .mode-glider { transform: translateX(0); }
         #mode-and:checked ~ .mode-glider { transform: translateX(100%); background-color: #3488F0; }
 
+        /* 필터 모달 내부의 모든 주요 요소들에 좌우 여백 강제 부여 */
+        #modal-filter .modal-content h3,          /* 타이틀 */
+        #modal-filter .modal-search-box,         /* 검색창 */
+        #modal-filter .mode-switch,              /* OR/AND 스위치 */
+        #modal-filter .filter-mode-container + div, /* 본인 대상 효과 제외 섹션 */
+        #modal-filter .modal-tabs,               /* 탭 버튼 */
+        #modal-filter #filter-checkbox-group,    /* 체크박스 목록 */
+        #modal-filter .modal-footer              /* 하단 버튼 */ {
+            width: 90% !important;               /* 가로폭을 90%로 줄임 */
+            margin-left: auto !important;        /* 가운데 정렬 */
+            margin-right: auto !important;       /* 가운데 정렬 */
+        }
+
+        /* 필터 목록(체크박스) 영역의 상하 여백 보정 */
+        #modal-filter #filter-checkbox-group {
+            padding: 10px !important;            /* 내부 박스들이 테두리에 붙지 않게 */
+            width: 90% !important;               /* 위 설정과 동일하게 맞춰서 정렬 유지 */
+        }
+
+        /* 하단 버튼 영역 패딩 추가 보정 */
+        #modal-filter .modal-footer {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px 0 !important;          /* 좌우 패딩은 width: 90%가 담당하므로 상하만 */
+            
+        }
+
+        #modal-filter .modal-content h3 {
+        padding-top: 25px !important;  /* 천장에서 제목을 아래로 밉니다 */
+        margin-bottom: 20px !important; /* 제목과 검색창 사이 간격 확보 */
+        font-size: 1.4rem !important;  /* 제목 크기도 살짝 키워 시원하게 */
+        }
+
+        /* 2. 각 요소들 사이의 간격(Margin)을 조금 더 여유 있게 조정 */
+        #modal-filter .modal-search-box {
+            margin-bottom: 15px !important;
+        }
+
+        #modal-filter .mode-switch {
+            margin-bottom: 15px !important;
+        }
+
+        /* 3. 모달 하단 버튼 아래 여백도 살짝 추가해서 대칭을 맞춤 */
+        #modal-filter .modal-footer {
+            padding-bottom: 25px !important;
+        }
+
         /* Top 버튼 */
         #top-btn {
             position: fixed; bottom: 30px; right: 25px; z-index: 999; width: 50px; height: 50px;
@@ -344,4 +392,31 @@
 /* hidden 클래스가 없다면 추가 */
 .hidden {
     display: none !important;
+}
+
+/* 타이틀 호버 스타일 */
+.main-title {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: inline-block; /* 애니메이션 효과가 잘 보이도록 설정 */
+    user-select: none;
+}
+
+.main-title:hover {
+    color: var(--accent-green); /* 연두색으로 변화 */
+    transform: scale(1.05); /* 살짝 커짐 */
+    text-shadow: 0 4px 8px rgba(188, 221, 95, 0.3); /* 은은한 빛 효과 */
+}
+
+.main-title:active {
+    transform: scale(0.95); /* 클릭 시 쏙 들어가는 느낌 */
+}
+
+/* 리셋 시 그리드에 적용할 애니메이션 */
+@keyframes resetFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.reset-ani {
+    animation: resetFadeIn 0.5s ease-out forwards;
 }

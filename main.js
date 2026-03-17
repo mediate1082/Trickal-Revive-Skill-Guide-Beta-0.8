@@ -79,6 +79,61 @@ async function loadExternalData() {
         setupFilterModal();
         document.getElementById('loading-text').classList.add('hidden');
         handleSortFilter(); 
+
+        // --- [타이틀 클릭 시 모든 상태 초기화 로직] ---
+        const mainTitle = document.querySelector('.main-title');
+        if (mainTitle) {
+            mainTitle.style.cursor = 'pointer'; // 클릭 가능하다는 시각적 힌트
+            mainTitle.title = "클릭 시 필터 및 검색 초기화"; // 툴팁 추가
+
+            mainTitle.onclick = () => {
+                // 1. 검색어 초기화 및 X 버튼 숨기기
+                const searchInput = document.getElementById('search-input');
+                if (searchInput) {
+                    searchInput.value = '';
+                    const clearBtn = document.getElementById('search-clear-btn');
+                    if (clearBtn) clearBtn.classList.add('hidden');
+                }
+
+                // 2. 선택된 필터(Set) 비우기
+                if (typeof selectedStatuses !== 'undefined') {
+                    selectedStatuses.clear();
+                }
+
+                // 3. 필터 모달 내 체크박스 UI 초기화
+                const filterCheckboxes = document.querySelectorAll('#filter-checkbox-group input[type="checkbox"]');
+                filterCheckboxes.forEach(cb => cb.checked = false);
+
+                // 4. 필터 검색창 및 탭 초기화
+                const filterSearch = document.getElementById('filter-search');
+                if (filterSearch) filterSearch.value = '';
+                if (typeof setFilterTab === 'function') setFilterTab('all');
+
+                // 5. 정렬 상태를 기본(이름순, 오름차순)으로 리셋
+                const sortSelect = document.getElementById('sort-select');
+                if (sortSelect) sortSelect.value = 'name';
+                
+                isAscending = true;
+                const orderBtn = document.getElementById('order-btn');
+                if (orderBtn) orderBtn.innerText = "▲";
+
+                // 6. '본인 대상 제외' 토글 해제
+                const excludeSelf = document.getElementById('exclude-self-toggle');
+                if (excludeSelf) excludeSelf.checked = false;
+
+                // 7. 화면 갱신 및 애니메이션 적용
+                const grid = document.getElementById('main-grid');
+                if (grid) {
+                    grid.classList.remove('reset-ani');
+                    void grid.offsetWidth; // 브라우저 리플로우 강제 발생 (애니메이션 재시작용)
+                    grid.classList.add('reset-ani');
+                }
+
+                handleSortFilter(); // 필터링 실행
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            };
+        }
     } catch (e) { console.error("로드 실패:", e); }
 }
 
@@ -233,32 +288,68 @@ function refreshFilterList() {
             group.appendChild(label);
         });
 }
+function getGradeColor(grade) {
+    if (!grade || grade === 'X' || grade === '?') return '#94a3b8';
+    if (grade.includes('10')) return '#22C55E'; // 기존 O (~Lv.10+)
+    if (grade.includes('-')) return '#EF4444';  // 기존 X (~Lv.7-)
+    return '#F59E0B';                           // 기존 △ (~Lv.7+)
+}
 
 function displayCards(data, id, append = false) {
     const container = document.getElementById(id); 
     if (!append) container.innerHTML = "";
     
     data.forEach(char => {
-        const getGradeClass = (g) => g === 'O' ? 'color-O' : g === '△' ? 'color-delta' : g === 'X' ? 'color-X' : '';
-        const card = document.createElement('div'); 
+        const card = document.createElement('div');
         card.className = 'card';
-        card.addEventListener('click', () => {
-            window.openDetailModal(char);
-        });
-        card.innerHTML = `
-            <div class="image-wrapper">
-                <img src="./assets/images/${char.name}.webp" class="char-img" onerror="this.src='./assets/images/default.webp'">
-                <img src="./assets/icons/personality/${char.personality}.webp" class="icon p-icon">
-                <img src="./assets/icons/role/${char.role}.webp" class="icon r-icon">
-                <img src="./assets/icons/line/${char.line}.webp" class="icon l-icon">
+        card.onclick = () => window.openDetailModal(char);
+        
+        // char.low_grade 등이 undefined일 경우를 대비해 빈 문자열 처리
+        const low = char.low_grade || '?';
+        const high = char.high_grade || '?';
+
+    card.innerHTML = `
+        <div class="image-wrapper">
+            <img src="./assets/images/${char.name}.webp" class="char-img" onerror="this.src='./assets/images/default.webp'">
+            <img src="./assets/icons/personality/${char.personality}.webp" class="icon p-icon">
+            <img src="./assets/icons/role/${char.role}.webp" class="icon r-icon">
+            <img src="./assets/icons/line/${char.line}.webp" class="icon l-icon">
+        </div>
+        <div class="char-name" style="font-size: 1.05rem; margin-bottom: 4px;">${char.name}</div>
+        
+        <div class="grade-info" style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 10px; padding: 0 5px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 100px;">
+                <span style="font-size: 0.75rem; color: #555; font-weight: 800; flex-shrink: 0;">저학년</span>
+                ${makeMainBadge(char.low_grade)}
             </div>
-            <div class="char-name">${char.name}</div>
-            <div class="grade-info">
-                <span class="grade-item">저:<span class="${getGradeClass(char.low_grade)}">${char.low_grade||'?'}</span></span>
-                <span class="grade-item">고:<span class="${getGradeClass(char.high_grade)}">${char.high_grade||'?'}</span></span>
-            </div>`;
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 100px;">
+                <span style="font-size: 0.75rem; color: #555; font-weight: 800; flex-shrink: 0;">고학년</span>
+                ${makeMainBadge(char.high_grade)}
+            </div>
+        </div>`;
         container.appendChild(card);
     });
+}
+
+function makeMainBadge(grade) {
+    if (!grade || grade === 'X' || grade === '?') return '<span style="color:#ccc; font-size:0.8rem;">-</span>';
+    
+    const color = getGradeColor(grade);
+    return `
+        <span style="
+            background: ${color}; 
+            color: white; 
+            font-size: 0.72rem;    /* 폰트 크기 업 */
+            font-weight: 900;     /* 더 두껍게 */
+            padding: 3px 8px;     /* 여백 대폭 증가 */
+            border-radius: 6px;   /* 둥근 느낌 유지 */
+            line-height: 1;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* 미세한 입체감 */
+        ">
+            ${grade}
+        </span>
+    `;
 }
 
 function toggleOrder() { isAscending = !isAscending; document.getElementById('order-btn').innerText = isAscending ? "▲" : "▼"; handleSortFilter(); }
