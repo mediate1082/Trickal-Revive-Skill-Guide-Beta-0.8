@@ -17,7 +17,7 @@ let infoText = "", isAscending = true, selectedStatuses = new Set(), currentFilt
 
 // [3] HTML onclick 이벤트와 연결하기
 window.openDetailModal = (char) => {
-    // ui.js로 모든 DB 뭉치를 전달합니다.
+    // ui.js로 모든 DB 뭉치를 전달.
     openDetailModal(char, { 
         debuffDB, 
         buffDB, 
@@ -45,6 +45,42 @@ window.closeModal = closeModal;
 window.scrollToTop = scrollToTop;
 window.refreshFilterList = refreshFilterList;
 window.toggleStatusFilter = toggleStatusFilter;
+
+// [+1] 성격별 컬러 및 테두리 데이터 설정
+const PERSONALITY_COLORS = {
+    '순수': { bg: '#66C17C', border: '#93F4A7' },
+    '냉정': { bg: '#85BAEC', border: '#A4D0F7' },
+    '광기': { bg: '#EE839D', border: '#F4ACBA' },
+    '우울': { bg: '#C784ED', border: '#D8A0FB' },
+    '활발': { bg: '#ECDC85', border: '#F9ECA8' },
+    '공명': { bg: 'bg-resonance', border: '#FFFEFD' } // 공명은 CSS 클래스명 사용
+};
+
+// [+2] 성급 별 이미지 생성 함수 수정 (새로운 경로 및 파일명 적용)
+function makeStarHTML(rarity) {
+    // DB에서 가져온 값이 숫자가 아니거나 없을 경우를 대비해 확실히 숫자로 변환
+    const starCount = parseInt(rarity);
+
+    // 숫자가 아니거나 0 이하면 별을 그리지 않음
+    if (isNaN(starCount) || starCount <= 0) {
+        console.warn(`Rarity data missing or invalid: ${rarity}`); // 개발자 도구에서 확인용
+        return '<div style="height: 20px;"></div>'; // 공간만 차지
+    }
+
+    // 3성은 노란별(star3.webp), 2성 이하는 초록별(star2.webp)
+    const starImg = starCount >= 3 ? 'star3.webp' : 'star2.webp';
+    
+    let stars = '';
+    const starSrc = `./assets/icons/common_icons/${starImg}`;
+    
+    // 아이콘 크기 살짝 증대 (16px -> 19px) 및 쫀득하게 겹치기
+    for (let i = 0; i < starCount; i++) {
+        stars += `<img src="${starSrc}" style="width: 19px; height: 19px; margin: 0 -3px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));">`;
+    }
+    // 별 영역 y축 위치 미세 조정 (margin-top)
+    return `<div style="display: flex; justify-content: center; align-items: center; margin-top: -3px; height: 20px; z-index: 3; position: relative;">${stars}</div>`;
+}
+
 
 // [4] 데이터 로직 및 필터 함수들
 async function loadExternalData() {
@@ -295,38 +331,71 @@ function getGradeColor(grade) {
     return '#F59E0B';                           // 기존 △ (~Lv.7+)
 }
 
-function displayCards(data, id, append = false) {
+async function displayCards(data, id, append = false) {
     const container = document.getElementById(id); 
+    if (!container) return;
     if (!append) container.innerHTML = "";
     
+    const activeContext = data; 
+
     data.forEach(char => {
         const card = document.createElement('div');
-        card.className = 'card';
-        card.onclick = () => window.openDetailModal(char);
-        
-        // char.low_grade 등이 undefined일 경우를 대비해 빈 문자열 처리
-        const low = char.low_grade || '?';
-        const high = char.high_grade || '?';
+        const pData = PERSONALITY_COLORS[char.personality] || PERSONALITY_COLORS['공명'];
+        const isResonance = char.personality === '공명';
 
-    card.innerHTML = `
-        <div class="image-wrapper">
-            <img src="./assets/images/${char.name}.webp" class="char-img" onerror="this.src='./assets/images/default.webp'">
-            <img src="./assets/icons/personality/${char.personality}.webp" class="icon p-icon">
-            <img src="./assets/icons/role/${char.role}.webp" class="icon r-icon">
-            <img src="./assets/icons/line/${char.line}.webp" class="icon l-icon">
-        </div>
-        <div class="char-name" style="font-size: 1.05rem; margin-bottom: 4px;">${char.name}</div>
+        card.className = 'char-card';
+        card.style.border = `3px solid ${pData.border}`;
         
-        <div class="grade-info" style="display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 10px; padding: 0 5px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 100px;">
-                <span style="font-size: 0.75rem; color: #555; font-weight: 800; flex-shrink: 0;">저학년</span>
-                ${makeMainBadge(char.low_grade)}
+        // --- [엘다인 금색 글로우 로직] ---
+        if (char.Eldyne && char.Eldyne.trim() !== "" && char.Eldyne !== "X") {card.classList.add('eldyne-card');}
+
+
+        card.onclick = () => {
+            if (typeof window.openDetailModal === 'function') {
+                window.openDetailModal(char, activeContext);
+            }
+        };
+        
+        const topBgAttr = isResonance 
+            ? `class="card-top bg-resonance"` 
+            : `class="card-top" style="background: ${pData.bg};"`;
+
+        card.innerHTML = `
+            <div ${topBgAttr} style="position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 12px 12px 0 0; display: block;">
+                <img src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img" 
+                     style="width: 100%; height: 100%; object-fit: cover;" 
+                     onerror="this.src='./assets/icons/chara_image/default.webp'">
+                
+                <img src="./assets/icons/personality/${char.personality}.webp" style="position: absolute; top: 6px; left: 6px; width: 28px; height: 28px; z-index: 2; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
+                
+                <div style="position: absolute; bottom: 8px; left: 0; width: 100%; padding: 0 8px; display: flex; justify-content: space-between; align-items: center; z-index: 2;">
+                    <img src="./assets/icons/role/${char.role}.webp" style="width: 26px; height: 26px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
+                    <img src="./assets/icons/line/${char.line}.webp" style="width: 28px; height: 28px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
+                </div>
+
+                <div style="position: absolute; bottom: 6px; width: 100%; z-index: 3;">
+                    ${makeStarHTML(char.star)}
+                </div>
             </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 100px;">
-                <span style="font-size: 0.75rem; color: #555; font-weight: 800; flex-shrink: 0;">고학년</span>
-                ${makeMainBadge(char.high_grade)}
-            </div>
-        </div>`;
+
+            <div class="card-bottom" style="background: #ffffff; padding: 10px 5px; border-top: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 85px;">
+                
+                <div class="char-name" style="font-size: 1.1rem; font-weight: 800; color: #333; margin-bottom: 6px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${char.name}
+                </div>
+                
+                <div class="grade-info" style="display: flex; flex-direction: column; gap: 4px; align-items: center; width: 100%;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 95px;">
+                        <span style="font-size: 0.72rem; color: #777; font-weight: 800;">저</span>
+                        ${makeMainBadge(char.low_grade)}
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 95px;">
+                        <span style="font-size: 0.72rem; color: #777; font-weight: 800;">고</span>
+                        ${makeMainBadge(char.high_grade)}
+                    </div>
+                </div>
+            </div>`;
+            
         container.appendChild(card);
     });
 }

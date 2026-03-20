@@ -264,17 +264,47 @@ export function openDetailModal(char, dataContext) {
             ` : ''}
         `;
 
-        // [수정] 카드 자체 헤더를 살리기 위해 이름을 다시 "기본 공격"으로 넣어줍니다.
         normalAtkHTML = renderEffectCard('normal', { low_skill_name: "기본 공격" }, null, null, null, dataContext, normalContent, false);
     }
 
     // 4. 모달에 HTML 때려넣기 (고정 헤더 + 스크롤 본문 구조)
-    const modalContent = document.querySelector('#modal-detail .modal-content');
+   const modalContent = document.querySelector('#modal-detail .modal-content');
+
+  // [1] 부가 효과 탭(tab-1) 내용물 계산 및 예외 처리 로직
+    const tab1ContentHTML = (()=>{
+        const types = ['low','high','normal','power'];
+        let html = types.map(t => {
+            const d = combineTab1(t);
+            // 데이터가 'X'가 아니고 실제 내용이 있을 때만 렌더링
+            return (d.n && d.n !== 'X' && d.n.trim() !== "" ? renderEffectCard(t, t==='low'?lowSkillData:skillData, d.n, d.c, d.t, dataContext) : '');
+        }).join('');
+
+        if (char.has_aside && asideData) {
+            const a = combineTab1('aside');
+            if (a.n && a.n !== 'X' && a.n.trim() !== "") html += renderEffectCard('aside', asideData, a.n, a.c, a.t, dataContext);
+        }
+
+        if (!html.trim()) {
+            return `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 350px; text-align: center; opacity: 0.9;">
+                    <img src="./assets/icons/common_icons/empty.webp" 
+                         style="width: 81px; height: 68px; margin-bottom: 20px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));"
+                         onerror="this.src='./assets/icons/status/버프_아이콘 없음.webp'">
+                    
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #475569; letter-spacing: -0.5px;">
+                        부가 효과가 없어용...
+                    </div>
+                    
+                    </div>
+                </div>`;
+        }
+        return html;
+    })();
     
-    modalContent.innerHTML = `
+   modalContent.innerHTML = `
         <button class="modal-close-x" onclick="document.getElementById('modal-detail').classList.add('hidden'); document.body.style.overflow='auto';">&times;</button>
 
-        <div class="modal-fixed-header">
+        <div class="modal-fixed-header" id="modal-header">
             <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px; padding-right: 35px;">
                 <img src="./assets/images/${char.name}.webp" style="width: 85px; height: 85px; border-radius: 18px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onerror="this.src='./assets/images/default.webp'">
                 <div>
@@ -290,36 +320,27 @@ export function openDetailModal(char, dataContext) {
             </div>
         </div>
 
-        <div id="detail-body-scroll">
+        <div id="detail-body-scroll" style="height: 500px; overflow-y: auto; padding-right: 5px; scroll-behavior: smooth;">
             <div id="tab-0" class="tab-content">
-                ${renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowRecContent,false,true)}
-                ${renderEffectCard('high', skillData, null, null, null, dataContext, highRecContent,false,true)}
-                <div style="background: #ffffff; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                ${renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowRecContent, false, true)}
+                ${renderEffectCard('high', skillData, null, null, null, dataContext, highRecContent, false, true)}
+                <div style="background: #ffffff; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 10px;">
                      <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
                          <img src="./assets/images/${char.name}.webp" style="width: 58px; height: 58px; border-radius: 12px; border: 3px solid #e67e22; object-fit: cover;">
                          <div style="display: flex; flex-direction: column;"><span style="font-size: 0.85rem; font-weight: bold; color: #e67e22;">종합</span><span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain};">강화 추천</span></div>
                      </div>
                      ${char.recommend_reason ? `<div style="background: #f8f9fa; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #e67e22; margin-bottom: 10px;"><strong style="color:#e67e22;">💡 추천 레벨: ${char.recommend_lv}</strong><div style="font-size:0.88rem;">${char.recommend_reason}</div></div>` : ''}
                      ${char.note ? `
-    <div style="background: #fffbe6; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #fadb14;">
-        <strong style="color:#856404;"> </strong>
-        <div style="font-size: 0.88rem; line-height: 1.7; word-break: keep-all;">
-            ${char.note.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}
-        </div>
-    </div>` : ''}
+                    <div style="background: #fffbe6; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #fadb14;">
+                        <div style="font-size: 0.88rem; line-height: 1.7; word-break: keep-all;">
+                            ${char.note.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}
+                        </div>
+                    </div>` : ''}
                 </div>
             </div>
 
             <div id="tab-1" class="tab-content hidden">
-                ${['low','high','normal','power'].map(t => {
-                    const d = combineTab1(t);
-                    return (d.n ? renderEffectCard(t, t==='low'?lowSkillData:skillData, d.n, d.c, d.t, dataContext) : '');
-                }).join('')}
-                ${(char.has_aside && asideData) ? (()=>{ 
-                    const a = combineTab1('aside'); 
-                    if (a.n && a.n !== 'X') return renderEffectCard('aside', asideData, a.n, a.c, a.t, dataContext); 
-                    return ''; 
-                })() : ''}
+                ${tab1ContentHTML}
             </div>
 
             <div id="tab-2" class="tab-content hidden">
@@ -329,9 +350,13 @@ export function openDetailModal(char, dataContext) {
             </div>
         </div> `;
 
-    // 5. 모달 표시
+     // [3] 모달 표시 및 높이 최종 보정
     document.getElementById('modal-detail').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    
+    // 탭 전환 시 스크롤 위치를 맨 위로 초기화해주는 센스!
+    const scrollArea = document.getElementById('detail-body-scroll');
+    if (scrollArea) scrollArea.scrollTop = 0;
 }
 
 export function updateLowSkillLv(lv, name, lowSkillDB) {
