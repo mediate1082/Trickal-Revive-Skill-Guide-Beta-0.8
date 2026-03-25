@@ -271,35 +271,30 @@ export function openDetailModal(char, dataContext) {
    const modalContent = document.querySelector('#modal-detail .modal-content');
 
   // [1] 부가 효과 탭(tab-1) 내용물 계산 및 예외 처리 로직
-    const tab1ContentHTML = (()=>{
-        const types = ['low','high','normal','power'];
-        let html = types.map(t => {
-            const d = combineTab1(t);
-            // 데이터가 'X'가 아니고 실제 내용이 있을 때만 렌더링
-            return (d.n && d.n !== 'X' && d.n.trim() !== "" ? renderEffectCard(t, t==='low'?lowSkillData:skillData, d.n, d.c, d.t, dataContext) : '');
-        }).join('');
+    const tab1ContentHTML = (() => {
+    const types = ['low', 'high', 'normal', 'power'];
+    let html = types.map(t => {
+        const d = combineTab1(t);
+        return (d.n && d.n !== 'X' && d.n.trim() !== "" ? renderEffectCard(t, t === 'low' ? lowSkillData : skillData, d.n, d.c, d.t, dataContext) : '');
+    }).join('');
 
-        if (char.has_aside && asideData) {
-            const a = combineTab1('aside');
-            if (a.n && a.n !== 'X' && a.n.trim() !== "") html += renderEffectCard('aside', asideData, a.n, a.c, a.t, dataContext);
-        }
+    if (char.has_aside && asideData) {
+        const a = combineTab1('aside');
+        if (a.n && a.n !== 'X' && a.n.trim() !== "") html += renderEffectCard('aside', asideData, a.n, a.c, a.t, dataContext);
+    }
 
-        if (!html.trim()) {
-            return `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 350px; text-align: center; opacity: 0.9;">
-                    <img src="./assets/icons/common_icons/empty.webp" 
-                         style="width: 81px; height: 68px; margin-bottom: 20px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));"
-                         onerror="this.src='./assets/icons/status/버프_아이콘 없음.webp'">
-                    
-                    <div style="font-size: 1.15rem; font-weight: 800; color: #475569; letter-spacing: -0.5px;">
-                        부가 효과가 없어용...
-                    </div>
-                    
-                    </div>
-                </div>`;
-        }
-        return html;
-    })();
+    if (!html.trim()) {
+        // height: 350px 대신 min-height를 사용하고 부모와 분리된 독립 박스로 구성
+        return `
+            <div class="empty-tab-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; text-align: center; width: 100%;">
+                <img src="./assets/icons/common_icons/empty.webp" 
+                     style="width: 80px; height: 80px; margin-bottom: 20px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));"
+                     onerror="this.src='./assets/icons/status/버프_아이콘 없음.webp'">
+                <div style="font-size: 1.15rem; font-weight: 800; color: #475569; letter-spacing: -0.5px;">부가 효과가 없어용...</div>
+            </div>`;
+    }
+    return html;
+})();
     
    modalContent.innerHTML = `
         <button class="modal-close-x" onclick="document.getElementById('modal-detail').classList.add('hidden'); document.body.style.overflow='auto';">&times;</button>
@@ -343,7 +338,7 @@ export function openDetailModal(char, dataContext) {
                 ${tab1ContentHTML}
             </div>
 
-            <div id="tab-2" class="tab-content hidden">
+            <div id="tab-2" class="tab-content hidden" style="display: block;">
                 ${lowSkillData ? renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowDetail, true) : ''}
                 ${skillData ? renderEffectCard('high', skillData, null, null, null, dataContext, highDetail, true) : ''}
                 ${normalAtkHTML}

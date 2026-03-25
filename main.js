@@ -175,6 +175,69 @@ async function loadExternalData() {
 
 function setupFilterModal() { refreshFilterList(); }
 
+
+function updateFilterTags() {
+    const container = document.getElementById('active-filters');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const hasSearch = document.getElementById('search-input').value.trim() !== '';
+    const hasStatus = selectedStatuses && selectedStatuses.size > 0;
+
+    if ((hasSearch && hasStatus) || (selectedStatuses.size > 1)) {
+        const clearAllBtn = document.createElement('div');
+        clearAllBtn.className = 'filter-tag tag-clear-all';
+        clearAllBtn.innerHTML = `<span>전체 해제</span>`;
+        clearAllBtn.onclick = () => {
+            // 모든 상태 초기화
+            document.getElementById('search-input').value = '';
+            const clearBtn = document.getElementById('search-clear-btn');
+            if (clearBtn) clearBtn.classList.add('hidden');
+            selectedStatuses.clear();
+            
+            // 모달 체크박스 전체 해제
+            document.querySelectorAll('#filter-checkbox-group input:checked').forEach(cb => cb.checked = false);
+            
+            handleSortFilter();
+        };
+        container.appendChild(clearAllBtn);
+    }
+
+    // 1. 검색어 태그 처리
+    if (hasSearch) {
+        createTag(`검색: ${document.getElementById('search-input').value}`, 'tag-search', () => {
+            document.getElementById('search-input').value = '';
+            document.getElementById('search-clear-btn').classList.add('hidden');
+            handleSortFilter(); 
+        });
+    }
+
+    // 2. 부가 효과 태그 처리
+    if (hasStatus) {
+        selectedStatuses.forEach(tagName => {
+            const isInBuff = buffDescDB.some(b => b.status_name === tagName || (b.tag && b.tag.split(',').map(t => t.trim()).includes(tagName)));
+            const isInDebuff = debuffDescDB.some(d => d.status_name === tagName || (d.tag && d.tag.split(',').map(t => t.trim()).includes(tagName)));
+
+            let tagClass = (isInBuff && isInDebuff) ? 'tag-neutral' : (isInBuff ? 'tag-buff' : (isInDebuff ? 'tag-debuff' : 'tag-neutral'));
+
+            createTag(tagName, tagClass, () => {
+                selectedStatuses.delete(tagName);
+                const cb = document.querySelector(`#filter-checkbox-group input[value="${tagName}"]`);
+                if (cb) cb.checked = false;
+                handleSortFilter(); 
+            });
+        });
+    }
+
+    function createTag(text, className, onRemove) {
+        const tag = document.createElement('div');
+        tag.className = `filter-tag ${className}`; 
+        tag.innerHTML = `<span>${text}</span><span class="remove-btn">✕</span>`;
+        tag.querySelector('.remove-btn').onclick = (e) => { e.stopPropagation(); onRemove(); };
+        container.appendChild(tag);
+    }
+}
+
 function handleSortFilter() {
     const query = document.getElementById('search-input').value.toLowerCase().trim();
     const sort = document.getElementById('sort-select').value;
@@ -243,6 +306,7 @@ function handleSortFilter() {
         });
     }
     document.getElementById('filter-count').innerText = selectedStatuses.size > 0 ? `(${selectedStatuses.size})` : '';
+    updateFilterTags();
 }
 
 // 검색창 클리어 기능
@@ -344,27 +408,31 @@ async function displayCards(data, id, append = false) {
         const isResonance = char.personality === '공명';
 
         card.className = 'char-card';
-        card.style.border = `3px solid ${pData.border}`;
         
-        // --- [엘다인 금색 글로우 로직] ---
-        if (char.Eldyne && char.Eldyne.trim() !== "" && char.Eldyne !== "X") {card.classList.add('eldyne-card');}
-
-
+        // 1. [엘다인 체크] Eldyne 열에 값이 있으면 기존 효과 클래스 추가
+        if (char.Eldyne && char.Eldyne.trim() !== "" && char.Eldyne !== "X") {
+            card.classList.add('eldyne-card');
+        }
+        
         card.onclick = () => {
             if (typeof window.openDetailModal === 'function') {
                 window.openDetailModal(char, activeContext);
             }
         };
-        
-        const topBgAttr = isResonance 
-            ? `class="card-top bg-resonance"` 
-            : `class="card-top" style="background: ${pData.bg};"`;
+
+        // 2. [상단 테두리 설정] 초상화 영역에만 성격 색상 테두리 부여
+        const topStyle = `
+            background: ${isResonance ? 'none' : pData.bg};
+            border: 3px solid ${pData.border};
+            border-bottom: none; /* 하단 이름표와 깔끔하게 연결 */
+        `;
+        const topBgClass = isResonance ? `card-top bg-resonance` : `card-top`;
 
         card.innerHTML = `
-            <div ${topBgAttr} style="position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 12px 12px 0 0; display: block;">
+            <div class="${topBgClass}" style="${topStyle}">
                 <img src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img" 
-                     style="width: 100%; height: 100%; object-fit: cover;" 
-                     onerror="this.src='./assets/icons/chara_image/default.webp'">
+                    style="width: 100%; height: 100%; object-fit: cover;" 
+                    onerror="this.src='./assets/icons/chara_image/default.webp'">
                 
                 <img src="./assets/icons/personality/${char.personality}.webp" style="position: absolute; top: 6px; left: 6px; width: 28px; height: 28px; z-index: 2; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
                 
@@ -378,21 +446,16 @@ async function displayCards(data, id, append = false) {
                 </div>
             </div>
 
-            <div class="card-bottom" style="background: #ffffff; padding: 10px 5px; border-top: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 85px;">
+            <div class="card-bottom" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80px; background: #ffffff; padding: 8px 6px; border-radius: 0 0 15px 15px;">
                 
-                <div class="char-name" style="font-size: 1.1rem; font-weight: 800; color: #333; margin-bottom: 6px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                <div class="char-name" style="font-size: 1rem; font-weight: 800; color: #333; margin-bottom: 8px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${char.name}
                 </div>
                 
-                <div class="grade-info" style="display: flex; flex-direction: column; gap: 4px; align-items: center; width: 100%;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 95px;">
-                        <span style="font-size: 0.72rem; color: #777; font-weight: 800;">저</span>
-                        ${makeMainBadge(char.low_grade)}
-                    </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 95px;">
-                        <span style="font-size: 0.72rem; color: #777; font-weight: 800;">고</span>
-                        ${makeMainBadge(char.high_grade)}
-                    </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; padding: 0 4px;">
+                    ${makeSkillGauge('저', char.low_grade)}
+                    <div style="width: 1px; height: 10px; background: #eee;"></div>
+                    ${makeSkillGauge('고', char.high_grade)}
                 </div>
             </div>`;
             
@@ -400,24 +463,33 @@ async function displayCards(data, id, append = false) {
     });
 }
 
-function makeMainBadge(grade) {
-    if (!grade || grade === 'X' || grade === '?') return '<span style="color:#ccc; font-size:0.8rem;">-</span>';
-    
-    const color = getGradeColor(grade);
+// 등급 텍스트에 따른 게이지 정보를 반환하는 헬퍼 함수
+function getGaugeInfo(grade) {
+    if (!grade || grade === 'X') return { width: '0%', color: '#cbd5e1', label: 'X' };
+    const g = grade.trim();
+    // 텍스트에서 숫자와 기호만 추출 (예: "~ Lv. 10+" -> "10+")
+    const label = g.match(/\d+[\+\-]?/g) ? g.match(/\d+[\+\-]?/g)[0] : g;
+    // 1. [초록색] 10+ (100% 게이지)
+    if (g.includes('10+')) { return { width: '100%', color: '#22C55E', label };}
+    // 2. [주황색] 7+ (65% 게이지)
+    if (g.includes('7+')) {return { width: '65%', color: '#F59E0B', label }; }
+    // 3. [빨간색] 7- (30% 게이지)
+    if (g.includes('7-')) {return { width: '30%', color: '#EF4444', label };}
+    // 기본값 (예외 상황 대비)
+    return { width: '40%', color: '#94a3b8', label };
+}
+
+// 게이지 바 HTML을 생성하는 함수
+function makeSkillGauge(typeLabel, grade) {
+    const info = getGaugeInfo(grade);
     return `
-        <span style="
-            background: ${color}; 
-            color: white; 
-            font-size: 0.72rem;    /* 폰트 크기 업 */
-            font-weight: 900;     /* 더 두껍게 */
-            padding: 3px 8px;     /* 여백 대폭 증가 */
-            border-radius: 6px;   /* 둥근 느낌 유지 */
-            line-height: 1;
-            white-space: nowrap;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* 미세한 입체감 */
-        ">
-            ${grade}
-        </span>
+        <div style="display: flex; align-items: center; gap: 4px; flex: 1;">
+            <span style="font-size: 0.7rem; color: #777; font-weight: 800; flex-shrink: 0;">${typeLabel}</span>
+            <div style="flex-grow: 1; height: 5px; background: #e2e8f0; border-radius: 3px; overflow: hidden; position: relative; min-width: 30px;">
+                <div style="width: ${info.width}; background: ${info.color}; height: 100%; border-radius: 3px;"></div>
+            </div>
+            <span style="font-size: 0.65rem; color: ${info.color}; font-weight: 800; flex-shrink: 0; min-width: 18px; text-align: right;">${info.label}</span>
+        </div>
     `;
 }
 

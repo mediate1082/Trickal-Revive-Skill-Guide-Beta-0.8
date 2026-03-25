@@ -95,14 +95,38 @@
 
 /* 카드 전체 틀 */
 .char-card { 
-    background: #fff; 
-    border-radius: 15px; /* 더 둥글게 */
-    overflow: hidden; 
+    background: transparent;
+    border: none !important;
+    border-radius: 15px;
+    overflow: visible; /* 그림자가 잘리지 않게 설정 */
     cursor: pointer; 
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* transition 추가 */
     display: flex;
     flex-direction: column;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    position: relative;
+    
+    /* [수정] 그림자: y축을 살짝 내리고 퍼짐 정도(blur)를 키워 깊이감을 줍니다. */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12), 0 2px 5px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 상단 초상화 영역 */
+.card-top {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 15px 15px 0 0; 
+    box-sizing: border-box; /* [중요] 테두리가 안쪽으로 생기게 해서 가로폭 유지 */
+    display: block;
+}
+
+/* 하단 이름표 영역 */
+.card-bottom {
+    background: #ffffff;
+    padding: 10px 5px;
+    border-radius: 0 0 15px 15px; 
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .char-card .icon {
@@ -124,15 +148,6 @@
 .char-card:hover { transform: translateY(-5px); }
 
 
-/* 상단 성격 배경 영역 */
-.card-top {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1 !important; 
-    overflow: hidden;
-    border-radius: 12px 12px 0 0;
-    display: block; 
-}
 
 /* 사도 이미지 (배경이 보이도록 투명도나 블렌딩 없이 꽉 채움) */
 .char-img { 
@@ -142,15 +157,6 @@
     display: block;
 }
 
-/* 하단 이름표 영역 */
-.card-bottom {
-    background: #ffffff;
-    padding: 10px 5px;
-    height: 90px; /* 모든 카드의 하단 높이를 통일 (선택 사항) */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
 
 .char-name { 
     font-weight: 800; /* 인게임처럼 두껍게 */
@@ -164,15 +170,11 @@
 
 /* 엘다인 전용 고정 금색 글로우 효과 */
 .eldyne-card {
-    /* 여러 겹의 그림자를 겹쳐서 금색 아우라가 
-       카드 밖으로 은은하게 퍼지도록 설정 
-    */
     box-shadow: 
         0 0 10px rgba(255, 215, 0, 0.6), 
         0 0 20px rgba(255, 165, 0, 0.4),
         inset 0 0 8px rgba(255, 223, 0, 0.3) !important;
     
-    /* 엘다인 카드를 시각적으로 조금 더 강조 */
     z-index: 5;
     transform: scale(1.02); /* 아주 살짝 키워서 존재감 부여 */
 }
@@ -192,6 +194,41 @@
     gap: 5px; 
     align-items: center; 
 }
+
+/* 스킬 강화 게이지 바 컨테이너 */
+.skill-gauge-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    max-width: 80px; /* 게이지 바의 전체 너비 조절 */
+}
+
+.skill-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #777;
+    flex-shrink: 0;
+}
+
+.gauge-bg {
+    flex-grow: 1;
+    height: 8px; /* 게이지 두께 */
+    background: #e2e8f0; /* 빈 막대 색상 */
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.gauge-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+
+
+
         /* 모달 시스템 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
         /* 모달 컨텐츠: 내부 내용이 길어지면 스크롤이 생기도록 수정 */
@@ -472,6 +509,100 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); 
             border-color: var(--accent-green); 
         }               
+
+.active-filters-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* 태그 간격 살짝 넓힘 */
+    padding: 6px 15px 12px 15px; /* 하단 여백 충분히 확보 */
+    min-height: 0;
+}
+
+/* 필터 태그 */
+.filter-tag {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px; 
+    padding: 6px 14px; 
+ 
+    font-size: 0.8rem; /* 약간 키움 */
+    font-weight: 800; /* 아주 굵게 */
+    color: var(--text-dark) !important; /* 폰트색 고정 */
+    
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    
+    transition: all 0.2s ease;
+    border: none;
+}
+
+/* 제거 버튼 스타일 */
+.filter-tag .remove-btn {
+    margin-left: 8px; /* 간격 넓힘 */
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: rgba(45, 51, 29, 0.6); /* 텍스트색에 투명도 적용 */
+    transition: color 0.2s;
+}
+.filter-tag .remove-btn:hover {
+    color: #e74c3c; /* 호버 시에만 빨간색 */
+}
+
+/* 1. 버프 태그 (파란색 계열 ▲) */
+.filter-tag.tag-buff {
+    background-color: #3488F0; /* 인게임 버프 파랑 */
+}
+.filter-tag.tag-buff::before {
+    content: '▲';
+    margin-right: 4px;
+    font-size: 0.7rem;
+}
+
+/* 2. 디버프 태그 (빨간색 계열 ▼) */
+.filter-tag.tag-debuff {
+    background-color: #FC6881; /* 인게임 디버프 빨강 */
+}
+.filter-tag.tag-debuff::before {
+    content: '▼';
+    margin-right: 4px;
+    font-size: 0.7rem;
+}
+
+/* 3. 중립/개전 효과 태그 (보라색 계열 -) */
+.filter-tag.tag-neutral {
+    background-color: #A361FF; /* 인게임 중립 보라 */
+}
+.filter-tag.tag-neutral::before {
+    content: '-';
+    margin-right: 5px;
+    font-weight: 900;
+}
+
+/* 4. 검색어 태그 (기본 연두색) */
+.filter-tag.tag-search {
+    background-color: var(--card-bg); /* 기존 ECF7CD */
+    border: 1px solid var(--accent-green);
+}
+
+/* 모두 해제 버튼 스타일 */
+.filter-tag.tag-clear-all {
+    background-color: #f1f5f9; /* 연한 회색 */
+    border: 1.5px solid #cbd5e1;
+    color: #64748b !important; 
+    cursor: pointer;
+    padding: 6px 14px; 
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.filter-tag.tag-clear-all:hover {
+    background-color: #ffebee; /* 살짝 붉은 기운이 도는 배경 */
+    color: #e74c3c !important; /* 호버 시 붉은색으로 강조 */
+    border-color: #fab1a0;
+}
+
+
+/* 검색창 서식 */
 .search-box {
     position: relative; /* 버튼의 기준점 */
     display: flex;
