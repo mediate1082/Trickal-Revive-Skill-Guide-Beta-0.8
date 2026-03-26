@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>트릭컬 스킬 가이드</title>
+
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+  
+</head>
+
+<body>
+    <header>
+        <div class="header-container">
+            <div class="header-top">
+                <div style="width:40px"></div>
+                <h1 class="main-title">트릭컬 스킬 가이드</h1>
+                <button class="btn" style="border-radius:50%; width:38px; height:38px; padding:0;" onclick="openInfoModal()">❓</button>
+            </div>
+            <div class="controls-row">
+                <div class="filter-bar-container" style="display: flex; gap: 8px; width: 100%; align-items: center;">
+                    <select id="sort-select" class="btn nav-select" onchange="handleSortFilter()" style="height: 40px;">
+                        <option value="name">이름순</option>
+                        <option value="tier">티어순</option>
+                        <option value="personality">성격순</option>
+                        <option value="role">역할순</option>
+                        <option value="line">배치순</option>
+                    </select>
+                    <button id="order-btn" class="btn square-btn" onclick="toggleOrder()">▲</button>
+                    <button class="btn filter-btn" onclick="openFilterModal()">
+                        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
+                        부가 효과 필터 <span id="filter-count"></span>
+                    </button>
+                    <div class="search-box" style="margin-left: auto;">
+                        <input type="text" id="search-input" placeholder="사도 이름 검색..." oninput="handleSortFilter()">
+                        <button id="search-clear-btn" class="hidden" onclick="clearSearch()">&times;</button>
+                    </div>
+                </div>
+            </div>
+            <div id="active-filters" class="active-filters-container">
+            </div>
+        </div>
+    </header>
+
+    <div class="content-container">
+        <div id="loading-text" style="text-align:center; padding:50px; color:#888;">데이터 로딩 중...</div>
+        <div id="main-grid" class="grid"></div>
+    </div>
+
+   <div id="modal-filter" class="modal-overlay hidden" onclick="closeFilterModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 style="margin-top: 0; margin-bottom: 15px;">부가 효과 필터</h3>
+        
+        <div class="modal-search-box">
+            <input type="text" id="filter-search" placeholder="필터 키워드 검색..." oninput="refreshFilterList()">
+        </div>
+
+        <div class="filter-mode-container" style="margin-bottom: 10px;">
+            <div class="mode-switch">
+                <input type="radio" name="filter-mode" id="mode-or" value="OR" checked onchange="handleSortFilter()">
+                <label for="mode-or">OR</label>
+                <input type="radio" name="filter-mode" id="mode-and" value="AND" onchange="handleSortFilter()">
+                <label for="mode-and">AND</label>
+                <div class="mode-glider"></div>
+            </div>
+        </div>
+
+        <div style="padding: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid #eee; border-radius: 12px; font-size: 0.85rem;">
+            <span>본인만 대상인 효과 제외</span>
+            <label class="switch">
+                <input type="checkbox" id="exclude-self-toggle" onchange="handleSortFilter()">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="modal-tabs" style="margin-bottom: 0; border-bottom: none; gap: 2px;">
+            <button class="tab-btn active" id="tab-all" onclick="setFilterTab('all')" 
+                style="border-radius: 10px 10px 0 0; border: 1px solid #eee; border-bottom: none; background: #f8f8f8; padding: 8px; font-size: 0.85rem;">전체</button>
+            <button class="tab-btn" id="tab-buff" onclick="setFilterTab('buff')" 
+                style="border-radius: 10px 10px 0 0; border: 1px solid #eee; border-bottom: none; background: #f8f8f8; padding: 8px; font-size: 0.85rem;">버프</button>
+            <button class="tab-btn" id="tab-debuff" onclick="setFilterTab('debuff')" 
+                style="border-radius: 10px 10px 0 0; border: 1px solid #eee; border-bottom: none; background: #f8f8f8; padding: 8px; font-size: 0.85rem;">디버프</button>
+        </div>
+
+        <div id="filter-checkbox-group">
+            </div>
+
+        <div class="modal-footer">
+            <button class="btn" style="flex: 1;" onclick="resetFilters()">초기화</button>
+            <button class="btn" style="flex: 1; background: var(--accent-green);" onclick="closeFilterModal()">적용</button>
+        </div>
+    </div>
+</div>
+
+    <div id="modal-detail" class="modal-overlay hidden" onclick="closeModal('modal-detail')">
+        <div class="modal-content" onclick="event.stopPropagation()"><div id="detail-body"></div><button class="btn" style="width:100%; margin-top:15px; background:var(--accent-green);" onclick="closeModal('modal-detail')">닫기</button></div>
+    </div>
+    <div id="modal-info" class="modal-overlay hidden" onclick="closeModal('modal-info')">
+        <div class="modal-content" onclick="event.stopPropagation()"><h3 style="margin:0;">범례</h3><p id="info-content" style="white-space:pre-wrap;"></p><button class="btn" style="width:100%; margin-top:15px;" onclick="closeModal('modal-info')">닫기</button></div>
+    </div>
+
+    <button id="top-btn" onclick="scrollToTop()">▲<div style="font-size:0.7rem;">TOP</div></button>
+
+
+<script type="module" src="main.js"></script>
+
+</body>
+</html>
