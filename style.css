@@ -18,47 +18,119 @@
         }
         .hidden { display: none !important; }
         
-        /* 헤더 스타일 */
-        header { 
-            background: #fff; padding: 15px; position: sticky; top: 0; 
-            z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.08); width: 100%; 
-        }
-        .header-container { max-width: var(--max-width); margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .main-title { font-size: clamp(1.4rem, 6vw, 2.5rem); font-weight: normal; color: #4a5a1f; margin: 0; text-align: center; flex-grow: 1; }
-        
-        .controls-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        @media (min-width: 768px) { .controls-row { flex-direction: row; justify-content: space-between; align-items: center; } }
-        
-        .btn { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.9rem; font-family: inherit; transition: all 0.2s ease-out; }
-        .btn:hover {
-            transform: translateY(-3px); /* 위로 3px 살짝 띄우기 */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 떴을 때 바닥에 생기는 그림자 */
-            border-color: var(--accent-green); /* 테두리를 연두색으로 강조 */
-            background-color: #f9fdf0; /* 배경색도 아주 살짝 연두빛으로 */
-        }
-        .btn:active {
-            transform: translateY(-1px); /* 클릭 시 살짝 눌리는 느낌 */
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* 내비게이션 바 전용 스타일 */
-        .nav-select { width: 100px; padding-right: 25px !important; flex-shrink: 0; }
-        .square-btn { width: 40px; height: 40px; padding: 0 !important; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .filter-btn { 
-            min-width: 130px; height: 40px; display: flex; align-items: center; 
-            justify-content: center; gap: 6px; flex-shrink: 0; white-space: nowrap; 
-        }
-        .nav-icon { width: 16px; height: 16px; fill: #2D331D; flex-shrink: 0; }
-        #filter-count:not(:empty) { font-size: 0.8rem; color: #e74c3c; font-weight: bold; margin-left: 2px; }
+/* 헤더 전체: 화면 끝에서 끝까지 배경을 채움 */
+header { 
+    background: #fff; 
+    padding: 10px 0; /* 좌우 패딩은 컨테이너가 담당하도록 0으로 변경 */
+    position: sticky; 
+    top: 0; 
+    z-index: 100; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08); 
+    width: 100%; 
+}
 
-        .search-box { width: 100%; position: relative; }
-        @media (min-width: 768px) { .search-box { max-width: 300px; } }
-        .search-box input { 
-            width: 100%; padding: 12px 12px 12px 40px; border-radius: 20px; border: 2px solid #eee; 
-            outline: none; font-family: inherit; font-size: 1rem;
-            background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23888" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 14px center;
-        }
+/* 헤더 컨테이너: 그리드 너비와 일치시키는 핵심 영역 */
+.header-container { 
+    max-width: var(--max-width); 
+    margin: 0 auto; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; 
+    padding: 0 15px; /* 그리드의 패딩과 일치시켜 상하 정렬 라인을 맞춤 */
+}
+
+.header-top { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    width: 100%; 
+}
+
+.main-title { 
+    font-size: clamp(1.4rem, 6vw, 2.2rem); 
+    font-weight: normal; 
+    color: #4a5a1f; 
+    margin: 0; 
+    text-align: center; 
+    flex-grow: 1; 
+}
+
+/* 컨트롤 행: 모바일에서는 세로, 768px 이상에선 가로 */
+.controls-row { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    width: 100%; 
+}
+
+/* [추가] 모바일에서 버튼들이 삐져나가지 않게 하는 컨테이너 */
+.filter-bar-container {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    align-items: center;
+    flex-wrap: wrap; /* 모바일에서 공간 부족 시 자연스럽게 줄바꿈 */
+}
+
+@media (min-width: 768px) { 
+    .controls-row { 
+        flex-direction: row; 
+        justify-content: space-between; 
+        align-items: center; 
+    } 
+    .filter-bar-container {
+        flex-wrap: nowrap; /* 데스크탑에선 한 줄 유지 */
+        width: auto;
+    }
+}
+
+/* 버튼 공통 스타일 */
+.btn { 
+    padding: 8px 12px; 
+    border-radius: 8px; 
+    border: 1px solid #ddd; 
+    background: #fff; 
+    cursor: pointer; 
+    font-size: 0.9rem; 
+    font-family: inherit; 
+    transition: all 0.2s ease-out; 
+    white-space: nowrap; /* 글자 줄바꿈 방지 */
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--accent-green);
+    background-color: #f9fdf0;
+}
+
+/* 내비게이션 바 전용 */
+.nav-select { width: 100px; padding-right: 25px !important; flex-shrink: 0; }
+.square-btn { width: 40px; height: 40px; padding: 0 !important; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.filter-btn { 
+    min-width: 130px; 
+    height: 40px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 6px; 
+    flex-shrink: 0; 
+}
+
+/* 검색창: 모바일에서 너비 확보 */
+.search-box { width: 100%; position: relative; }
+@media (min-width: 768px) { .search-box { max-width: 300px; } }
+
+.search-box input { 
+    width: 100%; 
+    padding: 10px 12px 10px 40px; 
+    border-radius: 20px; 
+    border: 2px solid #eee; 
+    outline: none; 
+    font-family: inherit; 
+    font-size: 0.95rem;
+    background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23888" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 14px center;
+}
 
 /* [1] 공명 성격 무지개 애니메이션 정의 */
 @keyframes rainbowGradient {
@@ -138,10 +210,74 @@
 }
 
 /* 모바일에서의 아이콘 크기 조정 (필요시) */
-@media (max-width: 768px) {
-    .char-card .icon {
-        width: 26px;
-        height: 26px;
+@media (max-width: 480px) {
+    /* 1. 그리드 설정: 화면 너비를 정확히 3등분(1fr) 합니다. */
+    .grid {
+        grid-template-columns: repeat(3, 1fr) !important; 
+        gap: 6px !important; /* 카드 사이 간격을 좁혀서 공간 확보 */
+        padding: 8px !important; /* 양옆 여백 축소 */
+        width: 100% !important;
+    }
+
+    /* 2. 카드 크기: 고정 너비를 해제하고 그리드가 주는 33% 너비에 맞춥니다. */
+    .char-card {
+        width: 100% !important; 
+        max-width: none !important;
+        min-width: 0 !important; /* 최소 너비 제한을 풀어야 축소됩니다. */
+    }
+
+    /* 3. 카드 내부 요소 축소 (카드가 작아지니 내용물도 줄여야 함) */
+    .char-name {
+        font-size: 0.8rem !important; /* 이름 글자 크기 축소 */
+        margin-bottom: 4px !important;
+    }
+
+    /* 하단 별, 게이지 바 영역 높이 줄이기 */
+    .card-bottom {
+        padding: 5px 2px !important;
+    }
+
+    /* 게이지 바 텍스트 숨기기 (공간 확보를 위해 '저', '고' 글자만 남기거나 줄임) */
+    .skill-label {
+        font-size: 0.6rem !important;
+    }
+    
+    /* 별 아이콘 크기 축소 */
+    .char-card div[style*="height: 20px"] img {
+        width: 14px !important;
+        height: 14px !important;
+    }
+
+/* 1. 게이지 바 컨테이너: 밖으로 나가지 않게 너비 제한 해제 */
+    .card-bottom div[style*="display: flex; align-items: center; justify-content: space-between"] {
+        flex-direction: column; /* [선택] 너무 좁으면 세로로 배치하거나 */
+        gap: 2px !important;
+        width: 100% !important;
+    }
+
+    /* 2. 각 게이지 유닛 축소 */
+    .card-bottom div[style*="flex: 1"] {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        gap: 2px !important;
+    }
+
+    /* 3. 게이지 막대 자체 크기 줄이기 */
+    .card-bottom div[style*="height: 5px"] {
+        min-width: 0 !important; /* 고정 최소 너비 해제 */
+        flex-grow: 1 !important;
+    }
+
+    /* 4. 텍스트 가독성 확보를 위한 폰트 축소 */
+    .card-bottom span {
+        font-size: 0.6rem !important; /* '저', '고' 글자 크기 축소 */
+        min-width: auto !important; /* 고정 너비 해제 */
+    }
+
+    /* 레벨 숫자(10+, 7+) 텍스트도 축소 */
+    .card-bottom span[style*="text-align: right"] {
+        font-size: 0.6rem !important;
+        min-width: 15px !important;
     }
 }
 
