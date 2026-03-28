@@ -166,6 +166,74 @@ function renderEffectItems(effectString, condString, targetString, allStatusDB, 
     }).join('');
 }
 
+// 어사이드 전용 헬퍼 함수
+const renderAsideTabContent = (char, asideData) => {
+    if (!asideData || !asideData.aside1_name) {
+        return `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; text-align: center;">
+                <img src="./assets/icons/common_icons/empty.webp" style="width: 80px; opacity: 0.5; margin-bottom: 15px;" onerror="this.src='./assets/icons/status/버프_아이콘 없음.webp'">
+                <div style="color: #94a3b8; font-weight: bold;">아직 어사이드 정보가 준비되지 않았어용...</div>
+            </div>`;
+    }
+
+    let html = '';
+    const themeColor = '#A855F7'; 
+
+    // 엘다인 판정: Eldyne 열에 값이 있는지 확인 (문자열인 경우 trim 후 빈값 체크)
+    const isEldyne = char.Eldyne && char.Eldyne.toString().trim() !== "";
+    const globalStatValue = isEldyne ? '4%' : '3%';
+
+    for (let i = 1; i <= 3; i++) {
+        const name = asideData[`aside${i}_name` ];
+        const icon = asideData[`aside${i}_icon` ];
+        const desc = asideData[`aside${i}_desc` ];
+        const template = asideData[`aside${i}_stat_template` ];
+        const value = asideData[`aside${i}_stat_value` ];
+
+        if (!name) continue;
+
+        html += `
+            <div style="background: #ffffff; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px;">
+                <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+                    <div style="position: relative; flex-shrink: 0;">
+                        <img src="./assets/icons/aside/aside_${i}/${icon}" 
+                             style="width: 58px; height: 58px; border-radius: 12px; border: 3px solid ${themeColor}; object-fit: cover;" 
+                             onerror="this.src='./assets/icons/skills/default.webp'">
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center; gap: 2px;">
+                        <span style="font-size: 0.85rem; font-weight: bold; color: ${themeColor};">어사이드 ★${i}</span>
+                        <span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain}; line-height: 1.2;">${name}</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="font-size: 0.9rem; color: #666; line-height: 1.6;">
+                        ${desc?.replace(/\\n/g, '<br>')}
+                    </div>
+                    
+                    ${(template && value) ? `
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 14px; font-size: 0.95rem; color: #333; line-height: 1.6; box-shadow: inset 0 2px 5px ${COLORS.inset}; border: 1px solid rgba(0,0,0,0.03);">
+                        ${parseSkillLevelText(template, value, themeColor)}
+                    </div>` : ''}
+
+                    ${(i === 3 && asideData.aside_3_global) ? `
+                    <div style="position: relative; background: #fdf4ff; border-radius: 12px; padding: 12px 12px 12px 18px; 
+                                box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${themeColor}; 
+                                border: 1px solid rgba(0,0,0,0.03); margin-top: 5px;">
+                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                            <strong style="color: ${themeColor}; font-size: 0.95rem;">★ 전 사도 보유 효과</strong>
+                        </div>
+                        <div style="font-size: 0.88rem; color: #555; line-height: 1.5;">
+                            전 사도 <span style="font-weight:bold; color:${themeColor};">${asideData.aside_3_global.split(',').join(', ')}</span> 증가 : 
+                            <span style="font-weight:bold;">${globalStatValue}</span>
+                        </div>
+                    </div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+    return html;
+};
 
 export function openDetailModal(char, dataContext) {
     currentSkillMode = 'PvE';
@@ -266,6 +334,8 @@ export function openDetailModal(char, dataContext) {
 
         normalAtkHTML = renderEffectCard('normal', { low_skill_name: "기본 공격" }, null, null, null, dataContext, normalContent, false);
     }
+    // [Tab 3 준비]
+    const asideContentHTML = renderAsideTabContent(char, asideData);
 
     // 4. 모달에 HTML 때려넣기 (고정 헤더 + 스크롤 본문 구조)
    const modalContent = document.querySelector('#modal-detail .modal-content');
@@ -312,6 +382,7 @@ export function openDetailModal(char, dataContext) {
                 <button class="tab-btn active" onclick="switchTab(0)">강화 추천</button>
                 <button class="tab-btn" onclick="switchTab(1)">부가 효과</button>
                 <button class="tab-btn" onclick="switchTab(2)">상세 설명</button>
+                <button class="tab-btn" onclick="switchTab(3)">어사이드 정보</button> </div>
             </div>
         </div>
 
@@ -342,6 +413,10 @@ export function openDetailModal(char, dataContext) {
                 ${lowSkillData ? renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowDetail, true) : ''}
                 ${skillData ? renderEffectCard('high', skillData, null, null, null, dataContext, highDetail, true) : ''}
                 ${normalAtkHTML}
+            </div>
+
+            <div id="tab-3" class="tab-content hidden">
+                ${asideContentHTML}
             </div>
         </div> `;
 
