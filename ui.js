@@ -166,7 +166,7 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
     }).join('');
 }
 
-// 어사이드 전용 헬퍼 함수
+// 어사이드 전용 헬퍼 함수 (전체 버전)
 const renderAsideTabContent = (char, asideData) => {
     if (!asideData || !asideData.aside1_name) {
         return `
@@ -179,10 +179,6 @@ const renderAsideTabContent = (char, asideData) => {
     let html = '';
     const themeColor = '#A855F7'; 
 
-    // 엘다인 판정: Eldyne 열에 값이 있는지 확인 (문자열인 경우 trim 후 빈값 체크)
-    const isEldyne = char.Eldyne && char.Eldyne.toString().trim() !== "";
-    const globalStatValue = isEldyne ? '4%' : '3%';
-
     for (let i = 1; i <= 3; i++) {
         const name = asideData[`aside${i}_name` ];
         const icon = asideData[`aside${i}_icon` ];
@@ -192,7 +188,7 @@ const renderAsideTabContent = (char, asideData) => {
 
         if (!name) continue;
 
-html += `
+        html += `
             <div style="background: #ffffff; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px;">
                 <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
                     <div style="position: relative; flex-shrink: 0;">
@@ -216,45 +212,54 @@ html += `
                         ${parseSkillLevelText(template, value, themeColor)}
                     </div>` : ''}
 
-${(i === 3 && asideData.aside_3_global) ? `
-                    <div style="background: #f8f9fa; border-radius: 12px; padding: 16px; 
-                                box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${themeColor}; 
-                                border: 1px solid rgba(0,0,0,0.03); margin-top: 5px;">
+                    ${(i === 3 && asideData.aside_3_global) ? (() => {
+                        const isEldyne = char.Eldyne && char.Eldyne.toString().trim() !== "";
+                        const rawGlobalValue = asideData.aside_3_global_value ? asideData.aside_3_global_value.toString().trim() : "";
                         
-                        <div style="margin-bottom: 12px;">
-                            <strong style="color: #333333; font-size: 0.95rem;">사도 전체 능력치</strong>
-                        </div>
+                        // 이름과 값을 각각 분리 (1:1 매칭용)
+                        const statNames = asideData.aside_3_global.split(',').map(s => s.trim());
+                        const statValues = rawGlobalValue !== "" ? rawGlobalValue.split(',').map(v => v.trim()) : [];
 
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            ${asideData.aside_3_global.split(',').map(stat => {
-                                const pureStat = stat.trim();
-                                // 기호 앞에 +가 없는 경우 자동 추가 (3성 % 등)
-                                const fullVal = globalStatValue.startsWith('+') ? globalStatValue : '+' + globalStatValue;
-                                
-                                // 숫자(소수점 포함)와 기호를 분리하는 로직
-                                const numMatch = fullVal.match(/[0-9.]+/);
-                                const numberPart = numMatch ? numMatch[0] : "";
-                                const [prefix, suffix] = fullVal.split(numberPart);
+                        return `
+                        <div style="background: #f8f9fa; border-radius: 12px; padding: 16px; 
+                                    box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${themeColor}; 
+                                    border: 1px solid rgba(0,0,0,0.03); margin-top: 5px;">
+                            
+                            <div style="margin-bottom: 12px;">
+                                <strong style="color: #333333; font-size: 0.95rem;">사도 전체 능력치</strong>
+                            </div>
 
-                                return `
-                                <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 10px 14px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <img src="./assets/icons/base_stat/${pureStat}.webp" 
-                                             style="width: 28px; height: 28px;" 
-                                             onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
-                                        <span style="font-size: 0.9rem; font-weight: 700; color: #475569;">전체 ${pureStat}</span>
-                                    </div>
-                                    <span style="font-size: 1.05rem; font-weight: 800; color: #475569;">
-                                        ${prefix}<span style="color: ${themeColor};">${numberPart}</span>${suffix}
-                                    </span>
-                                </div>`;
-                            }).join('')}
-                        </div>
-                        
-                        <div style="margin-top: 12px; text-align: center; font-size: 0.75rem; color: ${themeColor}; font-weight: bold; opacity: 0.8;">
-                            사도 전체 능력치 효과는 모든 사도에게 적용됩니다.
-                        </div>
-                    </div>` : ''}
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                ${statNames.map((pureStat, idx) => {
+                                    // 해당 순서의 값을 매칭, 없으면 3%/4% 로직
+                                    const currentVal = statValues[idx] || (isEldyne ? '4%' : '3%');
+                                    const fullValStr = currentVal.startsWith('+') ? currentVal : '+' + currentVal;
+
+                                    // 숫자와 기호 분리 로직
+                                    const numMatch = fullValStr.match(/[0-9.]+/);
+                                    const numberPart = numMatch ? numMatch[0] : "";
+                                    const [prefix, suffix] = fullValStr.split(numberPart);
+
+                                    return `
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 10px 14px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <img src="./assets/icons/base_stat/${pureStat}.webp" 
+                                                 style="width: 28px; height: 28px;" 
+                                                 onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
+                                            <span style="font-size: 0.9rem; font-weight: 700; color: #475569;">전체 ${pureStat}</span>
+                                        </div>
+                                        <span style="font-size: 1.05rem; font-weight: 800; color: #475569;">
+                                            ${prefix}<span style="color: ${themeColor};">${numberPart}</span>${suffix}
+                                        </span>
+                                    </div>`;
+                                }).join('')}
+                            </div>
+                            
+                            <div style="margin-top: 12px; text-align: center; font-size: 0.75rem; color: ${themeColor}; font-weight: bold; opacity: 0.8;">
+                                사도 전체 능력치 효과는 모든 사도에게 적용됩니다.
+                            </div>
+                        </div>`;
+                    })() : ''}
                 </div>
             </div>
         `;
