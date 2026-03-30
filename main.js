@@ -8,12 +8,12 @@ let db = [],
     debuffDescDB = [], 
     buffDB = [], 
     buffDescDB = [], 
-    allStatusDB = [],
+    allStateDB = [],
     normalAtkDB = [],
     asideDB = []; // 쉼표로 연결하여 let 선언 공유
     
 
-let infoText = "", isAscending = true, selectedStatuses = new Set(), currentFilterTab = 'all';
+let infoText = "", isAscending = true, selectedStatees = new Set(), currentFilterTab = 'all';
 
 // [3] HTML onclick 이벤트와 연결하기
 window.openDetailModal = (char) => {
@@ -23,7 +23,7 @@ window.openDetailModal = (char) => {
         buffDB, 
         lowSkillDB, 
         highSkillDB, 
-        allStatusDB, 
+        allStateDB, 
         debuffDescDB, 
         normalAtkDB,
         asideDB 
@@ -44,7 +44,7 @@ window.openInfoModal = openInfoModal;
 window.closeModal = closeModal;
 window.scrollToTop = scrollToTop;
 window.refreshFilterList = refreshFilterList;
-window.toggleStatusFilter = toggleStatusFilter;
+window.toggleStateFilter = toggleStateFilter;
 
 // [+1] 성격별 컬러 및 테두리 데이터 설정
 const PERSONALITY_COLORS = {
@@ -110,7 +110,7 @@ async function loadExternalData() {
         lowSkillDB = Papa.parse(res9, cfg).data; 
         asideDB = Papa.parse(res10, cfg).data; 
         
-        allStatusDB = [...buffDescDB, ...debuffDescDB];
+        allStateDB = [...buffDescDB, ...debuffDescDB];
 
         setupFilterModal();
         document.getElementById('loading-text').classList.add('hidden');
@@ -132,8 +132,8 @@ async function loadExternalData() {
                 }
 
                 // 2. 선택된 필터(Set) 비우기
-                if (typeof selectedStatuses !== 'undefined') {
-                    selectedStatuses.clear();
+                if (typeof selectedStatees !== 'undefined') {
+                    selectedStatees.clear();
                 }
 
                 // 3. 필터 모달 내 체크박스 UI 초기화
@@ -182,9 +182,9 @@ function updateFilterTags() {
     container.innerHTML = '';
 
     const hasSearch = document.getElementById('search-input').value.trim() !== '';
-    const hasStatus = selectedStatuses && selectedStatuses.size > 0;
+    const hasState = selectedStatees && selectedStatees.size > 0;
 
-    if ((hasSearch && hasStatus) || (selectedStatuses.size > 1)) {
+    if ((hasSearch && hasState) || (selectedStatees.size > 1)) {
         const clearAllBtn = document.createElement('div');
         clearAllBtn.className = 'filter-tag tag-clear-all';
         clearAllBtn.innerHTML = `<span>전체 해제</span>`;
@@ -193,7 +193,7 @@ function updateFilterTags() {
             document.getElementById('search-input').value = '';
             const clearBtn = document.getElementById('search-clear-btn');
             if (clearBtn) clearBtn.classList.add('hidden');
-            selectedStatuses.clear();
+            selectedStatees.clear();
             
             // 모달 체크박스 전체 해제
             document.querySelectorAll('#filter-checkbox-group input:checked').forEach(cb => cb.checked = false);
@@ -213,15 +213,15 @@ function updateFilterTags() {
     }
 
     // 2. 부가 효과 태그 처리
-    if (hasStatus) {
-        selectedStatuses.forEach(tagName => {
-            const isInBuff = buffDescDB.some(b => b.status_name === tagName || (b.tag && b.tag.split(',').map(t => t.trim()).includes(tagName)));
-            const isInDebuff = debuffDescDB.some(d => d.status_name === tagName || (d.tag && d.tag.split(',').map(t => t.trim()).includes(tagName)));
+    if (hasState) {
+        selectedStatees.forEach(tagName => {
+            const isInBuff = buffDescDB.some(b => b.state_name === tagName || (b.tag && b.tag.split(',').map(t => t.trim()).includes(tagName)));
+            const isInDebuff = debuffDescDB.some(d => d.state_name === tagName || (d.tag && d.tag.split(',').map(t => t.trim()).includes(tagName)));
 
             let tagClass = (isInBuff && isInDebuff) ? 'tag-neutral' : (isInBuff ? 'tag-buff' : (isInDebuff ? 'tag-debuff' : 'tag-neutral'));
 
             createTag(tagName, tagClass, () => {
-                selectedStatuses.delete(tagName);
+                selectedStatees.delete(tagName);
                 const cb = document.querySelector(`#filter-checkbox-group input[value="${tagName}"]`);
                 if (cb) cb.checked = false;
                 handleSortFilter(); 
@@ -248,9 +248,9 @@ function handleSortFilter() {
         const nameMatch = (char.name || "").toLowerCase().includes(query);
         if (!nameMatch) return false;
 
-        let statusMatch = true;
-        if (selectedStatuses.size > 0) {
-            const selected = Array.from(selectedStatuses);
+        let stateMatch = true;
+        if (selectedStatees.size > 0) {
+            const selected = Array.from(selectedStatees);
             const check = (s) => {
                 const b = buffDB.find(x => x.name === char.name);
                 const d = debuffDB.find(x => x.name === char.name);
@@ -279,9 +279,9 @@ function handleSortFilter() {
                 }
                 return checkTagMatch(myEffects, s);
             };
-            statusMatch = (mode === 'AND') ? selected.every(s => check(s)) : selected.some(s => check(s));
+            stateMatch = (mode === 'AND') ? selected.every(s => check(s)) : selected.some(s => check(s));
         }
-        return statusMatch;
+        return stateMatch;
     });
 
     filtered.sort((a, b) => {
@@ -305,7 +305,7 @@ function handleSortFilter() {
             displayCards(groups[k], 'main-grid', true);
         });
     }
-    document.getElementById('filter-count').innerText = selectedStatuses.size > 0 ? `(${selectedStatuses.size})` : '';
+    document.getElementById('filter-count').innerText = selectedStatees.size > 0 ? `(${selectedStatees.size})` : '';
     updateFilterTags();
 }
 
@@ -345,7 +345,7 @@ function checkTagMatch(list, kw) {
         const pureName = n.split('(')[0].trim();
         const targetKw = kw.trim();
         if (pureName === targetKw) return true;
-        const info = allStatusDB.find(d => (d.status_name || "").trim() === pureName);
+        const info = allStateDB.find(d => (d.state_name || "").trim() === pureName);
         if (info && info.tag) {
             const tags = info.tag.split(',').map(t => t.trim());
             return tags.includes(targetKw);
@@ -360,7 +360,7 @@ function refreshFilterList() {
     if (!group) return; 
     group.innerHTML = '';
 
-    let sourceData = (currentFilterTab === 'all') ? allStatusDB : (currentFilterTab === 'buff' ? buffDescDB : debuffDescDB);
+    let sourceData = (currentFilterTab === 'all') ? allStateDB : (currentFilterTab === 'buff' ? buffDescDB : debuffDescDB);
 
     let tagSet = new Set();
     sourceData.forEach(item => {
@@ -376,15 +376,15 @@ function refreshFilterList() {
         .filter(tagName => tagName.toLowerCase().includes(search))
         .sort((a, b) => a.localeCompare(b))
         .forEach(tagName => {
-            const isChecked = selectedStatuses.has(tagName);
-            const isInBuff = buffDescDB.some(b => b.status_name === tagName || (b.tag && b.tag.split(',').map(t => t.trim()).includes(tagName)));
-            const isInDebuff = debuffDescDB.some(d => d.status_name === tagName || (d.tag && d.tag.split(',').map(t => t.trim()).includes(tagName)));
+            const isChecked = selectedStatees.has(tagName);
+            const isInBuff = buffDescDB.some(b => b.state_name === tagName || (b.tag && b.tag.split(',').map(t => t.trim()).includes(tagName)));
+            const isInDebuff = debuffDescDB.some(d => d.state_name === tagName || (d.tag && d.tag.split(',').map(t => t.trim()).includes(tagName)));
 
             let typeIcon = (isInBuff && isInDebuff) ? '<span style="display:inline-block; width:12px; height:4px; background:#A361FF; vertical-align:middle; border-radius:1px;"></span>' : (isInBuff ? '<span style="color:#3488F0;">▲</span>' : '<span style="color:#FC6881;">▼</span>');
 
             const label = document.createElement('label');
             label.className = 'filter-label';
-            label.innerHTML = `<input type="checkbox" value="${tagName}" ${isChecked ? 'checked' : ''} onchange="toggleStatusFilter('${tagName}')"> ${typeIcon} <span style="margin-left:4px;">${tagName}</span>`;
+            label.innerHTML = `<input type="checkbox" value="${tagName}" ${isChecked ? 'checked' : ''} onchange="toggleStateFilter('${tagName}')"> ${typeIcon} <span style="margin-left:4px;">${tagName}</span>`;
             group.appendChild(label);
         });
 }
@@ -494,12 +494,12 @@ function makeSkillGauge(typeLabel, grade) {
 }
 
 function toggleOrder() { isAscending = !isAscending; document.getElementById('order-btn').innerText = isAscending ? "▲" : "▼"; handleSortFilter(); }
-function toggleStatusFilter(s) { selectedStatuses.has(s) ? selectedStatuses.delete(s) : selectedStatuses.add(s); handleSortFilter(); }
+function toggleStateFilter(s) { selectedStatees.has(s) ? selectedStatees.delete(s) : selectedStatees.add(s); handleSortFilter(); }
 function setFilterTab(t) { currentFilterTab = t; document.querySelectorAll('#modal-filter .tab-btn').forEach(b => b.classList.toggle('active', b.id === `tab-${t}`)); refreshFilterList(); }
 function openFilterModal() { document.getElementById('modal-filter').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
 function closeFilterModal() { document.getElementById('modal-filter').classList.add('hidden'); document.body.style.overflow = 'auto'; }
 function resetFilters() {
-    selectedStatuses.clear();
+    selectedStatees.clear();
     const searchInput = document.getElementById('filter-search');
     if (searchInput) searchInput.value = '';
     setFilterTab('all');

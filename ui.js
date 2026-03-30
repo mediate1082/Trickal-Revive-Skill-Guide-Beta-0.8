@@ -53,7 +53,7 @@ const formatDescWithBullets = (text) => {
 
 // 개별 스킬별 부가 효과 카드 렌더링 함수
 function renderEffectCard(type, skillInfo, buffString, condString, targetString, ctx, customContent = null, showBadge = false, isRecommend = false) {
-    const { allStatusDB, debuffDescDB } = ctx;
+    const { allStateDB, debuffDescDB } = ctx;
     let iconPath = "", typeLabel = "", skillName = "", themeColor = "";
     
     // 타입 배지 (저학년/고학년 전용 아이콘)
@@ -129,12 +129,12 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
             </div>
             
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${customContent ? customContent : renderEffectItems(buffString, condString, targetString, ctx.allStatusDB, ctx.debuffDescDB)}
+                ${customContent ? customContent : renderEffectItems(buffString, condString, targetString, ctx.allStateDB, ctx.debuffDescDB)}
             </div>
         </div>`;
 }
 // 상태이상 개별 아이템 음각 박스 (좌측 컬러 바 적용)
-function renderEffectItems(effectString, condString, targetString, allStatusDB, debuffDescDB) {
+function renderEffectItems(effectString, condString, targetString, allStateDB, debuffDescDB) {
     if (!effectString || effectString === 'X') return '';
     const names = effectString.split(',').map(s => s.trim());
     const conds = condString ? condString.split(',').map(s => s.trim()) : [];
@@ -142,16 +142,16 @@ function renderEffectItems(effectString, condString, targetString, allStatusDB, 
 
     return names.map((raw, index) => {
         const pureName = raw.split('(')[0].trim();
-        const info = allStatusDB.find(d => d.status_name === pureName);
-        const isDebuff = (info && (info.type === "약화" || info.type === "제어" || info.type === "지속피해")) || (debuffDescDB.some(d => d.status_name === pureName));
+        const info = allStateDB.find(d => d.state_name === pureName);
+        const isDebuff = (info && (info.type === "약화" || info.type === "제어" || info.type === "지속피해")) || (debuffDescDB.some(d => d.state_name === pureName));
         const accentColor = isDebuff ? "#FC6881" : "#3488F0"; 
-        const iconSrc = (info && info.icon_file) ? `./assets/icons/status/${info.icon_file}` : `./assets/icons/status/버프_아이콘 없음.webp`;
+        const iconSrc = (info && info.icon_file) ? `./assets/icons/state/${info.icon_file}` : `./assets/icons/state/버프_아이콘 없음.webp`;
 
         return `
             <div style="position: relative; background: #f8f9fa; border-radius: 12px; padding: 12px 12px 12px 18px; 
                         box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${accentColor}; 
                         border: 1px solid rgba(0,0,0,0.03); display: flex; align-items: flex-start; gap: 12px; overflow: hidden;">
-                <img src="${iconSrc}" style="width: 34px; height: 34px; flex-shrink: 0;" onerror="this.src='./assets/icons/status/버프_아이콘 없음.webp';">
+                <img src="${iconSrc}" style="width: 34px; height: 34px; flex-shrink: 0;" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp';">
                 <div style="flex: 1;">
                     <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;">
                         <strong style="color: ${COLORS.textMain}; font-size: 1rem;">${raw}</strong>
@@ -171,7 +171,7 @@ const renderAsideTabContent = (char, asideData) => {
     if (!asideData || !asideData.aside1_name) {
         return `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; text-align: center;">
-                <img src="./assets/icons/common_icons/empty.webp" style="width: 80px; opacity: 0.5; margin-bottom: 15px;" onerror="this.src='./assets/icons/status/버프_아이콘 없음.webp'">
+                <img src="./assets/icons/common_icons/empty.webp" style="width: 80px; opacity: 0.5; margin-bottom: 15px;" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
                 <div style="color: #94a3b8; font-weight: bold;">아직 어사이드 정보가 준비되지 않았어용...</div>
             </div>`;
     }
@@ -192,7 +192,7 @@ const renderAsideTabContent = (char, asideData) => {
 
         if (!name) continue;
 
-        html += `
+html += `
             <div style="background: #ffffff; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px;">
                 <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
                     <div style="position: relative; flex-shrink: 0;">
@@ -216,16 +216,43 @@ const renderAsideTabContent = (char, asideData) => {
                         ${parseSkillLevelText(template, value, themeColor)}
                     </div>` : ''}
 
-                    ${(i === 3 && asideData.aside_3_global) ? `
-                    <div style="position: relative; background: #fdf4ff; border-radius: 12px; padding: 12px 12px 12px 18px; 
+${(i === 3 && asideData.aside_3_global) ? `
+                    <div style="background: #f8f9fa; border-radius: 12px; padding: 16px; 
                                 box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${themeColor}; 
                                 border: 1px solid rgba(0,0,0,0.03); margin-top: 5px;">
-                        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                            <strong style="color: ${themeColor}; font-size: 0.95rem;">★ 전 사도 보유 효과</strong>
+                        
+                        <div style="margin-bottom: 12px;">
+                            <strong style="color: #333333; font-size: 0.95rem;">사도 전체 능력치</strong>
                         </div>
-                        <div style="font-size: 0.88rem; color: #555; line-height: 1.5;">
-                            전 사도 <span style="font-weight:bold; color:${themeColor};">${asideData.aside_3_global.split(',').join(', ')}</span> 증가 : 
-                            <span style="font-weight:bold;">${globalStatValue}</span>
+
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${asideData.aside_3_global.split(',').map(stat => {
+                                const pureStat = stat.trim();
+                                // 기호 앞에 +가 없는 경우 자동 추가 (3성 % 등)
+                                const fullVal = globalStatValue.startsWith('+') ? globalStatValue : '+' + globalStatValue;
+                                
+                                // 숫자(소수점 포함)와 기호를 분리하는 로직
+                                const numMatch = fullVal.match(/[0-9.]+/);
+                                const numberPart = numMatch ? numMatch[0] : "";
+                                const [prefix, suffix] = fullVal.split(numberPart);
+
+                                return `
+                                <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 10px 14px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <img src="./assets/icons/base_stat/${pureStat}.webp" 
+                                             style="width: 28px; height: 28px;" 
+                                             onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
+                                        <span style="font-size: 0.9rem; font-weight: 700; color: #475569;">전체 ${pureStat}</span>
+                                    </div>
+                                    <span style="font-size: 1.05rem; font-weight: 800; color: #475569;">
+                                        ${prefix}<span style="color: ${themeColor};">${numberPart}</span>${suffix}
+                                    </span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                        
+                        <div style="margin-top: 12px; text-align: center; font-size: 0.75rem; color: ${themeColor}; font-weight: bold; opacity: 0.8;">
+                            사도 전체 능력치 효과는 모든 사도에게 적용됩니다.
                         </div>
                     </div>` : ''}
                 </div>
@@ -239,7 +266,7 @@ export function openDetailModal(char, dataContext) {
     currentSkillMode = 'PvE';
     currentApostle = char;
     currentDataContext = dataContext;
-    const { debuffDB, buffDB, highSkillDB, lowSkillDB, allStatusDB, debuffDescDB, normalAtkDB, asideDB } = dataContext;
+    const { debuffDB, buffDB, highSkillDB, lowSkillDB, allStateDB, debuffDescDB, normalAtkDB, asideDB } = dataContext;
     const apostleDebuffs = debuffDB.find(d => d.name.trim() === char.name.trim());
     const apostleBuffs = buffDB.find(b => b.name.trim() === char.name.trim());
     const skillData = highSkillDB.find(s => s['chara_name']?.trim() === char.name.trim());
@@ -359,7 +386,7 @@ export function openDetailModal(char, dataContext) {
             <div class="empty-tab-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; text-align: center; width: 100%;">
                 <img src="./assets/icons/common_icons/empty.webp" 
                      style="width: 80px; height: 80px; margin-bottom: 20px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));"
-                     onerror="this.src='./assets/icons/status/버프_아이콘 없음.webp'">
+                     onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
                 <div style="font-size: 1.15rem; font-weight: 800; color: #475569; letter-spacing: -0.5px;">부가 효과가 없어용...</div>
             </div>`;
     }

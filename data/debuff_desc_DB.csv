@@ -1,4 +1,4 @@
-﻿status_name,icon_file,type,description,tag
+﻿state_name,icon_file,type,description,tag
 SP 감소,디버프_SP 감소.webp,약화,현재 SP 잔량이 감소한다,SP 감소
 SP 회복 감소,디버프_SP 회복 감소.webp,약화,SP 자연 회복량이 감소한다,SP 회복 감소
 넉백,디버프_넉백.webp,제어,행동불가 상태로 뒤로 밀린다,"넉백,행동불가"
