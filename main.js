@@ -165,6 +165,14 @@ async function loadExternalData() {
                     grid.classList.add('reset-ani');
                 }
 
+                // 8. [추가] 어사이드 필터 초기화
+                if (typeof window.resetAsideFilter === 'function') {
+                    // 모달을 열지 않고 데이터만 초기화하기 위해 로직 분리 호출
+                    window.activeAsideFilters = { targets: [], effects: [] };
+                    const asideCount = document.getElementById('aside-filter-count');
+                    if (asideCount) asideCount.innerText = '';
+                }
+
                 handleSortFilter(); // 필터링 실행
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -248,6 +256,18 @@ function handleSortFilter() {
         const nameMatch = (char.name || "").toLowerCase().includes(query);
         if (!nameMatch) return false;
 
+        if (window.activeAsideFilters) {
+            const aData = asideDB.find(a => a.chara_name === char.name);
+            const selT = activeAsideFilters.targets.filter(t => !t.includes('무관'));
+            const selE = activeAsideFilters.effects.filter(e => !e.includes('무관'));
+
+            if (selT.length > 0 || selE.length > 0) {
+                if (!aData) return false; 
+                const tMatch = selT.length === 0 || selT.some(t => aData.aside3_target_tags?.includes(t.replace(' 아군', '').replace('파티 ', '')));
+                const eMatch = selE.length === 0 || selE.some(e => aData.aside3_effect_tags?.includes(e));
+                if (!(tMatch && eMatch)) return false;
+            }
+        }
         let stateMatch = true;
         if (selectedStatees.size > 0) {
             const selected = Array.from(selectedStatees);

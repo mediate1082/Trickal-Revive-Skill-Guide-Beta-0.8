@@ -1,7 +1,10 @@
 let currentSkillMode = 'PvE'; // PvE로 고정
 let currentApostle = null;
 let currentDataContext = null;
-
+window.activeAsideFilters = {
+    targets: [],
+    effects: []
+};
 // [컬러 가이드]
 const COLORS = {
     low: '#22C55E',      // 저학년 테마
@@ -413,7 +416,7 @@ export function openDetailModal(char, dataContext) {
             <div class="modal-tabs">
                 <button class="tab-btn active" onclick="switchTab(0)">강화 추천</button>
                 <button class="tab-btn" onclick="switchTab(1)">부가 효과</button>
-                <button class="tab-btn" onclick="switchTab(2)">상세 설명</button>
+                <button class="tab-btn" onclick="switchTab(2)">스킬 정보</button>
                 <button class="tab-btn" onclick="switchTab(3)">어사이드 정보</button> </div>
             </div>
         </div>
@@ -534,3 +537,143 @@ export function switchTab(idx) {
     contents.forEach((c, i) => i === idx ? c.classList.remove('hidden') : c.classList.add('hidden'));
     btns.forEach((b, i) => i === idx ? b.classList.add('active') : b.classList.remove('active'));
 }
+
+// [1] 필터 데이터 정의 (항목 매칭용)
+const ASIDE_TARGETS = ['무관(상관없음)', '파티 전체', '전열 아군', '중열 아군', '후열 아군', '동일 성격 아군'];
+const ASIDE_EFFECTS = [
+    '무관(상관없음)', '주는 피해량 증가', '받는 피해량 감소', '받는 물리 피해량 감소', '받는 마법 피해량 감소',
+    '스킬 피해량 증가', '공격 속도 증가', '최대 HP 증가', 'SP 회복량 증가',
+    '치명타 증가', '치명 피해 증가', '치명타 저항 증가', '치명 피해 저항 증가'
+];
+
+// [2] 모달 열기
+window.openAsideFilter = () => {
+    document.getElementById('modal-aside-filter').classList.remove('hidden');
+    window.switchAsideFilterTab(0); 
+    document.body.style.overflow = 'hidden';
+};
+
+
+// [3] 탭 전환 로직 (디자인 포인트 포함)
+window.switchAsideFilterTab = (idx) => {
+    const group = document.getElementById('aside-filter-group');
+    const btns = document.querySelectorAll('.aside-tab');
+    
+    if (!group) return;
+
+    // 1. 탭 버튼 활성화 클래스만 토글
+    btns.forEach((b, i) => b.classList.toggle('active', i === idx));
+
+    // 2. 내용 렌더링 (모서리 제어 로직 삭제 - CSS에서 정적으로 처리)
+    if (idx === 0) {
+        group.innerHTML = ASIDE_TARGETS.map(t => renderAsideOption('targets', t)).join('');
+    } else {
+        group.innerHTML = ASIDE_EFFECTS.map(e => renderAsideOption('effects', e)).join('');
+    }
+};
+
+// [4] 옵션 렌더링 (라벨 + 체크박스 구조 유지)
+function renderAsideOption(type, value) {
+    const isActive = window.activeAsideFilters[type].includes(value);
+    const activeStyle = isActive ? 'background-color: #f4f9e9; border-color: var(--accent-green);' : '';
+    
+    return `
+        <label class="filter-label" style="${activeStyle}">
+            <input type="checkbox" value="${value}" ${isActive ? 'checked' : ''} 
+                   onchange="window.toggleAsideFilter('${type}', '${value}', this)"
+                   style="margin: 0; width: 16px; height: 16px;">
+            <span style="margin-left: 4px;">${value}</span>
+        </label>
+    `;
+}
+
+// [5] 필터 토글 (무관 처리 포함)
+window.toggleAsideFilter = (type, value, checkbox) => {
+    if (value.includes('무관')) {
+        window.activeAsideFilters[type] = [value];
+    } else {
+        window.activeAsideFilters[type] = window.activeAsideFilters[type].filter(v => !v.includes('무관'));
+        const index = window.activeAsideFilters[type].indexOf(value);
+        if (index > -1) window.activeAsideFilters[type].splice(index, 1);
+        else window.activeAsideFilters[type].push(value);
+    }
+    window.switchAsideFilterTab(type === 'targets' ? 0 : 1);
+};
+
+// [6] 필터 적용 함수
+window.applyAsideFilter = () => {
+    const selT = window.activeAsideFilters.targets;
+    const selE = window.activeAsideFilters.effects;
+    const total = selT.length + selE.length;
+
+    const countSpan = document.getElementById('aside-filter-count');
+    if (countSpan) {
+        countSpan.innerText = total > 0 ? `(${total})` : '';
+    }
+
+    window.closeAsideFilter();
+
+    // 메인 필터링 실행
+    if (typeof window.handleSortFilter === 'function') {
+        window.handleSortFilter();
+    }
+};
+
+window.addEventListener('click', (e) => {
+    const asideFilterModal = document.getElementById('modal-aside-filter');
+    // 클릭된 대상이 'modal-overlay' 클래스를 가진 배경일 경우에만 닫기
+    if (e.target === asideFilterModal) {
+        window.closeAsideFilter();
+    }
+});
+// [7] 초기화 함수
+window.resetAsideFilter = () => {
+    window.activeAsideFilters = { 
+        targets: [], 
+        effects: [] 
+    };
+
+    const countSpan = document.getElementById('aside-filter-count');
+    if (countSpan) countSpan.innerText = '';
+
+    window.switchAsideFilterTab(0); 
+    if (typeof window.handleSortFilter === 'function') {
+        window.handleSortFilter();
+    }
+};
+
+window.addEventListener('click', (e) => {
+    const asideModal = document.getElementById('modal-aside-filter');
+    const filterModal = document.getElementById('modal-filter');
+    const infoModal = document.getElementById('modal-info');
+    const detailModal = document.getElementById('modal-detail');
+
+    // 어사이드 필터 배경 클릭
+    if (e.target === asideModal) {
+        window.closeAsideFilter();
+    }
+    // 부가 효과 필터 배경 클릭 (main.js에 함수가 있다면 window로 호출)
+    if (e.target === filterModal) {
+        if (typeof window.closeFilterModal === 'function') window.closeFilterModal();
+        else if (typeof closeFilterModal === 'function') closeFilterModal();
+    }
+    // 정보 모달 배경 클릭
+    if (e.target === infoModal) {
+        if (typeof window.closeModal === 'function') window.closeModal('modal-info');
+        else if (typeof closeModal === 'function') closeModal('modal-info');
+    }
+    // 상세 정보 모달 배경 클릭
+    if (e.target === detailModal) {
+        detailModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+});
+
+// 2. [추가] closeAsideFilter 함수 재등록 (혹시 모를 누락 방지)
+window.closeAsideFilter = () => {
+    const modal = document.getElementById('modal-aside-filter');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+};

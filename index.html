@@ -34,6 +34,10 @@
                         <svg class="nav-icon" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
                         부가 효과 필터 <span id="filter-count"></span>
                     </button>
+                   <button class="btn filter-btn" onclick="window.openAsideFilter()">
+                        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
+                        어사이드 ★3 필터 <span id="aside-filter-count"></span>
+                    </button>
                     <div class="search-box" style="margin-left: auto;">
                         <input type="text" id="search-input" placeholder="사도 이름 검색..." oninput="handleSortFilter()">
                         <button id="search-clear-btn" class="hidden" onclick="clearSearch()">&times;</button>
@@ -49,6 +53,25 @@
         <div id="loading-text" style="text-align:center; padding:50px; color:#888;">데이터 로딩 중...</div>
         <div id="main-grid" class="grid"></div>
     </div>
+
+<div id="modal-aside-filter" class="modal-overlay hidden">
+    <div class="modal-content">
+        <button class="modal-close-x" onclick="window.closeAsideFilter()">&times;</button>
+        <h3 style="padding: 25px 0 20px 25px; margin: 0; font-size: 1.4rem; text-align: left; color: var(--text-dark);">어사이드 ★3 필터</h3>
+        
+        <div class="modal-tabs">
+            <button class="tab-btn aside-tab active" onclick="window.switchAsideFilterTab(0)">적용 대상</button>
+            <button class="tab-btn aside-tab" onclick="window.switchAsideFilterTab(1)">적용 효과</button>
+        </div>
+
+        <div id="aside-filter-group"></div>
+
+        <div class="modal-footer" style="width: 90%; margin: 0 auto; display: flex; gap: 10px; padding: 20px 0;">
+            <button class="btn" style="flex: 1;" onclick="window.resetAsideFilter()">초기화</button>
+            <button class="btn apply-btn" style="flex: 1; background: var(--accent-green); border: none;" onclick="window.applyAsideFilter()">적용</button>
+        </div>
+    </div>
+</div>
 
    <div id="modal-filter" class="modal-overlay hidden" onclick="closeFilterModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
