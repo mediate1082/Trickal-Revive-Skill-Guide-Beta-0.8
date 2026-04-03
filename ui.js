@@ -149,26 +149,27 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
         const isDebuff = (info && (info.type === "약화" || info.type === "제어" || info.type === "지속피해")) || (debuffDescDB.some(d => d.state_name === pureName));
         const accentColor = isDebuff ? "#FC6881" : "#3488F0"; 
         const iconSrc = (info && info.icon_file) ? `./assets/icons/state/${info.icon_file}` : `./assets/icons/state/버프_아이콘 없음.webp`;
-
         return `
-            <div style="position: relative; background: #f8f9fa; border-radius: 12px; padding: 12px 12px 12px 18px; 
-                        box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${accentColor}; 
-                        border: 1px solid rgba(0,0,0,0.03); display: flex; align-items: flex-start; gap: 12px; overflow: hidden;">
-                <img src="${iconSrc}" style="width: 34px; height: 34px; flex-shrink: 0;" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp';">
-                <div style="flex: 1;">
-                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;">
-                        <strong style="color: ${COLORS.textMain}; font-size: 1rem;">${raw}</strong>
-                        ${conds[index] ? `<span style="font-size: 0.7rem; background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 6px; font-weight: bold;">${conds[index]}</span>` : ''}
-                        ${targets[index] ? `<span style="font-size: 0.7rem; background: #DCFCE7; color: #166534; padding: 2px 6px; border-radius: 6px; font-weight: bold;">${targets[index]}</span>` : ''}
-                    </div>
-                    <div style="font-size: 0.88rem; color: #555; line-height: 1.5; word-break: keep-all;">
-                        ${info ? info.description : "상세 정보가 없습니다."}
-                    </div>
+        <div class="effect-item" 
+            data-cond="${conds[index] || ''}" 
+            data-target="${targets[index] || ''}"
+            style="position: relative; background: #f8f9fa; border-radius: 12px; padding: 12px 12px 12px 18px; 
+                    box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${accentColor}; 
+                    border: 1px solid rgba(0,0,0,0.03); display: flex; align-items: flex-start; gap: 12px; 
+                    overflow: hidden; margin: 0 !important;"> <img src="${iconSrc}" style="width: 34px; height: 34px; flex-shrink: 0;" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp';">
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;">
+                    <strong style="color: ${COLORS.textMain}; font-size: 1rem;">${raw}</strong>
+                    ${conds[index] ? `<span style="font-size: 0.7rem; background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 6px; font-weight: bold;">${conds[index]}</span>` : ''}
+                    ${targets[index] ? `<span style="font-size: 0.7rem; background: #DCFCE7; color: #166534; padding: 2px 6px; border-radius: 6px; font-weight: bold;">${targets[index]}</span>` : ''}
                 </div>
-            </div>`;
+                <div style="font-size: 0.88rem; color: #555; line-height: 1.5; word-break: keep-all;">
+                    ${info ? info.description : "상세 정보가 없습니다."}
+                </div>
+            </div>
+        </div>`;
     }).join('');
 }
-
 // 어사이드 전용 헬퍼 함수 (전체 버전)
 const renderAsideTabContent = (char, asideData) => {
     if (!asideData || !asideData.aside1_name) {
@@ -375,6 +376,13 @@ export function openDetailModal(char, dataContext) {
     // 4. 모달에 HTML 때려넣기 (고정 헤더 + 스크롤 본문 구조)
    const modalContent = document.querySelector('#modal-detail .modal-content');
 
+   let flagsHTML = `
+        <div class="modal-side-flags" id="detail-side-flags">
+            <div class="side-flag" id="flag-aside" onclick="window.toggleQuickFilter('aside')" title="A2 효과 제외">A2 제외</div>
+            <div class="side-flag" id="flag-artifact" onclick="window.toggleQuickFilter('artifact')" title="애착 제외">애착 제외</div>
+            <div class="side-flag" id="flag-self" onclick="window.toggleQuickFilter('self')" title="자신 제외">자신 제외</div>
+        </div>`;
+
   // [1] 부가 효과 탭(tab-1) 내용물 계산 및 예외 처리 로직
     const tab1ContentHTML = (() => {
     const types = ['low', 'high', 'normal', 'power'];
@@ -402,24 +410,27 @@ export function openDetailModal(char, dataContext) {
 })();
     
    modalContent.innerHTML = `
+        ${flagsHTML}
         <button class="modal-close-x" onclick="document.getElementById('modal-detail').classList.add('hidden'); document.body.style.overflow='auto';">&times;</button>
 
         <div class="modal-fixed-header" id="modal-header">
-            <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px; padding-right: 35px;">
-                <img src="./assets/images/${char.name}.webp" style="width: 85px; height: 85px; border-radius: 18px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onerror="this.src='./assets/images/default.webp'">
-                <div>
-                    <h2 style="margin: 0; font-size: 1.5rem;">${char.name}</h2>
-                    <p style="margin: 4px 0; font-weight: bold; font-size: 1rem; color: ${tierColor};">${char.tier || ''}</p>
-                    <p style="margin: 0; color: #666; font-size: 0.85rem;">${char.personality} | ${char.role} | ${char.line}</p>
-                </div>
-            </div>
-            <div class="modal-tabs">
-                <button class="tab-btn active" onclick="switchTab(0)">강화 추천</button>
-                <button class="tab-btn" onclick="switchTab(1)">부가 효과</button>
-                <button class="tab-btn" onclick="switchTab(2)">스킬 정보</button>
-                <button class="tab-btn" onclick="switchTab(3)">어사이드 정보</button> </div>
+        <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px; padding-right: 35px;">
+            <img src="./assets/images/${char.name}.webp" style="width: 85px; height: 85px; border-radius: 18px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onerror="this.src='./assets/images/default.webp'">
+            <div>
+                <h2 style="margin: 0; font-size: 1.5rem;">${char.name}</h2>
+                <p style="margin: 4px 0; font-weight: bold; font-size: 1rem; color: ${tierColor};">${char.tier || ''}</p>
+                <p style="margin: 0; color: #666; font-size: 0.85rem;">${char.personality} | ${char.role} | ${char.line}</p>
             </div>
         </div>
+        
+        <div class="modal-tabs" style="position: relative;">
+            <button class="tab-btn active" onclick="switchTab(0)">강화 추천</button>
+            <button class="tab-btn" onclick="switchTab(1)">부가 효과</button>
+            <button class="tab-btn" onclick="switchTab(2)">스킬 정보</button>
+            <button class="tab-btn" onclick="switchTab(3)">어사이드 정보</button>
+            
+            <div class="tab-indicator" id="tab-indicator"></div> 
+        </div> </div>
 
         <div id="detail-body-scroll" style="height: 500px; overflow-y: auto; padding-right: 5px; scroll-behavior: smooth;">
             <div id="tab-0" class="tab-content">
@@ -534,8 +545,18 @@ export function parseSkillLevelText(template, raw, color = '#e74c3c') {
 export function switchTab(idx) {
     const contents = document.querySelectorAll('#modal-detail .tab-content');
     const btns = document.querySelectorAll('#modal-detail .tab-btn');
+    const indicator = document.getElementById('tab-indicator');
+    const flagContainer = document.getElementById('detail-side-flags');
     contents.forEach((c, i) => i === idx ? c.classList.remove('hidden') : c.classList.add('hidden'));
+    
     btns.forEach((b, i) => i === idx ? b.classList.add('active') : b.classList.remove('active'));
+
+    if (indicator) {indicator.style.transform = `translateX(${idx * 100}%)`;}
+
+    if (flagContainer) {
+        if (idx === 1) flagContainer.classList.add('show');
+        else flagContainer.classList.remove('show');
+    }
 }
 
 // [1] 필터 데이터 정의 (항목 매칭용)
@@ -677,3 +698,47 @@ window.closeAsideFilter = () => {
         document.body.style.overflow = 'auto';
     }
 };
+
+
+// 플래그 토글 및 블러 처리 함수
+export function toggleQuickFilter(type) {
+    const flag = document.getElementById(`flag-${type}`);
+    if (!flag) return;
+
+    flag.classList.toggle('is-active');
+    const isActive = flag.classList.contains('is-active');
+    
+    const items = document.querySelectorAll('.effect-item');
+    items.forEach(item => {
+        const cond = item.getAttribute('data-cond') || "";
+        const target = item.getAttribute('data-target') || "";
+        
+        let shouldHide = false;
+        if (type === 'aside' && (cond.includes('A2') || cond.includes('어사이드'))) shouldHide = isActive;
+        if (type === 'artifact' && cond.includes('애착')) shouldHide = isActive;
+        if (type === 'self' && target === '자신') shouldHide = isActive;
+
+        if (shouldHide) {
+            item.classList.add('is-hidden'); // 클래스명 변경
+        } else {
+            checkRemainingFilters(item);
+        }
+    });
+}
+
+// 모든 필터 조건을 검사해서 블러를 유지할지 결정
+function checkRemainingFilters(item) {
+    const cond = item.getAttribute('data-cond') || "";
+    const target = item.getAttribute('data-target') || "";
+    
+    const asideActive = document.getElementById('flag-aside')?.classList.contains('is-active');
+    const artActive = document.getElementById('flag-artifact')?.classList.contains('is-active');
+    const selfActive = document.getElementById('flag-self')?.classList.contains('is-active');
+
+    let stillNeedHide = false;
+    if (asideActive && (cond.includes('A2') || cond.includes('어사이드'))) stillNeedHide = true;
+    if (artActive && cond.includes('애착')) stillNeedHide = true;
+    if (selfActive && target === '자신') stillNeedHide = true;
+
+    if (!stillNeedHide) item.classList.remove('is-hidden');
+}

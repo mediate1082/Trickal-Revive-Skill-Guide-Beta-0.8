@@ -62,6 +62,7 @@
         <div class="modal-tabs">
             <button class="tab-btn aside-tab active" onclick="window.switchAsideFilterTab(0)">적용 대상</button>
             <button class="tab-btn aside-tab" onclick="window.switchAsideFilterTab(1)">적용 효과</button>
+            <div class="tab-indicator" id="aside-tab-indicator" style="width: 50%;"></div>
         </div>
 
         <div id="aside-filter-group"></div>
@@ -118,9 +119,20 @@
     </div>
 </div>
 
-    <div id="modal-detail" class="modal-overlay hidden" onclick="closeModal('modal-detail')">
-        <div class="modal-content" onclick="event.stopPropagation()"><div id="detail-body"></div><button class="btn" style="width:100%; margin-top:15px; background:var(--accent-green);" onclick="closeModal('modal-detail')">닫기</button></div>
+<div id="modal-detail" class="modal-overlay hidden" onclick="closeModal('modal-detail')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        
+        <div class="modal-side-flags" id="detail-side-flags">
+            <div class="side-flag" id="flag-aside" onclick="window.toggleQuickFilter('aside')" title="A2 효과 제외">A2</div>
+            <div class="side-flag" id="flag-artifact" onclick="window.toggleQuickFilter('artifact')" title="애착 아티팩트 효과 제외">ART</div>
+            <div class="side-flag" id="flag-self" onclick="window.toggleQuickFilter('self')" title="자신 대상 효과 제외">SELF</div>
+        </div>
+
+        <div id="detail-body"></div>
+        
+        <button class="btn" style="width:100%; margin-top:15px; background:var(--accent-green);" onclick="closeModal('modal-detail')">닫기</button>
     </div>
+</div>
     <div id="modal-info" class="modal-overlay hidden" onclick="closeModal('modal-info')">
         <div class="modal-content" onclick="event.stopPropagation()"><h3 style="margin:0;">범례</h3><p id="info-content" style="white-space:pre-wrap;"></p><button class="btn" style="width:100%; margin-top:15px;" onclick="closeModal('modal-info')">닫기</button></div>
     </div>

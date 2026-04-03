@@ -1,4 +1,4 @@
-import { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv } from './ui.js';
+import { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter } from './ui.js';
 
 // [2] 전역 변수 설정
 let db = [], 
@@ -33,6 +33,7 @@ window.openDetailModal = (char) => {
 window.switchTab = switchTab;
 window.updateLowSkillLv = (lv, name) => updateLowSkillLv(lv, name, lowSkillDB);
 window.updateHighSkillLv = (lv, name) => updateHighSkillLv(lv, name, highSkillDB);
+window.toggleQuickFilter = (type) => toggleQuickFilter(type);
 
 window.handleSortFilter = handleSortFilter;
 window.toggleOrder = toggleOrder;
@@ -526,7 +527,19 @@ function resetFilters() {
     handleSortFilter(); 
 }
 function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); document.body.style.overflow='hidden';}
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.body.style.overflow='auto';}
+function closeModal(id) {
+    // 1. 상세 정보 모달(modal-detail)을 닫을 때만 플래그 상태 리셋
+    if (id === 'modal-detail') {
+        const flags = document.querySelectorAll('.side-flag');
+        flags.forEach(flag => flag.classList.remove('is-active'));
+
+        const blurredItems = document.querySelectorAll('.effect-item.is-blurred');
+        blurredItems.forEach(item => item.classList.remove('is-blurred'));
+    }
+    const modal = document.getElementById(id);
+    if (modal) {modal.classList.add('hidden');}
+    document.body.style.overflow = 'auto';
+}
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 loadExternalData();

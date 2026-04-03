@@ -454,34 +454,10 @@ header {
             color: #000;
         }
 
-        .modal-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: bold; color: #888; font-family: inherit; }
-        .tab-btn.active { color: var(--text-dark); border-bottom: 3px solid var(--accent-green); }
-        .skill-box { background: #f9fdf0; border: 1px solid #e0ebc6; border-radius: 15px; padding: 15px; margin-bottom: 15px; }
-        .skill-effect-container {
-            background: #FDFDFD !important; /* 요청하신 배경색 */
-            border: 1px solid #eee !important;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        /* 섹션별 왼쪽 테두리 컬러 구분 */
-        .border-low-high { border-left: 5px solid #BCDD5F !important; }   /* 저/고학년 */
-        .border-normal-power { border-left: 5px solid #607D8B !important; } /* 일반/강화 */
-        .border-aside { border-left: 5px solid #9B59B6 !important; }        /* 어사이드 */
-
-        /* 섹션 제목 스타일 */
-        .skill-section-title {
-            font-weight: bold;
-            font-size: 0.95rem;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-dark);
-        }
+        .modal-tabs { display: flex; position: relative!important; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: bold; color: #888; font-family: inherit; z-index: 5; transition: color 0.3s ease;}        
+        .tab-btn.active {color: var(--text-dark); border-bottom: none !important; }
+        .tab-indicator {position: absolute; bottom: -2px; left: 0;width: 25%;  height: 3px;background-color: var(--accent-green) !important;transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);z-index: 10;display: block !important;}
 
         /* 필터 모달 전용 */
         .modal-search-box { position: relative; width: 100%; margin-bottom: 15px; }
@@ -891,4 +867,121 @@ header {
     background-color: #f4f9e9 !important;
     border-color: var(--accent-green) !important;
     font-weight: bold;
+}
+
+#modal-detail .modal-content {
+    overflow: visible !important; 
+    position: relative;
+    z-index: 2001;
+    background: #fff;
+    border-radius: 20px; /* 기존 곡률 유지 */
+}
+
+/* 2. [핵심] 상단 고정 헤더에 상단 곡률 다시 부여 */
+.modal-fixed-header {
+    padding: 20px 20px 0 20px;
+    background: #fff;
+    z-index: 10;
+    flex-shrink: 0;
+    border-bottom: 1px solid #eee;
+    /* 추가: 모달 본체의 곡률에 맞춰 윗부분을 깎음 */
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+/* 3. [핵심] 하단 버튼 영역 또는 마지막 요소에 하단 곡률 부여 */
+#modal-detail .btn[onclick*="closeModal"] {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+/* 4. 스크롤 영역 배경색이 삐져나오지 않도록 조정 */
+#detail-body-scroll {
+    background: #f1f3f5;
+    border-bottom-left-radius: 20px; 
+    border-bottom-right-radius: 20px;
+}
+
+/* 1. 플래그들을 담는 바구니 (모달 왼쪽에 부착) */
+.modal-side-flags {
+    position: absolute;
+    left: 0px;
+    top: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: -1;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* 2. tab-1 활성화 시 플래그 등장  */
+.modal-side-flags.show {
+    left: -85px; 
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 3. 플래그 크기 확대 (모바일 가독성) */
+.side-flag {
+    width: 90px;
+    height: 40px;
+    background: rgba(188, 221, 95, 0.85) !important; 
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-right: none;
+    border-radius: 0; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #333;
+    cursor: pointer;
+    box-shadow: -2px 1px 4px rgba(0, 0, 0, 0.1); 
+    white-space: nowrap;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(2px); }
+
+.side-flag:hover {
+    background: rgba(188, 221, 95, 0.95) !important;
+    transform: translateX(-3px);
+    filter: brightness(1.05);
+}
+    
+
+/* 4. 활성화 시 안으로 쏙 들어가는 연출 보정 */
+.side-flag.is-active {
+    transform: translateX(65px); /* 쏙 들어감 */
+    background: var(--accent-green) !important;
+    color: #fff !important;
+    box-shadow: none;
+    border-left: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.side-flag.is-active:hover {
+    transform: translateX(55px); 
+}
+
+/* 5. 스무스 페이드 & 슬라이드 애니메이션 (아이템용) */
+.effect-item {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 500px; 
+    opacity: 1;
+    transform: translateY(0);
+    overflow: hidden;
+    margin: 0 !important; 
+}
+.effect-item.is-hidden {
+    opacity: 0;
+    max-height: 0;
+    /* gap에 의한 공간까지 지우기 위해 display: none 처럼 인식하게 함 */
+    transform: scale(0.95);
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: none !important;
+    pointer-events: none;
+    /* transition을 위해 visibility 대신 opacity 사용 유지 */
 }
