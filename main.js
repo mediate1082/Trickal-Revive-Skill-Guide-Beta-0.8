@@ -544,3 +544,59 @@ function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
 loadExternalData();
 window.onscroll = () => { document.getElementById("top-btn").style.display = (window.scrollY > 300) ? "flex" : "none"; };
+
+window.addEventListener('keydown', (e) => {
+    const detailModal = document.getElementById('modal-detail');
+    const isDetailVisible = !detailModal.classList.contains('hidden');
+    if (e.key === 'Escape') {
+        if (isDetailVisible) {
+            detailModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+        if (typeof window.closeFilterModal === 'function') window.closeFilterModal();
+        if (typeof window.closeAsideFilter === 'function') window.closeAsideFilter();
+    }
+    if (e.key === 'Tab' && isDetailVisible) {
+        e.preventDefault(); 
+        const btns = document.querySelectorAll('#modal-detail .tab-btn');
+        let currentIdx = Array.from(btns).findIndex(b => b.classList.contains('active'));
+
+        let nextIdx = (currentIdx + 1) % btns.length;
+        
+        if (typeof window.switchTab === 'function') {
+            window.switchTab(nextIdx);
+        } else {
+            btns[nextIdx].click();
+        }
+    }
+});
+
+// [main.js] 키보드 이벤트 리스너 근처에 추가
+window.addEventListener('mouseup', (e) => {
+    const detailModal = document.getElementById('modal-detail');
+    const isDetailVisible = !detailModal.classList.contains('hidden');
+
+    // 상세 모달이 열려 있을 때만 작동
+    if (isDetailVisible) {
+        // 마우스 4번 버튼 (Browser Back)
+        if (e.button === 3) {
+            e.preventDefault(); // 브라우저 기본 뒤로가기 방지
+            
+            detailModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+        
+        // (선택 사항) 마우스 5번 버튼 (Browser Forward)으로 탭 순환
+        if (e.button === 4) {
+            e.preventDefault();
+            const btns = document.querySelectorAll('#modal-detail .tab-btn');
+            let currentIdx = Array.from(btns).findIndex(b => b.classList.contains('active'));
+            let nextIdx = (currentIdx + 1) % btns.length;
+            
+            if (typeof window.switchTab === 'function') {
+                window.switchTab(nextIdx);
+            }
+        }
+    }
+});
+
