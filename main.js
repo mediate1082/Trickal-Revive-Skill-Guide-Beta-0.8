@@ -363,9 +363,13 @@ if (searchInput) {
 function checkTagMatch(list, kw) {
     if (!list || list.length === 0) return false;
     return list.some(n => {
-        const pureName = n.split('(')[0].trim();
         const targetKw = kw.trim();
+        
+        if (n.includes(targetKw)) return true;
+
+        const pureName = n.split('(')[0].trim();
         if (pureName === targetKw) return true;
+
         const info = allStateDB.find(d => (d.state_name || "").trim() === pureName);
         if (info && info.tag) {
             const tags = info.tag.split(',').map(t => t.trim());

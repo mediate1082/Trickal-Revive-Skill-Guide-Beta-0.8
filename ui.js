@@ -144,11 +144,21 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
     const targets = targetString ? targetString.split(',').map(s => s.trim()) : [];
 
     return names.map((raw, index) => {
+        // 1. 원본 텍스트(예: "무적(개전)") 그대로 DB에 전용 설명이 있는지 먼저 검색
+        let info = allStateDB.find(d => d.state_name === raw);
+        
+        // 2. 만약 전용 정보가 없다면, 기존처럼 괄호를 떼어낸 이름(예: "무적")으로 다시 검색
         const pureName = raw.split('(')[0].trim();
-        const info = allStateDB.find(d => d.state_name === pureName);
-        const isDebuff = (info && (info.type === "약화" || info.type === "제어" || info.type === "지속피해")) || (debuffDescDB.some(d => d.state_name === pureName));
+        if (!info) {
+            info = allStateDB.find(d => d.state_name === pureName);
+        }
+
+        // 3. 디버프 판별 시에도 괄호가 포함된 원본과 자른 이름 둘 다 대응하도록 보완
+        const isDebuff = (info && (info.type === "약화" || info.type === "제어" || info.type === "지속피해")) || (debuffDescDB.some(d => d.state_name === pureName || d.state_name === raw));
+        
         const accentColor = isDebuff ? "#FC6881" : "#3488F0"; 
         const iconSrc = (info && info.icon_file) ? `./assets/icons/state/${info.icon_file}` : `./assets/icons/state/버프_아이콘 없음.webp`;
+        
         return `
         <div class="effect-item" 
             data-cond="${conds[index] || ''}" 
