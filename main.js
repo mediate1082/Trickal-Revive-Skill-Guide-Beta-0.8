@@ -272,20 +272,25 @@ function handleSortFilter() {
         let stateMatch = true;
         if (selectedStatees.size > 0) {
             const selected = Array.from(selectedStatees);
-            const check = (s) => {
+                const check = (s) => {
                 const b = buffDB.find(x => x.name === char.name);
                 const d = debuffDB.find(x => x.name === char.name);
-                let myEffects = [];
+                let myData = []; // 변경: 이름과 조건을 묶어서 담을 배열
 
                 if (b) {
                     ['low_buff', 'high_buff', 'normal_buff', 'power_buff', 'aside_passive'].forEach(key => {
                         if (b[key] && b[key] !== 'X') {
                             const targetKey = key.replace('_buff', '_target').replace('_passive', '_target');
+                            const condKey = key.replace('_buff', '_cond').replace('_passive', '_cond'); // 조건 키 찾기
+                            
                             const effs = b[key].split(',').map(e => e.trim());
                             const targets = b[targetKey] ? b[targetKey].split(',').map(t => t.trim()) : [];
+                            const conds = b[condKey] ? b[condKey].split(',').map(c => c.trim()) : [];
+                            
                             effs.forEach((eff, idx) => {
                                 if (excludeSelf && targets[idx] === '자신') return;
-                                myEffects.push(eff);
+                                // 이름(name)과 조건(cond)을 세트로 묶어서 저장!
+                                myData.push({ name: eff, cond: conds[idx] || '' }); 
                             });
                         }
                     });
@@ -293,12 +298,23 @@ function handleSortFilter() {
                 if (d) {
                     ['low_debuff', 'high_debuff', 'normal_debuff', 'power_debuff', 'aside_passive'].forEach(key => {
                         if (d[key] && d[key] !== 'X') {
-                            const splitEffs = d[key].split(',').map(e => e.trim());
-                            myEffects.push(...splitEffs);
+                            // targetKey 교체 로직은 debuffDB에 맞게 _debuff를 _target으로 바꿉니다.
+                            const targetKey = key.replace('_debuff', '_target').replace('_passive', '_target');
+                            const condKey = key.replace('_debuff', '_cond').replace('_passive', '_cond'); // 조건 키 찾기
+                            
+                            const effs = d[key].split(',').map(e => e.trim());
+                            const targets = d[targetKey] ? d[targetKey].split(',').map(t => t.trim()) : [];
+                            const conds = d[condKey] ? d[condKey].split(',').map(c => c.trim()) : [];
+
+                            effs.forEach((eff, idx) => {
+                                if (excludeSelf && targets[idx] === '자신') return;
+                                myData.push({ name: eff, cond: conds[idx] || '' }); 
+                            });
                         }
                     }); 
                 }
-                return checkTagMatch(myEffects, s);
+                // 배열을 checkTagMatch로 넘깁니다.
+                return checkTagMatch(myData, s);
             };
             stateMatch = (mode === 'AND') ? selected.every(s => check(s)) : selected.some(s => check(s));
         }
@@ -362,14 +378,21 @@ if (searchInput) {
 
 function checkTagMatch(list, kw) {
     if (!list || list.length === 0) return false;
-    return list.some(n => {
+    
+    return list.some(item => {
         const targetKw = kw.trim();
-        
-        if (n.includes(targetKw)) return true;
+        const pureName = item.name.split('(')[0].trim();
 
-        const pureName = n.split('(')[0].trim();
+        // ★ 1차 검사: '조건(cond)' 텍스트 안에 필터 키워드(예: "개전")가 포함되어 있는지!
+        if (item.cond && item.cond.includes(targetKw)) return true;
+
+        // ★ 2차 검사: 버프 이름(원본)에 키워드가 있는지
+        if (item.name.includes(targetKw)) return true;
+
+        // ★ 3차 검사: 괄호를 제외한 순수 이름 일치 여부
         if (pureName === targetKw) return true;
 
+        // ★ 4차 검사: allStateDB의 'tag' 속성 검사
         const info = allStateDB.find(d => (d.state_name || "").trim() === pureName);
         if (info && info.tag) {
             const tags = info.tag.split(',').map(t => t.trim());

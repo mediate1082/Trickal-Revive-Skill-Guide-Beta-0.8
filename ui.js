@@ -136,7 +136,7 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
             </div>
         </div>`;
 }
-// 상태이상 개별 아이템 음각 박스 (좌측 컬러 바 적용)
+// 상태이상 개별 아이템 음각 박스
 function renderEffectItems(effectString, condString, targetString, allStateDB, debuffDescDB) {
     if (!effectString || effectString === 'X') return '';
     const names = effectString.split(',').map(s => s.trim());
@@ -153,11 +153,14 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
             info = allStateDB.find(d => d.state_name === pureName);
         }
 
-        // 3. 디버프 판별 시에도 괄호가 포함된 원본과 자른 이름 둘 다 대응하도록 보완
+        // 3. 디버프 판별
         const isDebuff = (info && (info.type === "약화" || info.type === "제어" || info.type === "지속피해")) || (debuffDescDB.some(d => d.state_name === pureName || d.state_name === raw));
         
         const accentColor = isDebuff ? "#FC6881" : "#3488F0"; 
-        const iconSrc = (info && info.icon_file) ? `./assets/icons/state/${info.icon_file}` : `./assets/icons/state/버프_아이콘 없음.webp`;
+        
+        const defaultIcon = isDebuff ? '디버프_아이콘 없음.webp' : '버프_아이콘 없음.webp';
+        
+        const iconSrc = (info && info.icon_file) ? `./assets/icons/state/${info.icon_file}` : `./assets/icons/state/${defaultIcon}`;
         
         return `
         <div class="effect-item" 
@@ -166,7 +169,8 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
             style="position: relative; background: #f8f9fa; border-radius: 12px; padding: 12px 12px 12px 18px; 
                     box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${accentColor}; 
                     border: 1px solid rgba(0,0,0,0.03); display: flex; align-items: flex-start; gap: 12px; 
-                    overflow: hidden; margin: 0 !important;"> <img src="${iconSrc}" style="width: 34px; height: 34px; flex-shrink: 0;" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp';">
+                    overflow: hidden; margin: 0 !important;"> 
+            <img src="${iconSrc}" style="width: 34px; height: 34px; flex-shrink: 0;" onerror="this.src='./assets/icons/state/${defaultIcon}';">
             <div style="flex: 1;">
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;">
                     <strong style="color: ${COLORS.textMain}; font-size: 1rem;">${raw}</strong>
@@ -180,13 +184,14 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
         </div>`;
     }).join('');
 }
+
 // 어사이드 전용 헬퍼 함수 (전체 버전)
 const renderAsideTabContent = (char, asideData) => {
     if (!asideData || !asideData.aside1_name) {
         return `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; text-align: center;">
                 <img src="./assets/icons/common_icons/empty.webp" style="width: 80px; opacity: 0.5; margin-bottom: 15px;" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
-                <div style="color: #94a3b8; font-weight: bold;">아직 어사이드 정보가 준비되지 않았어용...</div>
+                <div style="color: #94a3b8; font-weight: bold;">아직 사념이 깊지 않은 것 같다...</div>
             </div>`;
     }
 
