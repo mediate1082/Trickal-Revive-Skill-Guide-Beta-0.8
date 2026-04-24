@@ -121,16 +121,7 @@
 
 <div id="modal-detail" class="modal-overlay hidden" onclick="closeModal('modal-detail')">
     <div class="modal-content" onclick="event.stopPropagation()">
-        
-        <div class="modal-side-flags" id="detail-side-flags">
-            <div class="side-flag" id="flag-aside" onclick="window.toggleQuickFilter('aside')" title="A2 효과 제외">A2</div>
-            <div class="side-flag" id="flag-artifact" onclick="window.toggleQuickFilter('artifact')" title="애착 아티팩트 효과 제외">ART</div>
-            <div class="side-flag" id="flag-self" onclick="window.toggleQuickFilter('self')" title="자신 대상 효과 제외">SELF</div>
-        </div>
-
-        <div id="detail-body"></div>
-        
-        <button class="btn" style="width:100%; margin-top:15px; background:var(--accent-green);" onclick="closeModal('modal-detail')">닫기</button>
+        <!-- ui.js의 openDetailModal이 이 안을 innerHTML로 완전히 채움 -->
     </div>
 </div>
     <div id="modal-info" class="modal-overlay hidden" onclick="closeModal('modal-info')">

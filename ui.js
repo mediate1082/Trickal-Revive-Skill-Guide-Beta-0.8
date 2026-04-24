@@ -298,7 +298,6 @@ export function openDetailModal(char, dataContext) {
     const normalAtkData = normalAtkDB ? normalAtkDB.find(n => n.chara_name?.trim() === char.name.trim()) : null;
     const asideData = asideDB ? asideDB.find(a => a.chara_name?.trim() === char.name.trim()) : null;
 
-    const body = document.getElementById('detail-body');
     const tierColor = (tier => {
         if (!tier) return '#888'; 
         if (tier.includes('메타픽')) return '#E91E63';
@@ -447,7 +446,7 @@ export function openDetailModal(char, dataContext) {
             <div class="tab-indicator" id="tab-indicator"></div> 
         </div> </div>
 
-        <div id="detail-body-scroll" style="height: 500px; overflow-y: auto; padding-right: 5px; scroll-behavior: smooth;">
+        <div id="detail-body-scroll" style="overflow-y: auto; padding-right: 5px; scroll-behavior: smooth;">
             <div id="tab-0" class="tab-content">
                 ${renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowRecContent, false, true)}
                 ${renderEffectCard('high', skillData, null, null, null, dataContext, highRecContent, false, true)}
