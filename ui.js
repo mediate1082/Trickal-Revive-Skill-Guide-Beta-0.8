@@ -561,7 +561,14 @@ export function switchTab(idx) {
     const btns = document.querySelectorAll('#modal-detail .tab-btn');
     const indicator = document.getElementById('tab-indicator');
     const flagContainer = document.getElementById('detail-side-flags');
-    contents.forEach((c, i) => i === idx ? c.classList.remove('hidden') : c.classList.add('hidden'));
+    contents.forEach((c, i) => {
+        if (i === idx) {
+            c.classList.remove('hidden');
+            c.scrollTop = 0; // 활성화되는 탭의 스크롤 초기화
+        } else {
+            c.classList.add('hidden');
+        }
+    });
     
     btns.forEach((b, i) => i === idx ? b.classList.add('active') : b.classList.remove('active'));
 

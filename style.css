@@ -374,7 +374,7 @@ header {
             max-width: 500px;
             padding: 0; /* 패딩을 0으로 하고 내부 영역에서 조절 */
             border-radius: 20px;
-            max-height: 85vh;
+            max-max-height: 80vh;
             display: flex;
             flex-direction: column; /* 세로 배치 */
             overflow: hidden; /* 전체 스크롤은 막음 */
@@ -984,4 +984,24 @@ header {
     border: none !important;
     pointer-events: none;
     /* transition을 위해 visibility 대신 opacity 사용 유지 */
+}
+
+/* 모달 flexbox 레이아웃 */
+#modal-detail .modal-content {
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#modal-detail .modal-fixed-header {
+  flex-shrink: 0;
+}
+
+#detail-body-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+#modal-detail .btn[onclick*="closeModal"] {
+  flex-shrink: 0;
 }
