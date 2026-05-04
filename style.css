@@ -11,7 +11,8 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
+        html { overflow-x: hidden; }
+        body {
             font-family: 'OneMobilePop', 'Pretendard', sans-serif; background: var(--bg-main); 
             color: var(--text-dark); margin: 0; padding: 0; width: 100%; 
             overflow-x: hidden; font-size: 18px; line-height: 1.5; scrollbar-gutter: stable; 
@@ -1002,6 +1003,26 @@ header {
   overflow-y: auto;
 }
 
-#modal-detail .btn[onclick*="closeModal"] {
   flex-shrink: 0;
+}
+
+#modal-detail .tab-content {
+  display: none;
+  min-height: 400px; /* 콘텐츠가 적어도 이 높이는 유지하도록 */
+}
+
+#modal-detail .tab-content.active {
+  display: block;
+}
+
+@media (max-width: 480px) {
+    #modal-detail {
+        padding-left: 88px;
+        padding-right: 5px;
+        justify-content: flex-end;
+    }
+    #modal-detail .modal-content {
+        width: 100%;
+        max-width: none;
+    }
 }

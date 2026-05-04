@@ -411,13 +411,10 @@ export function openDetailModal(char, dataContext) {
     }
 
     if (!html.trim()) {
-        // height: 350px 대신 min-height를 사용하고 부모와 분리된 독립 박스로 구성
         return `
-            <div class="empty-tab-wrapper" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; text-align: center; width: 100%;">
-                <img src="./assets/icons/common_icons/empty.webp" 
-                     style="width: 80px; height: 80px; margin-bottom: 20px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));"
-                     onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
-                <div style="font-size: 1.15rem; font-weight: 800; color: #475569; letter-spacing: -0.5px;">부가 효과가 없어용...</div>
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; text-align: center;">
+                <img src="./assets/icons/common_icons/empty.webp" style="width: 80px; opacity: 0.5; margin-bottom: 15px;" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
+                <div style="color: #94a3b8; font-weight: bold;">부가 효과가 없어용...</div>
             </div>`;
     }
     return html;
@@ -483,10 +480,33 @@ export function openDetailModal(char, dataContext) {
      // [3] 모달 표시 및 높이 최종 보정
     document.getElementById('modal-detail').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    
+
     // 탭 전환 시 스크롤 위치를 맨 위로 초기화해주는 센스!
     const scrollArea = document.getElementById('detail-body-scroll');
     if (scrollArea) scrollArea.scrollTop = 0;
+
+    // 모든 탭의 높이를 측정해 빈 탭 전환 시 모달이 줄어들지 않도록 고정
+    requestAnimationFrame(() => {
+        const tabs = document.querySelectorAll('#modal-detail .tab-content');
+        const scroll = document.getElementById('detail-body-scroll');
+        const header = document.getElementById('modal-header');
+        if (!scroll || !header) return;
+        const maxAllowed = Math.floor(window.innerHeight * 0.8) - header.offsetHeight;
+        let maxH = 0;
+        tabs.forEach(tab => {
+            const wasHidden = tab.classList.contains('hidden');
+            if (wasHidden) {
+                tab.classList.remove('hidden');
+                tab.style.display = 'block';
+            }
+            maxH = Math.max(maxH, tab.scrollHeight);
+            if (wasHidden) {
+                tab.style.display = '';
+                tab.classList.add('hidden');
+            }
+        });
+        if (maxH > 0) scroll.style.minHeight = Math.min(maxH, maxAllowed) + 'px';
+    });
 }
 
 export function updateLowSkillLv(lv, name, lowSkillDB) {

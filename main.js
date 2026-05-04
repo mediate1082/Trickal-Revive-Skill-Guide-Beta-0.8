@@ -264,8 +264,12 @@ function handleSortFilter() {
 
             if (selT.length > 0 || selE.length > 0) {
                 if (!aData) return false; 
-                const tMatch = selT.length === 0 || selT.some(t => aData.aside3_target_tags?.includes(t.replace(' 아군', '').replace('파티 ', '')));
-                const eMatch = selE.length === 0 || selE.some(e => aData.aside3_effect_tags?.includes(e));
+                const tMatch = selT.length === 0 || selT.some(t =>
+                    (aData.aside3_target_tags || '').includes(t.replace(' 아군', '').replace('파티 ', ''))
+                );
+                const eMatch = selE.length === 0 || selE.some(e =>
+                    (aData.aside3_effect_tags || '').includes(e)
+                );
                 if (!(tMatch && eMatch)) return false;
             }
         }
