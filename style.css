@@ -13,9 +13,9 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html { overflow-x: hidden; }
         body {
-            font-family: 'OneMobilePop', 'Pretendard', sans-serif; background: var(--bg-main); 
-            color: var(--text-dark); margin: 0; padding: 0; width: 100%; 
-            overflow-x: hidden; font-size: 18px; line-height: 1.5; scrollbar-gutter: stable; 
+            font-family: 'OneMobilePop', 'Pretendard', sans-serif; background: var(--bg-main);
+            color: var(--text-dark); margin: 0; padding: 0; width: 100%;
+            overflow-x: hidden; font-size: 18px; line-height: 1.5;
         }
         .hidden { display: none !important; }
         
@@ -214,9 +214,8 @@ header {
 @media (max-width: 480px) {
     /* 1. 그리드 설정: 화면 너비를 정확히 3등분(1fr) 합니다. */
     .grid {
-        grid-template-columns: repeat(3, 1fr) !important; 
-        gap: 6px !important; /* 카드 사이 간격을 좁혀서 공간 확보 */
-        padding: 8px !important; /* 양옆 여백 축소 */
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
         width: 100% !important;
     }
 
@@ -1003,26 +1002,23 @@ header {
   overflow-y: auto;
 }
 
-  flex-shrink: 0;
-}
-
 #modal-detail .tab-content {
-  display: none;
-  min-height: 400px; /* 콘텐츠가 적어도 이 높이는 유지하도록 */
-}
-
-#modal-detail .tab-content.active {
-  display: block;
+  min-height: 400px;
 }
 
 @media (max-width: 480px) {
     #modal-detail {
-        padding-left: 88px;
-        padding-right: 5px;
-        justify-content: flex-end;
+        padding-left: 0;
+        padding-right: 0;
+        justify-content: center;
+        align-items: center;
     }
     #modal-detail .modal-content {
-        width: 100%;
+        width: 88%;
         max-width: none;
+        max-height: 84vh;
+    }
+    .modal-side-flags {
+        display: none !important;
     }
 }
