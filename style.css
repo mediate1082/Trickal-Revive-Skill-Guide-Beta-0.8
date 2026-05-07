@@ -366,6 +366,10 @@ header {
 
 
         /* 모달 시스템 */
+        /* 모달이 열려 있는 동안 html/body 스크롤 잠금 */
+        html:has(.modal-overlay:not(.hidden)) {
+            overflow: hidden;
+        }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
         /* 모달 컨텐츠: 내부 내용이 길어지면 스크롤이 생기도록 수정 */
         .modal-content {
