@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>트릭컬 스킬 가이드</title>
 
-    <link rel="stylesheet" href="style.css">
+    <script>
+        /* ── 캐시 버스팅 버전 ──────────────────────────────
+           배포할 때 이 숫자만 올리면 CSS·JS 캐시가 자동으로 갱신됩니다. */
+        var APP_VERSION = '1.0.0';
+        document.write('<link rel="stylesheet" href="style.css?v=' + APP_VERSION + '">');
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
   
@@ -158,7 +163,14 @@
     <button id="top-btn" onclick="scrollToTop()">▲<div style="font-size:0.7rem;">TOP</div></button>
 
 
-<script type="module" src="main.js"></script>
+<script>
+    (function () {
+        var s = document.createElement('script');
+        s.type = 'module';
+        s.src = 'main.js?v=' + APP_VERSION;
+        document.body.appendChild(s);
+    })();
+</script>
 
 </body>
 </html>
