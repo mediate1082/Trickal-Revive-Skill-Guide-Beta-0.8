@@ -6,52 +6,79 @@
     <title>트릭컬 스킬 가이드</title>
 
     <link rel="stylesheet" href="style.css">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
   
 </head>
 
 <body>
-    <header>
-        <div class="header-container">
-            <div class="header-top">
-                <div style="width:40px"></div>
-                <h1 class="main-title">트릭컬 스킬 가이드</h1>
-                <button class="btn" style="border-radius:50%; width:38px; height:38px; padding:0;" onclick="openInfoModal()">❓</button>
+    <header class="tg-header">
+        <div class="tg-accent-strip"></div>
+        <div class="tg-header-inner">
+            <div class="tg-title-wrap">
+                <div class="tg-eyebrow">Trickcal · Skill Guide</div>
+                <h1 class="tg-title main-title">트릭컬 <em>스킬</em> 가이드</h1>
             </div>
-            <div class="controls-row">
-                <div class="filter-bar-container" style="display: flex; gap: 8px; width: 100%; align-items: center;">
-                    <select id="sort-select" class="btn nav-select" onchange="handleSortFilter()" style="height: 40px;">
-                        <option value="name">이름순</option>
-                        <option value="tier">티어순</option>
-                        <option value="personality">성격순</option>
-                        <option value="role">역할순</option>
-                        <option value="line">배치순</option>
-                    </select>
-                    <button id="order-btn" class="btn square-btn" onclick="toggleOrder()">▲</button>
-                    <button class="btn filter-btn" onclick="openFilterModal()">
-                        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
-                        부가 효과 필터 <span id="filter-count"></span>
+            <button class="tg-help-btn" onclick="openInfoModal()" aria-label="도움말">❓</button>
+        </div>
+
+    </header>
+
+    <div class="tg-subheader">
+        <div class="tg-nav-wrap">
+            <div class="tg-nav">
+                <div class="tg-nav-left">
+                    <input type="hidden" id="sort-select" value="name">
+                    <div class="tg-dropdown" id="sortDropdown">
+                        <button type="button" class="tg-dropdown-btn" aria-expanded="false" aria-haspopup="listbox">
+                            <span class="tg-dropdown-label">이름순</span>
+                            <span class="tg-dropdown-caret">▾</span>
+                        </button>
+                    </div>
+
+                    <button id="order-btn" class="tg-btn tg-btn-circle tg-btn-muted" onclick="toggleOrder()">▲</button>
+
+                    <button class="tg-btn" onclick="openFilterModal()">
+                        <span class="tg-btn-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/>
+                            </svg>
+                        </span>
+                        부가 효과 필터
+                        <span class="tg-btn-badge" id="filter-count"></span>
                     </button>
-                   <button class="btn filter-btn" onclick="window.openAsideFilter()">
-                        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
-                        어사이드 ★3 필터 <span id="aside-filter-count"></span>
+
+                    <button class="tg-btn" onclick="window.openAsideFilter()">
+                        <span class="tg-btn-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/>
+                            </svg>
+                        </span>
+                        어사이드 ★3 필터
+                        <span class="tg-btn-badge" id="aside-filter-count" style="background:#c4b5fd;color:#5b21b6;"></span>
                     </button>
-                    <div class="search-box" style="margin-left: auto;">
+                </div>
+
+                <div class="tg-nav-search">
+                    <div class="tg-search">
+                        <span class="tg-search-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>
+                            </svg>
+                        </span>
                         <input type="text" id="search-input" placeholder="사도 이름 검색..." oninput="handleSortFilter()">
                         <button id="search-clear-btn" class="hidden" onclick="clearSearch()">&times;</button>
                     </div>
                 </div>
             </div>
-            <div id="active-filters" class="active-filters-container">
-            </div>
         </div>
-    </header>
 
-    <div class="content-container">
+        <div id="active-filters" class="tg-chips-wrap" style="display:none;"></div>
+    </div>
+
+    <div class="tg-grid-wrap">
         <div id="loading-text" style="text-align:center; padding:50px; color:#888;">데이터 로딩 중...</div>
-        <div id="main-grid" class="grid"></div>
+        <div id="main-grid" class="tg-grid"></div>
     </div>
 
 <div id="modal-aside-filter" class="modal-overlay hidden">

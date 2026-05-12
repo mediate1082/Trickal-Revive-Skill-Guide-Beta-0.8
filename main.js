@@ -149,6 +149,8 @@ async function loadExternalData() {
                 // 5. 정렬 상태를 기본(이름순, 오름차순)으로 리셋
                 const sortSelect = document.getElementById('sort-select');
                 if (sortSelect) sortSelect.value = 'name';
+                const sortDropdown = document.getElementById('sortDropdown');
+                if (sortDropdown?._resetDropdown) sortDropdown._resetDropdown('name', '이름순');
                 
                 isAscending = true;
                 const orderBtn = document.getElementById('order-btn');
@@ -193,58 +195,63 @@ function updateFilterTags() {
     const hasSearch = document.getElementById('search-input').value.trim() !== '';
     const hasState = selectedStatees && selectedStatees.size > 0;
 
-    if ((hasSearch && hasState) || (selectedStatees.size > 1)) {
-        const clearAllBtn = document.createElement('div');
-        clearAllBtn.className = 'filter-tag tag-clear-all';
-        clearAllBtn.innerHTML = `<span>전체 해제</span>`;
-        clearAllBtn.onclick = () => {
-            // 모든 상태 초기화
-            document.getElementById('search-input').value = '';
-            const clearBtn = document.getElementById('search-clear-btn');
-            if (clearBtn) clearBtn.classList.add('hidden');
-            selectedStatees.clear();
-            
-            // 모달 체크박스 전체 해제
-            document.querySelectorAll('#filter-checkbox-group input:checked').forEach(cb => cb.checked = false);
-            
-            handleSortFilter();
-        };
-        container.appendChild(clearAllBtn);
+    const chips = [];
+
+    function makeChip(text, tgClass, onRemove) {
+        const chip = document.createElement('div');
+        chip.className = 'tg-chip' + (tgClass ? ' ' + tgClass : '');
+        chip.innerHTML = `<span>${text}</span><span class="tg-x">✕</span>`;
+        chip.querySelector('.tg-x').onclick = (e) => { e.stopPropagation(); onRemove(); };
+        chips.push(chip);
     }
 
-    // 1. 검색어 태그 처리
     if (hasSearch) {
-        createTag(`검색: ${document.getElementById('search-input').value}`, 'tag-search', () => {
+        makeChip(`검색: ${document.getElementById('search-input').value}`, '', () => {
             document.getElementById('search-input').value = '';
             document.getElementById('search-clear-btn').classList.add('hidden');
-            handleSortFilter(); 
+            handleSortFilter();
         });
     }
 
-    // 2. 부가 효과 태그 처리
     if (hasState) {
         selectedStatees.forEach(tagName => {
             const isInBuff = buffDescDB.some(b => b.state_name === tagName || (b.tag && b.tag.split(',').map(t => t.trim()).includes(tagName)));
             const isInDebuff = debuffDescDB.some(d => d.state_name === tagName || (d.tag && d.tag.split(',').map(t => t.trim()).includes(tagName)));
-
-            let tagClass = (isInBuff && isInDebuff) ? 'tag-neutral' : (isInBuff ? 'tag-buff' : (isInDebuff ? 'tag-debuff' : 'tag-neutral'));
-
-            createTag(tagName, tagClass, () => {
+            const tgClass = (isInBuff && isInDebuff) ? '' : (isInBuff ? 'tg-chip-buff' : (isInDebuff ? 'tg-chip-debuff' : ''));
+            const icon = (isInBuff && isInDebuff) ? '-' : (isInBuff ? '▲' : (isInDebuff ? '▼' : ''));
+            makeChip(`${icon} ${tagName}`, tgClass, () => {
                 selectedStatees.delete(tagName);
                 const cb = document.querySelector(`#filter-checkbox-group input[value="${tagName}"]`);
                 if (cb) cb.checked = false;
-                handleSortFilter(); 
+                handleSortFilter();
             });
         });
     }
 
-    function createTag(text, className, onRemove) {
-        const tag = document.createElement('div');
-        tag.className = `filter-tag ${className}`; 
-        tag.innerHTML = `<span>${text}</span><span class="remove-btn">✕</span>`;
-        tag.querySelector('.remove-btn').onclick = (e) => { e.stopPropagation(); onRemove(); };
-        container.appendChild(tag);
+    if ((hasSearch && hasState) || (selectedStatees.size > 1)) {
+        const clearChip = document.createElement('div');
+        clearChip.className = 'tg-chip tg-chip-clear';
+        clearChip.innerHTML = '<span>전체 해제</span>';
+        clearChip.onclick = () => {
+            document.getElementById('search-input').value = '';
+            const clearBtn = document.getElementById('search-clear-btn');
+            if (clearBtn) clearBtn.classList.add('hidden');
+            selectedStatees.clear();
+            document.querySelectorAll('#filter-checkbox-group input:checked').forEach(cb => cb.checked = false);
+            handleSortFilter();
+        };
+        chips.push(clearChip);
     }
+
+    if (chips.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = '';
+    const chipsDiv = document.createElement('div');
+    chipsDiv.className = 'tg-chips';
+    chips.forEach(c => chipsDiv.appendChild(c));
+    container.appendChild(chipsDiv);
 }
 
 function handleSortFilter() {
@@ -346,7 +353,7 @@ function handleSortFilter() {
             displayCards(groups[k], 'main-grid', true);
         });
     }
-    document.getElementById('filter-count').innerText = selectedStatees.size > 0 ? `(${selectedStatees.size})` : '';
+    document.getElementById('filter-count').innerText = selectedStatees.size > 0 ? String(selectedStatees.size) : '';
     updateFilterTags();
 }
 
@@ -504,9 +511,9 @@ async function displayCards(data, id, append = false) {
                     ${char.name}
                 </div>
                 
-                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; padding: 0 4px;">
+                <div style="display: flex; align-items: center; width: 100%; gap: 4px; padding: 0 4px;">
                     ${makeSkillGauge('저', char.low_grade)}
-                    <div style="width: 1px; height: 10px; background: #eee;"></div>
+                    <div style="width: 1px; height: 10px; background: #eee; flex-shrink: 0;"></div>
                     ${makeSkillGauge('고', char.high_grade)}
                 </div>
             </div>`;
@@ -535,12 +542,12 @@ function getGaugeInfo(grade) {
 function makeSkillGauge(typeLabel, grade) {
     const info = getGaugeInfo(grade);
     return `
-        <div style="display: flex; align-items: center; gap: 4px; flex: 1;">
-            <span style="font-size: 0.7rem; color: #777; font-weight: 800; flex-shrink: 0;">${typeLabel}</span>
-            <div style="flex-grow: 1; height: 5px; background: #e2e8f0; border-radius: 3px; overflow: hidden; position: relative; min-width: 30px;">
+        <div style="display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0;">
+            <span style="font-size: 0.65rem; color: #777; font-weight: 800; flex-shrink: 0;">${typeLabel}</span>
+            <div style="flex: 1; height: 5px; background: #e2e8f0; border-radius: 3px; overflow: hidden; min-width: 0;">
                 <div style="width: ${info.width}; background: ${info.color}; height: 100%; border-radius: 3px;"></div>
             </div>
-            <span style="font-size: 0.65rem; color: ${info.color}; font-weight: 800; flex-shrink: 0; min-width: 18px; text-align: right;">${info.label}</span>
+            <span style="font-size: 0.6rem; color: ${info.color}; font-weight: 800; flex-shrink: 0; min-width: 14px; text-align: right;">${info.label}</span>
         </div>
     `;
 }
@@ -573,7 +580,73 @@ function closeModal(id) {
 }
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
+function initSortDropdown(rootEl, options, currentValue, onChange) {
+    if (!rootEl) return;
+    const btn = rootEl.querySelector('.tg-dropdown-btn');
+    const label = rootEl.querySelector('.tg-dropdown-label');
+    let value = currentValue;
+    let menu = null;
+
+    const close = () => {
+        if (!menu) return;
+        menu.remove(); menu = null;
+        btn.setAttribute('aria-expanded', 'false');
+        document.removeEventListener('mousedown', onDocClick);
+        document.removeEventListener('keydown', onKey);
+    };
+    const onDocClick = (e) => { if (!rootEl.contains(e.target)) close(); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+
+    const open = () => {
+        menu = document.createElement('div');
+        menu.className = 'tg-dropdown-menu';
+        menu.setAttribute('role', 'listbox');
+        options.forEach(o => {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'tg-dropdown-item';
+            item.setAttribute('role', 'option');
+            item.setAttribute('aria-selected', String(o.value === value));
+            item.innerHTML = `<span>${o.label}</span>${o.value === value ? '<span class="tg-dropdown-item-check">✓</span>' : ''}`;
+            item.addEventListener('click', () => {
+                value = o.value;
+                label.textContent = o.label;
+                onChange(o.value);
+                close();
+            });
+            menu.appendChild(item);
+        });
+        rootEl.appendChild(menu);
+        btn.setAttribute('aria-expanded', 'true');
+        document.addEventListener('mousedown', onDocClick);
+        document.addEventListener('keydown', onKey);
+    };
+
+    btn.addEventListener('click', () => {
+        btn.getAttribute('aria-expanded') === 'true' ? close() : open();
+    });
+
+    rootEl._resetDropdown = (v, l) => { value = v; label.textContent = l; };
+}
+
 loadExternalData();
+
+initSortDropdown(
+    document.getElementById('sortDropdown'),
+    [
+        { value: 'name',        label: '이름순' },
+        { value: 'tier',        label: '티어순' },
+        { value: 'personality', label: '성격순' },
+        { value: 'role',        label: '역할순' },
+        { value: 'line',        label: '배치순' },
+    ],
+    'name',
+    (v) => {
+        document.getElementById('sort-select').value = v;
+        handleSortFilter();
+    }
+);
+
 window.onscroll = () => { document.getElementById("top-btn").style.display = (window.scrollY > 300) ? "flex" : "none"; };
 
 window.addEventListener('keydown', (e) => {

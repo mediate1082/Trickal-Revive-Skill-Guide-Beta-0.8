@@ -1,1028 +1,458 @@
-        @font-face {
-            font-family: 'OneMobilePop';
-            src: url('./assets/fonts/ONEMobilePOP.ttf') format('truetype');
-            font-weight: normal; font-style: normal; font-display: swap;
-        }
-
-        :root { 
-            --bg-main: #f9fdf0; --card-bg: #ECF7CD; --accent-green: #BCDD5F; 
-            --text-dark: #2D331D; --color-O: #27ae60; --color-delta: #d35400;
-            --color-X: #c0392b; --max-width: 1200px;
-        }
-
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html { overflow-x: hidden; }
-        body {
-            font-family: 'OneMobilePop', 'Pretendard', sans-serif; background: var(--bg-main);
-            color: var(--text-dark); margin: 0; padding: 0; width: 100%;
-            overflow-x: hidden; font-size: 18px; line-height: 1.5;
-        }
-        .hidden { display: none !important; }
-        
-/* 헤더 전체: 화면 끝에서 끝까지 배경을 채움 */
-header { 
-    background: #fff; 
-    padding: 10px 0; /* 좌우 패딩은 컨테이너가 담당하도록 0으로 변경 */
-    position: sticky; 
-    top: 0; 
-    z-index: 100; 
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08); 
-    width: 100%; 
+@font-face {
+    font-family: 'OneMobilePop';
+    src: url('./assets/fonts/ONEMobilePOP.ttf') format('truetype');
+    font-weight: normal; font-style: normal; font-display: swap;
 }
 
-/* 헤더 컨테이너: 그리드 너비와 일치시키는 핵심 영역 */
-.header-container { 
-    max-width: var(--max-width); 
-    margin: 0 auto; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 12px; 
-    padding: 0 15px; /* 그리드의 패딩과 일치시켜 상하 정렬 라인을 맞춤 */
+/* ── Design Tokens ─────────────────────── */
+:root {
+    --bg-main: #F7FBEF;
+    --header-bg: #FFFFFF;
+    --nav-bg: #FFFDF6;
+    --grid-bg: #F2F8E6;
+    --text-dark: #3F4F1F;
+    --text-muted: #7A806D;
+    --accent-green: #B9DD63;
+    --accent-green-strong: #8FB93E;
+    --accent-soft: #EAF6C8;
+    --border-soft: #E3E8D5;
+    --shadow-soft: rgba(63, 79, 31, 0.08);
+    /* Legacy */
+    --card-bg: #ECF7CD;
+    --color-O: #27ae60; --color-delta: #d35400; --color-X: #c0392b;
+    --max-width: 1200px;
 }
 
-.header-top { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    width: 100%; 
+/* ── Global ────────────────────────────── */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { overflow-x: hidden; }
+body {
+    font-family: 'OneMobilePop', 'Pretendard', sans-serif;
+    background: var(--bg-main);
+    color: var(--text-dark);
+    margin: 0; padding: 0; width: 100%;
+    overflow-x: hidden; font-size: 18px; line-height: 1.5;
+}
+.hidden { display: none !important; }
+
+/* 모달이 열려 있는 동안 html 스크롤 잠금 */
+html:has(.modal-overlay:not(.hidden)) { overflow: hidden; }
+
+/* ── Header ───────────────────────────── */
+.tg-header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border-soft);
+    box-shadow: 0 1px 0 var(--shadow-soft);
+    padding: 0;
+}
+.tg-header-inner {
+    max-width: 980px; margin: 0 auto; padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.tg-accent-strip { height: 3px; background: var(--accent-green); }
+.tg-title-wrap { text-align: left; }
+.tg-eyebrow {
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em;
+    color: var(--text-muted); text-transform: uppercase; margin-bottom: 1px;
+}
+.tg-title {
+    font-family: 'OneMobilePop', sans-serif;
+    font-size: 1.25rem; font-weight: 800;
+    color: var(--text-dark); line-height: 1.1; margin: 0;
+}
+.tg-title em { font-style: normal; color: var(--accent-green-strong); }
+.tg-help-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #FFFDF6; border: 1px solid var(--border-soft);
+    cursor: pointer; font-size: 0.95rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-muted); transition: all 0.15s ease;
+}
+.tg-help-btn:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
+
+/* ── Nav / Filter Bar ───────────────────── */
+.tg-nav-wrap { max-width: 980px; margin: 0 auto; padding: 8px 16px 10px; }
+.tg-nav {
+    background: var(--nav-bg); border: 1px solid var(--border-soft);
+    border-radius: 18px; padding: 10px 12px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    box-shadow: 0 2px 8px var(--shadow-soft);
+}
+.tg-nav-left { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 1 1 auto; }
+.tg-nav-search { flex: 0 0 auto; min-width: 220px; width: 300px; max-width: 100%; }
+
+/* ── Buttons ─────────────────────────── */
+.tg-btn {
+    appearance: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #FFFFFF; border: 1px solid var(--border-soft); border-radius: 12px;
+    padding: 8px 14px;
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.82rem; font-weight: 800;
+    color: var(--text-dark); cursor: pointer;
+    transition: background 0.15s, border-color 0.15s; white-space: nowrap;
+}
+.tg-btn:hover { background: var(--accent-soft); border-color: var(--accent-green); }
+.tg-btn:focus-visible { outline: none; border-color: var(--accent-green); box-shadow: 0 0 0 3px rgba(185,221,99,0.35); }
+.tg-btn .tg-btn-icon { display: inline-flex; color: var(--text-muted); }
+.tg-btn:hover .tg-btn-icon { color: var(--accent-green-strong); }
+.tg-btn-circle { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 50%; font-size: 0.85rem; }
+.tg-btn-muted { color: var(--text-muted); }
+.tg-btn-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent-green); color: #2D3812;
+    border-radius: 999px; height: 18px; min-width: 18px; padding: 0 5px;
+    font-size: 0.65rem; font-weight: 800; margin-left: 2px;
+}
+.tg-btn-badge:empty { display: none; }
+
+/* 모달 내부 버튼 (기존 .btn 클래스 — modal HTML에서 계속 사용) */
+.btn {
+    padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd;
+    background: #fff; cursor: pointer; font-size: 0.9rem;
+    font-family: inherit; transition: all 0.2s ease-out; white-space: nowrap;
+}
+.btn:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--accent-green); background-color: #f9fdf0; }
+
+/* ── Custom Dropdown ─────────────────── */
+.tg-dropdown { position: relative; display: inline-block; }
+.tg-dropdown-btn {
+    appearance: none; display: inline-flex; align-items: center; gap: 8px;
+    background: #FFFFFF; border: 1px solid var(--border-soft); border-radius: 12px;
+    padding: 8px 12px 8px 14px;
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.82rem; font-weight: 800;
+    color: var(--text-dark); cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    min-width: 96px; justify-content: space-between;
+}
+.tg-dropdown-btn:hover { background: var(--accent-soft); border-color: var(--accent-green); }
+.tg-dropdown-btn[aria-expanded="true"] {
+    border-color: var(--accent-green); background: var(--accent-soft);
+    box-shadow: 0 0 0 3px rgba(185,221,99,0.35);
+}
+.tg-dropdown-caret { font-size: 0.6rem; color: var(--text-muted); transition: transform 0.15s; }
+.tg-dropdown-btn[aria-expanded="true"] .tg-dropdown-caret { transform: rotate(180deg); }
+
+.tg-dropdown-menu {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 200;
+    min-width: 100%; background: #FFFFFF;
+    border: 1px solid var(--border-soft); border-radius: 12px; padding: 6px;
+    box-shadow: 0 8px 24px rgba(63,79,31,0.12), 0 2px 6px rgba(63,79,31,0.06);
+    display: flex; flex-direction: column; gap: 2px;
+    animation: tg-dd-in 0.12s ease-out;
+}
+@keyframes tg-dd-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.tg-dropdown-item {
+    appearance: none; background: transparent; border: none; text-align: left;
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.82rem; font-weight: 800;
+    color: var(--text-dark); padding: 7px 12px; border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    white-space: nowrap; transition: background 0.1s;
+}
+.tg-dropdown-item:hover { background: var(--accent-soft); }
+.tg-dropdown-item[aria-selected="true"] { background: var(--accent-soft); color: var(--accent-green-strong); }
+.tg-dropdown-item-check { color: var(--accent-green-strong); font-size: 0.78rem; }
+
+/* ── Search ──────────────────────────── */
+.tg-search { position: relative; width: 100%; }
+.tg-search-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); display: inline-flex; pointer-events: none;
+}
+.tg-search input {
+    width: 100%; padding: 9px 38px 9px 38px;
+    border-radius: 999px; border: 1.5px solid var(--border-soft);
+    background: #FFFFFF; font-family: 'OneMobilePop', sans-serif;
+    font-size: 0.85rem; font-weight: 700; color: var(--text-dark);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tg-search input::placeholder { color: var(--text-muted); font-weight: 500; }
+.tg-search input:focus { outline: none; border-color: var(--accent-green); box-shadow: 0 0 0 3px rgba(185,221,99,0.35); }
+
+#search-clear-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    width: 20px; height: 20px; background: #e5e7eb; color: #6b7280;
+    border: none; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; padding: 0; z-index: 10;
+}
+#search-clear-btn:hover { background: #d1d5db; color: #374151; }
+#search-input { padding-right: 35px !important; }
+
+/* ── Sub-header (nav + chips, non-sticky) ── */
+.tg-subheader {
+    background: var(--bg-main);
+    border-bottom: 1px solid var(--border-soft);
+    box-shadow: 0 2px 6px var(--shadow-soft);
 }
 
-.main-title { 
-    font-size: clamp(1.4rem, 6vw, 2.2rem); 
-    font-weight: normal; 
-    color: #4a5a1f; 
-    margin: 0; 
-    text-align: center; 
-    flex-grow: 1; 
+/* ── Active Filter Chips ─────────────────── */
+.tg-chips-wrap { max-width: 980px; margin: 0 auto; padding: 0 16px 10px; }
+.tg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tg-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px;
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.74rem; font-weight: 800;
+    cursor: default; background: var(--accent-soft);
+    border: 1px solid var(--accent-green); color: var(--text-dark);
+}
+.tg-chip .tg-x { opacity: 0.5; cursor: pointer; font-size: 0.7rem; }
+.tg-chip .tg-x:hover { opacity: 1; }
+.tg-chip-buff   { background: #DBEAFE; border-color: #93C5FD; color: #1D4ED8; }
+.tg-chip-debuff { background: #FFE4E6; border-color: #FCA5A5; color: #BE123C; }
+.tg-chip-clear  { background: #FFFFFF; border-color: var(--border-soft); color: var(--text-muted); cursor: pointer; }
+.tg-chip-clear:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
+
+/* ── Grid ────────────────────────────── */
+.tg-grid-wrap {
+    background: var(--grid-bg);
+    padding: 20px 0 40px;
+}
+.tg-grid {
+    max-width: 980px; margin: 0 auto; padding: 0 16px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 14px;
 }
 
-/* 컨트롤 행: 모바일에서는 세로, 768px 이상에선 가로 */
-.controls-row { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 10px; 
-    width: 100%; 
+/* ── Responsive ──────────────────────── */
+@media (max-width: 720px) {
+    .tg-nav { padding: 8px 10px; gap: 6px; }
+    .tg-nav-left { flex: 1 1 100%; gap: 6px; }
+    .tg-nav-search { flex: 1 1 100%; width: 100%; min-width: 0; order: 99; }
+    .tg-btn { font-size: 0.78rem; padding: 7px 12px; }
+}
+@media (max-width: 420px) {
+    .tg-header-inner { padding: 8px 12px; }
+    .tg-title { font-size: 1.1rem; }
+    .tg-nav-wrap, .tg-chips-wrap { padding-left: 10px; padding-right: 10px; }
+    .tg-grid { padding: 0 10px; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+    .tg-btn { font-size: 0.74rem; padding: 6px 10px; }
 }
 
-/* [추가] 모바일에서 버튼들이 삐져나가지 않게 하는 컨테이너 */
-.filter-bar-container {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-    align-items: center;
-    flex-wrap: wrap; /* 모바일에서 공간 부족 시 자연스럽게 줄바꿈 */
-}
+/* ═══════════════════════════════════════════
+   CARDS
+═══════════════════════════════════════════ */
 
-@media (min-width: 768px) { 
-    .controls-row { 
-        flex-direction: row; 
-        justify-content: space-between; 
-        align-items: center; 
-    } 
-    .filter-bar-container {
-        flex-wrap: nowrap; /* 데스크탑에선 한 줄 유지 */
-        width: auto;
-    }
-}
-
-/* 버튼 공통 스타일 */
-.btn { 
-    padding: 8px 12px; 
-    border-radius: 8px; 
-    border: 1px solid #ddd; 
-    background: #fff; 
-    cursor: pointer; 
-    font-size: 0.9rem; 
-    font-family: inherit; 
-    transition: all 0.2s ease-out; 
-    white-space: nowrap; /* 글자 줄바꿈 방지 */
-}
-
-.btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: var(--accent-green);
-    background-color: #f9fdf0;
-}
-
-/* 내비게이션 바 전용 */
-.nav-select { width: 100px; padding-right: 25px !important; flex-shrink: 0; }
-.square-btn { width: 40px; height: 40px; padding: 0 !important; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.filter-btn { 
-    min-width: 130px; 
-    height: 40px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    gap: 6px; 
-    flex-shrink: 0; 
-}
-
-/* 검색창: 모바일에서 너비 확보 */
-.search-box { width: 100%; position: relative; }
-@media (min-width: 768px) { .search-box { max-width: 300px; } }
-
-.search-box input { 
-    width: 100%; 
-    padding: 10px 12px 10px 40px; 
-    border-radius: 20px; 
-    border: 2px solid #eee; 
-    outline: none; 
-    font-family: inherit; 
-    font-size: 0.95rem;
-    background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23888" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 14px center;
-}
-
-/* [1] 공명 성격 무지개 애니메이션 정의 */
 @keyframes rainbowGradient {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-
 .bg-resonance {
-    /* 배경 이미지가 박스 크기를 절대 넘지 못하게 고정 */
-    background: linear-gradient(
-        270deg,
-        #FFD1D1, #FFFDCE, #D1FFD1, #D1FFFF, #D1D1FF, #FFD1FF
-    ) !important;
-    background-size: 200% 200% !important; /* 너무 큰 사이즈는 연산 오류를 줄 수 있으니 200%로 조정 */
+    background: linear-gradient(270deg, #FFD1D1, #FFFDCE, #D1FFD1, #D1FFFF, #D1D1FF, #FFD1FF) !important;
+    background-size: 200% 200% !important;
     animation: rainbowGradient 10s ease infinite;
-    /* 배경이 테두리 밖으로 번지는 현상 방지 */
     background-origin: border-box;
 }
 
-/* [2] 메인 그리드 및 카드 구조 개편 */
-.content-container { padding: 15px; max-width: var(--max-width); margin: 0 auto; width: 100%; }
-
-.grid { 
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 10px; /* 인게임 느낌을 위해 간격을 살짝 조정 */
-    width: 100%; 
+.char-card {
+    background: transparent; border: none !important; border-radius: 15px;
+    overflow: visible; cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex; flex-direction: column; position: relative;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.12), 0 2px 5px rgba(0,0,0,0.08) !important;
 }
-
-@media (min-width: 768px) { 
-    .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; } 
-}
-
-/* 카드 전체 틀 */
-.char-card { 
-    background: transparent;
-    border: none !important;
-    border-radius: 15px;
-    overflow: visible; /* 그림자가 잘리지 않게 설정 */
-    cursor: pointer; 
-    transition: transform 0.2s ease, box-shadow 0.2s ease; /* transition 추가 */
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    
-    /* [수정] 그림자: y축을 살짝 내리고 퍼짐 정도(blur)를 키워 깊이감을 줍니다. */
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12), 0 2px 5px rgba(0, 0, 0, 0.08) !important;
-}
-
-/* 상단 초상화 영역 */
 .card-top {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    border-radius: 15px 15px 0 0; 
-    box-sizing: border-box; /* [중요] 테두리가 안쪽으로 생기게 해서 가로폭 유지 */
-    display: block;
+    position: relative; width: 100%; aspect-ratio: 1 / 1;
+    overflow: hidden; border-radius: 15px 15px 0 0;
+    box-sizing: border-box; display: block;
 }
-
-/* 하단 이름표 영역 */
 .card-bottom {
-    background: #ffffff;
-    padding: 10px 5px;
-    border-radius: 0 0 15px 15px; 
-    width: 100%;
-    box-sizing: border-box;
+    background: #ffffff; padding: 10px 5px;
+    border-radius: 0 0 15px 15px; width: 100%; box-sizing: border-box;
 }
-
-.char-card .icon {
-    position: absolute;
-    width: 32px; /* [수정] 24px -> 32px로 대폭 증가 (PC기준) */
-    height: 32px;
-    z-index: 2;
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); /* 약간의 입체감 */
-}
-
-/* 모바일에서의 아이콘 크기 조정 (필요시) */
-@media (max-width: 480px) {
-    /* 1. 그리드 설정: 화면 너비를 정확히 3등분(1fr) 합니다. */
-    .grid {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 6px !important;
-        width: 100% !important;
-    }
-
-    /* 2. 카드 크기: 고정 너비를 해제하고 그리드가 주는 33% 너비에 맞춥니다. */
-    .char-card {
-        width: 100% !important; 
-        max-width: none !important;
-        min-width: 0 !important; /* 최소 너비 제한을 풀어야 축소됩니다. */
-    }
-
-    /* 3. 카드 내부 요소 축소 (카드가 작아지니 내용물도 줄여야 함) */
-    .char-name {
-        font-size: 0.8rem !important; /* 이름 글자 크기 축소 */
-        margin-bottom: 4px !important;
-    }
-
-    /* 하단 별, 게이지 바 영역 높이 줄이기 */
-    .card-bottom {
-        padding: 5px 2px !important;
-    }
-
-    /* 게이지 바 텍스트 숨기기 (공간 확보를 위해 '저', '고' 글자만 남기거나 줄임) */
-    .skill-label {
-        font-size: 0.6rem !important;
-    }
-    
-    /* 별 아이콘 크기 축소 */
-    .char-card div[style*="height: 20px"] img {
-        width: 14px !important;
-        height: 14px !important;
-    }
-
-/* 1. 게이지 바 컨테이너: 밖으로 나가지 않게 너비 제한 해제 */
-    .card-bottom div[style*="display: flex; align-items: center; justify-content: space-between"] {
-        flex-direction: column; /* [선택] 너무 좁으면 세로로 배치하거나 */
-        gap: 2px !important;
-        width: 100% !important;
-    }
-
-    /* 2. 각 게이지 유닛 축소 */
-    .card-bottom div[style*="flex: 1"] {
-        width: 100% !important;
-        justify-content: flex-start !important;
-        gap: 2px !important;
-    }
-
-    /* 3. 게이지 막대 자체 크기 줄이기 */
-    .card-bottom div[style*="height: 5px"] {
-        min-width: 0 !important; /* 고정 최소 너비 해제 */
-        flex-grow: 1 !important;
-    }
-
-    /* 4. 텍스트 가독성 확보를 위한 폰트 축소 */
-    .card-bottom span {
-        font-size: 0.6rem !important; /* '저', '고' 글자 크기 축소 */
-        min-width: auto !important; /* 고정 너비 해제 */
-    }
-
-    /* 레벨 숫자(10+, 7+) 텍스트도 축소 */
-    .card-bottom span[style*="text-align: right"] {
-        font-size: 0.6rem !important;
-        min-width: 15px !important;
-    }
-}
-
+.char-card .icon { position: absolute; width: 32px; height: 32px; z-index: 2; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
 .char-card:hover { transform: translateY(-5px); }
-
-
-
-/* 사도 이미지 (배경이 보이도록 투명도나 블렌딩 없이 꽉 채움) */
-.char-img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover;
-    display: block;
+.char-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.char-name {
+    font-weight: 800; margin-bottom: 8px; font-size: 1rem; color: #333;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-
-.char-name { 
-    font-weight: 800; /* 인게임처럼 두껍게 */
-    margin-bottom: 8px; 
-    font-size: 1rem; 
-    color: #333;
-    overflow: hidden; 
-    text-overflow: ellipsis; 
-    white-space: nowrap; 
-}
-
-/* 엘다인 전용 고정 금색 글로우 효과 */
 .eldyne-card {
-    box-shadow: 
-        0 0 10px rgba(255, 215, 0, 0.6), 
-        0 0 20px rgba(255, 165, 0, 0.4),
-        inset 0 0 8px rgba(255, 223, 0, 0.3) !important;
-    
-    z-index: 5;
-    transform: scale(1.02); /* 아주 살짝 키워서 존재감 부여 */
+    box-shadow: 0 0 10px rgba(255,215,0,0.6), 0 0 20px rgba(255,165,0,0.4), inset 0 0 8px rgba(255,223,0,0.3) !important;
+    z-index: 5; transform: scale(1.02);
 }
-
-/* 마우스 호버 시에는 더 강하게 빛나도록 설정 (선택 사항) */
 .eldyne-card:hover {
-    box-shadow: 
-        0 0 15px rgba(255, 215, 0, 0.8), 
-        0 0 30px rgba(255, 165, 0, 0.6) !important;
+    box-shadow: 0 0 15px rgba(255,215,0,0.8), 0 0 30px rgba(255,165,0,0.6) !important;
     transform: scale(1.05) translateY(-5px);
 }
 
-/* 뱃지 정보 컨테이너 */
-.grade-info { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 5px; 
-    align-items: center; 
+.grade-info { display: flex; flex-direction: column; gap: 5px; align-items: center; }
+.skill-gauge-container { display: flex; align-items: center; gap: 5px; width: 100%; max-width: 80px; }
+.skill-label { font-size: 0.75rem; font-weight: 800; color: #777; flex-shrink: 0; }
+.gauge-bg { flex-grow: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; position: relative; }
+.gauge-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+
+/* Mobile card overrides */
+@media (max-width: 480px) {
+    .char-name { font-size: 0.8rem !important; margin-bottom: 4px !important; }
+    .card-bottom { padding: 5px 2px !important; }
+    .skill-label { font-size: 0.6rem !important; }
+    .char-card div[style*="height: 20px"] img { width: 14px !important; height: 14px !important; }
+    .card-bottom div[style*="gap: 4px"] { gap: 2px !important; }
+    .card-bottom div[style*="min-width: 0"] { gap: 1px !important; }
+    .card-bottom div[style*="height: 5px"] { min-width: 0 !important; }
+    .card-bottom span { font-size: 0.6rem !important; min-width: auto !important; }
+    .card-bottom span[style*="text-align: right"] { font-size: 0.6rem !important; min-width: 15px !important; }
 }
 
-/* 스킬 강화 게이지 바 컨테이너 */
-.skill-gauge-container {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    width: 100%;
-    max-width: 80px; /* 게이지 바의 전체 너비 조절 */
+/* ═══════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════ */
+
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+.modal-content {
+    background: #fff; width: 92%; max-width: 500px; padding: 0; border-radius: 20px;
+    max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; position: relative;
 }
-
-.skill-label {
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: #777;
-    flex-shrink: 0;
+.modal-fixed-header {
+    padding: 20px 20px 0 20px; background: #fff; z-index: 10; flex-shrink: 0;
+    border-bottom: 1px solid #eee; border-top-left-radius: 20px; border-top-right-radius: 20px;
 }
-
-.gauge-bg {
-    flex-grow: 1;
-    height: 8px; /* 게이지 두께 */
-    background: #e2e8f0; /* 빈 막대 색상 */
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
+#detail-body-scroll {
+    flex: 1 1 auto; background: #f1f3f5; padding: 20px;
+    overflow-y: auto; scrollbar-gutter: stable;
+    scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent;
+    border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
 }
+#detail-body-scroll::-webkit-scrollbar { width: 8px; }
+#detail-body-scroll::-webkit-scrollbar-track { background: transparent; }
+#detail-body-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; border: 2px solid #f1f3f5; }
+#detail-body-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
 
-.gauge-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.3s ease;
+.modal-close-x {
+    position: absolute; top: 15px; right: 15px;
+    width: 32px; height: 32px; background: #f1f3f5; border: none; border-radius: 50%;
+    font-size: 22px; color: #666; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; z-index: 100; transition: all 0.2s;
 }
+.modal-close-x:hover { background: #e2e8f0; color: #000; }
 
+.modal-tabs { display: flex; position: relative !important; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+.tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: bold; color: #888; font-family: inherit; z-index: 5; transition: color 0.3s ease; }
+.tab-btn.active { color: var(--text-dark); border-bottom: none !important; }
+.tab-indicator { position: absolute; bottom: -2px; left: 0; width: 25%; height: 3px; background-color: var(--accent-green) !important; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 10; display: block !important; }
 
-
-
-        /* 모달 시스템 */
-        /* 모달이 열려 있는 동안 html/body 스크롤 잠금 */
-        html:has(.modal-overlay:not(.hidden)) {
-            overflow: hidden;
-        }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
-        /* 모달 컨텐츠: 내부 내용이 길어지면 스크롤이 생기도록 수정 */
-        .modal-content {
-            background: #fff;
-            width: 92%;
-            max-width: 500px;
-            padding: 0; /* 패딩을 0으로 하고 내부 영역에서 조절 */
-            border-radius: 20px;
-            max-max-height: 80vh;
-            display: flex;
-            flex-direction: column; /* 세로 배치 */
-            overflow: hidden; /* 전체 스크롤은 막음 */
-            position: relative;
-        }
-
-        .modal-fixed-header {
-            padding: 20px 20px 0 20px;
-            background: #fff;
-            z-index: 10;
-            flex-shrink: 0; /* 크기 고정 */
-            border-bottom: 1px solid #eee; /* 탭 하단 경계선 */
-        }
-
-        /* --- 모달 스크롤 영역 최적화 (style.css) --- */
-
-        #detail-body-scroll {
-            flex-grow: 1; /* 남은 공간 차지 */
-            background: #f1f3f5; /* 탭 내부 배경색 */
-            padding: 20px; /* 좌우 여백 */
-            
-            /* [핵심] 스크롤바 유무와 상관없이 우측 여백을 항상 일정하게 유지 */
-            overflow-y: auto; 
-            scrollbar-gutter: stable; /* 스크롤바 자리를 미리 파둡니다. */
-            
-            /* Firefox용 슬림 스크롤바 */
-            scrollbar-width: thin;
-            scrollbar-color: rgba(0,0,0,0.2) transparent;
-        }
-
-        /* --- Webkit (Chrome, Safari, Edge) 커스텀 스크롤바 디자인 --- */
-
-        /* 1. 스크롤바 전체 너비 설정 */
-        #detail-body-scroll::-webkit-scrollbar {
-            width: 8px; /* 너무 넓지 않게 설정 */
-        }
-
-        /* 2. 스크롤바 트랙 (배경) */
-        #detail-body-scroll::-webkit-scrollbar-track {
-            background: transparent; /* 배경은 투명하게 */
-        }
-
-        /* 3. 스크롤바 핸들 (바) */
-        #detail-body-scroll::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.15); /* 옅은 회색으로 시각적 부담 축소 */
-            border-radius: 10px; /* 둥근 모서리 */
-            border: 2px solid #f1f3f5; /* 트랙 색상과 같은 테두리를 주어 더 얇게 보이게 함 */
-        }
-
-        /* 4. 스크롤바 핸들 호버 효과 */
-        #detail-body-scroll::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 0, 0, 0.3); /* 마우스 올리면 조금 더 진하게 */
-        }
-
-        /* 상단 닫기(X) 버튼 스타일 */
-        .modal-close-x {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 32px;
-            height: 32px;
-            background: #f1f3f5;
-            border: none;
-            border-radius: 50%;
-            font-size: 22px;
-            color: #666;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            transition: all 0.2s;
-        }
-
-        .modal-close-x:hover {
-            background: #e2e8f0;
-            color: #000;
-        }
-
-        .modal-tabs { display: flex; position: relative!important; border-bottom: 2px solid #eee; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: bold; color: #888; font-family: inherit; z-index: 5; transition: color 0.3s ease;}        
-        .tab-btn.active {color: var(--text-dark); border-bottom: none !important; }
-        .tab-indicator {position: absolute; bottom: -2px; left: 0;width: 25%;  height: 3px;background-color: var(--accent-green) !important;transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);z-index: 10;display: block !important;}
-
-        /* 필터 모달 전용 */
-        .modal-search-box { position: relative; width: 100%; margin-bottom: 15px; }
-        .modal-search-box input { 
-            width: 100%; padding: 12px 12px 12px 40px; border-radius: 20px; border: 2px solid #eee; 
-            outline: none; font-family: inherit;
-            background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23888" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 14px center;
-        }
-        #modal-filter .tab-btn {
-            border: 1px solid #eee;
-            border-bottom: none;
-            background: #f8f8f8;
-            margin-right: 2px;
-            border-radius: 10px 10px 0 0;
-            transition: all 0.2s;}
-
-        #modal-filter .tab-btn.active {
-            background: #fff !important;
-            border-top: 2px solid var(--accent-green) !important;
-            border-left: 1px solid #eee !important;
-            border-right: 1px solid #eee !important;
-            color: var(--text-dark) !important;
-            z-index: 2;
-            margin-bottom: -1px; /* 탭이 박스 테두리를 덮도록 설정 */
-        }
-
-        #filter-checkbox-group {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            grid-auto-rows: min-content !important;
-            align-content: start !important;
-            gap: 8px !important;
-            padding: 10px !important;
-            border: 1px solid #eee !important;
-            border-radius: 12px;
-            background: #fff !important;
-            height: 300px !important; /* 높이 고정 유지 */
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            /* 탭 메뉴(뚜껑)와 이어지도록 설정 */
-            border-top-left-radius: 0 !important;
-            border-top: 2px solid var(--accent-green) !important;
-            margin-top: -1px !important;
-        }
-        /* 체크박스 라벨 스타일링 */
-        .filter-label {
-            display: flex; 
-            align-items: center; 
-            gap: 6px; 
-            font-size: 0.85rem; 
-            cursor: pointer; 
-            padding: 8px; 
-            border: 1px solid #eee; 
-            border-radius: 8px; 
-            background: #fff;
-            transition: all 0.2s ease; /* 부드러운 전환 */
-        }
-
-        .filter-label:hover {
-            background-color: #f9fdf0 !important;
-            border-color: var(--accent-green) !important;
-            transform: translateY(-1px); /* 살짝 떠오르는 효과 */
-        }
-
-        /* 체크박스가 선택된 상태일 때 */
-        .filter-label:has(input:checked) {
-        background-color: #f4f9e9 !important;
-        border-color: var(--accent-green) !important;
-        font-weight: bold;
-        }
-
-        .modal-footer { display: flex; gap: 10px; margin-top: 15px; padding-bottom: 5px; }
-        .group-title { grid-column: 1 / -1; background: var(--accent-green); padding: 10px 15px; border-radius: 8px; margin-top: 15px; font-size: 1.1rem; }
-        
-        /* 스위치 & 슬라이더 */
-        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--accent-green); }
-        input:checked + .slider:before { transform: translateX(18px); }
-
-        .mode-switch { display: flex; position: relative; background-color: #eee; padding: 4px; border-radius: 12px; width: 100%; }
-        .mode-switch input { display: none; }
-        .mode-switch label { flex: 1; text-align: center; padding: 10px 0; font-size: 0.9rem; cursor: pointer; z-index: 1; transition: color 0.3s; color: #888; }
-        .mode-switch input:checked + label { color: #fff; font-weight: bold; }
-        #mode-or:checked + label { color: var(--text-dark); }
-        .mode-glider { position: absolute; display: flex; height: calc(100% - 8px); width: calc(50% - 4px); background-color: var(--accent-green); border-radius: 10px; transition: transform 0.3s; z-index: 0; }
-        #mode-or:checked ~ .mode-glider { transform: translateX(0); }
-        #mode-and:checked ~ .mode-glider { transform: translateX(100%); background-color: #3488F0; }
-
-        /* 필터 모달 내부의 모든 주요 요소들에 좌우 여백 강제 부여 */
-        #modal-filter .modal-content h3,          /* 타이틀 */
-        #modal-filter .modal-search-box,         /* 검색창 */
-        #modal-filter .mode-switch,              /* OR/AND 스위치 */
-        #modal-filter .filter-mode-container + div, /* 본인 대상 효과 제외 섹션 */
-        #modal-filter .modal-tabs,               /* 탭 버튼 */
-        #modal-filter #filter-checkbox-group,    /* 체크박스 목록 */
-        #modal-filter .modal-footer              /* 하단 버튼 */ {
-            width: 90% !important;               /* 가로폭을 90%로 줄임 */
-            margin-left: auto !important;        /* 가운데 정렬 */
-            margin-right: auto !important;       /* 가운데 정렬 */
-        }
-
-        /* 필터 목록(체크박스) 영역의 상하 여백 보정 */
-        #modal-filter #filter-checkbox-group {
-            padding: 10px !important;            /* 내부 박스들이 테두리에 붙지 않게 */
-            width: 90% !important;               /* 위 설정과 동일하게 맞춰서 정렬 유지 */
-        }
-
-        /* 하단 버튼 영역 패딩 추가 보정 */
-        #modal-filter .modal-footer {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding: 15px 0 !important;          /* 좌우 패딩은 width: 90%가 담당하므로 상하만 */
-            
-        }
-
-        #modal-filter .modal-content h3 {
-        padding-top: 25px !important;  /* 천장에서 제목을 아래로 밉니다 */
-        margin-bottom: 20px !important; /* 제목과 검색창 사이 간격 확보 */
-        font-size: 1.4rem !important;  /* 제목 크기도 살짝 키워 시원하게 */
-        }
-
-        /* 2. 각 요소들 사이의 간격(Margin)을 조금 더 여유 있게 조정 */
-        #modal-filter .modal-search-box {
-            margin-bottom: 15px !important;
-        }
-
-        #modal-filter .mode-switch {
-            margin-bottom: 15px !important;
-        }
-
-        /* 3. 모달 하단 버튼 아래 여백도 살짝 추가해서 대칭을 맞춤 */
-        #modal-filter .modal-footer {
-            padding-bottom: 25px !important;
-        }
-
-        /* Top 버튼 */
-        #top-btn {
-            position: fixed; bottom: 30px; right: 25px; z-index: 999; width: 50px; height: 50px;
-            background-color: #2D331D; color: white; border: none; border-radius: 50%;
-            cursor: pointer; display: none; flex-direction: column; align-items: center; justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s; font-family: 'OneMobilePop', sans-serif;
-        }
-        #top-btn:hover { background-color: var(--accent-green); transform: translateY(-5px); }
-
-        /*상호작용 애니메이션*/
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 8px;
-            text-align: center;
-            cursor: pointer;
-            border: 1px solid #d0e0a0;
-            transition: all 0.2s ease-out;
-        }
-        .card:hover {
-            transform: translateY(-8px); /* 위로 8px 이동 */
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); 
-            border-color: var(--accent-green); 
-        }               
-
-.active-filters-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px; /* 태그 간격 살짝 넓힘 */
-    padding: 6px 15px 12px 15px; /* 하단 여백 충분히 확보 */
-    min-height: 0;
+/* ── Filter Modal ─────────────────────── */
+.modal-search-box { position: relative; width: 100%; margin-bottom: 15px; }
+.modal-search-box input {
+    width: 100%; padding: 12px 12px 12px 40px; border-radius: 20px; border: 2px solid #eee; outline: none; font-family: inherit;
+    background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%23888" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>') no-repeat 14px center;
 }
+#modal-filter .tab-btn { border: 1px solid #eee; border-bottom: none; background: #f8f8f8; margin-right: 2px; border-radius: 10px 10px 0 0; transition: all 0.2s; }
+#modal-filter .tab-btn.active { background: #fff !important; border-top: 2px solid var(--accent-green) !important; border-left: 1px solid #eee !important; border-right: 1px solid #eee !important; color: var(--text-dark) !important; z-index: 2; margin-bottom: -1px; }
+#filter-checkbox-group {
+    display: grid !important; grid-template-columns: 1fr 1fr !important;
+    grid-auto-rows: min-content !important; align-content: start !important;
+    gap: 8px !important; padding: 10px !important;
+    border: 1px solid #eee !important; border-radius: 12px; background: #fff !important;
+    height: 300px !important; overflow-y: auto !important; overflow-x: hidden !important;
+    border-top-left-radius: 0 !important; border-top: 2px solid var(--accent-green) !important; margin-top: -1px !important;
+}
+.filter-label { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer; padding: 8px; border: 1px solid #eee; border-radius: 8px; background: #fff; transition: all 0.2s ease; }
+.filter-label:hover { background-color: #f9fdf0 !important; border-color: var(--accent-green) !important; transform: translateY(-1px); }
+.filter-label:has(input:checked) { background-color: #f4f9e9 !important; border-color: var(--accent-green) !important; font-weight: bold; }
 
-/* 필터 태그 */
-.filter-tag {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 20px; 
-    padding: 6px 14px; 
- 
-    font-size: 0.8rem; /* 약간 키움 */
-    font-weight: 800; /* 아주 굵게 */
-    color: var(--text-dark) !important; /* 폰트색 고정 */
-    
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    
-    transition: all 0.2s ease;
-    border: none;
-}
+.modal-footer { display: flex; gap: 10px; margin-top: 15px; padding-bottom: 5px; }
+.group-title { grid-column: 1 / -1; background: var(--accent-green); padding: 10px 15px; border-radius: 8px; margin-top: 15px; font-size: 1.1rem; }
 
-/* 제거 버튼 스타일 */
-.filter-tag .remove-btn {
-    margin-left: 8px; /* 간격 넓힘 */
-    cursor: pointer;
-    font-size: 0.9rem;
-    color: rgba(45, 51, 29, 0.6); /* 텍스트색에 투명도 적용 */
-    transition: color 0.2s;
-}
-.filter-tag .remove-btn:hover {
-    color: #e74c3c; /* 호버 시에만 빨간색 */
-}
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--accent-green); }
+input:checked + .slider:before { transform: translateX(18px); }
 
-/* 1. 버프 태그 (파란색 계열 ▲) */
-.filter-tag.tag-buff {
-    background-color: #3488F0; /* 인게임 버프 파랑 */
-}
-.filter-tag.tag-buff::before {
-    content: '▲';
-    margin-right: 4px;
-    font-size: 0.7rem;
-}
+.mode-switch { display: flex; position: relative; background-color: #eee; padding: 4px; border-radius: 12px; width: 100%; }
+.mode-switch input { display: none; }
+.mode-switch label { flex: 1; text-align: center; padding: 10px 0; font-size: 0.9rem; cursor: pointer; z-index: 1; transition: color 0.3s; color: #888; }
+.mode-switch input:checked + label { color: #fff; font-weight: bold; }
+#mode-or:checked + label { color: var(--text-dark); }
+.mode-glider { position: absolute; display: flex; height: calc(100% - 8px); width: calc(50% - 4px); background-color: var(--accent-green); border-radius: 10px; transition: transform 0.3s; z-index: 0; }
+#mode-or:checked ~ .mode-glider { transform: translateX(0); }
+#mode-and:checked ~ .mode-glider { transform: translateX(100%); background-color: #3488F0; }
 
-/* 2. 디버프 태그 (빨간색 계열 ▼) */
-.filter-tag.tag-debuff {
-    background-color: #FC6881; /* 인게임 디버프 빨강 */
-}
-.filter-tag.tag-debuff::before {
-    content: '▼';
-    margin-right: 4px;
-    font-size: 0.7rem;
-}
+#modal-filter .modal-content h3,
+#modal-filter .modal-search-box,
+#modal-filter .mode-switch,
+#modal-filter .filter-mode-container + div,
+#modal-filter .modal-tabs,
+#modal-filter #filter-checkbox-group,
+#modal-filter .modal-footer { width: 90% !important; margin-left: auto !important; margin-right: auto !important; }
+#modal-filter #filter-checkbox-group { padding: 10px !important; width: 90% !important; }
+#modal-filter .modal-footer { display: flex; justify-content: center; gap: 10px; padding: 15px 0 25px !important; }
+#modal-filter .modal-content h3 { padding-top: 25px !important; margin-bottom: 20px !important; font-size: 1.4rem !important; }
+#modal-filter .modal-search-box { margin-bottom: 15px !important; }
+#modal-filter .mode-switch { margin-bottom: 15px !important; }
 
-/* 3. 중립/개전 효과 태그 (보라색 계열 -) */
-.filter-tag.tag-neutral {
-    background-color: #A361FF; /* 인게임 중립 보라 */
+/* ── Misc ─────────────────────────────── */
+#top-btn {
+    position: fixed; bottom: 30px; right: 25px; z-index: 999; width: 50px; height: 50px;
+    background-color: #2D331D; color: white; border: none; border-radius: 50%;
+    cursor: pointer; display: none; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s; font-family: 'OneMobilePop', sans-serif;
 }
-.filter-tag.tag-neutral::before {
-    content: '-';
-    margin-right: 5px;
-    font-weight: 900;
-}
+#top-btn:hover { background-color: var(--accent-green); transform: translateY(-5px); }
 
-/* 4. 검색어 태그 (기본 연두색) */
-.filter-tag.tag-search {
-    background-color: var(--card-bg); /* 기존 ECF7CD */
-    border: 1px solid var(--accent-green);
-}
+.card { background: var(--card-bg); border-radius: 12px; padding: 8px; text-align: center; cursor: pointer; border: 1px solid #d0e0a0; transition: all 0.2s ease-out; }
+.card:hover { transform: translateY(-8px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: var(--accent-green); }
 
-/* 모두 해제 버튼 스타일 */
-.filter-tag.tag-clear-all {
-    background-color: #f1f5f9; /* 연한 회색 */
-    border: 1.5px solid #cbd5e1;
-    color: #64748b !important; 
-    cursor: pointer;
-    padding: 6px 14px; 
-    font-size: 0.75rem;
-    font-weight: 800;
-}
+/* 타이틀 클릭 리셋 호버 */
+.main-title { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; user-select: none; }
+.main-title:hover { color: var(--accent-green); transform: scale(1.05); text-shadow: 0 4px 8px rgba(188,221,95,0.3); }
+.main-title:active { transform: scale(0.95); }
 
-.filter-tag.tag-clear-all:hover {
-    background-color: #ffebee; /* 살짝 붉은 기운이 도는 배경 */
-    color: #e74c3c !important; /* 호버 시 붉은색으로 강조 */
-    border-color: #fab1a0;
-}
-
-
-/* 검색창 서식 */
-.search-box {
-    position: relative; /* 버튼의 기준점 */
-    display: flex;
-    align-items: center;
-}
-
-#search-clear-btn {
-    position: absolute;
-    right: 10px;
-    width: 20px;
-    height: 20px;
-    background: #e5e7eb;
-    color: #6b7280;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    padding: 0;
-    z-index: 10;
-}
-
-#search-clear-btn:hover {
-    background: #d1d5db;
-    color: #374151;
-}
-
-/* 텍스트가 X 버튼과 겹치지 않게 */
-#search-input {
-    padding-right: 35px !important;
-}
-
-/* hidden 클래스가 없다면 추가 */
-.hidden {
-    display: none !important;
-}
-
-/* 타이틀 호버 스타일 */
-.main-title {
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    display: inline-block; /* 애니메이션 효과가 잘 보이도록 설정 */
-    user-select: none;
-}
-
-.main-title:hover {
-    color: var(--accent-green); /* 연두색으로 변화 */
-    transform: scale(1.05); /* 살짝 커짐 */
-    text-shadow: 0 4px 8px rgba(188, 221, 95, 0.3); /* 은은한 빛 효과 */
-}
-
-.main-title:active {
-    transform: scale(0.95); /* 클릭 시 쏙 들어가는 느낌 */
-}
-
-/* 리셋 시 그리드에 적용할 애니메이션 */
 @keyframes resetFadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+.reset-ani { animation: resetFadeIn 0.5s ease-out forwards; }
 
-.reset-ani {
-    animation: resetFadeIn 0.5s ease-out forwards;
-}
-
-#modal-aside-filter .modal-tabs {
-    width: 90% !important;
-    margin: 0 auto !important;
-    display: flex !important;
-    align-items: flex-end !important;
-}
-
-/* 1. 기본 탭 버튼 디자인 (이모지 없이 텍스트만, 부가 효과와 동일 곡률) */
-#modal-aside-filter .aside-tab {
-    flex: 1;
-    background: #f1f5f9;
-    border: 1px solid #eee;
-    border-bottom: none;
-    border-radius: 10px 10px 0 0;
-    padding: 10px;
-    font-size: 0.9rem;
-    color: #888;
-    cursor: pointer;
-}
-
-/* 1. 하단 박스: 탭과 1px 겹치게 위로 올리고 상단 테두리 설정 */
+/* ═══════════════════════════════════════════
+   ASIDE FILTER MODAL
+═══════════════════════════════════════════ */
+#modal-aside-filter .modal-tabs { width: 90% !important; margin: 0 auto !important; display: flex !important; align-items: flex-end !important; }
+#modal-aside-filter .aside-tab { flex: 1; background: #f1f5f9; border: 1px solid #eee; border-bottom: none; border-radius: 10px 10px 0 0; padding: 10px; font-size: 0.9rem; color: #888; cursor: pointer; }
 #modal-aside-filter #aside-filter-group {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    grid-auto-rows: min-content !important;
-    gap: 8px !important;
-    padding: 20px 15px !important;
-    border: 1px solid #eee !important;
-    
-    /* 상단 모서리를 직각으로 고정하여 탭 하단과 빈틈없이 밀착 */
-    border-radius: 0 0 12px 12px !important; 
-    background: #fff !important;
-    min-height: 400px !important;
-    
-    /* 박스 상단 테두리 선 */
-    border-top: 2px solid var(--accent-green) !important;
-    
-    /* 탭 버튼 하단과 겹치도록 설정 */
-    margin-top: -1px !important; 
-    
-    width: 90% !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    position: relative;
-    z-index: 1; /* 탭 버튼(z-index: 2)보다 아래에 위치 */
+    display: grid !important; grid-template-columns: 1fr 1fr !important;
+    grid-auto-rows: min-content !important; gap: 8px !important; padding: 20px 15px !important;
+    border: 1px solid #eee !important; border-radius: 0 0 12px 12px !important; background: #fff !important;
+    min-height: 400px !important; border-top: 2px solid var(--accent-green) !important; margin-top: -1px !important;
+    width: 90% !important; margin-left: auto !important; margin-right: auto !important;
+    position: relative; z-index: 1;
 }
+#modal-aside-filter .aside-tab.active { background: #fff !important; border: 1px solid #eee !important; border-top: 2.5px solid var(--accent-green) !important; border-bottom: 3px solid #fff !important; color: var(--text-dark) !important; font-weight: bold; z-index: 2; margin-bottom: -2px !important; }
+#modal-aside-filter .filter-label { display: flex !important; align-items: center !important; gap: 8px !important; padding: 10px !important; border: 1px solid #eee !important; border-radius: 8px !important; background: #fff !important; cursor: pointer; font-size: 0.85rem !important; transition: all 0.2s ease; }
+#modal-aside-filter .filter-label:hover { background-color: #f4f9e9 !important; border-color: var(--accent-green) !important; transform: translateY(-1px); }
+#modal-aside-filter .filter-label:has(input:checked) { background-color: #f4f9e9 !important; border-color: var(--accent-green) !important; font-weight: bold; }
 
-/* 2. 활성화된 탭: 박스의 상단 선(연두색)을 하얀색 바닥으로 덮어서 지워버림 */
-#modal-aside-filter .aside-tab.active {
-    background: #fff !important;
-    border: 1px solid #eee !important;
-    border-top: 2.5px solid var(--accent-green) !important;
-    border-bottom: 3px solid #fff !important; 
-    
-    color: var(--text-dark) !important;
-    font-weight: bold;
-    z-index: 2; 
-    
-    margin-bottom: -2px !important; 
-}
-
-/* 4. 필터 라벨(칩) 디자인 및 녹색 호버 통일 */
-#modal-aside-filter .filter-label {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    padding: 10px !important;
-    border: 1px solid #eee !important;
-    border-radius: 8px !important;
-    background: #fff !important;
-    cursor: pointer;
-    font-size: 0.85rem !important;
-    transition: all 0.2s ease;
-}
-
-#modal-aside-filter .filter-label:hover {
-    background-color: #f4f9e9 !important;
-    border-color: var(--accent-green) !important;
-    transform: translateY(-1px); /* 살짝 떠오르는 효과 */
-}
-
-/* 체크박스가 선택된 상태의 라벨 스타일 (has 선택자 활용) */
-#modal-aside-filter .filter-label:has(input:checked) {
-    background-color: #f4f9e9 !important;
-    border-color: var(--accent-green) !important;
-    font-weight: bold;
-}
-
+/* ═══════════════════════════════════════════
+   DETAIL MODAL
+═══════════════════════════════════════════ */
 #modal-detail .modal-content {
-    overflow: visible !important; 
-    position: relative;
-    z-index: 2001;
-    background: #fff;
-    border-radius: 20px; /* 기존 곡률 유지 */
+    overflow: visible !important; position: relative; z-index: 2001;
+    background: #fff; border-radius: 20px; max-height: 80vh; display: flex; flex-direction: column;
 }
+#modal-detail .modal-fixed-header { flex-shrink: 0; }
+#modal-detail .tab-content { min-height: 400px; }
 
-/* 2. [핵심] 상단 고정 헤더에 상단 곡률 다시 부여 */
-.modal-fixed-header {
-    padding: 20px 20px 0 20px;
-    background: #fff;
-    z-index: 10;
-    flex-shrink: 0;
-    border-bottom: 1px solid #eee;
-    /* 추가: 모달 본체의 곡률에 맞춰 윗부분을 깎음 */
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-}
+/* ── Side Flags ──────────────────────── */
+.modal-side-flags { position: absolute; left: 0px; top: 220px; display: flex; flex-direction: column; gap: 10px; z-index: -1; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); opacity: 0; pointer-events: none; }
+.modal-side-flags.show { left: -85px; opacity: 1; pointer-events: auto; }
+.side-flag { width: 90px; height: 40px; background: rgba(188,221,95,0.85) !important; border: 1px solid rgba(0,0,0,0.05); border-right: none; border-radius: 0; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #333; cursor: pointer; box-shadow: -2px 1px 4px rgba(0,0,0,0.1); white-space: nowrap; transition: all 0.25s ease; backdrop-filter: blur(2px); }
+.side-flag:hover { background: rgba(188,221,95,0.95) !important; transform: translateX(-3px); filter: brightness(1.05); }
+.side-flag.is-active { transform: translateX(65px); background: var(--accent-green) !important; color: #fff !important; box-shadow: none; border-left: 2px solid rgba(255,255,255,0.3); }
+.side-flag.is-active:hover { transform: translateX(55px); }
 
-/* 3. [핵심] 하단 버튼 영역 또는 마지막 요소에 하단 곡률 부여 */
-#modal-detail .btn[onclick*="closeModal"] {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    border-bottom-left-radius: 20px;
-    border-bottom-right-radius: 20px;
-}
+.effect-item { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); max-height: 500px; opacity: 1; transform: translateY(0); overflow: hidden; margin: 0 !important; }
+.effect-item.is-hidden { opacity: 0; max-height: 0; transform: scale(0.95); padding-top: 0 !important; padding-bottom: 0 !important; border: none !important; pointer-events: none; }
 
-/* 4. 스크롤 영역 배경색이 삐져나오지 않도록 조정 */
-#detail-body-scroll {
-    background: #f1f3f5;
-    border-bottom-left-radius: 20px; 
-    border-bottom-right-radius: 20px;
-}
-
-/* 1. 플래그들을 담는 바구니 (모달 왼쪽에 부착) */
-.modal-side-flags {
-    position: absolute;
-    left: 0px;
-    top: 220px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: -1;
-    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    opacity: 0;
-    pointer-events: none;
-}
-
-/* 2. tab-1 활성화 시 플래그 등장  */
-.modal-side-flags.show {
-    left: -85px; 
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* 3. 플래그 크기 확대 (모바일 가독성) */
-.side-flag {
-    width: 90px;
-    height: 40px;
-    background: rgba(188, 221, 95, 0.85) !important; 
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    border-right: none;
-    border-radius: 0; 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: #333;
-    cursor: pointer;
-    box-shadow: -2px 1px 4px rgba(0, 0, 0, 0.1); 
-    white-space: nowrap;
-    transition: all 0.25s ease;
-    backdrop-filter: blur(2px); }
-
-.side-flag:hover {
-    background: rgba(188, 221, 95, 0.95) !important;
-    transform: translateX(-3px);
-    filter: brightness(1.05);
-}
-    
-
-/* 4. 활성화 시 안으로 쏙 들어가는 연출 보정 */
-.side-flag.is-active {
-    transform: translateX(65px); /* 쏙 들어감 */
-    background: var(--accent-green) !important;
-    color: #fff !important;
-    box-shadow: none;
-    border-left: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.side-flag.is-active:hover {
-    transform: translateX(55px); 
-}
-
-/* 5. 스무스 페이드 & 슬라이드 애니메이션 (아이템용) */
-.effect-item {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    max-height: 500px; 
-    opacity: 1;
-    transform: translateY(0);
-    overflow: hidden;
-    margin: 0 !important; 
-}
-.effect-item.is-hidden {
-    opacity: 0;
-    max-height: 0;
-    /* gap에 의한 공간까지 지우기 위해 display: none 처럼 인식하게 함 */
-    transform: scale(0.95);
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    border: none !important;
-    pointer-events: none;
-    /* transition을 위해 visibility 대신 opacity 사용 유지 */
-}
-
-/* 모달 flexbox 레이아웃 */
-#modal-detail .modal-content {
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-}
-
-#modal-detail .modal-fixed-header {
-  flex-shrink: 0;
-}
-
-#detail-body-scroll {
-  flex: 1 1 auto;
-  overflow-y: auto;
-}
-
-#modal-detail .tab-content {
-  min-height: 400px;
-}
-
+/* ── Mobile modal ────────────────────── */
 @media (max-width: 480px) {
-    #modal-detail {
-        padding-left: 0;
-        padding-right: 0;
-        justify-content: center;
-        align-items: center;
-    }
-    #modal-detail .modal-content {
-        width: 88%;
-        max-width: none;
-        max-height: 84vh;
-    }
-    .modal-side-flags {
-        display: none !important;
-    }
+    #modal-detail { padding-left: 0; padding-right: 0; justify-content: center; align-items: center; }
+    #modal-detail .modal-content { width: 88%; max-width: none; max-height: 84vh; }
+    .modal-side-flags { display: none !important; }
 }

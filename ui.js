@@ -670,7 +670,7 @@ window.applyAsideFilter = () => {
 
     const countSpan = document.getElementById('aside-filter-count');
     if (countSpan) {
-        countSpan.innerText = total > 0 ? `(${total})` : '';
+        countSpan.innerText = total > 0 ? String(total) : '';
     }
 
     window.closeAsideFilter();
