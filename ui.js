@@ -601,9 +601,10 @@ export function switchTab(idx) {
 }
 
 // [1] 필터 데이터 정의 (항목 매칭용)
-const ASIDE_TARGETS = ['무관(상관없음)', '파티 전체', '전열 아군', '중열 아군', '후열 아군', '동일 성격 아군'];
+let currentAsideTab = 0;
+const ASIDE_TARGETS = ['파티 전체', '전열 아군', '중열 아군', '후열 아군', '동일 성격 아군'];
 const ASIDE_EFFECTS = [
-    '무관(상관없음)', '주는 피해량 증가', '받는 피해량 감소', '받는 물리 피해량 감소', '받는 마법 피해량 감소',
+    '주는 피해량 증가', '받는 피해량 감소', '받는 물리 피해량 감소', '받는 마법 피해량 감소',
     '스킬 피해량 증가', '공격 속도 증가', '최대 HP 증가', 'SP 회복량 증가',
     '치명타 증가', '치명 피해 증가', '치명타 저항 증가', '치명 피해 저항 증가'
 ];
@@ -611,47 +612,134 @@ const ASIDE_EFFECTS = [
 // [2] 모달 열기
 window.openAsideFilter = () => {
     document.getElementById('modal-aside-filter').classList.remove('hidden');
-    window.switchAsideFilterTab(0); 
     document.body.style.overflow = 'hidden';
-};
-
-
-// [3] 탭 전환 로직 (디자인 포인트 포함)
-window.switchAsideFilterTab = (idx) => {
-    const group = document.getElementById('aside-filter-group');
-    const btns = document.querySelectorAll('.aside-tab');
-    
-    if (!group) return;
-
-    // 1. 탭 버튼 활성화 클래스만 토글
-    btns.forEach((b, i) => b.classList.toggle('active', i === idx));
-
-    // 2. 내용 렌더링 (모서리 제어 로직 삭제 - CSS에서 정적으로 처리)
-    if (idx === 0) {
-        group.innerHTML = ASIDE_TARGETS.map(t => renderAsideOption('targets', t)).join('');
-    } else {
-        group.innerHTML = ASIDE_EFFECTS.map(e => renderAsideOption('effects', e)).join('');
+    window.switchAsideFilterTab(0);
+    updateSegmentedIndicator('aside-segmented');
+    const scroll = document.getElementById('aside-filter-scroll');
+    if (scroll && !scroll._scrollFadeInit) {
+        scroll._scrollFadeInit = true;
+        scroll.addEventListener('scroll', () => {
+            scroll.classList.toggle('is-scrolled', scroll.scrollTop > 0);
+        }, { passive: true });
     }
 };
 
-// [4] 옵션 렌더링 (라벨 + 체크박스 구조 유지)
-function renderAsideOption(type, value) {
-    const isActive = window.activeAsideFilters[type].includes(value);
-    const activeStyle = isActive ? 'background-color: #f4f9e9; border-color: var(--accent-green);' : '';
-    
-    return `
-        <label class="filter-label" style="${activeStyle}">
-            <input type="checkbox" value="${value}" ${isActive ? 'checked' : ''} 
-                   onchange="window.toggleAsideFilter('${type}', '${value}', this)"
-                   style="margin: 0; width: 16px; height: 16px;">
-            <span style="margin-left: 4px;">${value}</span>
-        </label>
-    `;
+// 세그멘티드 탭 인디케이터 슬라이드 (두 모달 공유)
+export function updateSegmentedIndicator(segId) {
+    const seg = document.getElementById(segId);
+    if (!seg) return;
+    const indicator = seg.querySelector('.tg-segmented-indicator');
+    const btns = seg.querySelectorAll('.tg-segmented-btn');
+    if (!indicator || btns.length === 0) return;
+    const activeIdx = Array.from(btns).findIndex(b => b.classList.contains('is-active'));
+    if (activeIdx < 0) return;
+    const w = 100 / btns.length;
+    indicator.style.width = `calc(${w}% - 8px)`;
+    indicator.style.transform = `translateX(calc(${activeIdx * 100}% + ${activeIdx * 8}px))`;
+}
+
+// 어사이드 "무관" 배너 상태 갱신
+function refreshAsideAnyOption() {
+    const anyEl = document.getElementById('aside-any-option');
+    const input = document.getElementById('aside-any-input');
+    const set = currentAsideTab === 0 ? window.activeAsideFilters.targets : window.activeAsideFilters.effects;
+    const isAny = set.length === 0 || set.some(v => v.includes('무관'));
+    if (anyEl) anyEl.classList.toggle('is-active', isAny);
+    if (input) input.checked = isAny;
+}
+
+// 어사이드 "모두 해제" 버튼 visibility 갱신
+function refreshAsideClearAllBtn() {
+    const btn = document.getElementById('aside-clear-all-btn');
+    if (!btn) return;
+    const set = currentAsideTab === 0 ? window.activeAsideFilters.targets : window.activeAsideFilters.effects;
+    const count = set.filter(v => !v.includes('무관')).length;
+    if (count > 0) {
+        btn.style.visibility = 'visible'; btn.tabIndex = 0; btn.removeAttribute('aria-hidden');
+        btn.textContent = `모두 해제 (${count})`;
+    } else {
+        btn.style.visibility = 'hidden'; btn.tabIndex = -1; btn.setAttribute('aria-hidden', 'true');
+    }
+}
+
+// [3] 탭 전환 로직
+window.switchAsideFilterTab = (idx) => {
+    currentAsideTab = idx;
+    const group = document.getElementById('aside-filter-group');
+    const btns = document.querySelectorAll('.aside-tab');
+    if (!group) return;
+
+    btns.forEach((b, i) => b.classList.toggle('is-active', i === idx));
+    updateSegmentedIndicator('aside-segmented');
+
+    const scroll = document.getElementById('aside-filter-scroll');
+    if (scroll) { scroll.scrollTop = 0; scroll.classList.remove('is-scrolled'); }
+
+    const hint = document.getElementById('aside-any-hint');
+    const sectionTitle = document.getElementById('aside-section-title');
+    if (idx === 0) {
+        if (hint) hint.textContent = '이 적용 대상은 필터링하지 않음';
+        if (sectionTitle) sectionTitle.textContent = '대상 선택 · 단일 선택';
+        group.innerHTML = ASIDE_TARGETS.map(t => renderAsideOption('targets', t, 'radio')).join('');
+    } else {
+        if (hint) hint.textContent = '이 적용 효과는 필터링하지 않음';
+        if (sectionTitle) sectionTitle.textContent = '효과 선택 · 다중 선택';
+        group.innerHTML = ASIDE_EFFECTS.map(e => renderAsideOption('effects', e, 'checkbox')).join('');
+    }
+    refreshAsideAnyOption();
+    refreshAsideClearAllBtn();
+    if (typeof window.updateAsideFilterCount === 'function') window.updateAsideFilterCount();
+};
+
+// [공통] 필터 체크박스 아이템 렌더링 — 두 필터 모달이 공유
+export function renderFilterCheckbox(value, isChecked, onchangeAttr, prefixHTML = '') {
+    return `<label class="filter-label">
+        <input type="checkbox" value="${value}" ${isChecked ? 'checked' : ''} onchange="${onchangeAttr}">
+        ${prefixHTML}<span style="margin-left: 4px;">${value}</span>
+    </label>`;
+}
+
+// [4] 옵션 렌더링
+const ASIDE_EFFECT_ICONS = {
+    '주는 피해량 증가':      'assets/icons/state/버프_피해량 증가.webp',
+    '받는 피해량 감소':      'assets/icons/state/버프_받는 피해량 감소.webp',
+    '스킬 피해량 증가':      'assets/icons/state/버프_스킬 피해량 증가.webp',
+    '받는 물리 피해량 감소':  'assets/icons/base_stat/물리 방어력.webp',
+    '받는 마법 피해량 감소':  'assets/icons/base_stat/마법 방어력.webp',
+    '공격 속도 증가':        'assets/icons/base_stat/공격 속도.webp',
+    '최대 HP 증가':          'assets/icons/base_stat/HP.webp',
+    'SP 회복량 증가':        'assets/icons/base_stat/SP.webp',
+    '치명타 증가':           'assets/icons/base_stat/치명타.webp',
+    '치명 피해 증가':        'assets/icons/base_stat/치명 피해.webp',
+    '치명타 저항 증가':      'assets/icons/base_stat/치명타 저항.webp',
+    '치명 피해 저항 증가':   'assets/icons/base_stat/치명 피해 저항.webp',
+};
+
+const ASIDE_TARGET_ICONS = {
+    '파티 전체':    'assets/icons/line/전체열.webp',
+    '전열 아군':    'assets/icons/line/전열.webp',
+    '중열 아군':    'assets/icons/line/중열.webp',
+    '후열 아군':    'assets/icons/line/후열.webp',
+    '동일 성격 아군': 'assets/icons/personality/동일성격.webp',
+};
+
+function renderAsideOption(type, value, inputType = 'checkbox') {
+    const isChecked = window.activeAsideFilters[type].includes(value);
+    const iconMap = type === 'targets' ? ASIDE_TARGET_ICONS : ASIDE_EFFECT_ICONS;
+    const iconPath = iconMap[value] ?? null;
+    const iconHTML = iconPath
+        ? `<img src="${iconPath}" alt="${value}" class="aside-line-icon">`
+        : '';
+    return `<label class="filter-label">
+        <input type="${inputType}" value="${value}" ${isChecked ? 'checked' : ''} onchange="window.toggleAsideFilter('${type}', '${value}', this)">
+        ${iconHTML}<span class="tg-name">${value}</span>
+    </label>`;
 }
 
 // [5] 필터 토글 (무관 처리 포함)
 window.toggleAsideFilter = (type, value, checkbox) => {
-    if (value.includes('무관')) {
+    // 어사이드 대상(targets)은 단일 선택 (라디오 동작)
+    if (type === 'targets') {
         window.activeAsideFilters[type] = [value];
     } else {
         window.activeAsideFilters[type] = window.activeAsideFilters[type].filter(v => !v.includes('무관'));
@@ -659,49 +747,41 @@ window.toggleAsideFilter = (type, value, checkbox) => {
         if (index > -1) window.activeAsideFilters[type].splice(index, 1);
         else window.activeAsideFilters[type].push(value);
     }
-    window.switchAsideFilterTab(type === 'targets' ? 0 : 1);
+    const tabIdx = type === 'targets' ? 0 : 1;
+    window.switchAsideFilterTab(tabIdx);
 };
 
 // [6] 필터 적용 함수
 window.applyAsideFilter = () => {
-    const selT = window.activeAsideFilters.targets;
-    const selE = window.activeAsideFilters.effects;
-    const total = selT.length + selE.length;
-
-    const countSpan = document.getElementById('aside-filter-count');
-    if (countSpan) {
-        countSpan.innerText = total > 0 ? String(total) : '';
-    }
+    const t = window.activeAsideFilters.targets.filter(v => !v.includes('무관')).length;
+    const e = window.activeAsideFilters.effects.filter(v => !v.includes('무관')).length;
+    const asideN = t + e;
+    const asideCount = document.getElementById('modal-aside-count');
+    if (asideCount) { if (asideN > 0) { asideCount.hidden = false; asideCount.textContent = `${asideN}개`; } else { asideCount.hidden = true; } }
 
     window.closeAsideFilter();
 
-    // 메인 필터링 실행
     if (typeof window.handleSortFilter === 'function') {
         window.handleSortFilter();
     }
 };
 
-window.addEventListener('click', (e) => {
-    const asideFilterModal = document.getElementById('modal-aside-filter');
-    // 클릭된 대상이 'modal-overlay' 클래스를 가진 배경일 경우에만 닫기
-    if (e.target === asideFilterModal) {
-        window.closeAsideFilter();
-    }
-});
 // [7] 초기화 함수
 window.resetAsideFilter = () => {
-    window.activeAsideFilters = { 
-        targets: [], 
-        effects: [] 
-    };
-
-    const countSpan = document.getElementById('aside-filter-count');
-    if (countSpan) countSpan.innerText = '';
-
-    window.switchAsideFilterTab(0); 
+    window.activeAsideFilters = { targets: [], effects: [] };
+    const asideCount = document.getElementById('modal-aside-count');
+    if (asideCount) asideCount.hidden = true;
+    window.switchAsideFilterTab(0);
     if (typeof window.handleSortFilter === 'function') {
         window.handleSortFilter();
     }
+};
+
+// [8] 어사이드 현재 탭 전체 해제
+window.clearAsideFilter = () => {
+    const key = currentAsideTab === 0 ? 'targets' : 'effects';
+    window.activeAsideFilters[key] = [];
+    window.switchAsideFilterTab(currentAsideTab);
 };
 
 window.addEventListener('click', (e) => {
@@ -727,18 +807,30 @@ window.addEventListener('click', (e) => {
     // 상세 정보 모달 배경 클릭
     if (e.target === detailModal) {
         detailModal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
+        document.body.style.overflow = '';
     }
 });
 
-// 2. [추가] closeAsideFilter 함수 재등록 (혹시 모를 누락 방지)
+// closeAsideFilter
 window.closeAsideFilter = () => {
     const modal = document.getElementById('modal-aside-filter');
     if (modal) {
         modal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
+        document.body.style.overflow = '';
     }
 };
+
+// "무관" 배너 클릭 핸들러
+(function attachAnyOptionHandler() {
+    const anyOption = document.getElementById('aside-any-option');
+    if (!anyOption) return;
+    anyOption.addEventListener('click', (e) => {
+        e.preventDefault();
+        const key = currentAsideTab === 0 ? 'targets' : 'effects';
+        window.activeAsideFilters[key] = ['무관(상관없음)'];
+        window.switchAsideFilterTab(currentAsideTab);
+    });
+})();
 
 
 // 플래그 토글 및 블러 처리 함수

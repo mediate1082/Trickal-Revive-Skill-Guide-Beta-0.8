@@ -8,7 +8,7 @@
     <script>
         /* ── 캐시 버스팅 버전 ──────────────────────────────
            배포할 때 이 숫자만 올리면 CSS·JS 캐시가 자동으로 갱신됩니다. */
-        var APP_VERSION = '1.0.0';
+        var APP_VERSION = '1.2.0';
         document.write('<link rel="stylesheet" href="style.css?v=' + APP_VERSION + '">');
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -86,67 +86,140 @@
         <div id="main-grid" class="tg-grid"></div>
     </div>
 
-<div id="modal-aside-filter" class="modal-overlay hidden">
-    <div class="modal-content">
-        <button class="modal-close-x" onclick="window.closeAsideFilter()">&times;</button>
-        <h3 style="padding: 25px 0 20px 25px; margin: 0; font-size: 1.4rem; text-align: left; color: var(--text-dark);">어사이드 ★3 필터</h3>
-        
-        <div class="modal-tabs">
-            <button class="tab-btn aside-tab active" onclick="window.switchAsideFilterTab(0)">적용 대상</button>
-            <button class="tab-btn aside-tab" onclick="window.switchAsideFilterTab(1)">적용 효과</button>
-            <div class="tab-indicator" id="aside-tab-indicator" style="width: 50%;"></div>
+<div id="modal-aside-filter" class="tg-modal-overlay hidden">
+    <div class="tg-modal-card is-aside" onclick="event.stopPropagation()">
+        <div class="tg-modal-header">
+            <div class="tg-modal-title-wrap">
+                <div class="tg-modal-eyebrow"><span style="color: #7a806d;">Aside ★3 Filter</span></div>
+                <h3 class="tg-modal-title">어사이드 <em>★3</em> 필터</h3>
+            </div>
+            <span class="tg-modal-count" id="modal-aside-count" hidden>0개</span>
+            <button class="tg-modal-close" onclick="window.closeAsideFilter()" aria-label="닫기">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>
+                </svg>
+            </button>
         </div>
-
-        <div id="aside-filter-group"></div>
-
-        <div class="modal-footer" style="width: 90%; margin: 0 auto; display: flex; gap: 10px; padding: 20px 0;">
-            <button class="btn" style="flex: 1;" onclick="window.resetAsideFilter()">초기화</button>
-            <button class="btn apply-btn" style="flex: 1; background: var(--accent-green); border: none;" onclick="window.applyAsideFilter()">적용</button>
+        <div class="tg-modal-body">
+            <div class="tg-segmented" id="aside-segmented">
+                <div class="tg-segmented-indicator"></div>
+                <button class="tg-segmented-btn is-active aside-tab" onclick="window.switchAsideFilterTab(0)">
+                    <span class="tg-seg-icon">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/>
+                        </svg>
+                    </span>
+                    <span>적용 대상</span>
+                </button>
+                <button class="tg-segmented-btn aside-tab" onclick="window.switchAsideFilterTab(1)">
+                    <span class="tg-seg-icon">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3 L13.5 9.5 L20 11 L13.5 12.5 L12 19 L10.5 12.5 L4 11 L10.5 9.5 Z"/>
+                        </svg>
+                    </span>
+                    <span>적용 효과</span>
+                </button>
+            </div>
+            <label class="tg-any-option" id="aside-any-option">
+                <input type="checkbox" id="aside-any-input">
+                <span class="tg-radio"></span>
+                <div class="tg-any-text">
+                    <span class="tg-any-label">무관 · 상관없음</span>
+                    <span class="tg-any-hint" id="aside-any-hint">이 적용 대상은 필터링하지 않음</span>
+                </div>
+            </label>
+            <div class="tg-section-head">
+                <span class="tg-section-title" id="aside-section-title">대상 선택 · 단일 선택</span>
+                <button class="tg-section-action" id="aside-clear-all-btn"
+                    onclick="window.clearAsideFilter()" style="visibility: hidden;" tabindex="-1" aria-hidden="true">
+                    모두 해제 (0)
+                </button>
+            </div>
+            <div class="tg-filter-scroll" id="aside-filter-scroll">
+                <div id="aside-filter-group" class="tg-filter-grid"></div>
+            </div>
+        </div>
+        <div class="tg-modal-footer">
+            <button class="tg-btn-secondary" onclick="window.resetAsideFilter()">초기화</button>
+            <button class="tg-btn-primary" onclick="window.applyAsideFilter()" id="aside-apply-btn">적용</button>
         </div>
     </div>
 </div>
 
-   <div id="modal-filter" class="modal-overlay hidden" onclick="closeFilterModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <h3 style="margin-top: 0; margin-bottom: 15px;">부가 효과 필터</h3>
-        
-        <div class="modal-search-box">
-            <input type="text" id="filter-search" placeholder="필터 키워드 검색..." oninput="refreshFilterList()">
+<div id="modal-filter" class="tg-modal-overlay hidden" onclick="closeFilterModal()">
+    <div class="tg-modal-card" onclick="event.stopPropagation()">
+        <div class="tg-modal-header">
+            <div class="tg-modal-title-wrap">
+                <div class="tg-modal-eyebrow">EFFECTS Filter</div>
+                <h3 class="tg-modal-title">부가 효과 <em>필터</em></h3>
+            </div>
+            <span class="tg-modal-count" id="modal-filter-count" hidden>0개</span>
+            <button class="tg-modal-close" onclick="closeFilterModal()" aria-label="닫기">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>
+                </svg>
+            </button>
         </div>
-
-        <div class="filter-mode-container" style="margin-bottom: 10px;">
-            <div class="mode-switch">
-                <input type="radio" name="filter-mode" id="mode-or" value="OR" checked onchange="handleSortFilter()">
-                <label for="mode-or">OR</label>
-                <input type="radio" name="filter-mode" id="mode-and" value="AND" onchange="handleSortFilter()">
-                <label for="mode-and">AND</label>
-                <div class="mode-glider"></div>
+        <div class="tg-modal-body">
+            <div class="tg-modal-search">
+                <span class="tg-modal-search-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>
+                    </svg>
+                </span>
+                <input type="text" id="filter-search" placeholder="필터 키워드 검색..." oninput="refreshFilterList()">
+            </div>
+            <div class="tg-mode-row">
+                <span class="tg-mode-label">조건 모드</span>
+                <div class="tg-mode-switch">
+                    <input type="radio" name="filter-mode" id="mode-or" value="OR" checked onchange="handleSortFilter()">
+                    <label for="mode-or">OR · 하나라도</label>
+                    <input type="radio" name="filter-mode" id="mode-and" value="AND" onchange="handleSortFilter()">
+                    <label for="mode-and">AND · 모두</label>
+                    <div class="tg-mode-glider"></div>
+                </div>
+            </div>
+            <div class="tg-toggle-row">
+                <div class="tg-toggle-row-text">
+                    <span class="tg-toggle-row-label">본인만 대상인 효과 제외</span>
+                    <span class="tg-toggle-row-hint">자기 자신에게만 발동하는 버프/디버프 숨김</span>
+                </div>
+                <label class="tg-switch">
+                    <input type="checkbox" id="exclude-self-toggle" onchange="handleSortFilter()">
+                    <span class="tg-switch-slider"></span>
+                </label>
+            </div>
+            <div class="tg-section-head" style="margin-top: 6px;">
+                <span class="tg-section-title" id="filter-section-title">효과 목록</span>
+                <button class="tg-section-action" id="filter-clear-all-btn"
+                    onclick="resetFilters()" style="visibility: hidden;" tabindex="-1" aria-hidden="true">
+                    모두 해제 (0)
+                </button>
+            </div>
+            <div class="tg-segmented" id="filter-segmented">
+                <div class="tg-segmented-indicator"></div>
+                <button class="tg-segmented-btn is-active" id="tab-all" onclick="setFilterTab('all')">
+                    <span class="tg-seg-icon">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+                            <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
+                        </svg>
+                    </span>
+                    <span>전체</span>
+                </button>
+                <button class="tg-segmented-btn is-buff" id="tab-buff" onclick="setFilterTab('buff')">
+                    <span>▲</span><span>버프</span>
+                </button>
+                <button class="tg-segmented-btn is-debuff" id="tab-debuff" onclick="setFilterTab('debuff')">
+                    <span>▼</span><span>디버프</span>
+                </button>
+            </div>
+            <div class="tg-filter-scroll" id="filter-checkbox-scroll">
+                <div id="filter-checkbox-group" class="tg-filter-grid"></div>
             </div>
         </div>
-
-        <div style="padding: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid #eee; border-radius: 12px; font-size: 0.85rem;">
-            <span>본인만 대상인 효과 제외</span>
-            <label class="switch">
-                <input type="checkbox" id="exclude-self-toggle" onchange="handleSortFilter()">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="modal-tabs" style="margin-bottom: 0; border-bottom: none; gap: 2px;">
-            <button class="tab-btn active" id="tab-all" onclick="setFilterTab('all')" 
-                style="border-radius: 10px 10px 0 0; border: 1px solid #eee; border-bottom: none; background: #f8f8f8; padding: 8px; font-size: 0.85rem;">전체</button>
-            <button class="tab-btn" id="tab-buff" onclick="setFilterTab('buff')" 
-                style="border-radius: 10px 10px 0 0; border: 1px solid #eee; border-bottom: none; background: #f8f8f8; padding: 8px; font-size: 0.85rem;">버프</button>
-            <button class="tab-btn" id="tab-debuff" onclick="setFilterTab('debuff')" 
-                style="border-radius: 10px 10px 0 0; border: 1px solid #eee; border-bottom: none; background: #f8f8f8; padding: 8px; font-size: 0.85rem;">디버프</button>
-        </div>
-
-        <div id="filter-checkbox-group">
-            </div>
-
-        <div class="modal-footer">
-            <button class="btn" style="flex: 1;" onclick="resetFilters()">초기화</button>
-            <button class="btn" style="flex: 1; background: var(--accent-green);" onclick="closeFilterModal()">적용</button>
+        <div class="tg-modal-footer">
+            <button class="tg-btn-secondary" onclick="resetFilters()">초기화</button>
+            <button class="tg-btn-primary" onclick="applyFilterModal()" id="filter-apply-btn">적용</button>
         </div>
     </div>
 </div>

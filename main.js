@@ -1,4 +1,4 @@
-import { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter } from './ui.js';
+import { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter, renderFilterCheckbox, updateSegmentedIndicator } from './ui.js';
 
 // [2] 전역 변수 설정
 let db = [], 
@@ -13,7 +13,7 @@ let db = [],
     asideDB = []; // 쉼표로 연결하여 let 선언 공유
     
 
-let infoText = "", isAscending = true, selectedStatees = new Set(), currentFilterTab = 'all';
+let infoText = "", isAscending = true, selectedStatees = new Set(), pendingStatees = new Set(), currentFilterTab = 'all';
 
 // [3] HTML onclick 이벤트와 연결하기
 window.openDetailModal = (char) => {
@@ -37,8 +37,10 @@ window.toggleQuickFilter = (type) => toggleQuickFilter(type);
 
 window.handleSortFilter = handleSortFilter;
 window.toggleOrder = toggleOrder;
+window.updateAsideFilterCount = _updateAsideFilterCount;
 window.openFilterModal = openFilterModal;
 window.closeFilterModal = closeFilterModal;
+window.applyFilterModal = applyFilterModal;
 window.setFilterTab = setFilterTab;
 window.resetFilters = resetFilters;
 window.openInfoModal = openInfoModal;
@@ -187,6 +189,15 @@ async function loadExternalData() {
 function setupFilterModal() { refreshFilterList(); }
 
 
+function _updateAsideFilterCount() {
+    const af = window.activeAsideFilters || { targets: [], effects: [] };
+    const n = af.targets.filter(v => !v.includes('무관')).length + af.effects.filter(v => !v.includes('무관')).length;
+    const btn = document.getElementById('aside-filter-count');
+    if (btn) btn.innerText = n > 0 ? String(n) : '';
+    const mc = document.getElementById('modal-aside-count');
+    if (mc) { mc.hidden = n === 0; if (n > 0) mc.textContent = `${n}개`; }
+}
+
 function updateFilterTags() {
     const container = document.getElementById('active-filters');
     if (!container) return;
@@ -209,7 +220,7 @@ function updateFilterTags() {
         makeChip(`검색: ${document.getElementById('search-input').value}`, '', () => {
             document.getElementById('search-input').value = '';
             document.getElementById('search-clear-btn').classList.add('hidden');
-            handleSortFilter();
+            handleSortFilter(); triggerGridRefresh();
         });
     }
 
@@ -217,18 +228,38 @@ function updateFilterTags() {
         selectedStatees.forEach(tagName => {
             const isInBuff = buffDescDB.some(b => b.state_name === tagName || (b.tag && b.tag.split(',').map(t => t.trim()).includes(tagName)));
             const isInDebuff = debuffDescDB.some(d => d.state_name === tagName || (d.tag && d.tag.split(',').map(t => t.trim()).includes(tagName)));
-            const tgClass = (isInBuff && isInDebuff) ? '' : (isInBuff ? 'tg-chip-buff' : (isInDebuff ? 'tg-chip-debuff' : ''));
+            const tgClass = (isInBuff && isInDebuff) ? 'tg-chip-neutral' : (isInBuff ? 'tg-chip-buff' : (isInDebuff ? 'tg-chip-debuff' : ''));
             const icon = (isInBuff && isInDebuff) ? '-' : (isInBuff ? '▲' : (isInDebuff ? '▼' : ''));
             makeChip(`${icon} ${tagName}`, tgClass, () => {
                 selectedStatees.delete(tagName);
                 const cb = document.querySelector(`#filter-checkbox-group input[value="${tagName}"]`);
                 if (cb) cb.checked = false;
-                handleSortFilter();
+                handleSortFilter(); triggerGridRefresh();
             });
         });
     }
 
-    if ((hasSearch && hasState) || (selectedStatees.size > 1)) {
+    // 어사이드 필터 칩
+    const asideFilters = window.activeAsideFilters || { targets: [], effects: [] };
+    const asideTargets = asideFilters.targets.filter(v => !v.includes('무관'));
+    const asideEffects = asideFilters.effects.filter(v => !v.includes('무관'));
+
+    asideTargets.forEach(t => {
+        makeChip(`대상: ${t}`, 'tg-chip-aside', () => {
+            window.activeAsideFilters.targets = [];
+            _updateAsideFilterCount();
+            handleSortFilter(); triggerGridRefresh();
+        });
+    });
+    asideEffects.forEach(ef => {
+        makeChip(`효과: ${ef}`, 'tg-chip-aside', () => {
+            window.activeAsideFilters.effects = window.activeAsideFilters.effects.filter(v => v !== ef);
+            _updateAsideFilterCount();
+            handleSortFilter(); triggerGridRefresh();
+        });
+    });
+
+    if (chips.length > 1) {
         const clearChip = document.createElement('div');
         clearChip.className = 'tg-chip tg-chip-clear';
         clearChip.innerHTML = '<span>전체 해제</span>';
@@ -238,7 +269,9 @@ function updateFilterTags() {
             if (clearBtn) clearBtn.classList.add('hidden');
             selectedStatees.clear();
             document.querySelectorAll('#filter-checkbox-group input:checked').forEach(cb => cb.checked = false);
-            handleSortFilter();
+            window.activeAsideFilters = { targets: [], effects: [] };
+            _updateAsideFilterCount();
+            handleSortFilter(); triggerGridRefresh();
         };
         chips.push(clearChip);
     }
@@ -349,11 +382,16 @@ function handleSortFilter() {
         if (sort === 'line') keys = ['전열', '중열', '후열', '전체열'].filter(k => groups[k]);
         if (!isAscending) keys.reverse();
         keys.forEach(k => {
-            const t = document.createElement('div'); t.className = 'group-title'; t.innerText = k; grid.appendChild(t);
+            const t = document.createElement('div');
+            t.className = 'group-title';
+            t.innerText = k;
+            if (sort === 'personality') t.setAttribute('data-personality', k);
+            grid.appendChild(t);
             displayCards(groups[k], 'main-grid', true);
         });
     }
     document.getElementById('filter-count').innerText = selectedStatees.size > 0 ? String(selectedStatees.size) : '';
+    _updateAsideFilterCount();
     updateFilterTags();
 }
 
@@ -417,11 +455,9 @@ function refreshFilterList() {
     const group = document.getElementById('filter-checkbox-group');
     const search = document.getElementById('filter-search').value.toLowerCase().trim();
     if (!group) return; 
-    group.innerHTML = '';
+    const sourceData = (currentFilterTab === 'all') ? allStateDB : (currentFilterTab === 'buff' ? buffDescDB : debuffDescDB);
 
-    let sourceData = (currentFilterTab === 'all') ? allStateDB : (currentFilterTab === 'buff' ? buffDescDB : debuffDescDB);
-
-    let tagSet = new Set();
+    const tagSet = new Set();
     sourceData.forEach(item => {
         if (item.tag) {
             item.tag.split(',').forEach(t => {
@@ -431,21 +467,30 @@ function refreshFilterList() {
         }
     });
 
-    Array.from(tagSet)
+    const items = Array.from(tagSet)
         .filter(tagName => tagName.toLowerCase().includes(search))
-        .sort((a, b) => a.localeCompare(b))
-        .forEach(tagName => {
-            const isChecked = selectedStatees.has(tagName);
+        .sort((a, b) => a.localeCompare(b));
+
+    if (items.length === 0) {
+        group.innerHTML = '<div class="tg-filter-grid--empty">검색 결과가 없습니다</div>';
+        return;
+    }
+
+    group.innerHTML = items.map(tagName => {
+            const isChecked = pendingStatees.has(tagName);
             const isInBuff = buffDescDB.some(b => b.state_name === tagName || (b.tag && b.tag.split(',').map(t => t.trim()).includes(tagName)));
             const isInDebuff = debuffDescDB.some(d => d.state_name === tagName || (d.tag && d.tag.split(',').map(t => t.trim()).includes(tagName)));
-
-            let typeIcon = (isInBuff && isInDebuff) ? '<span style="display:inline-block; width:12px; height:4px; background:#A361FF; vertical-align:middle; border-radius:1px;"></span>' : (isInBuff ? '<span style="color:#3488F0;">▲</span>' : '<span style="color:#FC6881;">▼</span>');
-
-            const label = document.createElement('label');
-            label.className = 'filter-label';
-            label.innerHTML = `<input type="checkbox" value="${tagName}" ${isChecked ? 'checked' : ''} onchange="toggleStateFilter('${tagName}')"> ${typeIcon} <span style="margin-left:4px;">${tagName}</span>`;
-            group.appendChild(label);
-        });
+            const type = (isInBuff && isInDebuff) ? 'neutral' : (isInBuff ? 'buff' : 'debuff');
+            const markerHTML = type === 'neutral'
+                ? '<span class="tg-neutral-bar"></span>'
+                : (type === 'buff' ? '▲' : '▼');
+            return `<label class="filter-label" data-type="${type}">
+                <input type="checkbox" value="${tagName}" ${isChecked ? 'checked' : ''} onchange="toggleStateFilter('${tagName}')">
+                <span class="tg-type-mark">${markerHTML}</span>
+                <span class="tg-name">${tagName}</span>
+            </label>`;
+        })
+        .join('');
 }
 function getGradeColor(grade) {
     if (!grade || grade === 'X' || grade === '?') return '#94a3b8';
@@ -553,16 +598,83 @@ function makeSkillGauge(typeLabel, grade) {
 }
 
 function toggleOrder() { isAscending = !isAscending; document.getElementById('order-btn').innerText = isAscending ? "▲" : "▼"; handleSortFilter(); }
-function toggleStateFilter(s) { selectedStatees.has(s) ? selectedStatees.delete(s) : selectedStatees.add(s); handleSortFilter(); }
-function setFilterTab(t) { currentFilterTab = t; document.querySelectorAll('#modal-filter .tab-btn').forEach(b => b.classList.toggle('active', b.id === `tab-${t}`)); refreshFilterList(); }
-function openFilterModal() { document.getElementById('modal-filter').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
-function closeFilterModal() { document.getElementById('modal-filter').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+function triggerGridRefresh() {
+    const grid = document.getElementById('main-grid');
+    if (!grid) return;
+    grid.classList.remove('is-refreshing');
+    void grid.offsetWidth;
+    grid.classList.add('is-refreshing');
+    grid.addEventListener('animationend', () => grid.classList.remove('is-refreshing'), { once: true });
+}
+function refreshClearAllBtn() {
+    const btn = document.getElementById('filter-clear-all-btn');
+    if (!btn) return;
+    const count = pendingStatees.size;
+    if (count > 0) {
+        btn.style.visibility = 'visible'; btn.tabIndex = 0; btn.removeAttribute('aria-hidden');
+        btn.textContent = `모두 해제 (${count})`;
+    } else {
+        btn.style.visibility = 'hidden'; btn.tabIndex = -1; btn.setAttribute('aria-hidden', 'true');
+    }
+}
+function refreshModalCount() {
+    const el = document.getElementById('modal-filter-count');
+    const n = pendingStatees.size;
+    if (el) { if (n > 0) { el.hidden = false; el.textContent = `${n}개`; } else { el.hidden = true; } }
+}
+function toggleStateFilter(s) {
+    // 모달 내 pending 상태만 변경 — 적용 버튼 누를 때까지 카드 목록 갱신 안 함
+    pendingStatees.has(s) ? pendingStatees.delete(s) : pendingStatees.add(s);
+    refreshClearAllBtn();
+    refreshModalCount();
+}
+function setFilterTab(t) {
+    currentFilterTab = t;
+    document.querySelectorAll('#filter-segmented .tg-segmented-btn').forEach(b => b.classList.toggle('is-active', b.id === `tab-${t}`));
+    updateSegmentedIndicator('filter-segmented');
+    const scroll = document.getElementById('filter-checkbox-scroll');
+    if (scroll) { scroll.scrollTop = 0; scroll.classList.remove('is-scrolled'); }
+    refreshFilterList();
+}
+function initScrollFade(el) {
+    if (!el || el._scrollFadeInit) return;
+    el._scrollFadeInit = true;
+    el.addEventListener('scroll', () => {
+        el.classList.toggle('is-scrolled', el.scrollTop > 0);
+    }, { passive: true });
+}
+function openFilterModal() {
+    pendingStatees = new Set(selectedStatees); // 현재 적용 상태를 pending으로 복사
+    document.getElementById('modal-filter').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    updateSegmentedIndicator('filter-segmented');
+    refreshClearAllBtn();
+    refreshModalCount();
+    refreshFilterList();
+    initScrollFade(document.getElementById('filter-checkbox-scroll'));
+}
+function applyFilterModal() {
+    selectedStatees = new Set(pendingStatees); // pending → 실제 적용
+    document.getElementById('modal-filter').classList.add('hidden');
+    document.body.style.overflow = '';
+    handleSortFilter();
+    triggerGridRefresh();
+}
+function closeFilterModal() {
+    // X 버튼 / 배경 클릭: pending 버리고 닫기 (필터 적용 안 함)
+    document.getElementById('modal-filter').classList.add('hidden');
+    document.body.style.overflow = '';
+}
 function resetFilters() {
     selectedStatees.clear();
+    pendingStatees.clear();
     const searchInput = document.getElementById('filter-search');
     if (searchInput) searchInput.value = '';
     setFilterTab('all');
-    handleSortFilter(); 
+    refreshClearAllBtn();
+    refreshModalCount();
+    handleSortFilter();
+    triggerGridRefresh();
 }
 function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); document.body.style.overflow='hidden';}
 function closeModal(id) {
@@ -576,7 +688,7 @@ function closeModal(id) {
     }
     const modal = document.getElementById(id);
     if (modal) {modal.classList.add('hidden');}
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = '';
 }
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
@@ -651,56 +763,69 @@ window.onscroll = () => { document.getElementById("top-btn").style.display = (wi
 
 window.addEventListener('keydown', (e) => {
     const detailModal = document.getElementById('modal-detail');
+    const filterModal = document.getElementById('modal-filter');
+    const asideModal = document.getElementById('modal-aside-filter');
     const isDetailVisible = !detailModal.classList.contains('hidden');
+    const isFilterVisible = filterModal && !filterModal.classList.contains('hidden');
+    const isAsideVisible = asideModal && !asideModal.classList.contains('hidden');
+
     if (e.key === 'Escape') {
         if (isDetailVisible) {
             detailModal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
+            document.body.style.overflow = '';
         }
         if (typeof window.closeFilterModal === 'function') window.closeFilterModal();
         if (typeof window.closeAsideFilter === 'function') window.closeAsideFilter();
     }
-    if (e.key === 'Tab' && isDetailVisible) {
-        e.preventDefault(); 
-        const btns = document.querySelectorAll('#modal-detail .tab-btn');
-        let currentIdx = Array.from(btns).findIndex(b => b.classList.contains('active'));
 
-        let nextIdx = (currentIdx + 1) % btns.length;
-        
-        if (typeof window.switchTab === 'function') {
-            window.switchTab(nextIdx);
-        } else {
-            btns[nextIdx].click();
-        }
-    }
-});
-
-// [main.js] 키보드 이벤트 리스너 근처에 추가
-window.addEventListener('mouseup', (e) => {
-    const detailModal = document.getElementById('modal-detail');
-    const isDetailVisible = !detailModal.classList.contains('hidden');
-
-    // 상세 모달이 열려 있을 때만 작동
-    if (isDetailVisible) {
-        // 마우스 4번 버튼 (Browser Back)
-        if (e.button === 3) {
-            e.preventDefault(); // 브라우저 기본 뒤로가기 방지
-            
-            detailModal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-        
-        // (선택 사항) 마우스 5번 버튼 (Browser Forward)으로 탭 순환
-        if (e.button === 4) {
+    if (e.key === 'Tab') {
+        if (isDetailVisible) {
             e.preventDefault();
             const btns = document.querySelectorAll('#modal-detail .tab-btn');
             let currentIdx = Array.from(btns).findIndex(b => b.classList.contains('active'));
             let nextIdx = (currentIdx + 1) % btns.length;
-            
             if (typeof window.switchTab === 'function') {
                 window.switchTab(nextIdx);
+            } else {
+                btns[nextIdx].click();
             }
+        } else if (isFilterVisible) {
+            e.preventDefault();
+            const order = ['all', 'buff', 'debuff'];
+            const curIdx = order.indexOf(currentFilterTab);
+            const nextTab = order[(curIdx + 1) % order.length];
+            setFilterTab(nextTab);
+        } else if (isAsideVisible) {
+            e.preventDefault();
+            const asideTabs = document.querySelectorAll('#aside-segmented .tg-segmented-btn');
+            const asideCurIdx = Array.from(asideTabs).findIndex(b => b.classList.contains('is-active'));
+            const asideNextIdx = (asideCurIdx + 1) % asideTabs.length;
+            if (typeof window.switchAsideFilterTab === 'function') window.switchAsideFilterTab(asideNextIdx);
         }
+    }
+});
+
+window.addEventListener('mouseup', (e) => {
+    if (e.button !== 3) return;
+
+    // 마우스 4번 버튼: 열려 있는 모달 닫기
+    const detailModal = document.getElementById('modal-detail');
+    const filterModal = document.getElementById('modal-filter');
+    const asideModal = document.getElementById('modal-aside-filter');
+    const infoModal = document.getElementById('modal-info');
+
+    if (detailModal && !detailModal.classList.contains('hidden')) {
+        e.preventDefault();
+        closeModal('modal-detail');
+    } else if (filterModal && !filterModal.classList.contains('hidden')) {
+        e.preventDefault();
+        closeFilterModal();
+    } else if (asideModal && !asideModal.classList.contains('hidden')) {
+        e.preventDefault();
+        if (typeof window.closeAsideFilter === 'function') window.closeAsideFilter();
+    } else if (infoModal && !infoModal.classList.contains('hidden')) {
+        e.preventDefault();
+        closeModal('modal-info');
     }
 });
 
