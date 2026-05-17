@@ -513,10 +513,12 @@ async function displayCards(data, id, append = false) {
 
         card.className = 'char-card';
         
-        // 1. [엘다인 체크] Eldyne 열에 값이 있으면 기존 효과 클래스 추가
-        if (char.Eldyne && char.Eldyne.trim() !== "" && char.Eldyne !== "X") {
-            card.classList.add('eldyne-card');
-        }
+        // 1. [엘다인 체크] Eldyne 열에 값이 있으면 클래스 + 아이콘 준비
+        const isEldyne = char.Eldyne && char.Eldyne.trim() !== "" && char.Eldyne !== "X";
+        if (isEldyne) card.classList.add('eldyne-card');
+        const eldyneIcon = isEldyne
+            ? `<img src="./assets/icons/common_icons/Ingame_Icon_HeroGrow_Hidden.webp" class="eldyne-corner-icon">`
+            : '';
         
         card.onclick = () => {
             if (typeof window.openDetailModal === 'function') {
@@ -534,12 +536,12 @@ async function displayCards(data, id, append = false) {
 
         card.innerHTML = `
             <div class="${topBgClass}" style="${topStyle}">
-                <img src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img" 
-                    style="width: 100%; height: 100%; object-fit: cover;" 
+                <img src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img"
+                    style="width: 100%; height: 100%; object-fit: cover;"
                     onerror="this.src='./assets/icons/chara_image/default.webp'">
                 
                 <img src="./assets/icons/personality/${char.personality}.webp" style="position: absolute; top: 6px; left: 6px; width: 28px; height: 28px; z-index: 2; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
-                
+                ${eldyneIcon}
                 <div style="position: absolute; bottom: 8px; left: 0; width: 100%; padding: 0 8px; display: flex; justify-content: space-between; align-items: center; z-index: 2;">
                     <img src="./assets/icons/role/${char.role}.webp" style="width: 26px; height: 26px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
                     <img src="./assets/icons/line/${char.line}.webp" style="width: 28px; height: 28px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
