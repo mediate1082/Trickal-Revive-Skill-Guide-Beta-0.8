@@ -39,6 +39,23 @@
     --aside-accent-strong: #7C3DD6;
     --aside-accent-soft:   #F3E8FF;
     --aside-accent-border: #D4B6FB;
+    /* 디테일 모달 v1 토큰 */
+    --skill-low:     #22C55E;
+    --skill-high:    #16A34A;
+    --skill-pvp:     #A361FF;
+    --skill-normal:  #84CC16;
+    --skill-aside:   #A855F7;
+    --skill-overall: #e67e22;
+    --grade-10:  #22C55E;
+    --grade-7p:  #F59E0B;
+    --grade-7m:  #EF4444;
+    --grade-x:   #94a3b8;
+    --tier-meta:    #E91E63;
+    --tier-pers:    #2980B9;
+    --tier-unfit:   #7F8C8D;
+    --tier-1star:   #BCD3C7;
+    --tier-default: #e67e22;
+    --inset-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08);
 }
 
 /* ── Global ────────────────────────────── */
@@ -209,6 +226,10 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     background: var(--bg-main);
     border-bottom: 1px solid var(--border-soft);
     box-shadow: 0 2px 6px var(--shadow-soft);
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+}
+body.modal-open .tg-subheader {
+    transform: translateY(-100%);
 }
 
 /* ── Active Filter Chips ─────────────────── */
@@ -436,7 +457,7 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     color: var(--text-muted); cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s;
 }
-.tg-modal-close:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
+.tg-modal-close:hover { background: #FEE2E2; border-color: #FCA5A5; color: #DC2626; }
 .tg-modal-body {
     position: relative; flex: 1; overflow: hidden;
     padding: 16px 24px 0;
@@ -650,29 +671,473 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 .reset-ani { animation: resetFadeIn 0.5s ease-out forwards; }
 
 /* ═══════════════════════════════════════════
-   DETAIL MODAL
+   DETAIL MODAL — v1 디자인
 ═══════════════════════════════════════════ */
-#modal-detail .modal-content {
-    overflow: visible !important; position: relative; z-index: 2001;
-    background: #fff; border-radius: 20px; max-height: 80vh; display: flex; flex-direction: column;
+
+/* ── 오버레이 ──────────────────────────── */
+#modal-detail {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2000; padding: 16px;
+    animation: tg-fade 0.18s ease-out;
 }
-#modal-detail .modal-fixed-header { flex-shrink: 0; }
-#modal-detail .tab-content { min-height: 400px; }
+#modal-detail.is-closing {
+    animation: tg-fade-out 0.18s ease-in forwards;
+}
+@keyframes tg-fade-out { from { opacity: 1; } to { opacity: 0; } }
 
-/* ── Side Flags ──────────────────────── */
-.modal-side-flags { position: absolute; left: 0px; top: 220px; display: flex; flex-direction: column; gap: 10px; z-index: -1; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); opacity: 0; pointer-events: none; }
-.modal-side-flags.show { left: -85px; opacity: 1; pointer-events: auto; }
-.side-flag { width: 90px; height: 40px; background: rgba(188,221,95,0.85) !important; border: 1px solid rgba(0,0,0,0.05); border-right: none; border-radius: 0; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #333; cursor: pointer; box-shadow: -2px 1px 4px rgba(0,0,0,0.1); white-space: nowrap; transition: all 0.25s ease; backdrop-filter: blur(2px); }
-.side-flag:hover { background: rgba(188,221,95,0.95) !important; transform: translateX(-3px); filter: brightness(1.05); }
-.side-flag.is-active { transform: translateX(65px); background: var(--accent-green) !important; color: #fff !important; box-shadow: none; border-left: 2px solid rgba(255,255,255,0.3); }
-.side-flag.is-active:hover { transform: translateX(55px); }
+/* 디테일 카드: 필터 모달 .tg-modal-card와 max-width만 다름 */
+#modal-detail .tg-modal-card { max-width: 620px; height: 88vh; }
+#modal-detail.is-closing .tg-modal-card {
+    animation: tg-pop-out 0.2s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes tg-pop-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(6px) scale(0.96); }
+}
+@keyframes tg-slide-out-left  { from { opacity: 1; transform: translateX(0);      } to { opacity: 0; transform: translateX(-50px); } }
+@keyframes tg-slide-out-right { from { opacity: 1; transform: translateX(0);      } to { opacity: 0; transform: translateX( 50px); } }
+@keyframes tg-slide-in-right  { from { opacity: 0; transform: translateX( 50px); } to { opacity: 1; transform: translateX(0);      } }
+@keyframes tg-slide-in-left   { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0);      } }
 
-.effect-item { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); max-height: 500px; opacity: 1; transform: translateY(0); overflow: hidden; margin: 0 !important; }
-.effect-item.is-hidden { opacity: 0; max-height: 0; transform: scale(0.95); padding-top: 0 !important; padding-bottom: 0 !important; border: none !important; pointer-events: none; }
+/* ── Nav 화살표 ────────────────────────── */
+.tg-modal-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 56px; height: 56px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,0.12); backdrop-filter: blur(2px);
+    color: rgba(255,255,255,0.85); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    z-index: 10; transition: background 0.18s, color 0.18s, transform 0.18s;
+}
+.tg-modal-nav:hover { background: rgba(255,255,255,0.22); color: #fff; }
+.tg-modal-nav:active { transform: translateY(-50%) scale(0.94); }
+.tg-modal-nav.prev { left: max(8px, calc(50% - 386px)); }
+.tg-modal-nav.next { right: max(8px, calc(50% - 386px)); }
+#modal-detail.is-closing .tg-modal-nav { opacity: 0; transition: opacity 0.18s ease; }
+@media (max-width: 820px) {
+    .tg-modal-nav { width: 44px; height: 44px; }
+    .tg-modal-nav.prev { left: 8px; }
+    .tg-modal-nav.next { right: 8px; }
+}
+@media (max-width: 520px) { .tg-modal-nav { display: none; } }
 
-/* ── Mobile modal ────────────────────── */
-@media (max-width: 480px) {
-    #modal-detail { padding-left: 0; padding-right: 0; justify-content: center; align-items: center; }
-    #modal-detail .modal-content { width: 88%; max-width: none; max-height: 84vh; }
-    .modal-side-flags { display: none !important; }
+/* ── 디테일 헤더 ───────────────────────── */
+.tg-detail-header {
+    position: relative; flex-shrink: 0; padding: 22px 24px 14px;
+}
+.tg-detail-header-row {
+    display: flex; gap: 18px; align-items: center; padding-right: 44px;
+}
+.tg-detail-portrait {
+    width: 88px; height: 88px; border-radius: 20px; object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12); flex-shrink: 0; background: var(--accent-soft);
+}
+.tg-detail-meta { flex: 1; min-width: 0; }
+.tg-detail-eyebrow {
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px;
+}
+.tg-detail-name {
+    font-family: 'OneMobilePop', sans-serif; font-size: 1.5rem; font-weight: 800;
+    color: #333; margin: 0; line-height: 1.15;
+}
+.tg-detail-name-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 2px 0 4px;
+}
+.tg-detail-tier-row {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.tg-detail-tier {
+    --tier-color: var(--tier-default);
+    display: inline-block; padding: 3px 11px; border-radius: 999px;
+    font-size: 0.74rem; font-weight: 800;
+    background: var(--tier-color);
+    color: color-mix(in srgb, var(--tier-color) 8%, #fff);
+    border: none;
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--tier-color) 35%, transparent);
+}
+.tg-detail-tier[data-tier*="메타픽"]      { --tier-color: var(--tier-meta); }
+.tg-detail-tier[data-tier*="성격덱"]      { --tier-color: var(--tier-pers); }
+.tg-detail-tier[data-tier*="메타 부적합"] { --tier-color: var(--tier-unfit); }
+.tg-detail-tier[data-tier*="태생 1성"]    { --tier-color: var(--tier-1star); }
+.tg-detail-eldyne {
+    --eldyne-color: #C28A1C;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 11px 3px 9px; border-radius: 999px;
+    font-size: 0.74rem; font-weight: 800;
+    background: var(--eldyne-color);
+    color: color-mix(in srgb, var(--eldyne-color) 8%, #fff);
+    border: none;
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--eldyne-color) 35%, transparent);
+    line-height: 1.2; white-space: nowrap;
+}
+.tg-detail-eldyne-icon { display: inline-flex; width: 11px; height: 11px; flex-shrink: 0; }
+.tg-detail-eldyne[data-eldyne="영원살이"]      { --eldyne-color: #C28A1C; }
+.tg-detail-eldyne[data-eldyne="몽환살이"]      { --eldyne-color: #8B5CF6; }
+.tg-detail-eldyne[data-eldyne="염원살이"]      { --eldyne-color: #E11D74; }
+.tg-detail-eldyne[data-eldyne="별바라기"]       { --eldyne-color: #3B82F6; }
+.tg-detail-eldyne[data-eldyne="영원의 메아리"] { --eldyne-color: #0EA5A4; }
+.tg-detail-eldyne[data-eldyne="약속의 메아리"] { --eldyne-color: #F97316; }
+.tg-detail-attrs {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    font-size: 0.78rem; color: var(--text-muted); font-weight: 700;
+}
+.tg-detail-attr {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 9px 2px 6px; background: #F4F8E6; border-radius: 7px;
+}
+.tg-detail-attr-icon { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
+
+/* ── 닫기 버튼 ─────────────────────────── */
+.tg-modal-close {
+    position: absolute; top: 18px; right: 18px;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--border-soft); background: #fff;
+    color: var(--text-muted); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.tg-modal-close:hover { background: #FEE2E2; border-color: #FCA5A5; color: #DC2626; }
+.tg-modal-close svg { pointer-events: none; }
+
+/* ── 세그멘티드 탭 래퍼 ─────────────────── */
+.tg-detail-tabs-wrap {
+    flex-shrink: 0; padding: 14px 24px 0;
+    background: #fff; border-bottom: 1px solid var(--border-soft);
+}
+.tg-detail-tabs-wrap .tg-segmented { margin-bottom: 14px; }
+.tg-detail-tabs-wrap .tg-segmented-btn { padding: 9px 10px; font-size: 0.82rem; }
+.tg-detail-tabs-wrap .tg-seg-icon { width: 13px; height: 13px; }
+
+/* ── Modal Body + Scroll Area ──────────── */
+.tg-modal-body {
+    position: relative; flex: 1; overflow: hidden;
+    padding: 16px 24px 0;
+    display: flex; flex-direction: column; gap: 12px; min-height: 0;
+    background: #FBFCF6;
+}
+.tg-scroll-area {
+    position: relative; flex: 1; min-height: 0;
+    display: flex; margin-right: -24px;
+}
+.tg-scroll-area::before,
+.tg-scroll-area::after {
+    content: ''; position: absolute; left: 0; right: 0; height: 11px;
+    pointer-events: none; z-index: 5; opacity: 1; transition: opacity 0.2s ease;
+}
+.tg-scroll-area::before { top: 0; background: linear-gradient(to bottom, #fff, transparent); }
+.tg-scroll-area::after  { bottom: 0; background: linear-gradient(to top, #fff, transparent); }
+.tg-scroll-area.is-at-top::before   { opacity: 0; }
+.tg-scroll-area.is-at-bottom::after { opacity: 0; }
+.tg-detail-scroll {
+    flex: 1; overflow-y: auto; padding-bottom: 20px;
+    scrollbar-width: thin; scrollbar-color: rgba(63,79,31,0.22) transparent;
+    min-height: 0; display: flex; flex-direction: column; gap: 12px;
+}
+.tg-detail-scroll > * { margin-right: 24px; }
+.tg-detail-scroll::-webkit-scrollbar { width: 6px; }
+.tg-detail-scroll::-webkit-scrollbar-track { background: transparent; margin: 4px 0; }
+.tg-detail-scroll::-webkit-scrollbar-thumb { background: rgba(63,79,31,0.18); border-radius: 999px; }
+.tg-detail-scroll::-webkit-scrollbar-thumb:hover { background: rgba(63,79,31,0.34); }
+
+/* ── 퀵필터 칩 (부가 효과 탭) ──────────── */
+.tg-quickfilters-row {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    padding: 2px 0 10px; border-bottom: 1px solid var(--border-soft); flex-shrink: 0;
+}
+.tg-quickfilters-label { font-size: 0.72rem; font-weight: 800; color: var(--text-muted); letter-spacing: 0.04em; }
+.tg-quickfilter-chip {
+    appearance: none; display: inline-flex; align-items: center;
+    padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--border-soft);
+    background: #fff; font-family: 'OneMobilePop', sans-serif;
+    font-size: 0.74rem; font-weight: 800; color: var(--text-muted); cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.tg-quickfilter-chip:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
+.tg-quickfilter-chip.is-active { background: var(--text-dark); border-color: var(--text-dark); color: var(--accent-green); }
+.tg-qf-suffix {
+    display: inline-block; max-width: 0; overflow: hidden; opacity: 0;
+    vertical-align: middle; white-space: nowrap;
+    transition: max-width 0.28s cubic-bezier(.4,0,.2,1), opacity 0.2s ease;
+}
+.tg-quickfilter-chip.is-active .tg-qf-suffix { max-width: 3em; opacity: 1; }
+.tg-quickfilter-chip-check {
+    display: inline-block; font-size: 0.78rem; opacity: 0; max-width: 0; margin-left: 0;
+    overflow: hidden; vertical-align: middle;
+    transition: max-width 0.28s cubic-bezier(.4,0,.2,1), opacity 0.2s ease, margin-left 0.28s cubic-bezier(.4,0,.2,1);
+}
+.tg-quickfilter-chip.is-active .tg-quickfilter-chip-check { opacity: 0.85; max-width: 1.5em; margin-left: 4px; }
+
+/* ════════════════════════════════════
+   SKILL CARDS
+════════════════════════════════════ */
+.tg-skill-card {
+    --card-accent: var(--skill-low);
+    background: #fff; border-radius: 15px; padding: 18px 18px 16px;
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 2px 8px rgba(63,79,31,0.05);
+    display: flex; flex-direction: column; gap: 14px;
+}
+.tg-skill-card[data-type="low"]              { --card-accent: var(--skill-low); }
+.tg-skill-card[data-type="high"]             { --card-accent: var(--skill-high); }
+.tg-skill-card[data-type="high"] .tg-skill-card-icon {
+    border-color: var(--skill-high);
+    background: color-mix(in srgb, var(--skill-high) 12%, #fff);
+}
+.tg-skill-card[data-type="high"].is-pvp      { --card-accent: var(--skill-pvp); }
+.tg-skill-card[data-type="normal"],
+.tg-skill-card[data-type="power"]            { --card-accent: var(--skill-normal); }
+.tg-skill-card[data-type="aside"]            { --card-accent: var(--skill-aside); }
+.tg-skill-card[data-type="overall"]          { --card-accent: var(--skill-overall); }
+.tg-skill-card-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+}
+.tg-skill-card-icon-wrap { display: flex; gap: 14px; align-items: center; min-width: 0; }
+.tg-skill-card-icon-rel  { position: relative; flex-shrink: 0; }
+.tg-skill-card-icon {
+    width: 58px; height: 58px; border-radius: 13px;
+    border: 3px solid var(--card-accent); object-fit: cover;
+    background: color-mix(in srgb, var(--card-accent) 12%, #fff);
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.tg-skill-card-icon-badge {
+    position: absolute; top: -5px; left: -5px;
+    width: 22px; height: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 800; color: var(--card-accent); z-index: 2;
+    overflow: hidden;
+}
+.tg-skill-card-icon-badge img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.tg-skill-card-icon-lv {
+    position: absolute; right: -5px; bottom: -5px;
+    background: #333; color: #fff; font-size: 0.72rem; font-weight: 800;
+    padding: 3px 7px; border-radius: 8px; z-index: 3;
+}
+.tg-skill-card-titles { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tg-skill-card-type-label { font-size: 0.78rem; font-weight: 800; color: var(--card-accent); }
+.tg-skill-card-name-row { display: flex; align-items: center; gap: 6px; }
+.tg-skill-card-name { font-size: 1.25rem; font-weight: 800; color: #333; line-height: 1.2; }
+.tg-skill-card-body { display: flex; flex-direction: column; }
+.tg-skill-card-body > * + * { margin-top: 12px; }
+.tg-skill-card-divider { height: 1px; background: var(--border-soft); margin: 14px 0; }
+.tg-normal-section { display: flex; flex-direction: column; gap: 10px; }
+.tg-normal-sub-head { display: flex; flex-direction: column; gap: 2px; }
+.tg-skill-desc, .tg-aside-desc { font-size: 0.9rem; color: #555; line-height: 1.6; }
+.tg-skill-cooldown { display: flex; align-items: center; gap: 5px; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); }
+.tg-skill-cooldown-icon { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+.tg-skill-cooldown b { color: var(--card-accent); font-weight: 800; }
+.tg-skill-stat-box {
+    background: #F8F9FA; border-radius: 12px; padding: 14px;
+    font-size: 0.92rem; color: #444; line-height: 1.6;
+    border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow);
+}
+.tg-skill-stat-box b { color: var(--card-accent); font-size: 1.05rem; font-weight: 800; }
+
+/* ── PvE/PvP 모드 스위치 ─────────────── */
+.tg-mode-switch-mini {
+    position: relative; display: flex;
+    background: color-mix(in srgb, var(--card-accent) 14%, #fff);
+    padding: 3px; border-radius: 11px;
+    border: 1px solid color-mix(in srgb, var(--card-accent) 30%, transparent);
+    flex-shrink: 0;
+}
+.tg-mode-switch-mini input { display: none; }
+.tg-mode-switch-mini label {
+    text-align: center; padding: 5px 14px;
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.78rem; font-weight: 800;
+    cursor: pointer; color: #555; z-index: 1; transition: color 0.25s; min-width: 42px;
+}
+.tg-mode-switch-mini input:checked + label { color: #fff; }
+.tg-mode-glider-mini {
+    position: absolute; top: 3px; left: 3px;
+    height: calc(100% - 6px); width: calc(50% - 3px);
+    background: var(--card-accent); border-radius: 8px;
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1), background 0.25s; z-index: 0;
+}
+.tg-mode-switch-mini.is-pvp .tg-mode-glider-mini { transform: translateX(100%); }
+.tg-mode-switch-mini:hover .tg-mode-glider-mini {
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--card-accent) 45%, transparent);
+}
+
+/* ── Level Slider ──────────────────────── */
+.tg-lv-slider { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.tg-lv-slider input[type="range"] {
+    appearance: none; width: 100%; height: 8px;
+    background: linear-gradient(
+        to right,
+        var(--card-accent) 0%, var(--card-accent) var(--lv-progress, 0%),
+        #E3E8D5 var(--lv-progress, 0%), #E3E8D5 100%
+    );
+    border-radius: 999px; outline: none; cursor: pointer;
+}
+.tg-lv-slider input[type="range"]::-webkit-slider-thumb {
+    appearance: none; width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--card-accent);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: grab;
+}
+.tg-lv-slider input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.1); }
+.tg-lv-slider input[type="range"]::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--card-accent);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: grab;
+}
+.tg-lv-slider-marks {
+    display: flex; justify-content: space-between;
+    font-size: 0.74rem; font-weight: 800; color: var(--text-muted);
+}
+.tg-lv-ticks {
+    position: relative; display: flex; justify-content: space-between;
+    align-items: flex-start; height: 12px; padding: 0 11px; margin-top: -2px;
+}
+.tg-lv-tick { width: 2px; height: 5px; background: var(--border-soft); border-radius: 1px; flex-shrink: 0; }
+.tg-lv-tick.is-major { height: 11px; width: 2.5px; background: var(--card-accent); opacity: 0.85; }
+.tg-normal-sub-type { font-size: 0.78rem; font-weight: 800; color: var(--skill-normal); }
+.tg-normal-sub-name { font-size: 1.25rem; font-weight: 800; color: #333; }
+
+/* ════════════════════════════════════
+   EFFECT ITEMS
+════════════════════════════════════ */
+.tg-effect-item {
+    --effect-color: var(--buff);
+    position: relative; background: #fff; border-radius: 12px;
+    padding: 11px 12px 11px 16px; border: 1px solid var(--border-soft);
+    box-shadow: var(--inset-shadow);
+    display: flex; align-items: flex-start; gap: 12px; overflow: hidden;
+    transition: opacity 0.25s ease, max-height 0.35s cubic-bezier(.4,0,.2,1),
+                transform 0.3s ease, margin-top 0.35s cubic-bezier(.4,0,.2,1),
+                padding 0.35s cubic-bezier(.4,0,.2,1), border-width 0.35s;
+    max-height: 500px;
+}
+.tg-effect-item::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px; background: var(--effect-color);
+}
+.tg-effect-item[data-kind="debuff"] { --effect-color: var(--debuff); }
+.tg-effect-item.is-hidden {
+    opacity: 0; max-height: 0; transform: scale(0.96);
+    padding-top: 0 !important; padding-bottom: 0 !important;
+    margin-top: 0 !important; margin-bottom: 0 !important;
+    border-top-width: 0 !important; border-bottom-width: 0 !important;
+    pointer-events: none;
+}
+.tab-content { display: flex; flex-direction: column; gap: 12px; }
+
+.tg-effect-empty {
+    display: none;
+    padding: 14px 16px; font-size: 0.84rem; font-weight: 800;
+    color: var(--text-muted); text-align: center;
+    background: #F8F9FA; border-radius: 12px; border: 1px dashed var(--border-soft);
+}
+.tg-skill-card-body:not(:has(.tg-effect-item:not(.is-hidden))) .tg-effect-empty { display: block; }
+.tg-effect-item-icon {
+    width: 36px; height: 36px; flex-shrink: 0; border-radius: 8px;
+    background: color-mix(in srgb, var(--effect-color) 12%, #fff);
+    display: inline-flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.tg-effect-item-icon img { width: 100%; height: 100%; object-fit: cover; }
+.tg-effect-item-body { flex: 1; min-width: 0; }
+.tg-effect-item-head {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;
+}
+.tg-effect-item-name { color: #333; font-size: 0.98rem; font-weight: 800; }
+.tg-effect-item-chip { font-size: 0.7rem; padding: 2px 7px; border-radius: 6px; font-weight: 800; }
+.tg-effect-item-chip[data-kind="cond"]   { background: #fff3e0; color: #e65100; }
+.tg-effect-item-chip[data-kind="target"] { background: #DCFCE7; color: #166534; }
+.tg-effect-item-desc { font-size: 0.85rem; color: #555; line-height: 1.5; word-break: keep-all; }
+
+/* ── Grade Badge ───────────────────────── */
+.tg-grade-badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 9px; border-radius: 999px;
+    background: var(--grade-x); color: white;
+    font-size: 0.72rem; font-weight: 800;
+    margin-left: 8px; line-height: 1.2; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.tg-grade-badge[data-grade*="10"] { background: var(--grade-10); }
+.tg-grade-badge[data-grade*="-"]  { background: var(--grade-7m); }
+.tg-grade-badge[data-grade*="7+"] { background: var(--grade-7p); }
+
+/* ── Recommend Boxes ───────────────────── */
+.tg-recommend-box {
+    --rec-color: var(--grade-x);
+    position: relative; background: #F8F9FA; border-radius: 12px;
+    padding: 13px 16px 13px 18px; border: 1px solid var(--border-soft);
+    box-shadow: var(--inset-shadow); overflow: hidden;
+}
+.tg-recommend-box::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--rec-color);
+}
+.tg-recommend-box[data-grade*="10"] { --rec-color: var(--grade-10); }
+.tg-recommend-box[data-grade*="7+"] { --rec-color: var(--grade-7p); }
+.tg-recommend-box[data-grade*="7-"] { --rec-color: var(--grade-7m); }
+.tg-recommend-box-title { font-size: 0.92rem; font-weight: 800; color: #444; margin-bottom: 6px; }
+.tg-recommend-box-body  { font-size: 0.86rem; color: #555; line-height: 1.7; word-break: keep-all; }
+.tg-recommend-summary {
+    position: relative; background: #FFF7ED; border-radius: 12px;
+    padding: 12px 16px 12px 18px; border: 1px solid #fed7aa; overflow: hidden;
+}
+.tg-recommend-summary::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--skill-overall);
+}
+.tg-recommend-summary strong { display: flex; align-items: center; gap: 6px; color: var(--skill-overall); margin-bottom: 4px; }
+.tg-recommend-summary-body { font-size: 0.86rem; color: #555; line-height: 1.6; }
+.tg-recommend-note {
+    position: relative; background: #FFFBEB; border-radius: 12px;
+    padding: 12px 16px 12px 18px; border: 1px solid #fde68a;
+    font-size: 0.86rem; color: #78350F; line-height: 1.7; word-break: keep-all; overflow: hidden;
+}
+.tg-recommend-note::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #fadb14;
+}
+
+/* ── Aside Cards ───────────────────────── */
+.tg-aside-card {
+    --card-accent: var(--skill-aside);
+    background: #fff; border-radius: 15px; padding: 18px;
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 2px 8px rgba(63,79,31,0.05);
+    display: flex; flex-direction: column; gap: 12px;
+}
+.tg-aside-global-box {
+    position: relative; background: #F8F9FA; border-radius: 12px; padding: 16px 18px;
+    border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow); overflow: hidden;
+}
+.tg-aside-global-box::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--skill-aside);
+}
+.tg-aside-global-title strong { color: #444; font-size: 0.92rem; }
+.tg-aside-global-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.tg-aside-global-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fff; padding: 9px 13px; border-radius: 9px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03); border: 1px solid var(--border-soft);
+}
+.tg-aside-global-item-left { display: flex; align-items: center; gap: 9px; }
+.tg-aside-global-item-left img { width: 26px; height: 26px; border-radius: 6px; }
+.tg-aside-global-item-label { font-size: 0.84rem; font-weight: 800; color: #444; }
+.tg-aside-global-item-value { font-size: 1rem; font-weight: 800; color: #444; }
+.tg-aside-global-item-value .num { color: var(--skill-aside); }
+.tg-aside-global-footer {
+    margin-top: 10px; text-align: center; font-size: 0.72rem; font-weight: 800;
+    color: var(--text-muted); opacity: 0.9;
+}
+
+/* ── Empty State ───────────────────────── */
+.tg-empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 280px; text-align: center; gap: 14px;
+}
+.tg-empty-state img { width: 80px; opacity: 0.5; }
+.tg-empty-state-text { color: var(--text-muted); font-weight: 800; font-size: 0.96rem; }
+
+/* ── Mobile ─────────────────────────────── */
+@media (max-width: 560px) {
+    .tg-detail-header { padding: 18px 18px 14px; }
+    .tg-detail-header-row { padding-right: 40px; gap: 14px; }
+    .tg-detail-portrait { width: 72px; height: 72px; border-radius: 16px; }
+    .tg-detail-name { font-size: 1.25rem; }
+    .tg-modal-body { padding: 14px 18px 0; }
+    .tg-detail-tabs-wrap { padding: 12px 18px 0; }
+    .tg-detail-tabs-wrap .tg-segmented-btn { padding: 8px 6px; font-size: 0.74rem; }
 }

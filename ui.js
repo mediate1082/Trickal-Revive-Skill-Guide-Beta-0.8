@@ -9,7 +9,7 @@ window.activeAsideFilters = {
 const COLORS = {
     low: '#22C55E',      // 저학년 테마
     high: '#16A34A',     // 고학년 테마 (PvE)
-    pvp: '#D8B4FE',      // 고학년 테마 (PvP)
+    pvp: '#A361FF',      // 고학년 테마 (PvP)
     normal: '#339af0',   // 일반공격 테마
     sliderBg: '#F1F5F9', // 슬라이더 배경 (옅은 회색)
     badge: '#333333',    // 레벨 뱃지 배경
@@ -28,15 +28,7 @@ const getGradeColor = (grade) => {
 // [추가] 뱃지 생성 함수 (파일 어디서든 접근 가능하도록 밖으로 추출)
 const makeGradeBadge = (grade) => {
     if (!grade || grade.trim() === "" || grade === 'X') return '';
-    const bgColor = getGradeColor(grade);
-    return `
-        <span style="
-            display: inline-flex; align-items: center; justify-content: center;
-            padding: 2px 10px; border-radius: 12px; background: ${bgColor}; 
-            color: white; font-size: 0.75rem; font-weight: 800; 
-            margin-left: 8px; vertical-align: middle; line-height: 1.2;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        ">${grade}</span>`;
+    return `<span class="tg-grade-badge" data-grade="${grade.trim()}">${grade}</span>`;
 };
 
 // [1] 자동 불렛 생성 헬퍼 함수
@@ -56,85 +48,78 @@ const formatDescWithBullets = (text) => {
 
 // 개별 스킬별 부가 효과 카드 렌더링 함수
 function renderEffectCard(type, skillInfo, buffString, condString, targetString, ctx, customContent = null, showBadge = false, isRecommend = false) {
-    const { allStateDB, debuffDescDB } = ctx;
-    let iconPath = "", typeLabel = "", skillName = "", themeColor = "";
-    
-    // 타입 배지 (저학년/고학년 전용 아이콘)
+    let iconPath = "", typeLabel = "", skillName = "";
+
     let typeBadgeHTML = "";
     if (type === 'low') {
-        typeBadgeHTML = `<img src="./assets/icons/skill_type/저학년_아이콘.webp" style="position: absolute; top: -5px; left: -5px; width: 22px; height: 22px; z-index: 2;">`;
+        typeBadgeHTML = `<img class="tg-skill-card-icon-badge" src="./assets/icons/skill_type/저학년_아이콘.webp">`;
     } else if (type === 'high') {
-        typeBadgeHTML = `<img src="./assets/icons/skill_type/고학년_아이콘.webp" style="position: absolute; top: -5px; left: -5px; width: 22px; height: 22px; z-index: 2;">`;
+        typeBadgeHTML = `<img class="tg-skill-card-icon-badge" src="./assets/icons/skill_type/고학년_아이콘.webp">`;
     }
 
     switch(type) {
         case 'low':
             iconPath = `./assets/icons/low_skill/${skillInfo?.low_skill_icon || 'default.webp'}`;
-            typeLabel = "저학년 스킬";
-            skillName = skillInfo?.low_skill_name || "정보 없음";
-            themeColor = COLORS.low;
+            typeLabel = "저학년 스킬"; skillName = skillInfo?.low_skill_name || "정보 없음";
             break;
         case 'high':
             iconPath = `./assets/images/${skillInfo?.high_skill_icon?.trim() || 'default.webp'}`;
-            typeLabel = "고학년 스킬";
-            skillName = skillInfo?.high_skill_name || "정보 없음";
-            themeColor = COLORS.high;
+            typeLabel = "고학년 스킬"; skillName = skillInfo?.high_skill_name || "정보 없음";
             break;
         case 'normal':
         case 'power':
             iconPath = `./assets/icons/atk_type/${currentApostle.atk_type || '물리'}.webp`;
-            typeLabel = "일반 공격";
-            skillName = type === 'normal' ? "기본 공격" : "강화 공격";
-            themeColor = '#84CC16';
+            typeLabel = "일반 공격"; skillName = type === 'normal' ? "기본 공격" : "강화 공격";
             break;
-        case 'aside':
-            const safeInfo = skillInfo || {}; 
+        case 'aside': {
+            const safeInfo = skillInfo || {};
             const fileName = safeInfo.aside2_icon || `어사이드_${currentApostle.name}_2.webp`;
-            iconPath = `./assets/icons/aside/aside_2/${fileName}`; 
-            typeLabel = "어사이드 ★2";
-            skillName = safeInfo.aside2_name || "★2 추가 효과";
-            themeColor = '#A855F7';
+            iconPath = `./assets/icons/aside/aside_2/${fileName}`;
+            typeLabel = "어사이드 ★2"; skillName = safeInfo.aside2_name || "★2 추가 효과";
             break;
+        }
     }
 
-        return `
-        <div style="background: #ffffff; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; min-height: 58px; margin-bottom: 15px;">
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <div style="position: relative; flex-shrink: 0;">
-                        ${typeBadgeHTML}
-                        <img src="${iconPath}" 
-                             style="width: 58px; height: 58px; border-radius: 12px; border: 3px solid ${themeColor}; object-fit: cover;" 
-                             onerror="this.src='./assets/icons/skills/default.webp'">
-                        ${(showBadge && (type === 'low' || type === 'high')) ? `<div id="${type}-badge" style="position: absolute; right: -5px; bottom: -5px; background: ${COLORS.badge}; color: white; font-size: 0.75rem; font-weight: bold; padding: 3px 7px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.2); z-index:3;">Lv.1</div>` : ''}
-                    </div>
-                    <div style="display: flex; flex-direction: column; justify-content: center; gap: 2px;">
-                        <span style="font-size: 0.85rem; font-weight: bold; color: ${themeColor};">${typeLabel}</span>
-                        
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain}; line-height: 1.2;">${skillName}</span>
-                            
-                            ${(isRecommend && (type === 'low' || type === 'high')) ? makeGradeBadge(currentApostle[type === 'low' ? 'low_grade' : 'high_grade']) : ''}
-                        </div>
+    const lvBadgeHTML = (showBadge && (type === 'low' || type === 'high'))
+        ? `<div id="${type}-badge" class="tg-skill-card-icon-lv">Lv.1</div>`
+        : '';
+
+    const modeToggleHTML = (type === 'high' && showBadge)
+        ? `<div class="tg-mode-switch-mini${currentSkillMode === 'PvP' ? ' is-pvp' : ''}" id="mode-toggle-btn">
+               <label><input type="radio" name="skill-mode" value="PvE" ${currentSkillMode === 'PvE' ? 'checked' : ''} onchange="window.toggleSkillMode('PvE')">PvE</label>
+               <label><input type="radio" name="skill-mode" value="PvP" ${currentSkillMode === 'PvP' ? 'checked' : ''} onchange="window.toggleSkillMode('PvP')">PvP</label>
+               <div class="tg-mode-glider-mini"></div>
+           </div>`
+        : '';
+
+    const gradeBadgeHTML = (isRecommend && (type === 'low' || type === 'high'))
+        ? makeGradeBadge(currentApostle[type === 'low' ? 'low_grade' : 'high_grade'])
+        : '';
+
+    return `
+    <div class="tg-skill-card" data-type="${type}">
+        <div class="tg-skill-card-head">
+            <div class="tg-skill-card-icon-wrap">
+                <div class="tg-skill-card-icon-rel">
+                    ${typeBadgeHTML}
+                    <img class="tg-skill-card-icon" src="${iconPath}" onerror="this.src='./assets/icons/skills/default.webp'">
+                    ${lvBadgeHTML}
+                </div>
+                <div class="tg-skill-card-titles">
+                    <span class="tg-skill-card-type-label">${typeLabel}</span>
+                    <div class="tg-skill-card-name-row">
+                        <span class="tg-skill-card-name">${skillName}</span>
+                        ${gradeBadgeHTML}
                     </div>
                 </div>
-
-                ${(type === 'high' && showBadge) ? `
-                <div id="mode-toggle-btn" onclick="window.toggleSkillMode()" 
-                     style="display: flex; align-items: center; cursor: pointer; background: ${themeColor}; 
-                            padding: 2px; border-radius: 20px; width: 65px; height: 26px; 
-                            position: relative; transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.1);">
-                    <div style="position: absolute; left: ${currentSkillMode === 'PvE' ? '4px' : '40px'}; width: 20px; height: 20px; background: rgba(255,255,255,0.85); border-radius: 50%; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 1px 2px rgba(0,0,0,0.15);"></div>
-                    <span style="font-size: 0.72rem; font-weight: 800; color: #020817; width: 100%; text-align: ${currentSkillMode === 'PvE' ? 'right' : 'left'}; padding: 0 9px; pointer-events: none;">
-                        ${currentSkillMode}
-                    </span>
-                </div>` : ''}
             </div>
-            
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${customContent ? customContent : renderEffectItems(buffString, condString, targetString, ctx.allStateDB, ctx.debuffDescDB)}
-            </div>
-        </div>`;
+            ${modeToggleHTML}
+        </div>
+        <div class="tg-skill-card-body">
+            ${customContent ? customContent : renderEffectItems(buffString, condString, targetString, ctx.allStateDB, ctx.debuffDescDB)}
+            ${!customContent ? '<div class="tg-effect-empty">표시할 효과가 없습니다</div>' : ''}
+        </div>
+    </div>`;
 }
 // 상태이상 개별 아이템 음각 박스
 function renderEffectItems(effectString, condString, targetString, allStateDB, debuffDescDB) {
@@ -146,40 +131,31 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
     return names.map((raw, index) => {
         // 1. 원본 텍스트(예: "무적(개전)") 그대로 DB에 전용 설명이 있는지 먼저 검색
         let info = allStateDB.find(d => d.state_name === raw);
-        
-        // 2. 만약 전용 정보가 없다면, 기존처럼 괄호를 떼어낸 이름(예: "무적")으로 다시 검색
+
+        // 2. 전용 정보가 없으면 괄호 제거 이름으로 재검색
         const pureName = raw.split('(')[0].trim();
-        if (!info) {
-            info = allStateDB.find(d => d.state_name === pureName);
-        }
+        if (!info) info = allStateDB.find(d => d.state_name === pureName);
 
         // 3. 디버프 판별
-        const isDebuff = (info && (info.type === "약화" || info.type === "제어" || info.type === "지속피해")) || (debuffDescDB.some(d => d.state_name === pureName || d.state_name === raw));
-        
-        const accentColor = isDebuff ? "#FC6881" : "#3488F0"; 
-        
+        const isDebuff = (info && (info.type === "약화" || info.type === "제어" || info.type === "지속피해"))
+                      || (debuffDescDB.some(d => d.state_name === pureName || d.state_name === raw));
+
         const defaultIcon = isDebuff ? '디버프_아이콘 없음.webp' : '버프_아이콘 없음.webp';
-        
-        const iconSrc = (info && info.icon_file) ? `./assets/icons/state/${info.icon_file}` : `./assets/icons/state/${defaultIcon}`;
-        
+        const iconSrc = (info && info.icon_file)
+            ? `./assets/icons/state/${info.icon_file}`
+            : `./assets/icons/state/${defaultIcon}`;
+
         return `
-        <div class="effect-item" 
-            data-cond="${conds[index] || ''}" 
-            data-target="${targets[index] || ''}"
-            style="position: relative; background: #f8f9fa; border-radius: 12px; padding: 12px 12px 12px 18px; 
-                    box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${accentColor}; 
-                    border: 1px solid rgba(0,0,0,0.03); display: flex; align-items: flex-start; gap: 12px; 
-                    overflow: hidden; margin: 0 !important;"> 
-            <img src="${iconSrc}" style="width: 34px; height: 34px; flex-shrink: 0;" onerror="this.src='./assets/icons/state/${defaultIcon}';">
-            <div style="flex: 1;">
-                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;">
-                    <strong style="color: ${COLORS.textMain}; font-size: 1rem;">${raw}</strong>
-                    ${conds[index] ? `<span style="font-size: 0.7rem; background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 6px; font-weight: bold;">${conds[index]}</span>` : ''}
-                    ${targets[index] ? `<span style="font-size: 0.7rem; background: #DCFCE7; color: #166534; padding: 2px 6px; border-radius: 6px; font-weight: bold;">${targets[index]}</span>` : ''}
+        <div class="tg-effect-item" data-kind="${isDebuff ? 'debuff' : 'buff'}"
+             data-cond="${conds[index] || ''}" data-target="${targets[index] || ''}">
+            <div class="tg-effect-item-icon"><img src="${iconSrc}" onerror="this.src='./assets/icons/state/${defaultIcon}'"></div>
+            <div class="tg-effect-item-body">
+                <div class="tg-effect-item-head">
+                    <strong class="tg-effect-item-name">${raw}</strong>
+                    ${conds[index] ? `<span class="tg-effect-item-chip" data-kind="cond">${conds[index]}</span>` : ''}
+                    ${targets[index] ? `<span class="tg-effect-item-chip" data-kind="target">${targets[index]}</span>` : ''}
                 </div>
-                <div style="font-size: 0.88rem; color: #555; line-height: 1.5; word-break: keep-all;">
-                    ${info ? info.description : "상세 정보가 없습니다."}
-                </div>
+                <div class="tg-effect-item-desc">${info ? info.description : "상세 정보가 없습니다."}</div>
             </div>
         </div>`;
     }).join('');
@@ -189,107 +165,82 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
 const renderAsideTabContent = (char, asideData) => {
     if (!asideData || !asideData.aside1_name) {
         return `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; text-align: center;">
-                <img src="./assets/icons/common_icons/empty.webp" style="width: 80px; opacity: 0.5; margin-bottom: 15px;" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
-                <div style="color: #94a3b8; font-weight: bold;">아직 사념이 깊지 않은 것 같다...</div>
+            <div class="tg-empty-state">
+                <img src="./assets/icons/common_icons/empty.webp" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
+                <div class="tg-empty-state-text">아직 사념이 깊지 않은 것 같다...</div>
             </div>`;
     }
 
     let html = '';
-    const themeColor = '#A855F7'; 
 
     for (let i = 1; i <= 3; i++) {
-        const name = asideData[`aside${i}_name` ];
-        const icon = asideData[`aside${i}_icon` ];
-        const desc = asideData[`aside${i}_desc` ];
-        const template = asideData[`aside${i}_stat_template` ];
-        const value = asideData[`aside${i}_stat_value` ];
+        const name     = asideData[`aside${i}_name`];
+        const icon     = asideData[`aside${i}_icon`];
+        const desc     = asideData[`aside${i}_desc`];
+        const template = asideData[`aside${i}_stat_template`];
+        const value    = asideData[`aside${i}_stat_value`];
 
         if (!name) continue;
 
         html += `
-            <div style="background: #ffffff; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px;">
-                <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
-                    <div style="position: relative; flex-shrink: 0;">
-                        <img src="./assets/icons/aside/aside_${i}/${icon}" 
-                             style="width: 58px; height: 58px; border-radius: 12px; border: 3px solid ${themeColor}; object-fit: cover;" 
-                             onerror="this.src='./assets/icons/skills/default.webp'">
-                    </div>
-                    <div style="display: flex; flex-direction: column; justify-content: center; gap: 2px;">
-                        <span style="font-size: 0.85rem; font-weight: bold; color: ${themeColor};">어사이드 ★${i}</span>
-                        <span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain}; line-height: 1.2;">${name}</span>
+            <div class="tg-aside-card">
+                <div class="tg-skill-card-head">
+                    <div class="tg-skill-card-icon-wrap">
+                        <div class="tg-skill-card-icon-rel">
+                            <img class="tg-skill-card-icon" src="./assets/icons/aside/aside_${i}/${icon}"
+                                 onerror="this.src='./assets/icons/skills/default.webp'">
+                        </div>
+                        <div class="tg-skill-card-titles">
+                            <span class="tg-skill-card-type-label">어사이드 ★${i}</span>
+                            <span class="tg-skill-card-name">${name}</span>
+                        </div>
                     </div>
                 </div>
-                
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <div style="font-size: 0.9rem; color: #666; line-height: 1.6;">
-                        ${desc?.replace(/\\n/g, '<br>')}
-                    </div>
-                    
-                    ${(template && value) ? `
-                    <div style="background: #f8f9fa; border-radius: 12px; padding: 14px; font-size: 0.95rem; color: #333; line-height: 1.6; box-shadow: inset 0 2px 5px ${COLORS.inset}; border: 1px solid rgba(0,0,0,0.03);">
-                        ${parseSkillLevelText(template, value, themeColor)}
-                    </div>` : ''}
-
-                    ${(i === 3 && asideData.aside_3_global) ? (() => {
-                        const isEldyne = char.Eldyne && char.Eldyne.toString().trim() !== "";
-                        const rawGlobalValue = asideData.aside_3_global_value ? asideData.aside_3_global_value.toString().trim() : "";
-                        
-                        // 이름과 값을 각각 분리 (1:1 매칭용)
-                        const statNames = asideData.aside_3_global.split(',').map(s => s.trim());
-                        const statValues = rawGlobalValue !== "" ? rawGlobalValue.split(',').map(v => v.trim()) : [];
-
-                        return `
-                        <div style="background: #f8f9fa; border-radius: 12px; padding: 16px; 
-                                    box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${themeColor}; 
-                                    border: 1px solid rgba(0,0,0,0.03); margin-top: 5px;">
-                            
-                            <div style="margin-bottom: 12px;">
-                                <strong style="color: #333333; font-size: 0.95rem;">사도 전체 능력치</strong>
-                            </div>
-
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                ${statNames.map((pureStat, idx) => {
-                                    // 해당 순서의 값을 매칭, 없으면 3%/4% 로직
-                                    const currentVal = statValues[idx] || (isEldyne ? '4%' : '3%');
-                                    const fullValStr = currentVal.startsWith('+') ? currentVal : '+' + currentVal;
-
-                                    // 숫자와 기호 분리 로직
-                                    const numMatch = fullValStr.match(/[0-9.]+/);
-                                    const numberPart = numMatch ? numMatch[0] : "";
-                                    const [prefix, suffix] = fullValStr.split(numberPart);
-
-                                    return `
-                                    <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; padding: 10px 14px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <img src="./assets/icons/base_stat/${pureStat}.webp" 
-                                                 style="width: 28px; height: 28px;" 
-                                                 onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
-                                            <span style="font-size: 0.9rem; font-weight: 700; color: #475569;">전체 ${pureStat}</span>
-                                        </div>
-                                        <span style="font-size: 1.05rem; font-weight: 800; color: #475569;">
-                                            ${prefix}<span style="color: ${themeColor};">${numberPart}</span>${suffix}
-                                        </span>
-                                    </div>`;
-                                }).join('')}
-                            </div>
-                            
-                            <div style="margin-top: 12px; text-align: center; font-size: 0.75rem; color: ${themeColor}; font-weight: bold; opacity: 0.8;">
-                                사도 전체 능력치 효과는 모든 사도에게 적용됩니다.
-                            </div>
-                        </div>`;
-                    })() : ''}
+                <div class="tg-skill-card-body">
+                    <div class="tg-aside-desc">${desc?.replace(/\\n/g, '<br>')}</div>
+                    ${(template && value) ? `<div class="tg-skill-stat-box">${parseSkillLevelText(template, value)}</div>` : ''}
+                    ${(i === 3 && asideData.aside_3_global) ? renderAsideGlobalBox(char, asideData) : ''}
                 </div>
-            </div>
-        `;
+            </div>`;
     }
     return html;
 };
+
+function renderAsideGlobalBox(char, asideData) {
+    const isEldyne = char.Eldyne && char.Eldyne.toString().trim() !== "";
+    const rawGlobalValue = asideData.aside_3_global_value ? asideData.aside_3_global_value.toString().trim() : "";
+    const statNames  = asideData.aside_3_global.split(',').map(s => s.trim());
+    const statValues = rawGlobalValue !== "" ? rawGlobalValue.split(',').map(v => v.trim()) : [];
+
+    const items = statNames.map((pureStat, idx) => {
+        const currentVal = statValues[idx] || (isEldyne ? '4%' : '3%');
+        const fullValStr = currentVal.startsWith('+') ? currentVal : '+' + currentVal;
+        const numMatch   = fullValStr.match(/[0-9.]+/);
+        const numberPart = numMatch ? numMatch[0] : "";
+        const [prefix, suffix] = fullValStr.split(numberPart);
+        return `
+        <div class="tg-aside-global-item">
+            <div class="tg-aside-global-item-left">
+                <img src="./assets/icons/base_stat/${pureStat}.webp" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
+                <span class="tg-aside-global-item-label">전체 ${pureStat}</span>
+            </div>
+            <span class="tg-aside-global-item-value">${prefix}<span class="num">${numberPart}</span>${suffix}</span>
+        </div>`;
+    }).join('');
+
+    return `
+    <div class="tg-aside-global-box">
+        <div class="tg-aside-global-title"><strong>사도 전체 능력치</strong></div>
+        <div class="tg-aside-global-list">${items}</div>
+        <div class="tg-aside-global-footer">사도 전체 능력치 효과는 모든 사도에게 적용됩니다.</div>
+    </div>`;
+}
 
 export function openDetailModal(char, dataContext) {
     currentSkillMode = 'PvE';
     currentApostle = char;
     currentDataContext = dataContext;
+    window.currentApostleName = char.name;
     const { debuffDB, buffDB, highSkillDB, lowSkillDB, allStateDB, debuffDescDB, normalAtkDB, asideDB } = dataContext;
     const apostleDebuffs = debuffDB.find(d => d.name.trim() === char.name.trim());
     const apostleBuffs = buffDB.find(b => b.name.trim() === char.name.trim());
@@ -298,18 +249,17 @@ export function openDetailModal(char, dataContext) {
     const normalAtkData = normalAtkDB ? normalAtkDB.find(n => n.chara_name?.trim() === char.name.trim()) : null;
     const asideData = asideDB ? asideDB.find(a => a.chara_name?.trim() === char.name.trim()) : null;
 
-    const tierColor = (tier => {
-        if (!tier) return '#888'; 
-        if (tier.includes('메타픽')) return '#E91E63';
-        if (tier.includes('성격덱')) return '#2980B9';
-        if (tier.includes('메타 부적합')) return '#7F8C8D';
-        if (tier.includes('태생 1성')) return '#BCD3C7';
-        return '#e67e22';
-    })(char.tier);
-   
+    // 등급 → data-grade 속성값 변환
+    const gradeToAttr = (grade) => {
+        if (!grade || grade === 'X') return '7-';
+        if (grade.includes('10')) return '10+';
+        if (grade.includes('-')) return '7-';
+        return '7+';
+    };
+
     const getMergedSafe = (nameStr, condStr, targetStr) => {
-        if (!nameStr || nameStr === 'X') return { names: [], conds: [], targets: [] };
-        const names = nameStr.split(',').map(s => s.trim());
+        if (!nameStr || nameStr === 'X' || nameStr.trim() === '') return { names: [], conds: [], targets: [] };
+        const names = nameStr.split(',').map(s => s.trim()).filter(s => s !== '');
         const rawConds = (condStr && condStr !== 'X') ? condStr.split(',').map(s => s.trim()) : [];
         const rawTargets = (targetStr && targetStr !== 'X') ? targetStr.split(',').map(s => s.trim()) : [];
         return { names, conds: names.map((_, i) => rawConds[i] || ""), targets: names.map((_, i) => rawTargets[i] || "") };
@@ -325,187 +275,249 @@ export function openDetailModal(char, dataContext) {
     // 3. 각 탭의 내용물(HTML) 미리 준비하기
     // [Tab 0 준비]
     const lowRecContent = `
-    <div style="position: relative; background: #f8f9fa; border-radius: 12px; padding: 14px 18px; 
-                box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${getGradeColor(char.low_grade)}; border: 1px solid rgba(0,0,0,0.03);">
-        <div style="font-size: 0.95rem; font-weight: bold; color: ${COLORS.textMain}; margin-bottom: 8px;">강화 시 변경점</div>
-        <div style="font-size: 0.88rem; color: #555; line-height: 1.7; word-break: keep-all;">
-            ${formatDescWithBullets(char.low_desc)} </div>
+    <div class="tg-recommend-box" data-grade="${gradeToAttr(char.low_grade)}">
+        <div class="tg-recommend-box-title">강화 시 변경점</div>
+        <div class="tg-recommend-box-body">${formatDescWithBullets(char.low_desc)}</div>
     </div>`;
 
     const highRecContent = `
-    <div style="position: relative; background: #f8f9fa; border-radius: 12px; padding: 14px 18px; 
-                box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 ${getGradeColor(char.high_grade)}; border: 1px solid rgba(0,0,0,0.03);">
-        <div style="font-size: 0.95rem; font-weight: bold; color: ${COLORS.textMain}; margin-bottom: 8px;">강화 시 변경점</div>
-        <div style="font-size: 0.88rem; color: #555; line-height: 1.7; word-break: keep-all;">
-            ${formatDescWithBullets(char.high_desc)} </div>
+    <div class="tg-recommend-box" data-grade="${gradeToAttr(char.high_grade)}">
+        <div class="tg-recommend-box-title">강화 시 변경점</div>
+        <div class="tg-recommend-box-body">${formatDescWithBullets(char.high_desc)}</div>
     </div>`;
+
     // [Tab 2 준비]
+    const makeTicks = (max) => Array.from({length: max}, (_, i) => {
+        const lv = i + 1;
+        return `<div class="tg-lv-tick${(lv === 7 || lv === 10) ? ' is-major' : ''}"></div>`;
+    }).join('');
 
     let lowDetail = "";
     if (lowSkillData) {
-        let maxL = 1; for (let i = 1; i <= 13; i++) { if (lowSkillData[`Lv.${i}`]) maxL = i; }
-        lowDetail = `<div style="font-size: 0.9rem; color: #666; line-height: 1.6; margin-bottom: 12px;">${lowSkillData.low_skill_desc?.replace(/\\n/g, '<br>')}</div><div id="low-skill-stat-text" style="background: #f8f9fa; border-radius: 12px; padding: 14px; font-size: 0.95rem; box-shadow: inset 0 2px 5px ${COLORS.inset}; border: 1px solid rgba(0,0,0,0.03);">${parseSkillLevelText(lowSkillData.low_skill_stat_template, lowSkillData['Lv.1'], COLORS.low)}</div><div style="margin-top: 20px;"><input type="range" min="1" max="${maxL}" value="1" style="width:100%; accent-color:${COLORS.low};" oninput="window.updateLowSkillLv(this.value, '${char.name}')"><div style="display: flex; justify-content: space-between; color: #adb5bd; font-size: 0.75rem; margin-top: 8px; font-weight: bold;"><span>Lv.1</span><span>Lv.${maxL}</span></div></div>`;
+        let maxL = 1;
+        for (let i = 1; i <= 13; i++) { if (lowSkillData[`Lv.${i}`]) maxL = i; }
+        lowDetail = `
+            <div class="tg-skill-desc">${lowSkillData.low_skill_desc?.replace(/\\n/g, '<br>')}</div>
+            <div id="low-skill-stat-text" class="tg-skill-stat-box">${parseSkillLevelText(lowSkillData.low_skill_stat_template, lowSkillData['Lv.1'])}</div>
+            <div class="tg-lv-slider" style="--lv-progress:0%">
+                <input type="range" min="1" max="${maxL}" value="1" id="low-skill-slider" oninput="window.updateLowSkillLv(this.value, '${char.name}')">
+                <div class="tg-lv-ticks">${makeTicks(maxL)}</div>
+                <div class="tg-lv-slider-marks"><span>Lv.1</span><span>Lv.${maxL}</span></div>
+            </div>`;
     }
     let highDetail = "";
     if (skillData) {
-        let maxH = 1; const dbM = currentSkillMode === 'PvE' ? 'PvE' : 'PvP'; for (let i = 1; i <= 13; i++) { if (skillData[`Lv.${i}(${dbM})`]) maxH = i; }
-        const themeC = currentSkillMode === 'PvE' ? COLORS.high : COLORS.pvp;
-        highDetail = `<div id="high-cooldown-text" style="font-size: 0.85rem; color: #495057; font-weight: bold; margin-bottom: 10px;">재사용 대기시간 <span style="color: ${themeC}">${skillData[currentSkillMode === 'PvE' ? 'high_cooldown(PvE)' : 'cooldown(PvP)']}초</span></div><div style="font-size: 0.9rem; color: #666; line-height: 1.6; margin-bottom: 12px;">${skillData['high_skill_desc']?.replace(/\\n/g, '<br>')}</div><div id="high-skill-stat-text" style="background: #f8f9fa; border-radius: 12px; padding: 14px; font-size: 0.95rem; box-shadow: inset 0 2px 5px ${COLORS.inset}; border: 1px solid rgba(0,0,0,0.03);">${parseSkillLevelText(skillData['high_skill_stat_template'], skillData[`Lv.1(${currentSkillMode})`], themeC)}</div><div style="margin-top: 20px;"><input type="range" min="1" max="${maxH}" value="1" id="high-skill-slider" style="width:100%; accent-color:${themeC};" oninput="window.updateHighSkillLv(this.value, '${char.name}')"><div style="display: flex; justify-content: space-between; color: #adb5bd; font-size: 0.75rem; margin-top: 8px; font-weight: bold;"><span>Lv.1</span><span id="high-max-lv-display">Lv.${maxH}</span></div></div>`;
+        let maxH = 1;
+        for (let i = 1; i <= 13; i++) { if (skillData[`Lv.${i}(PvE)`]) maxH = i; }
+        highDetail = `
+            <div id="high-cooldown-text" class="tg-skill-cooldown"><img class="tg-skill-cooldown-icon" src="./assets/icons/common_icons/재사용 대기시간.webp" alt="">재사용 대기시간 <b>${skillData['high_cooldown(PvE)']}초</b></div>
+            <div class="tg-skill-desc">${skillData['high_skill_desc']?.replace(/\\n/g, '<br>')}</div>
+            <div id="high-skill-stat-text" class="tg-skill-stat-box">${parseSkillLevelText(skillData['high_skill_stat_template'], skillData['Lv.1(PvE)'])}</div>
+            <div class="tg-lv-slider" style="--lv-progress:0%">
+                <input type="range" min="1" max="${maxH}" value="1" id="high-skill-slider" oninput="window.updateHighSkillLv(this.value, '${char.name}')">
+                <div class="tg-lv-ticks">${makeTicks(maxH)}</div>
+                <div class="tg-lv-slider-marks"><span>Lv.1</span><span>Lv.${maxH}</span></div>
+            </div>`;
     }
     let normalAtkHTML = "";
     if (normalAtkData) {
-        const statColor = char.atk_type === '마법' ? '#339af0' : '#E63946';
-        
         const normalContent = `
-            <div style="margin-bottom: 15px;">
-                <div style="font-size: 0.9rem; color: #666; line-height: 1.6; margin-bottom: 12px;">
-                    ${normalAtkData.basic_atk_desc ? normalAtkData.basic_atk_desc.replace(/\\n/g, '<br>') : ''}
-                </div>
-                <div style="background: #f8f9fa; border-radius: 12px; padding: 14px; font-size: 0.95rem; color: #333; line-height: 1.6; box-shadow: inset 0 2px 5px ${COLORS.inset}; border: 1px solid rgba(0,0,0,0.03);">
-                    ${parseSkillLevelText(normalAtkData.basic_stat_template, normalAtkData.basic_atk_value, statColor)}
-                </div>
+            <div class="tg-normal-section">
+                <div class="tg-skill-desc">${normalAtkData.basic_atk_desc ? normalAtkData.basic_atk_desc.replace(/\\n/g, '<br>') : ''}</div>
+                <div class="tg-skill-stat-box">${parseSkillLevelText(normalAtkData.basic_stat_template, normalAtkData.basic_atk_value)}</div>
             </div>
-            
-        ${(normalAtkData.enhance_atk_desc && normalAtkData.enhance_atk_desc !== 'X') ? `
-                <div style="height: 1px; background: #eee; margin: 4px 0;"></div>
-                
-                <div>
-                    <div style="font-size: 0.85rem; font-weight: bold; color: #84CC16; margin-top: 4px; margin-bottom: 2px;">일반 공격</div>
-                    <div style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain}; margin-bottom: 8px;">강화 공격</div>
-                    <div style="font-size: 0.9rem; color: #666; line-height: 1.6; margin-bottom: 12px;">
-                        ${normalAtkData.enhance_atk_desc.replace(/\\n/g, '<br>')}
-                    </div>
-                    <div style="background: #f8f9fa; border-radius: 12px; padding: 14px; font-size: 0.95rem; color: #333; line-height: 1.6; box-shadow: inset 0 2px 5px ${COLORS.inset}; border: 1px solid rgba(0,0,0,0.03);">
-                        ${parseSkillLevelText(normalAtkData.enhance_stat_template, normalAtkData.enhance_atk_value, statColor)}
-                    </div>
+            ${(normalAtkData.enhance_atk_desc && normalAtkData.enhance_atk_desc !== 'X') ? `
+            <div class="tg-skill-card-divider"></div>
+            <div class="tg-normal-section">
+                <div class="tg-normal-sub-head">
+                    <div class="tg-normal-sub-type">일반 공격</div>
+                    <div class="tg-normal-sub-name">강화 공격</div>
                 </div>
-            ` : ''}
-        `;
-
+                <div class="tg-skill-desc">${normalAtkData.enhance_atk_desc.replace(/\\n/g, '<br>')}</div>
+                <div class="tg-skill-stat-box">${parseSkillLevelText(normalAtkData.enhance_stat_template, normalAtkData.enhance_atk_value)}</div>
+            </div>` : ''}`;
         normalAtkHTML = renderEffectCard('normal', { low_skill_name: "기본 공격" }, null, null, null, dataContext, normalContent, false);
     }
+
+    // [Tab 1 준비]
+    let hasEffects = false;
+    const tab1ContentHTML = (() => {
+        const types = ['low', 'high', 'normal', 'power'];
+        let html = types.map(t => {
+            const d = combineTab1(t);
+            return (d.n && d.n !== 'X' && d.n.trim() !== "" ? renderEffectCard(t, t === 'low' ? lowSkillData : skillData, d.n, d.c, d.t, dataContext) : '');
+        }).join('');
+        if (char.has_aside && asideData) {
+            const a = combineTab1('aside');
+            if (a.n && a.n !== 'X' && a.n.trim() !== "") html += renderEffectCard('aside', asideData, a.n, a.c, a.t, dataContext);
+        }
+        if (!html.trim()) {
+            return `
+                <div class="tg-empty-state">
+                    <img src="./assets/icons/common_icons/empty.webp" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
+                    <div class="tg-empty-state-text">부가 효과가 없어용...</div>
+                </div>`;
+        }
+        hasEffects = true;
+        return html;
+    })();
+
     // [Tab 3 준비]
     const asideContentHTML = renderAsideTabContent(char, asideData);
 
-    // 4. 모달에 HTML 때려넣기 (고정 헤더 + 스크롤 본문 구조)
-   const modalContent = document.querySelector('#modal-detail .modal-content');
+    // 헤더 배지 데이터
+    const tierDisplay = (char.tier || '').replace(/\[.*?\]\s*/g, '').trim();
+    const eldyneName = char.Eldyne?.toString().trim();
+    const iconEldyne = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L13.5 10.5 L21 12 L13.5 13.5 L12 21 L10.5 13.5 L3 12 L10.5 10.5 Z"/></svg>`;
+    const eldyneHTML = eldyneName
+        ? `<span class="tg-detail-eldyne" data-eldyne="${eldyneName}"><span class="tg-detail-eldyne-icon">${iconEldyne}</span>${eldyneName}</span>`
+        : '';
 
-   let flagsHTML = `
-        <div class="modal-side-flags" id="detail-side-flags">
-            <div class="side-flag" id="flag-aside" onclick="window.toggleQuickFilter('aside')" title="A2 효과 제외">A2 제외</div>
-            <div class="side-flag" id="flag-artifact" onclick="window.toggleQuickFilter('artifact')" title="애착 제외">애착 제외</div>
-            <div class="side-flag" id="flag-self" onclick="window.toggleQuickFilter('self')" title="자신 제외">자신 제외</div>
-        </div>`;
+    const attrIcons = [
+        { label: char.personality, path: `./assets/icons/personality/${char.personality}.webp` },
+        { label: char.role,        path: `./assets/icons/role/${char.role}.webp` },
+        { label: char.line,        path: `./assets/icons/line/${char.line}.webp` },
+        { label: char.atk_type,   path: `./assets/icons/atk_type/공격 타입_${char.atk_type}.webp` },
+    ];
+    const attrsHTML = attrIcons.map(a => `
+        <span class="tg-detail-attr">
+            <img class="tg-detail-attr-icon" src="${a.path}" onerror="this.style.display='none'" alt="">
+            <span>${a.label}</span>
+        </span>`).join('');
 
-  // [1] 부가 효과 탭(tab-1) 내용물 계산 및 예외 처리 로직
-    const tab1ContentHTML = (() => {
-    const types = ['low', 'high', 'normal', 'power'];
-    let html = types.map(t => {
-        const d = combineTab1(t);
-        return (d.n && d.n !== 'X' && d.n.trim() !== "" ? renderEffectCard(t, t === 'low' ? lowSkillData : skillData, d.n, d.c, d.t, dataContext) : '');
-    }).join('');
+    const iconX = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>`;
+    const iconChevL = `<svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="19 7 11 16 19 25"/><polyline points="25 7 17 16 25 25"/></svg>`;
+    const iconChevR = `<svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 7 21 16 13 25"/><polyline points="7 7 15 16 7 25"/></svg>`;
 
-    if (char.has_aside && asideData) {
-        const a = combineTab1('aside');
-        if (a.n && a.n !== 'X' && a.n.trim() !== "") html += renderEffectCard('aside', asideData, a.n, a.c, a.t, dataContext);
-    }
-
-    if (!html.trim()) {
-        return `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; text-align: center;">
-                <img src="./assets/icons/common_icons/empty.webp" style="width: 80px; opacity: 0.5; margin-bottom: 15px;" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
-                <div style="color: #94a3b8; font-weight: bold;">부가 효과가 없어용...</div>
-            </div>`;
-    }
-    return html;
-})();
-    
-   modalContent.innerHTML = `
-        ${flagsHTML}
-        <button class="modal-close-x" onclick="document.getElementById('modal-detail').classList.add('hidden'); document.body.style.overflow='auto';">&times;</button>
-
-        <div class="modal-fixed-header" id="modal-header">
-        <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 20px; padding-right: 35px;">
-            <img src="./assets/images/${char.name}.webp" style="width: 85px; height: 85px; border-radius: 18px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onerror="this.src='./assets/images/default.webp'">
-            <div>
-                <h2 style="margin: 0; font-size: 1.5rem;">${char.name}</h2>
-                <p style="margin: 4px 0; font-weight: bold; font-size: 1rem; color: ${tierColor};">${char.tier || ''}</p>
-                <p style="margin: 0; color: #666; font-size: 0.85rem;">${char.personality} | ${char.role} | ${char.line}</p>
-            </div>
-        </div>
-        
-        <div class="modal-tabs" style="position: relative;">
-            <button class="tab-btn active" onclick="switchTab(0)">강화 추천</button>
-            <button class="tab-btn" onclick="switchTab(1)">부가 효과</button>
-            <button class="tab-btn" onclick="switchTab(2)">스킬 정보</button>
-            <button class="tab-btn" onclick="switchTab(3)">어사이드 정보</button>
-            
-            <div class="tab-indicator" id="tab-indicator"></div> 
-        </div> </div>
-
-        <div id="detail-body-scroll" style="overflow-y: auto; padding-right: 5px; scroll-behavior: smooth;">
-            <div id="tab-0" class="tab-content">
-                ${renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowRecContent, false, true)}
-                ${renderEffectCard('high', skillData, null, null, null, dataContext, highRecContent, false, true)}
-                <div style="background: #ffffff; border-radius: 15px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 10px;">
-                     <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
-                         <img src="./assets/images/${char.name}.webp" style="width: 58px; height: 58px; border-radius: 12px; border: 3px solid #e67e22; object-fit: cover;">
-                         <div style="display: flex; flex-direction: column;"><span style="font-size: 0.85rem; font-weight: bold; color: #e67e22;">종합</span><span style="font-size: 1.3rem; font-weight: 800; color: ${COLORS.textMain};">강화 추천</span></div>
-                     </div>
-                     ${char.recommend_reason ? `<div style="background: #f8f9fa; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #e67e22; margin-bottom: 10px;"><strong style="color:#e67e22;">💡 추천 레벨: ${char.recommend_lv}</strong><div style="font-size:0.88rem;">${char.recommend_reason}</div></div>` : ''}
-                     ${char.note ? `
-                    <div style="background: #fffbe6; border-radius: 12px; padding: 12px 18px; box-shadow: inset 0 2px 5px ${COLORS.inset}, inset 3px 0 0 #fadb14;">
-                        <div style="font-size: 0.88rem; line-height: 1.7; word-break: keep-all;">
-                            ${char.note.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}
+    // 4. 모달에 HTML 주입
+    const overlay = document.getElementById('modal-detail');
+    overlay.innerHTML = `
+        <button class="tg-modal-nav prev" onclick="window.navigateApostle(-1)" aria-label="이전 사도">${iconChevL}</button>
+        <button class="tg-modal-nav next" onclick="window.navigateApostle(1)" aria-label="다음 사도">${iconChevR}</button>
+        <div class="tg-modal-card">
+            <div class="tg-detail-header">
+                <div class="tg-detail-header-row">
+                    <img class="tg-detail-portrait" src="./assets/images/${char.name}.webp" onerror="this.src='./assets/images/default.webp'" alt="${char.name}">
+                    <div class="tg-detail-meta">
+                        <span class="tg-detail-eyebrow">APOSTLE DETAIL</span>
+                        <div class="tg-detail-name-row">
+                            <h2 class="tg-detail-name">${char.name}</h2>
+                            <div class="tg-detail-tier-row">
+                                <span class="tg-detail-tier" data-tier="${tierDisplay}">${tierDisplay}</span>
+                                ${eldyneHTML}
+                            </div>
                         </div>
-                    </div>` : ''}
+                        <div class="tg-detail-attrs">${attrsHTML}</div>
+                    </div>
+                </div>
+                <button class="tg-modal-close" onclick="window.closeDetailModal()" aria-label="닫기">${iconX}</button>
+            </div>
+
+            <div class="tg-detail-tabs-wrap">
+                <div class="tg-segmented" id="detail-segmented">
+                    <button class="tg-segmented-btn is-active" onclick="switchTab(0)">강화 추천</button>
+                    <button class="tg-segmented-btn" onclick="switchTab(1)">부가 효과</button>
+                    <button class="tg-segmented-btn" onclick="switchTab(2)">스킬 정보</button>
+                    <button class="tg-segmented-btn" onclick="switchTab(3)">어사이드</button>
+                    <div class="tg-segmented-indicator"></div>
                 </div>
             </div>
 
-            <div id="tab-1" class="tab-content hidden">
-                ${tab1ContentHTML}
-            </div>
+            <div class="tg-modal-body">
+                <div class="tg-quickfilters-row hidden" id="detail-quickfilters" data-has-effects="${hasEffects}">
+                    <button class="tg-quickfilter-chip" id="flag-aside" onclick="window.toggleQuickFilter('aside')">
+                        <span>A2 효과 제외</span><span class="tg-qf-suffix"> 됨<span class="tg-quickfilter-chip-check">✓</span></span>
+                    </button>
+                    <button class="tg-quickfilter-chip" id="flag-artifact" onclick="window.toggleQuickFilter('artifact')">
+                        <span>애착 아티팩트 제외</span><span class="tg-qf-suffix"> 됨<span class="tg-quickfilter-chip-check">✓</span></span>
+                    </button>
+                    <button class="tg-quickfilter-chip" id="flag-self" onclick="window.toggleQuickFilter('self')">
+                        <span>자신 대상 제외</span><span class="tg-qf-suffix"> 됨<span class="tg-quickfilter-chip-check">✓</span></span>
+                    </button>
+                </div>
+                <div class="tg-scroll-area is-at-top">
+                    <div class="tg-detail-scroll">
+                        <div id="tab-0" class="tab-content">
+                            ${renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowRecContent, false, true)}
+                            ${renderEffectCard('high', skillData, null, null, null, dataContext, highRecContent, false, true)}
+                            <div class="tg-skill-card" data-type="overall">
+                                <div class="tg-skill-card-head">
+                                    <div class="tg-skill-card-icon-wrap">
+                                        <div class="tg-skill-card-icon-rel">
+                                            <img class="tg-skill-card-icon" src="./assets/images/${char.name}.webp" onerror="this.src='./assets/images/default.webp'">
+                                        </div>
+                                        <div class="tg-skill-card-titles">
+                                            <span class="tg-skill-card-type-label">종합</span>
+                                            <span class="tg-skill-card-name">강화 추천</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tg-skill-card-body">
+                                    ${char.recommend_reason ? `
+                                    <div class="tg-recommend-summary">
+                                        <strong>추천 레벨: ${char.recommend_lv}</strong>
+                                        <div>${char.recommend_reason}</div>
+                                    </div>` : ''}
+                                    ${char.note ? `
+                                    <div class="tg-recommend-note">
+                                        ${char.note.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}
+                                    </div>` : ''}
+                                </div>
+                            </div>
+                        </div>
 
-            <div id="tab-2" class="tab-content hidden" style="display: block;">
-                ${lowSkillData ? renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowDetail, true) : ''}
-                ${skillData ? renderEffectCard('high', skillData, null, null, null, dataContext, highDetail, true) : ''}
-                ${normalAtkHTML}
-            </div>
+                        <div id="tab-1" class="tab-content hidden">
+                            ${tab1ContentHTML}
+                        </div>
 
-            <div id="tab-3" class="tab-content hidden">
-                ${asideContentHTML}
-            </div>
-        </div> `;
+                        <div id="tab-2" class="tab-content hidden">
+                            ${lowSkillData ? renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowDetail, true) : ''}
+                            ${skillData ? renderEffectCard('high', skillData, null, null, null, dataContext, highDetail, true) : ''}
+                            ${normalAtkHTML}
+                        </div>
 
-     // [3] 모달 표시 및 높이 최종 보정
-    document.getElementById('modal-detail').classList.remove('hidden');
+                        <div id="tab-3" class="tab-content hidden">
+                            ${asideContentHTML}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    // 5. 모달 표시
+    overlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
 
-    // 탭 전환 시 스크롤 위치를 맨 위로 초기화해주는 센스!
-    const scrollArea = document.getElementById('detail-body-scroll');
-    if (scrollArea) scrollArea.scrollTop = 0;
-
-    // 모든 탭의 높이를 측정해 빈 탭 전환 시 모달이 줄어들지 않도록 고정
+    // 세그멘티드 인디케이터 초기 위치 + 사도 이동 슬라이드-인 애니메이션
     requestAnimationFrame(() => {
-        const tabs = document.querySelectorAll('#modal-detail .tab-content');
-        const scroll = document.getElementById('detail-body-scroll');
-        const header = document.getElementById('modal-header');
-        if (!scroll || !header) return;
-        const maxAllowed = Math.floor(window.innerHeight * 0.8) - header.offsetHeight;
-        let maxH = 0;
-        tabs.forEach(tab => {
-            const wasHidden = tab.classList.contains('hidden');
-            if (wasHidden) {
-                tab.classList.remove('hidden');
-                tab.style.display = 'block';
+        updateSegmentedIndicator('detail-segmented');
+        if (window._navDir !== undefined) {
+            const card = overlay.querySelector('.tg-modal-card');
+            if (card) {
+                card.style.animation = window._navDir > 0
+                    ? 'tg-slide-in-right 0.2s ease forwards'
+                    : 'tg-slide-in-left 0.2s ease forwards';
             }
-            maxH = Math.max(maxH, tab.scrollHeight);
-            if (wasHidden) {
-                tab.style.display = '';
-                tab.classList.add('hidden');
-            }
-        });
-        if (maxH > 0) scroll.style.minHeight = Math.min(maxH, maxAllowed) + 'px';
+            window._navDir = undefined;
+        }
+    });
+
+    // 스크롤 페이드 옵저버
+    requestAnimationFrame(() => {
+        const scrollArea = overlay.querySelector('.tg-scroll-area');
+        const scrollEl = overlay.querySelector('.tg-detail-scroll');
+        if (!scrollArea || !scrollEl || scrollEl._scrollFadeInit) return;
+        scrollEl._scrollFadeInit = true;
+        const updateFade = () => {
+            const atTop = scrollEl.scrollTop <= 0;
+            const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
+            scrollArea.classList.toggle('is-at-top', atTop);
+            scrollArea.classList.toggle('is-at-bottom', atBottom);
+        };
+        scrollEl.addEventListener('scroll', updateFade, { passive: true });
+        new ResizeObserver(updateFade).observe(scrollEl);
+        updateFade();
     });
 }
 
@@ -515,89 +527,86 @@ export function updateLowSkillLv(lv, name, lowSkillDB) {
     const rawVal = info[`Lv.${lv}`];
     const statBox = document.getElementById('low-skill-stat-text');
     const badge = document.getElementById('low-badge');
-    if (statBox) statBox.innerHTML = parseSkillLevelText(info['low_skill_stat_template'], rawVal, COLORS.low);
+    if (statBox) statBox.innerHTML = parseSkillLevelText(info['low_skill_stat_template'], rawVal);
     if (badge) badge.innerText = `Lv.${lv}`;
+    const slider = document.getElementById('low-skill-slider');
+    if (slider) {
+        const max = parseInt(slider.max);
+        const progress = max > 1 ? (lv - 1) / (max - 1) : 0;
+        slider.closest('.tg-lv-slider')?.style.setProperty('--lv-progress', (progress * 100).toFixed(1) + '%');
+    }
 }
 
 export function updateHighSkillLv(lv, name, highSkillDB) {
     const info = highSkillDB.find(s => s['chara_name']?.trim() === name.trim());
     if (!info) return;
     const isPvE = currentSkillMode === 'PvE';
-    const themeColor = isPvE ? COLORS.high : COLORS.pvp;
-    const rawVal = info[`Lv.${lv}(${isPvE ? 'PvE' : 'PvP'})`]; 
+    const rawVal = info[`Lv.${lv}(${isPvE ? 'PvE' : 'PvP'})`];
     if (rawVal) {
         const statBox = document.getElementById('high-skill-stat-text');
         const badge = document.getElementById('high-badge');
-        if (statBox) statBox.innerHTML = parseSkillLevelText(info['high_skill_stat_template'], rawVal, themeColor);
+        if (statBox) statBox.innerHTML = parseSkillLevelText(info['high_skill_stat_template'], rawVal);
         if (badge) badge.innerText = `Lv.${lv}`;
+    }
+    const slider = document.getElementById('high-skill-slider');
+    if (slider) {
+        const max = parseInt(slider.max);
+        const progress = max > 1 ? (lv - 1) / (max - 1) : 0;
+        slider.closest('.tg-lv-slider')?.style.setProperty('--lv-progress', (progress * 100).toFixed(1) + '%');
     }
 }
 
-window.toggleSkillMode = () => {
-    currentSkillMode = (currentSkillMode === 'PvE') ? 'PvP' : 'PvE';
+window.toggleSkillMode = (mode) => {
+    currentSkillMode = mode || (currentSkillMode === 'PvE' ? 'PvP' : 'PvE');
     const isPvE = currentSkillMode === 'PvE';
     const skillData = currentDataContext.highSkillDB.find(s => s['chara_name']?.trim() === currentApostle.name.trim());
     if (!skillData) return;
 
-    // PvP일 땐 보라색, PvE일 땐 고학년 초록색
-    const activeColor = isPvE ? COLORS.high : COLORS.pvp;
+    // 1. tab-2 내 고학년 카드에만 is-pvp 토글 → --card-accent 자동 전환 (쿨다운·수치·슬라이더 컬러 일괄 반영)
+    const highCard = document.querySelector('#tab-2 .tg-skill-card[data-type="high"]');
+    if (highCard) highCard.classList.toggle('is-pvp', !isPvE);
+
+    // 2. 모드 스위치 is-pvp 토글 + 라디오 동기화
+    const modeSwitch = document.getElementById('mode-toggle-btn');
+    if (modeSwitch) {
+        modeSwitch.classList.toggle('is-pvp', !isPvE);
+        modeSwitch.querySelectorAll('input[name="skill-mode"]').forEach(r => { r.checked = r.value === currentSkillMode; });
+    }
+
+    // 3. 쿨다운 텍스트 값 업데이트 (컬러는 CSS --card-accent 자동)
     const cooldownKey = isPvE ? 'high_cooldown(PvE)' : 'cooldown(PvP)';
-
-    // 1. 토글 버튼 업데이트
-    const toggleBtn = document.getElementById('mode-toggle-btn');
-    if (toggleBtn) {
-        toggleBtn.style.background = activeColor;
-        const knob = toggleBtn.querySelector('div');
-        knob.style.left = isPvE ? '4px' : '40px';
-        const span = toggleBtn.querySelector('span');
-        span.innerText = currentSkillMode;
-        span.style.textAlign = isPvE ? 'right' : 'left';
-    }
-
-    // 2. 대기시간 텍스트 컬러 업데이트
     const cooldownText = document.getElementById('high-cooldown-text');
-    if (cooldownText) {
-        cooldownText.innerHTML = `재사용 대기시간 <span style="color: ${activeColor}">${skillData[cooldownKey]}초</span>`;
-    }
+    if (cooldownText) cooldownText.innerHTML = `<img class="tg-skill-cooldown-icon" src="./assets/icons/common_icons/재사용 대기시간.webp" alt="">재사용 대기시간 <b>${skillData[cooldownKey]}초</b>`;
 
-    // 3. [추가] 슬라이더 컬러 및 계수 업데이트
+    // 4. 레벨 슬라이더 수치 업데이트 (컬러는 CSS --card-accent 자동)
     const slider = document.getElementById('high-skill-slider');
-    if (slider) {
-        slider.style.accentColor = activeColor; 
-        updateHighSkillLv(slider.value, currentApostle.name, currentDataContext.highSkillDB);
-    }
+    if (slider) updateHighSkillLv(slider.value, currentApostle.name, currentDataContext.highSkillDB);
 };
 
 export function parseSkillLevelText(template, raw, color = '#e74c3c') {
     if (!template || !raw) return template || "정보 없음";
     let res = String(template).replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
     const values = String(raw).split('\n').map(v => v.trim());
-    values.forEach((v, i) => { res = res.split(`{${i}}`).join(`<b style="color:${color}; font-size: 1.05rem;">${v}</b>`); });
+    values.forEach((v, i) => { res = res.split(`{${i}}`).join(`<b>${v}</b>`); });
     return res;
 }
 
 export function switchTab(idx) {
     const contents = document.querySelectorAll('#modal-detail .tab-content');
-    const btns = document.querySelectorAll('#modal-detail .tab-btn');
-    const indicator = document.getElementById('tab-indicator');
-    const flagContainer = document.getElementById('detail-side-flags');
-    contents.forEach((c, i) => {
-        if (i === idx) {
-            c.classList.remove('hidden');
-            c.scrollTop = 0; // 활성화되는 탭의 스크롤 초기화
-        } else {
-            c.classList.add('hidden');
-        }
-    });
-    
-    btns.forEach((b, i) => i === idx ? b.classList.add('active') : b.classList.remove('active'));
+    const btns = document.querySelectorAll('#detail-segmented .tg-segmented-btn');
+    const quickfilters = document.getElementById('detail-quickfilters');
+    const scrollEl = document.querySelector('#modal-detail .tg-detail-scroll');
 
-    if (indicator) {indicator.style.transform = `translateX(${idx * 100}%)`;}
+    contents.forEach((c, i) => i === idx ? c.classList.remove('hidden') : c.classList.add('hidden'));
+    btns.forEach((b, i) => b.classList.toggle('is-active', i === idx));
 
-    if (flagContainer) {
-        if (idx === 1) flagContainer.classList.add('show');
-        else flagContainer.classList.remove('show');
+    if (quickfilters) {
+        const showFilters = idx === 1 && quickfilters.dataset.hasEffects === 'true';
+        quickfilters.classList.toggle('hidden', !showFilters);
     }
+    if (scrollEl) scrollEl.scrollTop = 0;
+
+    updateSegmentedIndicator('detail-segmented');
 }
 
 // [1] 필터 데이터 정의 (항목 매칭용)
@@ -613,6 +622,7 @@ const ASIDE_EFFECTS = [
 window.openAsideFilter = () => {
     document.getElementById('modal-aside-filter').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
     window.switchAsideFilterTab(0);
     updateSegmentedIndicator('aside-segmented');
     const scroll = document.getElementById('aside-filter-scroll');
@@ -806,10 +816,23 @@ window.addEventListener('click', (e) => {
     }
     // 상세 정보 모달 배경 클릭
     if (e.target === detailModal) {
-        detailModal.classList.add('hidden');
-        document.body.style.overflow = '';
+        window.closeDetailModal();
     }
 });
+
+window.closeDetailModal = () => {
+    const overlay = document.getElementById('modal-detail');
+    if (!overlay) return;
+    overlay.classList.add('is-closing');
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('is-closing');
+        document.body.style.overflow = '';
+        document.body.classList.remove('modal-open');
+        document.querySelectorAll('.tg-quickfilter-chip').forEach(c => c.classList.remove('is-active'));
+        document.querySelectorAll('.tg-effect-item.is-hidden').forEach(i => i.classList.remove('is-hidden'));
+    }, 200);
+};
 
 // closeAsideFilter
 window.closeAsideFilter = () => {
@@ -817,6 +840,7 @@ window.closeAsideFilter = () => {
     if (modal) {
         modal.classList.add('hidden');
         document.body.style.overflow = '';
+        document.body.classList.remove('modal-open');
     }
 };
 
@@ -841,7 +865,7 @@ export function toggleQuickFilter(type) {
     flag.classList.toggle('is-active');
     const isActive = flag.classList.contains('is-active');
     
-    const items = document.querySelectorAll('.effect-item');
+    const items = document.querySelectorAll('.tg-effect-item');
     items.forEach(item => {
         const cond = item.getAttribute('data-cond') || "";
         const target = item.getAttribute('data-target') || "";

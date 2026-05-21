@@ -18,16 +18,36 @@ let infoText = "", isAscending = true, selectedStatees = new Set(), pendingState
 // [3] HTML onclick 이벤트와 연결하기
 window.openDetailModal = (char) => {
     // ui.js로 모든 DB 뭉치를 전달.
-    openDetailModal(char, { 
-        debuffDB, 
-        buffDB, 
-        lowSkillDB, 
-        highSkillDB, 
-        allStateDB, 
-        debuffDescDB, 
+    openDetailModal(char, {
+        debuffDB,
+        buffDB,
+        lowSkillDB,
+        highSkillDB,
+        allStateDB,
+        debuffDescDB,
         normalAtkDB,
-        asideDB 
+        asideDB
     });
+};
+
+window.navigateApostle = (dir) => {
+    const list = window.currentDisplayedList;
+    if (!list || !window.currentApostleName) return;
+    const idx = list.findIndex(c => c.name === window.currentApostleName);
+    if (idx < 0) return;
+    const next = list[(idx + dir + list.length) % list.length];
+    const card = document.querySelector('#modal-detail .tg-modal-card');
+    if (card) {
+        card.style.animation = dir > 0
+            ? 'tg-slide-out-left 0.15s ease forwards'
+            : 'tg-slide-out-right 0.15s ease forwards';
+        setTimeout(() => {
+            window._navDir = dir;
+            window.openDetailModal(next);
+        }, 150);
+    } else {
+        window.openDetailModal(next);
+    }
 };
 
 window.switchTab = switchTab;
@@ -370,6 +390,8 @@ function handleSortFilter() {
         return isAscending ? res : -res;
     });
 
+    window.currentDisplayedList = filtered;
+
     const grid = document.getElementById('main-grid');
     grid.innerHTML = "";
     if (sort === 'name') {
@@ -649,6 +671,7 @@ function openFilterModal() {
     pendingStatees = new Set(selectedStatees); // 현재 적용 상태를 pending으로 복사
     document.getElementById('modal-filter').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
     updateSegmentedIndicator('filter-segmented');
     refreshClearAllBtn();
     refreshModalCount();
@@ -659,6 +682,7 @@ function applyFilterModal() {
     selectedStatees = new Set(pendingStatees); // pending → 실제 적용
     document.getElementById('modal-filter').classList.add('hidden');
     document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
     handleSortFilter();
     triggerGridRefresh();
 }
@@ -666,6 +690,7 @@ function closeFilterModal() {
     // X 버튼 / 배경 클릭: pending 버리고 닫기 (필터 적용 안 함)
     document.getElementById('modal-filter').classList.add('hidden');
     document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
 }
 function resetFilters() {
     selectedStatees.clear();
@@ -678,19 +703,20 @@ function resetFilters() {
     handleSortFilter();
     triggerGridRefresh();
 }
-function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); document.body.style.overflow='hidden';}
+function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); document.body.style.overflow='hidden'; document.body.classList.add('modal-open'); }
 function closeModal(id) {
     // 1. 상세 정보 모달(modal-detail)을 닫을 때만 플래그 상태 리셋
     if (id === 'modal-detail') {
-        const flags = document.querySelectorAll('.side-flag');
+        const flags = document.querySelectorAll('.tg-quickfilter-chip');
         flags.forEach(flag => flag.classList.remove('is-active'));
 
-        const blurredItems = document.querySelectorAll('.effect-item.is-blurred');
+        const blurredItems = document.querySelectorAll('.tg-effect-item.is-blurred');
         blurredItems.forEach(item => item.classList.remove('is-blurred'));
     }
     const modal = document.getElementById(id);
     if (modal) {modal.classList.add('hidden');}
     document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
 }
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
@@ -773,18 +799,23 @@ window.addEventListener('keydown', (e) => {
 
     if (e.key === 'Escape') {
         if (isDetailVisible) {
-            detailModal.classList.add('hidden');
-            document.body.style.overflow = '';
+            if (typeof window.closeDetailModal === 'function') window.closeDetailModal();
         }
         if (typeof window.closeFilterModal === 'function') window.closeFilterModal();
         if (typeof window.closeAsideFilter === 'function') window.closeAsideFilter();
     }
 
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && isDetailVisible) {
+        e.preventDefault();
+        window.navigateApostle(e.key === 'ArrowRight' ? 1 : -1);
+        return;
+    }
+
     if (e.key === 'Tab') {
         if (isDetailVisible) {
             e.preventDefault();
-            const btns = document.querySelectorAll('#modal-detail .tab-btn');
-            let currentIdx = Array.from(btns).findIndex(b => b.classList.contains('active'));
+            const btns = document.querySelectorAll('#detail-segmented .tg-segmented-btn');
+            let currentIdx = Array.from(btns).findIndex(b => b.classList.contains('is-active'));
             let nextIdx = (currentIdx + 1) % btns.length;
             if (typeof window.switchTab === 'function') {
                 window.switchTab(nextIdx);
@@ -807,6 +838,18 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
+// 모바일 스와이프로 사도 이동
+let _touchStartX = 0;
+document.addEventListener('touchstart', (e) => {
+    if (document.getElementById('modal-detail')?.classList.contains('hidden')) return;
+    _touchStartX = e.touches[0].clientX;
+}, { passive: true });
+document.addEventListener('touchend', (e) => {
+    if (document.getElementById('modal-detail')?.classList.contains('hidden')) return;
+    const delta = e.changedTouches[0].clientX - _touchStartX;
+    if (Math.abs(delta) > 60) window.navigateApostle(delta > 0 ? -1 : 1);
+}, { passive: true });
+
 window.addEventListener('mouseup', (e) => {
     if (e.button !== 3) return;
 
@@ -818,7 +861,7 @@ window.addEventListener('mouseup', (e) => {
 
     if (detailModal && !detailModal.classList.contains('hidden')) {
         e.preventDefault();
-        closeModal('modal-detail');
+        if (typeof window.closeDetailModal === 'function') window.closeDetailModal();
     } else if (filterModal && !filterModal.classList.contains('hidden')) {
         e.preventDefault();
         closeFilterModal();
