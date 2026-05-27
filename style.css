@@ -56,6 +56,96 @@
     --tier-1star:   #BCD3C7;
     --tier-default: #e67e22;
     --inset-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08);
+
+    /* 신규 토큰 — 다크 모드 대응 */
+    --modal-card-bg:            #FFFFFF;
+    --modal-body-bg:            #FBFCF6;
+    --stat-box-bg:              #F8F9FA;
+    --search-input-bg:          #FAFBF3;
+    --segmented-bg:             #F4F8E6;
+    --segmented-indicator:      #FFFFFF;
+    --switch-off-bg:            #d6dec0;
+    --attr-pill-bg:             #F4F8E6;
+    --footer-bg:                #FFFFFF;
+    --overlay-bg:               rgba(63,79,31,0.45);
+    --recommend-summary-bg:     #FFF7ED;
+    --recommend-summary-border: #fed7aa;
+    --recommend-note-bg:        #FFFBEB;
+    --recommend-note-border:    #fde68a;
+    --recommend-note-text:      #78350F;
+    --text-heading:             #333333;
+    --text-body:                #555555;
+}
+
+/* ════════════════════════════════════════
+   다크 모드 — zinc 뉴트럴 그레이
+   배경·표면은 무채, 액센트(그린)만 아이덴티티로 유지
+════════════════════════════════════════ */
+[data-theme="dark"] {
+    /* ── 배경 계층 ── */
+    --bg-main:        #18181B;
+    --grid-bg:        #131316;
+    --header-bg:      #232327;
+    --nav-bg:         #1D1D20;
+    --card-bg:        #27272A;
+
+    /* ── 텍스트 ── */
+    --text-dark:      #E4E4E7;
+    --text-muted:     #8B8B92;
+
+    /* ── 경계선/그림자 ── */
+    --border-soft:    #313135;
+    --shadow-soft:    rgba(0,0,0,0.45);
+    --inset-shadow:   inset 0 2px 5px rgba(0, 0, 0, 0.4);
+
+    /* ── 액센트 ── */
+    --accent-green:        #6DA63A;
+    --accent-green-strong: #84C046;
+    --accent-soft:         #2A331C;
+
+    /* ── 의미 컬러 ── */
+    --buff-pale:   #16243A;
+    --buff-soft:   #243752;
+    --buff-text:   #7BB4F4;
+
+    --debuff-pale: #3A1820;
+    --debuff-soft: #5A2838;
+    --debuff-text: #FA8FA3;
+
+    --neutral-pale: #2A1A3F;
+    --neutral-soft: #3F2A55;
+    --neutral-text: #C49EFF;
+
+    /* ── 어사이드 모달 ── */
+    --aside-accent-soft:   #2A1A3F;
+    --aside-accent-border: #3F2A55;
+
+    /* ── 스킬/등급 보정 ── */
+    --skill-low:     #4ADE80;
+    --skill-high:    #34D060;
+    --skill-normal:  #A6E435;
+    --grade-10:      #4ADE80;
+    --grade-7p:      #FBBF24;
+    --grade-7m:      #F87171;
+
+    /* ── 신규 토큰 다크 값 ── */
+    --modal-card-bg:            #27272A;
+    --modal-body-bg:            #1E1E21;
+    --stat-box-bg:              #1A1A1D;
+    --search-input-bg:          #1A1A1D;
+    --segmented-bg:             #1A1A1D;
+    --segmented-indicator:      #353539;
+    --switch-off-bg:            #3F3F45;
+    --attr-pill-bg:             #2D2D31;
+    --footer-bg:                #232327;
+    --overlay-bg:               rgba(0,0,0,0.7);
+    --recommend-summary-bg:     #2A1F10;
+    --recommend-summary-border: #4A3818;
+    --recommend-note-bg:        #2A2410;
+    --recommend-note-border:    #4A4018;
+    --recommend-note-text:      #F5D88A;
+    --text-heading:             #FAFAFA;
+    --text-body:                #A1A1AA;
 }
 
 /* ── Global ────────────────────────────── */
@@ -100,11 +190,12 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 .tg-title em { font-style: normal; color: var(--accent-green-strong); }
 .tg-help-btn {
     width: 34px; height: 34px; border-radius: 50%;
-    background: #FFFDF6; border: 1px solid var(--border-soft);
-    cursor: pointer; font-size: 0.95rem;
+    background: var(--modal-card-bg); border: 1px solid var(--border-soft);
+    cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center;
     color: var(--text-muted); transition: all 0.15s ease;
 }
+.tg-help-btn svg { width: 18px; height: 18px; display: block; }
 .tg-help-btn:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
 
 /* ── Nav / Filter Bar ───────────────────── */
@@ -122,7 +213,7 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 .tg-btn {
     appearance: none;
     display: inline-flex; align-items: center; gap: 6px;
-    background: #FFFFFF; border: 1px solid var(--border-soft); border-radius: 12px;
+    background: var(--modal-card-bg); border: 1px solid var(--border-soft); border-radius: 12px;
     padding: 8px 14px;
     font-family: 'OneMobilePop', sans-serif; font-size: 0.82rem; font-weight: 800;
     color: var(--text-dark); cursor: pointer;
@@ -145,7 +236,7 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 /* 모달 내부 버튼 (기존 .btn 클래스 — modal HTML에서 계속 사용) */
 .btn {
     padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd;
-    background: #fff; cursor: pointer; font-size: 0.9rem;
+    background: var(--modal-card-bg); cursor: pointer; font-size: 0.9rem;
     font-family: inherit; transition: all 0.2s ease-out; white-space: nowrap;
 }
 .btn:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--accent-green); background-color: #f9fdf0; }
@@ -154,7 +245,7 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 .tg-dropdown { position: relative; display: inline-block; }
 .tg-dropdown-btn {
     appearance: none; display: inline-flex; align-items: center; gap: 8px;
-    background: #FFFFFF; border: 1px solid var(--border-soft); border-radius: 12px;
+    background: var(--modal-card-bg); border: 1px solid var(--border-soft); border-radius: 12px;
     padding: 8px 12px 8px 14px;
     font-family: 'OneMobilePop', sans-serif; font-size: 0.82rem; font-weight: 800;
     color: var(--text-dark); cursor: pointer;
@@ -171,7 +262,7 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 
 .tg-dropdown-menu {
     position: absolute; top: calc(100% + 6px); left: 0; z-index: 200;
-    min-width: 100%; background: #FFFFFF;
+    min-width: 100%; background: var(--modal-card-bg);
     border: 1px solid var(--border-soft); border-radius: 12px; padding: 6px;
     box-shadow: 0 8px 24px rgba(63,79,31,0.12), 0 2px 6px rgba(63,79,31,0.06);
     display: flex; flex-direction: column; gap: 2px;
@@ -201,7 +292,7 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 .tg-search input {
     width: 100%; padding: 9px 38px 9px 38px;
     border-radius: 999px; border: 1.5px solid var(--border-soft);
-    background: #FFFFFF; font-family: 'OneMobilePop', sans-serif;
+    background: var(--modal-card-bg); font-family: 'OneMobilePop', sans-serif;
     font-size: 0.85rem; font-weight: 700; color: var(--text-dark);
     transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -248,7 +339,7 @@ body.modal-open .tg-subheader {
 .tg-chip-debuff  { background: #FFE4E6; border-color: #FCA5A5; color: #BE123C; }
 .tg-chip-neutral { background: #F3E8FF; border-color: #C084FC; color: #7E22CE; }
 .tg-chip-aside  { background: #EDE9FE; border-color: #C4B5FD; color: #5B21B6; }
-.tg-chip-clear  { background: #FFFFFF; border-color: var(--border-soft); color: var(--text-muted); cursor: pointer; }
+.tg-chip-clear  { background: var(--modal-card-bg); border-color: var(--border-soft); color: var(--text-muted); cursor: pointer; }
 .tg-chip-clear:hover { background: #FEF2F2; border-color: #FCA5A5; color: #DC2626; }
 
 /* ── Grid ────────────────────────────── */
@@ -305,7 +396,7 @@ body.modal-open .tg-subheader {
     box-sizing: border-box; display: block;
 }
 .card-bottom {
-    background: #ffffff; padding: 10px 5px;
+    background: var(--modal-card-bg); padding: 10px 5px;
     border-radius: 0 0 15px 15px; width: 100%; box-sizing: border-box;
 }
 .char-card .icon { position: absolute; width: 32px; height: 32px; z-index: 2; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
@@ -339,7 +430,7 @@ body.modal-open .tg-subheader {
 }
 .char-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .char-name {
-    font-weight: 800; margin-bottom: 8px; font-size: 1rem; color: #333;
+    font-weight: 800; margin-bottom: 8px; font-size: 1rem; color: var(--text-heading);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
@@ -369,11 +460,11 @@ body.modal-open .tg-subheader {
 
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
 .modal-content {
-    background: #fff; width: 92%; max-width: 500px; padding: 0; border-radius: 20px;
+    background: var(--modal-card-bg); width: 92%; max-width: 500px; padding: 0; border-radius: 20px;
     max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; position: relative;
 }
 .modal-fixed-header {
-    padding: 20px 20px 0 20px; background: #fff; z-index: 10; flex-shrink: 0;
+    padding: 20px 20px 0 20px; background: var(--modal-card-bg); z-index: 10; flex-shrink: 0;
     border-bottom: 1px solid #eee; border-top-left-radius: 20px; border-top-right-radius: 20px;
 }
 #detail-body-scroll {
@@ -412,7 +503,7 @@ body.modal-open .tg-subheader {
 }
 @keyframes tg-fade { from { opacity: 0; } to { opacity: 1; } }
 .tg-modal-card {
-    background: #fff; border-radius: 22px;
+    background: var(--modal-card-bg); border-radius: 22px;
     width: 100%; max-width: 540px; max-height: 88vh;
     display: flex; flex-direction: column; overflow: hidden;
     box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.06);
@@ -453,7 +544,7 @@ body.modal-open .tg-subheader {
 .tg-modal-close {
     position: absolute; top: 18px; right: 18px;
     width: 34px; height: 34px; border-radius: 50%;
-    border: 1px solid var(--border-soft); background: #fff;
+    border: 1px solid var(--border-soft); background: var(--modal-card-bg);
     color: var(--text-muted); cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s;
 }
@@ -463,7 +554,7 @@ body.modal-open .tg-subheader {
     padding: 16px 24px 0;
     display: flex; flex-direction: column; gap: 14px; min-height: 0;
 }
-.tg-modal-body::after { content: ''; position: absolute; left: 24px; right: 24px; bottom: 0; height: 12px; background: linear-gradient(to top, #fff, transparent); pointer-events: none; z-index: 5; }
+.tg-modal-body::after { content: ''; position: absolute; left: 24px; right: 24px; bottom: 0; height: 12px; background: linear-gradient(to top, var(--modal-card-bg), transparent); pointer-events: none; z-index: 5; }
 .tg-filter-scroll { flex: 1; overflow-y: auto; padding-right: 4px; margin-right: -4px; padding-bottom: 16px; scrollbar-width: thin; scrollbar-color: rgba(63,79,31,0.2) transparent; min-height: 0; position: relative; }
 /* 어사이드 필터: 탭 전환 시 높이가 요동치지 않도록 최대 탭(효과 12개) 기준 고정 */
 #aside-filter-scroll { min-height: 280px; }
@@ -475,7 +566,7 @@ body.modal-open .tg-subheader {
     display: block;
     height: 9px;
     margin-bottom: -9px;
-    background: linear-gradient(to bottom, #fff 30%, transparent);
+    background: linear-gradient(to bottom, var(--modal-card-bg) 30%, transparent);
     pointer-events: none;
     z-index: 5;
     opacity: 0;
@@ -485,16 +576,16 @@ body.modal-open .tg-subheader {
 .tg-filter-scroll::-webkit-scrollbar { width: 8px; }
 .tg-filter-scroll::-webkit-scrollbar-thumb { background: rgba(63,79,31,0.15); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
 .tg-filter-scroll::-webkit-scrollbar-thumb:hover { background: rgba(63,79,31,0.3); background-clip: padding-box; border: 2px solid transparent; }
-.tg-modal-footer { flex-shrink: 0; padding: 14px 24px 18px; border-top: 1px solid var(--border-soft); background: #fff; display: flex; gap: 10px; }
+.tg-modal-footer { flex-shrink: 0; padding: 14px 24px 18px; border-top: 1px solid var(--border-soft); background: var(--footer-bg); display: flex; gap: 10px; }
 .tg-modal-footer .tg-btn-secondary,
 .tg-modal-footer .tg-btn-primary { flex: 1; appearance: none; border-radius: 12px; padding: 11px 16px; font-family: 'OneMobilePop', sans-serif; font-size: 0.92rem; font-weight: 800; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.tg-btn-secondary { background: #fff; border: 1.5px solid var(--border-soft); color: var(--text-muted); }
+.tg-btn-secondary { background: var(--modal-card-bg); border: 1.5px solid var(--border-soft); color: var(--text-muted); }
 .tg-btn-secondary:hover { background: #FFE4E6; border-color: var(--debuff); color: var(--debuff-text); }
 .tg-btn-primary { background: var(--accent-green); border: 1.5px solid var(--accent-green-strong); color: #2D3812; box-shadow: 0 4px 14px rgba(143, 185, 62, 0.45), inset 0 -2px 0 rgba(143, 185, 62, 0.4); }
 .tg-btn-primary:hover { background: var(--accent-green-strong); border-color: var(--accent-green-strong); color: #fff; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(143, 185, 62, 0.5); }
 /* Segmented tabs */
-.tg-segmented { position: relative; display: inline-flex; padding: 4px; background: #F4F8E6; border: 1px solid var(--border-soft); border-radius: 14px; width: 100%; }
-.tg-segmented-indicator { position: absolute; top: 4px; left: 4px; height: calc(100% - 8px); background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(63,79,31,0.10), 0 0 0 1px var(--border-soft); transition: transform 0.28s cubic-bezier(.4,0,.2,1), width 0.28s cubic-bezier(.4,0,.2,1); z-index: 0; pointer-events: none; }
+.tg-segmented { position: relative; display: inline-flex; padding: 4px; background: var(--segmented-bg); border: 1px solid var(--border-soft); border-radius: 14px; width: 100%; }
+.tg-segmented-indicator { position: absolute; top: 4px; left: 4px; height: calc(100% - 8px); background: var(--segmented-indicator); border-radius: 10px; box-shadow: 0 1px 3px rgba(63,79,31,0.10), 0 0 0 1px var(--border-soft); transition: transform 0.28s cubic-bezier(.4,0,.2,1), width 0.28s cubic-bezier(.4,0,.2,1); z-index: 0; pointer-events: none; }
 .tg-segmented-btn { appearance: none; flex: 1; background: transparent; border: none; padding: 8px 14px; border-radius: 10px; font-family: 'OneMobilePop', sans-serif; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); cursor: pointer; transition: color 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; position: relative; z-index: 1; }
 .tg-segmented-btn:hover { color: var(--text-dark); }
 .tg-segmented-btn.is-active { color: var(--text-dark); }
@@ -504,13 +595,13 @@ body.modal-open .tg-subheader {
 /* Modal search */
 .tg-modal-search { position: relative; width: 100%; }
 .tg-modal-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); display: inline-flex; pointer-events: none; }
-.tg-modal-search input { width: 100%; padding: 10px 14px 10px 40px; border-radius: 12px; border: 1.5px solid var(--border-soft); background: #FAFBF3; font-family: 'OneMobilePop', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--text-dark); transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
-.tg-modal-search input:focus { outline: none; border-color: var(--accent-green); background: #fff; box-shadow: 0 0 0 3px rgba(185, 221, 99, 0.35); }
+.tg-modal-search input { width: 100%; padding: 10px 14px 10px 40px; border-radius: 12px; border: 1.5px solid var(--border-soft); background: var(--search-input-bg); font-family: 'OneMobilePop', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--text-dark); transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
+.tg-modal-search input:focus { outline: none; border-color: var(--accent-green); background: var(--modal-card-bg); box-shadow: 0 0 0 3px rgba(185, 221, 99, 0.35); }
 .tg-modal-search input::placeholder { color: var(--text-muted); font-weight: 500; }
 /* Mode switch (OR/AND) */
 .tg-mode-row { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
 .tg-mode-label { font-size: 0.78rem; font-weight: 800; color: var(--text-muted); flex-shrink: 0; }
-.tg-mode-switch { position: relative; display: flex; background: #F4F8E6; padding: 4px; border-radius: 12px; border: 1px solid var(--border-soft); flex: 1; }
+.tg-mode-switch { position: relative; display: flex; background: var(--segmented-bg); padding: 4px; border-radius: 12px; border: 1px solid var(--border-soft); flex: 1; }
 .tg-mode-switch input { display: none; }
 .tg-mode-switch label { flex: 1; text-align: center; padding: 7px 0; font-family: 'OneMobilePop', sans-serif; font-size: 0.82rem; font-weight: 800; cursor: pointer; color: var(--text-muted); z-index: 1; transition: color 0.25s; }
 .tg-mode-switch input:checked + label { color: #2D3812; }
@@ -521,13 +612,13 @@ body.modal-open .tg-subheader {
 .tg-mode-switch:hover .tg-mode-glider { box-shadow: 0 2px 8px rgba(143, 185, 62, 0.4); }
 .tg-mode-switch:hover #mode-and:checked ~ .tg-mode-glider { box-shadow: 0 2px 8px rgba(52, 138, 241, 0.45); }
 /* Toggle row */
-.tg-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: #FAFBF3; border: 1px solid var(--border-soft); border-radius: 12px; }
+.tg-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: var(--search-input-bg); border: 1px solid var(--border-soft); border-radius: 12px; }
 .tg-toggle-row-text { display: flex; flex-direction: column; gap: 1px; flex: 1; }
 .tg-toggle-row-label { font-size: 0.85rem; font-weight: 800; color: var(--text-dark); }
 .tg-toggle-row-hint  { font-size: 0.7rem; color: var(--text-muted); }
 .tg-switch { position: relative; display: inline-block; width: 38px; height: 22px; flex-shrink: 0; }
 .tg-switch input { display: none; }
-.tg-switch-slider { position: absolute; inset: 0; background: #d6dec0; border-radius: 999px; transition: 0.25s; cursor: pointer; }
+.tg-switch-slider { position: absolute; inset: 0; background: var(--switch-off-bg); border-radius: 999px; transition: 0.25s; cursor: pointer; }
 .tg-switch-slider::before { content: ''; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.15); transition: 0.25s; }
 .tg-switch input:checked + .tg-switch-slider { background: var(--accent-green); }
 .tg-switch input:checked + .tg-switch-slider::before { transform: translateX(16px); }
@@ -536,12 +627,12 @@ body.modal-open .tg-subheader {
 .tg-switch:hover:has(input:checked) .tg-switch-slider { background: var(--accent-green-strong); }
 .tg-switch:hover:has(input:checked) .tg-switch-slider::before { transform: translateX(14px); box-shadow: 0 2px 6px rgba(0,0,0,0.22); }
 /* "무관" any option */
-.tg-any-option { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #fff; border: 1.5px solid var(--border-soft); border-radius: 12px; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+.tg-any-option { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--modal-card-bg); border: 1.5px solid var(--border-soft); border-radius: 12px; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
 .tg-any-option:hover { background: var(--aside-accent-soft); border-color: var(--aside-accent-border); }
 .tg-any-option.is-active { background: var(--aside-accent-soft); border-color: var(--aside-accent); box-shadow: 0 0 0 3px rgba(163, 97, 255, 0.18); }
 .tg-any-option.is-active:hover { background: var(--aside-accent-soft); border-color: var(--aside-accent-strong); }
 .tg-any-option input { display: none; }
-.tg-any-option .tg-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #c8d0b0; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.tg-any-option .tg-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border-soft); flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
 .tg-any-option.is-active .tg-radio { border-color: var(--aside-accent-strong); background: var(--aside-accent-strong); }
 .tg-any-option.is-active .tg-radio::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #fff; }
 .tg-any-option .tg-any-text { display: flex; flex-direction: column; gap: 1px; }
@@ -567,7 +658,7 @@ body.modal-open .tg-subheader {
 .tg-filter-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; min-height: 240px; align-content: start; }
 .tg-filter-grid--empty { display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 40px 20px; }
 /* filter-label (shared — replaces old definition) */
-.filter-label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--border-soft); background: #fff; font-size: 0.82rem; font-weight: 700; color: var(--text-dark); cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; }
+.filter-label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--border-soft); background: var(--modal-card-bg); font-size: 0.82rem; font-weight: 700; color: var(--text-dark); cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; }
 .filter-label::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: transparent; transition: background 0.15s, width 0.15s; }
 .filter-label:hover { background: var(--accent-soft); border-color: var(--accent-green); }
 .filter-label[data-type="buff"]:hover:not(:has(input:checked))    { background: var(--buff-pale);    border-color: var(--buff-soft); }
@@ -577,7 +668,7 @@ body.modal-open .tg-subheader {
 .filter-label[data-type="neutral"]:hover:not(:has(input:checked)) { background: var(--neutral-pale); border-color: var(--neutral-soft); }
 .filter-label[data-type="neutral"]:hover:not(:has(input:checked))::before { background: var(--neutral); }
 .filter-label input[type="checkbox"],
-.filter-label input[type="radio"] { appearance: none; width: 16px; height: 16px; border: 1.5px solid #c8d0b0; background: #fff; cursor: pointer; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.filter-label input[type="radio"] { appearance: none; width: 16px; height: 16px; border: 1.5px solid var(--border-soft); background: var(--modal-card-bg); cursor: pointer; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
 .filter-label input[type="checkbox"] { border-radius: 4px; }
 .filter-label input[type="radio"]    { border-radius: 50%; }
 .filter-label input[type="checkbox"]:checked,
@@ -741,7 +832,7 @@ body.modal-open .tg-subheader {
 }
 .tg-detail-name {
     font-family: 'OneMobilePop', sans-serif; font-size: 1.5rem; font-weight: 800;
-    color: #333; margin: 0; line-height: 1.15;
+    color: var(--text-heading); margin: 0; line-height: 1.15;
 }
 .tg-detail-name-row {
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 2px 0 4px;
@@ -786,7 +877,7 @@ body.modal-open .tg-subheader {
 }
 .tg-detail-attr {
     display: inline-flex; align-items: center; gap: 5px;
-    padding: 2px 9px 2px 6px; background: #F4F8E6; border-radius: 7px;
+    padding: 2px 9px 2px 6px; background: var(--attr-pill-bg); border-radius: 7px;
 }
 .tg-detail-attr-icon { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
 
@@ -794,7 +885,7 @@ body.modal-open .tg-subheader {
 .tg-modal-close {
     position: absolute; top: 18px; right: 18px;
     width: 34px; height: 34px; border-radius: 50%;
-    border: 1px solid var(--border-soft); background: #fff;
+    border: 1px solid var(--border-soft); background: var(--modal-card-bg);
     color: var(--text-muted); cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s;
 }
@@ -804,7 +895,7 @@ body.modal-open .tg-subheader {
 /* ── 세그멘티드 탭 래퍼 ─────────────────── */
 .tg-detail-tabs-wrap {
     flex-shrink: 0; padding: 14px 24px 0;
-    background: #fff; border-bottom: 1px solid var(--border-soft);
+    background: var(--modal-card-bg); border-bottom: 1px solid var(--border-soft);
 }
 .tg-detail-tabs-wrap .tg-segmented { margin-bottom: 14px; }
 .tg-detail-tabs-wrap .tg-segmented-btn { padding: 9px 10px; font-size: 0.82rem; }
@@ -815,7 +906,7 @@ body.modal-open .tg-subheader {
     position: relative; flex: 1; overflow: hidden;
     padding: 16px 24px 0;
     display: flex; flex-direction: column; gap: 12px; min-height: 0;
-    background: #FBFCF6;
+    background: var(--modal-body-bg);
 }
 .tg-scroll-area {
     position: relative; flex: 1; min-height: 0;
@@ -826,8 +917,8 @@ body.modal-open .tg-subheader {
     content: ''; position: absolute; left: 0; right: 0; height: 11px;
     pointer-events: none; z-index: 5; opacity: 1; transition: opacity 0.2s ease;
 }
-.tg-scroll-area::before { top: 0; background: linear-gradient(to bottom, #fff, transparent); }
-.tg-scroll-area::after  { bottom: 0; background: linear-gradient(to top, #fff, transparent); }
+.tg-scroll-area::before { top: 0; background: linear-gradient(to bottom, var(--modal-body-bg), transparent); }
+.tg-scroll-area::after  { bottom: 0; background: linear-gradient(to top, var(--modal-body-bg), transparent); }
 .tg-scroll-area.is-at-top::before   { opacity: 0; }
 .tg-scroll-area.is-at-bottom::after { opacity: 0; }
 .tg-detail-scroll {
@@ -850,7 +941,7 @@ body.modal-open .tg-subheader {
 .tg-quickfilter-chip {
     appearance: none; display: inline-flex; align-items: center;
     padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--border-soft);
-    background: #fff; font-family: 'OneMobilePop', sans-serif;
+    background: var(--modal-card-bg); font-family: 'OneMobilePop', sans-serif;
     font-size: 0.74rem; font-weight: 800; color: var(--text-muted); cursor: pointer;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
@@ -874,7 +965,7 @@ body.modal-open .tg-subheader {
 ════════════════════════════════════ */
 .tg-skill-card {
     --card-accent: var(--skill-low);
-    background: #fff; border-radius: 15px; padding: 18px 18px 16px;
+    background: var(--modal-card-bg); border-radius: 15px; padding: 18px 18px 16px;
     border: 1px solid var(--border-soft);
     box-shadow: 0 2px 8px rgba(63,79,31,0.05);
     display: flex; flex-direction: column; gap: 14px;
@@ -917,19 +1008,19 @@ body.modal-open .tg-subheader {
 .tg-skill-card-titles { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .tg-skill-card-type-label { font-size: 0.78rem; font-weight: 800; color: var(--card-accent); }
 .tg-skill-card-name-row { display: flex; align-items: center; gap: 6px; }
-.tg-skill-card-name { font-size: 1.25rem; font-weight: 800; color: #333; line-height: 1.2; }
+.tg-skill-card-name { font-size: 1.25rem; font-weight: 800; color: var(--text-heading); line-height: 1.2; }
 .tg-skill-card-body { display: flex; flex-direction: column; }
 .tg-skill-card-body > * + * { margin-top: 12px; }
 .tg-skill-card-divider { height: 1px; background: var(--border-soft); margin: 14px 0; }
 .tg-normal-section { display: flex; flex-direction: column; gap: 10px; }
 .tg-normal-sub-head { display: flex; flex-direction: column; gap: 2px; }
-.tg-skill-desc, .tg-aside-desc { font-size: 0.9rem; color: #555; line-height: 1.6; }
+.tg-skill-desc, .tg-aside-desc { font-size: 0.9rem; color: var(--text-body); line-height: 1.6; }
 .tg-skill-cooldown { display: flex; align-items: center; gap: 5px; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); }
 .tg-skill-cooldown-icon { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
 .tg-skill-cooldown b { color: var(--card-accent); font-weight: 800; }
 .tg-skill-stat-box {
-    background: #F8F9FA; border-radius: 12px; padding: 14px;
-    font-size: 0.92rem; color: #444; line-height: 1.6;
+    background: var(--stat-box-bg); border-radius: 12px; padding: 14px;
+    font-size: 0.92rem; color: var(--text-heading); line-height: 1.6;
     border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow);
 }
 .tg-skill-stat-box b { color: var(--card-accent); font-size: 1.05rem; font-weight: 800; }
@@ -946,7 +1037,7 @@ body.modal-open .tg-subheader {
 .tg-mode-switch-mini label {
     text-align: center; padding: 5px 14px;
     font-family: 'OneMobilePop', sans-serif; font-size: 0.78rem; font-weight: 800;
-    cursor: pointer; color: #555; z-index: 1; transition: color 0.25s; min-width: 42px;
+    cursor: pointer; color: var(--text-body); z-index: 1; transition: color 0.25s; min-width: 42px;
 }
 .tg-mode-switch-mini input:checked + label { color: #fff; }
 .tg-mode-glider-mini {
@@ -993,14 +1084,14 @@ body.modal-open .tg-subheader {
 .tg-lv-tick { width: 2px; height: 5px; background: var(--border-soft); border-radius: 1px; flex-shrink: 0; }
 .tg-lv-tick.is-major { height: 11px; width: 2.5px; background: var(--card-accent); opacity: 0.85; }
 .tg-normal-sub-type { font-size: 0.78rem; font-weight: 800; color: var(--skill-normal); }
-.tg-normal-sub-name { font-size: 1.25rem; font-weight: 800; color: #333; }
+.tg-normal-sub-name { font-size: 1.25rem; font-weight: 800; color: var(--text-heading); }
 
 /* ════════════════════════════════════
    EFFECT ITEMS
 ════════════════════════════════════ */
 .tg-effect-item {
     --effect-color: var(--buff);
-    position: relative; background: #fff; border-radius: 12px;
+    position: relative; background: var(--modal-card-bg); border-radius: 12px;
     padding: 11px 12px 11px 16px; border: 1px solid var(--border-soft);
     box-shadow: var(--inset-shadow);
     display: flex; align-items: flex-start; gap: 12px; overflow: hidden;
@@ -1027,7 +1118,7 @@ body.modal-open .tg-subheader {
     display: none;
     padding: 14px 16px; font-size: 0.84rem; font-weight: 800;
     color: var(--text-muted); text-align: center;
-    background: #F8F9FA; border-radius: 12px; border: 1px dashed var(--border-soft);
+    background: var(--stat-box-bg); border-radius: 12px; border: 1px dashed var(--border-soft);
 }
 .tg-skill-card-body:not(:has(.tg-effect-item:not(.is-hidden))) .tg-effect-empty { display: block; }
 .tg-effect-item-icon {
@@ -1040,11 +1131,11 @@ body.modal-open .tg-subheader {
 .tg-effect-item-head {
     display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;
 }
-.tg-effect-item-name { color: #333; font-size: 0.98rem; font-weight: 800; }
+.tg-effect-item-name { color: var(--text-heading); font-size: 0.98rem; font-weight: 800; }
 .tg-effect-item-chip { font-size: 0.7rem; padding: 2px 7px; border-radius: 6px; font-weight: 800; }
 .tg-effect-item-chip[data-kind="cond"]   { background: #fff3e0; color: #e65100; }
 .tg-effect-item-chip[data-kind="target"] { background: #DCFCE7; color: #166534; }
-.tg-effect-item-desc { font-size: 0.85rem; color: #555; line-height: 1.5; word-break: keep-all; }
+.tg-effect-item-desc { font-size: 0.85rem; color: var(--text-body); line-height: 1.5; word-break: keep-all; }
 
 /* ── Grade Badge ───────────────────────── */
 .tg-grade-badge {
@@ -1061,7 +1152,7 @@ body.modal-open .tg-subheader {
 /* ── Recommend Boxes ───────────────────── */
 .tg-recommend-box {
     --rec-color: var(--grade-x);
-    position: relative; background: #F8F9FA; border-radius: 12px;
+    position: relative; background: var(--stat-box-bg); border-radius: 12px;
     padding: 13px 16px 13px 18px; border: 1px solid var(--border-soft);
     box-shadow: var(--inset-shadow); overflow: hidden;
 }
@@ -1071,21 +1162,21 @@ body.modal-open .tg-subheader {
 .tg-recommend-box[data-grade*="10"] { --rec-color: var(--grade-10); }
 .tg-recommend-box[data-grade*="7+"] { --rec-color: var(--grade-7p); }
 .tg-recommend-box[data-grade*="7-"] { --rec-color: var(--grade-7m); }
-.tg-recommend-box-title { font-size: 0.92rem; font-weight: 800; color: #444; margin-bottom: 6px; }
-.tg-recommend-box-body  { font-size: 0.86rem; color: #555; line-height: 1.7; word-break: keep-all; }
+.tg-recommend-box-title { font-size: 0.92rem; font-weight: 800; color: var(--text-heading); margin-bottom: 6px; }
+.tg-recommend-box-body  { font-size: 0.86rem; color: var(--text-body); line-height: 1.7; word-break: keep-all; }
 .tg-recommend-summary {
-    position: relative; background: #FFF7ED; border-radius: 12px;
-    padding: 12px 16px 12px 18px; border: 1px solid #fed7aa; overflow: hidden;
+    position: relative; background: var(--recommend-summary-bg); border-radius: 12px;
+    padding: 12px 16px 12px 18px; border: 1px solid var(--recommend-summary-border); overflow: hidden;
 }
 .tg-recommend-summary::before {
     content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--skill-overall);
 }
 .tg-recommend-summary strong { display: flex; align-items: center; gap: 6px; color: var(--skill-overall); margin-bottom: 4px; }
-.tg-recommend-summary-body { font-size: 0.86rem; color: #555; line-height: 1.6; }
+.tg-recommend-summary-body { font-size: 0.86rem; color: var(--text-body); line-height: 1.6; }
 .tg-recommend-note {
-    position: relative; background: #FFFBEB; border-radius: 12px;
-    padding: 12px 16px 12px 18px; border: 1px solid #fde68a;
-    font-size: 0.86rem; color: #78350F; line-height: 1.7; word-break: keep-all; overflow: hidden;
+    position: relative; background: var(--recommend-note-bg); border-radius: 12px;
+    padding: 12px 16px 12px 18px; border: 1px solid var(--recommend-note-border);
+    font-size: 0.86rem; color: var(--recommend-note-text); line-height: 1.7; word-break: keep-all; overflow: hidden;
 }
 .tg-recommend-note::before {
     content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #fadb14;
@@ -1094,29 +1185,29 @@ body.modal-open .tg-subheader {
 /* ── Aside Cards ───────────────────────── */
 .tg-aside-card {
     --card-accent: var(--skill-aside);
-    background: #fff; border-radius: 15px; padding: 18px;
+    background: var(--modal-card-bg); border-radius: 15px; padding: 18px;
     border: 1px solid var(--border-soft);
     box-shadow: 0 2px 8px rgba(63,79,31,0.05);
     display: flex; flex-direction: column; gap: 12px;
 }
 .tg-aside-global-box {
-    position: relative; background: #F8F9FA; border-radius: 12px; padding: 16px 18px;
+    position: relative; background: var(--stat-box-bg); border-radius: 12px; padding: 16px 18px;
     border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow); overflow: hidden;
 }
 .tg-aside-global-box::before {
     content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--skill-aside);
 }
-.tg-aside-global-title strong { color: #444; font-size: 0.92rem; }
+.tg-aside-global-title strong { color: var(--text-heading); font-size: 0.92rem; }
 .tg-aside-global-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
 .tg-aside-global-item {
     display: flex; align-items: center; justify-content: space-between;
-    background: #fff; padding: 9px 13px; border-radius: 9px;
+    background: var(--modal-card-bg); padding: 9px 13px; border-radius: 9px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03); border: 1px solid var(--border-soft);
 }
 .tg-aside-global-item-left { display: flex; align-items: center; gap: 9px; }
 .tg-aside-global-item-left img { width: 26px; height: 26px; border-radius: 6px; }
-.tg-aside-global-item-label { font-size: 0.84rem; font-weight: 800; color: #444; }
-.tg-aside-global-item-value { font-size: 1rem; font-weight: 800; color: #444; }
+.tg-aside-global-item-label { font-size: 0.84rem; font-weight: 800; color: var(--text-heading); }
+.tg-aside-global-item-value { font-size: 1rem; font-weight: 800; color: var(--text-heading); }
 .tg-aside-global-item-value .num { color: var(--skill-aside); }
 .tg-aside-global-footer {
     margin-top: 10px; text-align: center; font-size: 0.72rem; font-weight: 800;
@@ -1141,3 +1232,82 @@ body.modal-open .tg-subheader {
     .tg-detail-tabs-wrap { padding: 12px 18px 0; }
     .tg-detail-tabs-wrap .tg-segmented-btn { padding: 8px 6px; font-size: 0.74rem; }
 }
+
+/* ════════════════════════════════════
+   다크 모드 칩 오버라이드
+════════════════════════════════════ */
+[data-theme="dark"] .char-card {
+    box-shadow: 0 0 0 1.5px #52525B !important;
+}
+/* 디테일 모달 — 필터용 바텀 페이드 오버라이드 제거 */
+#modal-detail .tg-modal-body::after { display: none; }
+
+
+/* 인포 모달 */
+#modal-info .modal-content {
+    padding: 24px;
+    font-size: 0.88rem;
+    overflow-y: auto;
+    max-height: 80vh;
+}
+
+/* 부가효과 아이콘 프레임 다크 보정 */
+[data-theme="dark"] .tg-effect-item-icon {
+    background: color-mix(in srgb, var(--effect-color) 18%, #1A1A1D);
+}
+
+[data-theme="dark"] .filter-label input[type="checkbox"],
+[data-theme="dark"] .filter-label input[type="radio"] { border-color: #71717A; }
+[data-theme="dark"] .tg-effect-item-chip[data-kind="cond"]   { background: #4A3010; color: #FFB260; }
+[data-theme="dark"] .tg-effect-item-chip[data-kind="target"] { background: #1D3520; color: #76D093; }
+[data-theme="dark"] .tg-skill-card-icon-lv { background: #52525B; color: #F4F4F5; }
+
+/* ── 테마 토글 — 해/달 교차 애니메이션 ── */
+.tg-theme-toggle {
+    position: relative;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border-soft);
+    background: var(--modal-card-bg);
+    cursor: pointer;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.tg-theme-toggle:hover {
+    border-color: var(--accent-green);
+    background: var(--accent-soft);
+}
+.tg-theme-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(109, 166, 58, 0.35);
+}
+.tg-theme-toggle:active { transform: scale(0.92); }
+
+.tg-theme-toggle::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: var(--accent-green);
+    opacity: 0;
+    transform: scale(0.5);
+    pointer-events: none;
+}
+.tg-theme-toggle.is-pulsing::after {
+    animation: tg-toggle-pulse 0.55s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes tg-toggle-pulse {
+    0%   { opacity: 0.3;  transform: scale(0.3); }
+    70%  { opacity: 0.15; transform: scale(1.05); }
+    100% { opacity: 0;    transform: scale(1.3); }
+}
+
+/* ── 테마 토글 아이콘 ── */
+.tg-theme-toggle svg {
+    width: 18px; height: 18px; display: block; pointer-events: none;
+}
+[data-theme="dark"]  .tg-theme-toggle { color: #B9DD63; }
+[data-theme="light"] .tg-theme-toggle,
+:root                .tg-theme-toggle { color: #94A3B8; }

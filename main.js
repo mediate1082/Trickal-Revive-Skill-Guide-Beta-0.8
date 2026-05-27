@@ -1,5 +1,39 @@
 import { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter, renderFilterCheckbox, updateSegmentedIndicator } from './ui.js';
 
+// ── 테마 (라이트/다크) ─────────────────────────
+const _SVG_SUN  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>`;
+const _SVG_MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+
+function _updateThemeIcon(theme) {
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.innerHTML = theme === 'dark' ? _SVG_SUN : _SVG_MOON;
+}
+
+(function initTheme() {
+    const saved = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = saved || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+    _updateThemeIcon(theme);
+})();
+
+window.toggleTheme = function () {
+    const btn = document.getElementById('theme-toggle');
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    _updateThemeIcon(next);
+
+    if (btn) {
+        btn.classList.remove('is-pulsing');
+        // eslint-disable-next-line no-unused-expressions
+        btn.offsetWidth;
+        btn.classList.add('is-pulsing');
+        btn.addEventListener('animationend', () => btn.classList.remove('is-pulsing'), { once: true });
+    }
+};
+
 // [2] 전역 변수 설정
 let db = [], 
     debuffDB = [], 
@@ -574,9 +608,9 @@ async function displayCards(data, id, append = false) {
                 </div>
             </div>
 
-            <div class="card-bottom" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80px; background: #ffffff; padding: 8px 6px; border-radius: 0 0 15px 15px;">
-                
-                <div class="char-name" style="font-size: 1rem; font-weight: 800; color: #333; margin-bottom: 8px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            <div class="card-bottom" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80px; padding: 8px 6px; border-radius: 0 0 15px 15px;">
+
+                <div class="char-name" style="font-size: 1rem; font-weight: 800; margin-bottom: 8px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${char.name}
                 </div>
                 
@@ -612,8 +646,8 @@ function makeSkillGauge(typeLabel, grade) {
     const info = getGaugeInfo(grade);
     return `
         <div style="display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0;">
-            <span style="font-size: 0.65rem; color: #777; font-weight: 800; flex-shrink: 0;">${typeLabel}</span>
-            <div style="flex: 1; height: 5px; background: #e2e8f0; border-radius: 3px; overflow: hidden; min-width: 0;">
+            <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 800; flex-shrink: 0;">${typeLabel}</span>
+            <div style="flex: 1; height: 5px; background: var(--border-soft); border-radius: 3px; overflow: hidden; min-width: 0;">
                 <div style="width: ${info.width}; background: ${info.color}; height: 100%; border-radius: 3px;"></div>
             </div>
             <span style="font-size: 0.6rem; color: ${info.color}; font-weight: 800; flex-shrink: 0; min-width: 14px; text-align: right;">${info.label}</span>

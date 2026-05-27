@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>트릭컬 스킬 가이드</title>
+    <script>
+    (function () {
+        var s = localStorage.getItem('theme');
+        var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', s || (d ? 'dark' : 'light'));
+    })();
+    </script>
     <link rel="icon" href="assets/icons/common_icons/NerIcon.webp" type="image/webp">
     <meta property="og:title" content="트릭컬 스킬 가이드">
     <meta property="og:description" content="트릭컬 리바이브 사도별 스킬 및 부가 효과 정리">
@@ -33,7 +40,16 @@
                     <h1 class="tg-title main-title">트릭컬 <em>스킬</em> 가이드</h1>
                 </div>
             </div>
-            <button class="tg-help-btn" onclick="openInfoModal()" aria-label="도움말">❓</button>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <button id="theme-toggle" class="tg-theme-toggle" aria-label="테마 전환" title="테마 전환" onclick="window.toggleTheme()"></button>
+                <button class="tg-help-btn" onclick="openInfoModal()" aria-label="도움말">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 8C8 5.79 9.79 4 12 4s4 1.79 4 4c0 2.5-4 4-4 6"/>
+                        <circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
     </header>
