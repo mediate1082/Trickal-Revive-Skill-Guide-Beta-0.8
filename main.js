@@ -436,12 +436,23 @@ function handleSortFilter() {
         }, {});
         let keys = Object.keys(groups).sort();
         if (sort === 'line') keys = ['전열', '중열', '후열', '전체열'].filter(k => groups[k]);
+        // 티어순: [n] 숫자로 정렬, 없으면 맨 뒤
+        if (sort === 'tier') keys.sort((a, b) => {
+            const na = parseInt(a.match(/^\[(\d+)\]/)?.[1] ?? '99');
+            const nb = parseInt(b.match(/^\[(\d+)\]/)?.[1] ?? '99');
+            return na - nb;
+        });
         if (!isAscending) keys.reverse();
         keys.forEach(k => {
             const t = document.createElement('div');
             t.className = 'group-title';
-            t.innerText = k;
+            // 티어순: [n] 접두사를 제거하고 이름만 표시
+            const displayName = sort === 'tier' ? k.replace(/^\[\d+\]\s*/, '') : k;
+            t.innerText = displayName;
             if (sort === 'personality') t.setAttribute('data-personality', k);
+            if (sort === 'tier')        t.setAttribute('data-tier', displayName);
+            if (sort === 'line')        t.setAttribute('data-line', k);
+            if (sort === 'role')        t.setAttribute('data-role', k);
             grid.appendChild(t);
             displayCards(groups[k], 'main-grid', true);
         });

@@ -347,6 +347,32 @@ body.modal-open .tg-subheader {
     background: var(--grid-bg);
     padding: 20px 0 40px;
 }
+
+/* ── Footer ─────────────────────────────── */
+.tg-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 14px 20px;
+    background: var(--footer-bg);
+    border-top: 1px solid var(--border-soft);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+}
+
+/* span 사이 CSS 구분선 */
+.tg-footer span + span::before {
+    content: '';
+    display: inline-block;
+    width: 1px;
+    height: 0.75em;
+    background: var(--border-soft);
+    margin: 0 12px;
+    vertical-align: middle;
+    opacity: 0.8;
+}
 .tg-grid {
     max-width: 980px; margin: 0 auto; padding: 0 16px;
     display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 14px;
@@ -738,13 +764,38 @@ body.modal-open .tg-subheader {
     margin-top: 4px;
     letter-spacing: 0.06em;
 }
+/* 티어순 정렬 시 티어별 컬러 */
+.group-title[data-tier="메타픽"]     { background: #fde8f0; border-color: #E91E63; color: #9a0f3d; }
+.group-title[data-tier="성격덱"]     { background: #e3eff9; border-color: #2980B9; color: #1a4a7e; }
+.group-title[data-tier="연구 중"]    { background: #fef0e3; border-color: #E67E22; color: #8a4510; }
+.group-title[data-tier="메타 부적합"] { background: #f0f1f2; border-color: #7F8C8D; color: #3d4a4b; }
+.group-title[data-tier="태생 1성"]   { background: #eef4f2; border-color: #BCD3C7; color: #3a5c52; }
+
 /* 성격순 정렬 시 성격별 컬러 */
 .group-title[data-personality="순수"] { background: #E8F9EE; border-color: #93F4A7; color: #1a7a3d; }
 .group-title[data-personality="냉정"] { background: #E3EFF9; border-color: #A4D0F7; color: #1a4a7e; }
 .group-title[data-personality="광기"] { background: #FCE4EB; border-color: #F4ACBA; color: #8b2240; }
 .group-title[data-personality="우울"] { background: #F2E0FD; border-color: #D8A0FB; color: #5e1a8c; }
 .group-title[data-personality="활발"] { background: #FBF6E0; border-color: #F9ECA8; color: #7a6200; }
-.group-title[data-personality="공명"] { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
+.group-title[data-personality="공명"] {
+    background: linear-gradient(90deg,
+        #ffd6e0 0%, #ffecd6 16%, #fdffd6 33%,
+        #d6fde8 50%, #d6eeff 66%, #ead6ff 83%, #ffd6f0 100%
+    );
+    border-color: rgba(255, 255, 255, 0.7);
+    color: #3d2060;
+}
+
+/* 역할순 정렬 시 역할별 컬러 */
+.group-title[data-role="딜러"]   { background: #fdecea; border-color: #E85050; color: #7d1a1a; }
+.group-title[data-role="서포터"] { background: #fef6e8; border-color: #F5A623; color: #7a4a00; }
+.group-title[data-role="탱커"]   { background: #eaeffb; border-color: #4A7BD5; color: #1a3570; }
+
+/* 배치순 정렬 시 열별 컬러 */
+.group-title[data-line="전열"]   { background: #fdecea; border-color: #E74C3C; color: #7d1a12; }
+.group-title[data-line="중열"]   { background: #e8f8f0; border-color: #27AE60; color: #145a32; }
+.group-title[data-line="후열"]   { background: #e8f4fc; border-color: #3498DB; color: #1a4f7a; }
+.group-title[data-line="전체열"] { background: #eaecee; border-color: #2C3E50; color: #1a252f; }
 
 /* 필터 적용 시 카드 목록 갱신 애니메이션 */
 @keyframes tg-grid-refresh {
@@ -1164,6 +1215,79 @@ body.modal-open .tg-subheader {
 .tg-recommend-box[data-grade*="7-"] { --rec-color: var(--grade-7m); }
 .tg-recommend-box-title { font-size: 0.92rem; font-weight: 800; color: var(--text-heading); margin-bottom: 6px; }
 .tg-recommend-box-body  { font-size: 0.86rem; color: var(--text-body); line-height: 1.7; word-break: keep-all; }
+/* ── 종합 탭 신규 구조 ───────────────────── */
+.tg-overall-body        { display: flex; flex-direction: column; gap: 16px; }
+.tg-overall-2col        { display: flex; gap: 14px; align-items: flex-start; }
+.tg-overall-left        { flex: 3; min-width: 0; }
+.tg-overall-right       { flex: 2; min-width: 0; }
+.tg-overall-section     { display: flex; flex-direction: column; gap: 8px; }
+.tg-overall-section-title {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-muted);
+}
+
+/* 세부 역할 버블 */
+.tg-role-chips  { display: flex; flex-wrap: wrap; gap: 6px; }
+.tg-role-chip   {
+    padding: 3px 10px; border-radius: 99px;
+    background: var(--attr-pill-bg); border: 1px solid var(--border-soft);
+    font-size: 0.78rem; font-weight: 600; color: var(--text-body);
+}
+
+/* 콘텐츠별 활용도 카드 그리드 */
+.tg-content-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+}
+.tg-content-card {
+    border-radius: 10px; padding: 10px 10px 8px;
+    border: 1px solid var(--border-soft);
+    display: flex; flex-direction: column; gap: 4px;
+    min-height: 90px;
+}
+.tg-content-card.is-even { background: var(--bg-main); }
+.tg-content-card.is-odd  { background: var(--modal-body-bg); }
+.tg-content-card.is-empty { min-height: 0; border: none; background: transparent; }
+.tg-content-card-head   { display: flex; align-items: center; gap: 5px; }
+.tg-content-icon        { font-size: 0.9rem; line-height: 1; }
+.tg-content-name        { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); line-height: 1.2; }
+.tg-content-grade       {
+    font-size: 1.5rem; font-weight: 900; line-height: 1;
+    letter-spacing: -0.02em;
+}
+.tg-content-grade[data-grade="S"] { color: #E91E63; }
+.tg-content-grade[data-grade="A"] { color: #E67E22; }
+.tg-content-grade[data-grade="B"] { color: #2980B9; }
+.tg-content-grade[data-grade="C"] { color: #7F8C8D; }
+.tg-content-grade[data-grade="D"] { color: #BCD3C7; }
+.tg-content-note        { font-size: 0.7rem; color: var(--text-muted); line-height: 1.4; word-break: keep-all; }
+
+/* 아티팩트 추천 */
+.tg-art-section  { display: flex; flex-direction: column; gap: 10px; }
+.tg-art-combo    { display: flex; flex-direction: column; gap: 5px; }
+.tg-art-combo-label {
+    font-size: 0.7rem; font-weight: 700; color: var(--text-muted);
+}
+.tg-art-slots    { display: flex; gap: 6px; }
+.tg-art-slot     {
+    width: 40px; height: 40px; border-radius: 8px;
+    border: 1px solid var(--border-soft); background: var(--attr-pill-bg);
+    overflow: hidden; position: relative;
+    display: flex; align-items: center; justify-content: center;
+}
+.tg-art-slot img { width: 100%; height: 100%; object-fit: cover; }
+.tg-art-slot-fallback {
+    font-size: 0.65rem; font-weight: 700; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%;
+}
+.tg-art-slot.is-empty {
+    border-style: dashed; opacity: 0.35;
+}
+.tg-art-combo-note {
+    font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;
+    word-break: keep-all;
+}
+
 .tg-recommend-summary {
     position: relative; background: var(--recommend-summary-bg); border-radius: 12px;
     padding: 12px 16px 12px 18px; border: 1px solid var(--recommend-summary-border); overflow: hidden;

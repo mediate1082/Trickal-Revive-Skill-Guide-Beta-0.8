@@ -272,6 +272,124 @@ export function openDetailModal(char, dataContext) {
         return { n: [...b.names, ...d.names].join(', '), c: [...b.conds, ...d.conds].join(', '), t: [...b.targets, ...d.targets].join(', ') };
     };
 
+    // ── 종합-강화추천 탭 본문 빌더 ────────────────────────────────────────────
+    function buildOverallBody(c) {
+        // 메타픽([1]) · 성격덱([2]) 티어만 신규 UI 적용
+        const isTargetTier = /^\[1\]|\[2\]/.test(c.tier || '');
+        const hasNew = isTargetTier && (
+            c.detail_role || c.pvp || c.invasion || c.colosseum ||
+            c.col2_rim || c.col2_shady || c.frontier || c.art_main
+        );
+
+        // ── 구 방식 fallback (대상 티어 아니거나 신규 데이터 없을 때) ──
+        if (!hasNew) {
+            return `
+                ${c.recommend_reason ? `<div class="tg-recommend-summary">
+                    <strong>추천 레벨: ${c.recommend_lv}</strong>
+                    <div>${c.recommend_reason}</div>
+                </div>` : ''}
+                ${c.note ? `<div class="tg-recommend-note">
+                    ${c.note.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}
+                </div>` : ''}`;
+        }
+
+        // ── 파싱 헬퍼 ──
+        // "A|CC기 핵심픽" → { grade:'A', note:'CC기 핵심픽' }
+        const parseScore = (raw) => {
+            if (!raw) return null;
+            const [grade, ...rest] = raw.split('|');
+            return { grade: grade.trim(), note: rest.join('|').trim() };
+        };
+
+        // ── 1. 세부 역할 버블 ──
+        const roleHTML = c.detail_role ? (() => {
+            const chips = c.detail_role.split(',').map(t => t.trim()).filter(Boolean)
+                .map(t => `<span class="tg-role-chip">${t}</span>`).join('');
+            return `<div class="tg-overall-section">
+                <div class="tg-overall-section-title">세부 역할</div>
+                <div class="tg-role-chips">${chips}</div>
+            </div>`;
+        })() : '';
+
+        // ── 2. 콘텐츠별 활용도 카드 그리드 ──
+        const CONTENT_LIST = [
+            { key: 'pvp',       label: '줘팸터',         cat: 'pvp',  icon: '⚔️' },
+            { key: 'invasion',  label: '침략',            cat: 'pve',  icon: '🏰' },
+            { key: 'colosseum', label: '차원대충돌',      cat: 'pve',  icon: '🌀' },
+            { key: 'col2_rim',  label: '림의 차원',       cat: 'pve',  icon: '🌊' },
+            { key: 'col2_shady',label: '셰이디의 차원',   cat: 'pve',  icon: '⭐' },
+            { key: 'frontier',  label: '엘리아스 프론티어', cat: 'pve', icon: '🏆' },
+        ];
+        const hasContent = CONTENT_LIST.some(ci => c[ci.key]);
+        const contentHTML = hasContent ? (() => {
+            const cards = CONTENT_LIST.map((ci, idx) => {
+                const score = parseScore(c[ci.key]);
+                const checker = idx % 2 === 0 ? 'is-even' : 'is-odd';
+                if (!score) return `<div class="tg-content-card ${checker} is-empty"></div>`;
+                return `<div class="tg-content-card ${checker}">
+                    <div class="tg-content-card-head">
+                        <span class="tg-content-icon">${ci.icon}</span>
+                        <span class="tg-content-name">${ci.label}</span>
+                    </div>
+                    <div class="tg-content-grade" data-grade="${score.grade}">${score.grade}</div>
+                    ${score.note ? `<div class="tg-content-note">${score.note}</div>` : ''}
+                </div>`;
+            }).join('');
+            return `<div class="tg-overall-section">
+                <div class="tg-overall-section-title">콘텐츠별 활용도</div>
+                <div class="tg-content-grid">${cards}</div>
+            </div>`;
+        })() : '';
+
+        // ── 3. 아티팩트 추천 ──
+        const renderArtCombo = (raw, note, label) => {
+            if (!raw) return '';
+            const arts = raw.split('|').map(a => a.trim());
+            const slots = Array.from({length: 3}, (_, i) => {
+                const name = arts[i] || '';
+                return name
+                    ? `<div class="tg-art-slot" data-name="${name}" title="${name}">
+                           <img src="./assets/icons/artifacts/${name}.webp"
+                                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+                                alt="${name}">
+                           <div class="tg-art-slot-fallback" style="display:none">${name.slice(0,2)}</div>
+                       </div>`
+                    : `<div class="tg-art-slot is-empty"></div>`;
+            }).join('');
+            return `<div class="tg-art-combo">
+                <div class="tg-art-combo-label">${label}</div>
+                <div class="tg-art-slots">${slots}</div>
+                ${note ? `<div class="tg-art-combo-note">${note}</div>` : ''}
+            </div>`;
+        };
+
+        const artHTML = c.art_main ? `<div class="tg-overall-section">
+            <div class="tg-overall-section-title">아티팩트 추천</div>
+            <div class="tg-art-section">
+                ${renderArtCombo(c.art_main,  c.art_main_note,  '기본')}
+                ${renderArtCombo(c.art_alt1,  c.art_alt1_note,  '대체 1')}
+                ${renderArtCombo(c.art_alt2,  c.art_alt2_note,  '대체 2')}
+            </div>
+        </div>` : '';
+
+        // ── 기존 note는 신규 데이터 있어도 보존 ──
+        const noteHTML = c.note ? `<div class="tg-overall-section">
+            <div class="tg-overall-section-title">종합 메모</div>
+            <div class="tg-recommend-note">
+                ${c.note.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}
+            </div>
+        </div>` : '';
+
+        return `<div class="tg-overall-body">
+            ${roleHTML}
+            <div class="tg-overall-2col">
+                <div class="tg-overall-left">${contentHTML}</div>
+                <div class="tg-overall-right">${artHTML}</div>
+            </div>
+            ${noteHTML}
+        </div>`;
+    }
+
     // 3. 각 탭의 내용물(HTML) 미리 준비하기
     // [Tab 0 준비]
     const lowRecContent = `
@@ -453,15 +571,7 @@ export function openDetailModal(char, dataContext) {
                                     </div>
                                 </div>
                                 <div class="tg-skill-card-body">
-                                    ${char.recommend_reason ? `
-                                    <div class="tg-recommend-summary">
-                                        <strong>추천 레벨: ${char.recommend_lv}</strong>
-                                        <div>${char.recommend_reason}</div>
-                                    </div>` : ''}
-                                    ${char.note ? `
-                                    <div class="tg-recommend-note">
-                                        ${char.note.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}
-                                    </div>` : ''}
+                                    ${buildOverallBody(char)}
                                 </div>
                             </div>
                         </div>
