@@ -1,4 +1,5 @@
-import { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter, renderFilterCheckbox, updateSegmentedIndicator } from './ui.js';
+const { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter, renderFilterCheckbox, updateSegmentedIndicator }
+    = await import('./ui.js?v=' + (window.APP_VERSION || ''));
 
 // ── 테마 (라이트/다크) ─────────────────────────
 const _SVG_SUN  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>`;
@@ -142,17 +143,18 @@ function makeStarHTML(rarity) {
 // [4] 데이터 로직 및 필터 함수들
 async function loadExternalData() {
     try {
+        const v = window.APP_VERSION || '';
         const [res1, res2, res3, res4, res5, res6, res7, res8, res9, res10] = await Promise.all([
-            fetch('./data/DB.csv').then(res => res.text()),
-            fetch('./data/debuff_DB.csv').then(res => res.text()),
-            fetch('./data/debuff_desc_DB.csv').then(res => res.text()),
-            fetch('./data/high_skill_DB.csv').then(res => res.text()),
-            fetch('./data/info.txt').then(res => res.text()),
-            fetch('./data/buff_DB.csv').then(res => res.text()),
-            fetch('./data/buff_desc_DB.csv').then(res => res.text()),
-            fetch('./data/normal_Atk_DB.csv').then(res => res.text()),
-            fetch('./data/low_skill_DB.csv').then(res => res.text()),
-            fetch('./data/aside_DB.csv').then(res => res.text()),
+            fetch(`./data/DB.csv?v=${v}`).then(res => res.text()),
+            fetch(`./data/debuff_DB.csv?v=${v}`).then(res => res.text()),
+            fetch(`./data/debuff_desc_DB.csv?v=${v}`).then(res => res.text()),
+            fetch(`./data/high_skill_DB.csv?v=${v}`).then(res => res.text()),
+            fetch(`./data/info.txt?v=${v}`).then(res => res.text()),
+            fetch(`./data/buff_DB.csv?v=${v}`).then(res => res.text()),
+            fetch(`./data/buff_desc_DB.csv?v=${v}`).then(res => res.text()),
+            fetch(`./data/normal_Atk_DB.csv?v=${v}`).then(res => res.text()),
+            fetch(`./data/low_skill_DB.csv?v=${v}`).then(res => res.text()),
+            fetch(`./data/aside_DB.csv?v=${v}`).then(res => res.text()),
         ]);
 
         const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
