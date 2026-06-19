@@ -517,7 +517,7 @@ export function openDetailModal(char, dataContext) {
                 <div class="tg-detail-header-row">
                     <img class="tg-detail-portrait" src="./assets/images/${char.name}.webp" onerror="this.src='./assets/images/default.webp'" alt="${char.name}">
                     <div class="tg-detail-meta">
-                        <span class="tg-detail-eyebrow">APOSTLE DETAIL</span>
+                        <span class="tg-detail-eyebrow">${char.title || 'APOSTLE DETAIL'}</span>
                         <div class="tg-detail-name-row">
                             <h2 class="tg-detail-name">${char.name}</h2>
                             <div class="tg-detail-tier-row">

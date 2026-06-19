@@ -343,6 +343,81 @@ function updateFilterTags() {
     container.appendChild(chipsDiv);
 }
 
+// ── 한국어 검색 유틸 (영타 변환 + 초성 검색) ──────────────────────────────
+const _ENG_TO_JAMO = {
+    'q':'ㅂ','w':'ㅈ','e':'ㄷ','r':'ㄱ','t':'ㅅ','y':'ㅛ','u':'ㅕ','i':'ㅑ','o':'ㅐ','p':'ㅔ',
+    'a':'ㅁ','s':'ㄴ','d':'ㅇ','f':'ㄹ','g':'ㅎ','h':'ㅗ','j':'ㅓ','k':'ㅏ','l':'ㅣ',
+    'z':'ㅋ','x':'ㅌ','c':'ㅊ','v':'ㅍ','b':'ㅠ','n':'ㅜ','m':'ㅡ',
+    'Q':'ㅃ','W':'ㅉ','E':'ㄸ','R':'ㄲ','T':'ㅆ','O':'ㅒ','P':'ㅖ'
+};
+const _CHOSEONG  = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const _JUNGSEONG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const _JONGSEONG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+function _jamoToSyl(cho, jung, jong = 0) {
+    const ci = _CHOSEONG.indexOf(cho), ji = _JUNGSEONG.indexOf(jung);
+    if (ci < 0 || ji < 0) return cho + jung;
+    return String.fromCharCode(0xAC00 + ci * 588 + ji * 28 + jong);
+}
+
+function _assembleJamo(jamo) {
+    const isC = c => _CHOSEONG.includes(c);
+    const isV = c => _JUNGSEONG.includes(c);
+    let res = '', i = 0;
+    const cs = [...jamo];
+    while (i < cs.length) {
+        const c = cs[i];
+        if (isC(c) && i + 1 < cs.length && isV(cs[i + 1])) {
+            const [cho, jung] = [c, cs[i + 1]]; i += 2;
+            if (i < cs.length && isC(cs[i]) && !(i + 1 < cs.length && isV(cs[i + 1]))) {
+                const ji = _JONGSEONG.indexOf(cs[i]);
+                res += _jamoToSyl(cho, jung, ji > 0 ? ji : 0);
+                if (ji > 0) i++;
+            } else {
+                res += _jamoToSyl(cho, jung);
+            }
+        } else if (isV(c)) {
+            res += _jamoToSyl('ㅇ', c); i++;
+        } else {
+            res += c; i++;
+        }
+    }
+    return res;
+}
+
+function _korSearchMatch(name, query) {
+    const ESC = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const LONE_CONS = /^[ㄱ-ㅎ]$/;
+    let pattern = '', hasJamo = false;
+    for (const ch of query) {
+        if (LONE_CONS.test(ch)) {
+            const idx = _CHOSEONG.indexOf(ch);
+            if (idx >= 0) {
+                hasJamo = true;
+                const s = (0xAC00 + idx * 588).toString(16).padStart(4, '0');
+                const e = (0xAC00 + (idx + 1) * 588 - 1).toString(16).padStart(4, '0');
+                pattern += `[\\u${s}-\\u${e}]`;
+            } else { pattern += ESC(ch); }
+        } else if (/[가-힣]/.test(ch)) {
+            hasJamo = true; pattern += ESC(ch);
+        } else {
+            pattern += ESC(ch);
+        }
+    }
+    if (!hasJamo) return false;
+    try { return new RegExp(pattern, 'i').test(name); } catch { return false; }
+}
+
+function _matchesKorQuery(name, query) {
+    if (!query) return true;
+    if (name.toLowerCase().includes(query)) return true;
+    if (/^[a-z]+$/.test(query)) {
+        const assembled = _assembleJamo([...query].map(c => _ENG_TO_JAMO[c] || c).join(''));
+        if (name.includes(assembled)) return true;
+    }
+    return _korSearchMatch(name, query);
+}
+
 function handleSortFilter() {
     const query = document.getElementById('search-input').value.toLowerCase().trim();
     const sort = document.getElementById('sort-select').value;
@@ -350,7 +425,7 @@ function handleSortFilter() {
     const excludeSelf = document.getElementById('exclude-self-toggle')?.checked || false;
 
     let filtered = db.filter(char => {
-        const nameMatch = (char.name || "").toLowerCase().includes(query);
+        const nameMatch = _matchesKorQuery(char.name || "", query);
         if (!nameMatch) return false;
 
         if (window.activeAsideFilters) {
