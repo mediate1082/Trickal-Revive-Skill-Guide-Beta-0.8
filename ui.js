@@ -299,7 +299,7 @@ export function openDetailModal(char, dataContext) {
         return `
         <div class="tg-sp-box">
             <div class="tg-sp-header">
-                <span class="tg-sp-icon"><img src="./assets/icons/base_stat/sp.webp" alt="SP"></span>
+                <span class="tg-sp-icon"><img src="./assets/icons/base_stat/SP.webp" alt="SP"></span>
                 <span class="tg-sp-title">SP 정보</span>
                 <span class="tg-sp-header-sub">전투 시작 시 보유량 및 회복 속도</span>
             </div>
