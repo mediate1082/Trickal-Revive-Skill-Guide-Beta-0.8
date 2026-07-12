@@ -1428,6 +1428,74 @@ body.modal-open .tg-subheader {
     100% { opacity: 0;    transform: scale(1.3); }
 }
 
+/* ════════════════════════════════════
+   SP INFO BOX
+════════════════════════════════════ */
+.tg-sp-box {
+    --sp-color: #75A5F8;
+    background: var(--modal-card-bg);
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 2px 8px rgba(63,79,31,0.05);
+    border-radius: 15px; padding: 18px 18px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.tg-sp-header { display: flex; align-items: center; gap: 8px; }
+.tg-sp-icon {
+    width: 26px; height: 26px; flex-shrink: 0;
+    background: rgba(117, 165, 248, 0.18);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+}
+.tg-sp-icon img { width: 17px; height: 17px; object-fit: contain; }
+.tg-sp-title { font-weight: 800; font-size: 0.95rem; color: var(--text-heading); }
+.tg-sp-header-sub { font-size: 0.78rem; color: var(--text-muted); }
+
+.tg-sp-bar-wrap {
+    position: relative;
+    background: var(--border-soft);
+    border-radius: 999px; height: 7px;
+    margin-bottom: 10px;
+}
+.tg-sp-bar-fill {
+    position: absolute; left: 0; top: 0; height: 100%;
+    background: var(--sp-color); border-radius: 999px;
+    min-width: 0;
+}
+.tg-sp-bar-label {
+    position: absolute; right: 0; top: 10px;
+    font-size: 0.75rem; color: var(--text-muted); font-weight: 600;
+}
+
+.tg-sp-chips { display: flex; gap: 8px; }
+.tg-sp-chip {
+    flex: 1;
+    background: var(--stat-box-bg);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--inset-shadow);
+    border-radius: 10px;
+    padding: 10px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.tg-sp-chip-val { font-size: 1.05rem; font-weight: 800; color: var(--sp-color); }
+.tg-sp-chip-val.sp-max   { color: #75A5F8; }
+.tg-sp-chip-val.sp-start { color: #2DD4BF; }
+.tg-sp-chip-val.sp-tick  { color: #A78BFA; }
+.tg-sp-chip-val.sp-hit   { color: #F472B6; }
+.tg-sp-chip-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; }
+
+.tg-sp-time {
+    font-size: 0.88rem; color: var(--text-body); line-height: 1.5;
+    text-align: center; margin-top: 10px;
+}
+.tg-sp-time b { color: var(--sp-color); font-size: 1rem; }
+
+.tg-sp-time-sub {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;
+}
+.tg-sp-time-sub b { color: #C4B5E8; font-style: normal; }
+.tg-sp-role-icon { width: 15px; height: 15px; object-fit: contain; flex-shrink: 0; }
+
 /* ── 테마 토글 아이콘 ── */
 .tg-theme-toggle svg {
     width: 18px; height: 18px; display: block; pointer-events: none;

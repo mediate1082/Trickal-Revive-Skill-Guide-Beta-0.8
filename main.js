@@ -45,7 +45,8 @@ let db = [],
     buffDescDB = [], 
     allStateDB = [],
     normalAtkDB = [],
-    asideDB = []; // 쉼표로 연결하여 let 선언 공유
+    asideDB = [],
+    spDB = []; // 쉼표로 연결하여 let 선언 공유
     
 
 let infoText = "", isAscending = true, selectedStatees = new Set(), pendingStatees = new Set(), currentFilterTab = 'all';
@@ -61,7 +62,8 @@ window.openDetailModal = (char) => {
         allStateDB,
         debuffDescDB,
         normalAtkDB,
-        asideDB
+        asideDB,
+        spDB
     });
 };
 
@@ -144,7 +146,7 @@ function makeStarHTML(rarity) {
 async function loadExternalData() {
     try {
         const v = window.APP_VERSION || '';
-        const [res1, res2, res3, res4, res5, res6, res7, res8, res9, res10] = await Promise.all([
+        const [res1, res2, res3, res4, res5, res6, res7, res8, res9, res10, res11] = await Promise.all([
             fetch(`./data/DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_desc_DB.csv?v=${v}`).then(res => res.text()),
@@ -155,6 +157,7 @@ async function loadExternalData() {
             fetch(`./data/normal_Atk_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/low_skill_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/aside_DB.csv?v=${v}`).then(res => res.text()),
+            fetch(`./data/sp_DB.csv?v=${v}`).then(res => res.text()),
         ]);
 
         const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
@@ -166,8 +169,9 @@ async function loadExternalData() {
         buffDB = Papa.parse(res6, cfg).data;
         buffDescDB = Papa.parse(res7, cfg).data;
         normalAtkDB = Papa.parse(res8, cfg).data;
-        lowSkillDB = Papa.parse(res9, cfg).data; 
-        asideDB = Papa.parse(res10, cfg).data; 
+        lowSkillDB = Papa.parse(res9, cfg).data;
+        asideDB = Papa.parse(res10, cfg).data;
+        spDB = Papa.parse(res11, cfg).data;
         
         allStateDB = [...buffDescDB, ...debuffDescDB];
 

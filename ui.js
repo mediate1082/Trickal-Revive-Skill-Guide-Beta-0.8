@@ -241,7 +241,7 @@ export function openDetailModal(char, dataContext) {
     currentApostle = char;
     currentDataContext = dataContext;
     window.currentApostleName = char.name;
-    const { debuffDB, buffDB, highSkillDB, lowSkillDB, allStateDB, debuffDescDB, normalAtkDB, asideDB } = dataContext;
+    const { debuffDB, buffDB, highSkillDB, lowSkillDB, allStateDB, debuffDescDB, normalAtkDB, asideDB, spDB } = dataContext;
     const apostleDebuffs = debuffDB.find(d => d.name.trim() === char.name.trim());
     const apostleBuffs = buffDB.find(b => b.name.trim() === char.name.trim());
     const skillData = highSkillDB.find(s => s['chara_name']?.trim() === char.name.trim());
@@ -271,6 +271,64 @@ export function openDetailModal(char, dataContext) {
         const d = getMergedSafe(apostleDebuffs?.[dK], apostleDebuffs?.[cK], apostleDebuffs?.[tK]);
         return { n: [...b.names, ...d.names].join(', '), c: [...b.conds, ...d.conds].join(', '), t: [...b.targets, ...d.targets].join(', ') };
     };
+
+    // ── SP 정보 블록 빌더 ─────────────────────────────────────────────────────
+    function buildSpBlock(spData, isSupporter) {
+        if (!spData) return '';
+        const maxSP   = parseInt(spData['최대 SP']);
+        const startSP = parseInt(spData['시작 SP']);
+        const tickSP  = parseInt(spData['틱당 SP']);
+        const pct     = Math.round((startSP / maxSP) * 100);
+
+        const ticks   = Math.ceil((maxSP - startSP) / tickSP);
+        const secs    = (ticks * 1.04).toFixed(1);
+
+        const hitSP = parseInt(spData['타수당 SP']) || 0;
+
+        let supHTML = '';
+        if (isSupporter) {
+            const ticksSup = Math.ceil((maxSP - startSP) / (tickSP * 1.3));
+            const secsSup  = (ticksSup * 1.04).toFixed(1);
+            supHTML = `
+            <div class="tg-sp-time-sub">
+                <img src="./assets/icons/role/서포터.webp" class="tg-sp-role-icon" alt="서포터">
+                6학년 이상일 때 SP 회복 +30% → 약 <b>${secsSup}초</b> 이내
+            </div>`;
+        }
+
+        return `
+        <div class="tg-sp-box">
+            <div class="tg-sp-header">
+                <span class="tg-sp-icon"><img src="./assets/icons/base_stat/sp.webp" alt="SP"></span>
+                <span class="tg-sp-title">SP 정보</span>
+                <span class="tg-sp-header-sub">전투 시작 시 보유량 및 회복 속도</span>
+            </div>
+            <div class="tg-sp-bar-wrap">
+                <div class="tg-sp-bar-fill" style="width:${pct}%"></div>
+                <span class="tg-sp-bar-label">${startSP} / ${maxSP}</span>
+            </div>
+            <div class="tg-sp-chips">
+                <div class="tg-sp-chip">
+                    <span class="tg-sp-chip-val sp-max">${maxSP}</span>
+                    <span class="tg-sp-chip-label">최대 SP</span>
+                </div>
+                <div class="tg-sp-chip">
+                    <span class="tg-sp-chip-val sp-start">${startSP}</span>
+                    <span class="tg-sp-chip-label">시작 SP</span>
+                </div>
+                <div class="tg-sp-chip">
+                    <span class="tg-sp-chip-val sp-tick">+${tickSP}</span>
+                    <span class="tg-sp-chip-label">틱당 회복</span>
+                </div>
+                <div class="tg-sp-chip">
+                    <span class="tg-sp-chip-val sp-hit">+${hitSP}</span>
+                    <span class="tg-sp-chip-label">타수당 회복</span>
+                </div>
+            </div>
+            <div class="tg-sp-time">전투 시작 후 최대 약 <b>${secs}초</b> 이내에 저학년 스킬을 사용합니다</div>
+            ${supHTML}
+        </div>`;
+    }
 
     // ── 종합-강화추천 탭 본문 빌더 ────────────────────────────────────────────
     function buildOverallBody(c) {
@@ -480,6 +538,9 @@ export function openDetailModal(char, dataContext) {
         return html;
     })();
 
+    // [SP 블록 준비]
+    const spData = spDB ? spDB.find(s => s['사도'] === char.name) : null;
+
     // [Tab 3 준비]
     const asideContentHTML = renderAsideTabContent(char, asideData);
 
@@ -581,6 +642,7 @@ export function openDetailModal(char, dataContext) {
                         </div>
 
                         <div id="tab-2" class="tab-content hidden">
+                            ${buildSpBlock(spData, char.role === '서포터')}
                             ${lowSkillData ? renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowDetail, true) : ''}
                             ${skillData ? renderEffectCard('high', skillData, null, null, null, dataContext, highDetail, true) : ''}
                             ${normalAtkHTML}
