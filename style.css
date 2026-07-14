@@ -1503,3 +1503,298 @@ body.modal-open .tg-subheader {
 [data-theme="dark"]  .tg-theme-toggle { color: #B9DD63; }
 [data-theme="light"] .tg-theme-toggle,
 :root                .tg-theme-toggle { color: #94A3B8; }
+
+/* ═══════════════════════════════════════════════════════
+   TIER MAKER
+   ═══════════════════════════════════════════════════════ */
+
+/* 티어 메이커 내 버튼/인풋 폰트 일괄 적용 */
+.tg-tier-btn, .tm-hbtn, .tm-row-ctrl button,
+.tm-add-tier-btn, .tm-popup-btn, .tm-popup-input,
+.tm-pool-search, .tm-lbl, .tm-pool-group-hdr,
+.tm-popup-title, .tm-pool-title {
+    font-family: 'OneMobilePop', sans-serif;
+}
+
+/* ── 헤더 버튼 ── */
+.tg-tier-btn {
+    display: flex; align-items: center; justify-content: center; gap: 0;
+    padding: 0 9.5px; height: 36px; border-radius: 18px;
+    font-size: 0.82rem; font-weight: 600; cursor: pointer;
+    border: 1.5px solid var(--border-soft);
+    background: transparent; color: var(--text-muted);
+    overflow: hidden; white-space: nowrap;
+    transition: border-color 0.15s, color 0.15s, background 0.15s, padding 0.25s ease;
+}
+.tg-tier-btn:hover {
+    background: var(--accent-soft); border-color: var(--accent-green);
+    color: var(--text-dark); padding: 0 13px 0 9.5px;
+}
+.tm-btn-text {
+    max-width: 0; overflow: hidden;
+    opacity: 0; white-space: nowrap; margin-left: 0;
+    transition: max-width 0.28s ease, opacity 0.18s 0.06s ease, margin-left 0.28s ease;
+}
+.tg-tier-btn:hover .tm-btn-text { max-width: 80px; opacity: 1; margin-left: 5px; }
+[data-theme="dark"] .tg-tier-btn { border-color: #383838; color: #FAFAFA; }
+[data-theme="dark"] .tg-tier-btn:hover { background: #2e2e2e; border-color: #555; color: #FAFAFA; }
+
+/* ── 모달 헤더 ── */
+.tm-header {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; height: 52px;
+    background: var(--header-bg);
+    border-bottom: 1.5px solid var(--border-soft);
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.tm-header-left {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.95rem; font-weight: 700; color: #2D3748;
+}
+[data-theme="dark"] .tm-header-left { color: #FAFAFA; }
+.tm-header-right { display: flex; align-items: center; gap: 8px; }
+
+.tm-hbtn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 14px; height: 32px; border-radius: 7px;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    background: transparent;
+    border: 1.5px solid transparent; transition: all 0.15s;
+}
+.tm-hbtn-export {
+    background: var(--accent-soft); color: var(--accent-green-strong);
+    border-color: var(--accent-green);
+}
+.tm-hbtn-export:hover { background: var(--accent-green); color: #fff; }
+.tm-hbtn-close {
+    background: transparent; color: var(--text-muted);
+    border-color: var(--border-soft);
+}
+.tm-hbtn-close:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
+
+[data-theme="dark"] .tm-hbtn-export {
+    background: #1a2e1a; color: #86efac; border-color: #22c55e;
+}
+[data-theme="dark"] .tm-hbtn-close {
+    background: transparent; color: #909090; border-color: #383838;
+}
+[data-theme="dark"] .tm-hbtn-close:hover { background: #3a1a1a; border-color: #f87171; color: #f87171; }
+
+/* 테마 토글 아이콘 CSS 제어 */
+.tm-ti-dark { display: none; }
+.tm-ti-light { display: block; }
+[data-theme="dark"] .tm-ti-dark  { display: block; }
+[data-theme="dark"] .tm-ti-light { display: none;  }
+.tm-hbtn-theme { width: 34px; padding: 0; justify-content: center; border-color: var(--border-soft); color: var(--text-muted); }
+.tm-hbtn-theme:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
+[data-theme="dark"] .tm-hbtn-theme { border-color: #383838; color: #FAFAFA; }
+[data-theme="dark"] .tm-hbtn-theme:hover { background: #2e2e2e; border-color: #555; }
+
+/* ── 본문 레이아웃 ── */
+.tm-body { max-width: 1300px; margin: 0 auto; padding: 20px 16px 60px; }
+
+/* ── 티어 행 ── */
+.tm-board { display: flex; flex-direction: column; gap: 6px; }
+.tm-row {
+    display: flex; align-items: stretch;
+    border-radius: 10px; overflow: visible;
+    border: 1.5px solid var(--border-soft);
+    background: var(--modal-card-bg, #fff);
+    transition: box-shadow 0.15s;
+}
+[data-theme="dark"] .tm-row { background: #212121; border-color: #383838; }
+
+/* 라벨 */
+.tm-lbl {
+    flex-shrink: 0; width: 120px; min-height: 90px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; font-weight: 700; color: #fff;
+    cursor: pointer; user-select: none;
+    border-radius: 8px 0 0 8px;
+    padding: 8px;
+    text-shadow: 0 1px 2px rgba(0,0,0,.3);
+    transition: filter 0.15s;
+}
+.tm-lbl:hover { filter: brightness(1.12); }
+.tm-lbl-content {
+    display: flex; align-items: center; gap: 5px;
+    word-break: keep-all; line-height: 1.3; text-align: center;
+}
+.tm-lbl-edit-hint {
+    flex-shrink: 0; font-size: 0.78rem; opacity: 0;
+    transition: opacity 0.15s; font-family: sans-serif;
+    transform: scaleX(-1); display: inline-block;
+}
+.tm-lbl:hover .tm-lbl-edit-hint { opacity: 0.75; }
+.tm-lbl-input {
+    width: 90%; background: rgba(255,255,255,.25); border: 1.5px solid rgba(255,255,255,.6);
+    border-radius: 5px; color: #fff; font-size: 0.88rem; font-weight: 700;
+    text-align: center; padding: 4px 6px; outline: none;
+}
+
+/* 드롭 존 */
+.tm-zone {
+    flex: 1; display: flex; flex-wrap: wrap; align-items: flex-start;
+    gap: 8px; padding: 10px 12px; min-height: 90px;
+    transition: background 0.12s;
+}
+.tm-zone.tm-over { background: rgba(59,130,246,.08); }
+.tm-zone-empty {
+    align-self: center; width: 100%;
+    text-align: center; color: var(--text-muted);
+    font-size: 0.8rem; pointer-events: none; user-select: none;
+}
+
+/* 행 컨트롤 버튼 */
+.tm-row-ctrl {
+    flex-shrink: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px;
+    padding: 6px 6px 6px 2px;
+}
+.tm-row-ctrl button {
+    width: 26px; height: 26px; border-radius: 6px; font-size: 0.75rem;
+    background: transparent; border: 1.5px solid var(--border-soft);
+    color: var(--text-muted); cursor: pointer; transition: all 0.12s;
+    display: flex; align-items: center; justify-content: center;
+}
+.tm-row-ctrl button:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent-green); color: var(--accent-green-strong); }
+.tm-row-ctrl button:disabled { opacity: 0.3; cursor: not-allowed; }
+.tm-btn-gear { font-size: 0.85rem !important; }
+[data-theme="dark"] .tm-row-ctrl button { border-color: #383838; color: #909090; }
+
+/* ── 카드 (티어 메이커용) ── */
+.tm-card {
+    width: 100px; cursor: grab; transition: transform 0.12s, opacity 0.12s;
+}
+.tm-card:active { cursor: grabbing; }
+.tm-card.tm-dragging { opacity: 0.35; transform: scale(0.92); }
+
+/* 드래그 삽입 위치 고스트 */
+.tm-drag-ghost {
+    width: 100px; min-height: 120px; flex-shrink: 0;
+    border: 2px dashed #22C55E;
+    border-radius: 12px;
+    background: rgba(34, 197, 94, 0.08);
+    pointer-events: none;
+    box-sizing: border-box;
+}
+.tm-card-bottom { padding: 4px 5px 5px; }
+.tm-card-name {
+    font-size: 0.73rem; font-weight: 600; text-align: center;
+    color: #374151; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'OneMobilePop', sans-serif;
+}
+[data-theme="dark"] .tm-card-name { color: #FAFAFA; }
+
+/* ── 티어 추가 버튼 ── */
+.tm-add-tier-btn {
+    padding: 7px 20px; border-radius: 8px; font-size: 0.83rem; font-weight: 600;
+    cursor: pointer; background: transparent; color: var(--text-muted);
+    border: 1.5px dashed var(--border-soft); transition: all 0.15s;
+}
+.tm-add-tier-btn:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--accent-green-strong); border-style: solid; }
+[data-theme="dark"] .tm-add-tier-btn { border-color: #383838; color: #909090; }
+
+/* ── 미배치 풀 ── */
+.tm-pool-section {
+    border: 1.5px solid var(--border-soft); border-radius: 10px;
+    background: var(--modal-card-bg, #fff);
+    overflow: hidden;
+}
+[data-theme="dark"] .tm-pool-section { background: #212121; border-color: #383838; }
+.tm-pool-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px 8px;
+    border-bottom: 1.5px solid var(--border-soft);
+}
+[data-theme="dark"] .tm-pool-header { border-color: #383838; }
+.tm-pool-title { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); }
+.tm-pool-search-wrap {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg-main); border: 1.5px solid var(--border-soft);
+    border-radius: 7px; padding: 0 10px; height: 30px;
+}
+[data-theme="dark"] .tm-pool-search-wrap { background: #1a1a1a; border-color: #383838; }
+.tm-pool-search {
+    border: none; background: transparent; outline: none;
+    font-size: 0.8rem; color: var(--text-dark); width: 160px;
+}
+[data-theme="dark"] .tm-pool-search { color: #FAFAFA; }
+.tm-pool {
+    display: flex; flex-direction: column; gap: 12px; padding: 12px 14px;
+    min-height: 110px;
+    transition: background 0.12s;
+}
+.tm-pool.tm-over { background: rgba(59,130,246,.08); }
+
+.tm-pool-group { display: flex; align-items: flex-start; gap: 10px; width: 100%; }
+.tm-pool-group-hdr {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    min-width: 40px; flex-shrink: 0; padding-top: 2px;
+    font-size: 0.62rem; color: var(--text-muted); font-weight: 700;
+    white-space: nowrap; user-select: none;
+}
+.tm-pool-group-icon { width: 22px; height: 22px; object-fit: contain; }
+.tm-pool-group-cards { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+
+/* ── 설정 팝업 ── */
+.tm-popup {
+    position: absolute; z-index: 200;
+    background: var(--modal-card-bg, #fff);
+    border: 1.5px solid var(--border-soft);
+    border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.14);
+    padding: 12px 14px; min-width: 220px;
+}
+[data-theme="dark"] .tm-popup { background: #252525; border-color: #383838; }
+.tm-popup-title {
+    font-size: 0.78rem; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .04em;
+    margin: 0 0 10px;
+}
+.tm-popup-field { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.tm-popup-lbl { font-size: 0.78rem; color: var(--text-muted); width: 30px; flex-shrink: 0; }
+.tm-popup-input {
+    flex: 1; height: 28px; border-radius: 6px; font-size: 0.82rem;
+    border: 1.5px solid var(--border-soft); background: var(--bg-main);
+    color: var(--text-dark); padding: 0 8px; outline: none;
+}
+.tm-popup-input:focus { border-color: var(--accent-green); }
+[data-theme="dark"] .tm-popup-input { background: #1a1a1a; border-color: #383838; color: #FAFAFA; }
+.tm-swatches { display: flex; flex-wrap: wrap; gap: 5px; }
+.tm-sw {
+    width: 22px; height: 22px; border-radius: 5px; cursor: pointer;
+    border: 2.5px solid transparent; transition: transform 0.1s, border-color 0.1s;
+}
+.tm-sw:hover { transform: scale(1.18); }
+.tm-sw-active { border-color: #fff; box-shadow: 0 0 0 1.5px #555; }
+[data-theme="dark"] .tm-sw-active { box-shadow: 0 0 0 1.5px #aaa; }
+.tm-popup-divider { border: none; border-top: 1.5px solid var(--border-soft); margin: 10px 0 8px; }
+[data-theme="dark"] .tm-popup-divider { border-color: #383838; }
+.tm-popup-btn {
+    display: block; width: 100%; text-align: left;
+    padding: 6px 8px; border-radius: 6px; font-size: 0.82rem;
+    cursor: pointer; background: transparent; border: none;
+    color: var(--text-dark); transition: background 0.12s;
+    margin-bottom: 4px;
+}
+.tm-popup-btn:hover { background: var(--accent-soft); }
+.tm-popup-btn-danger { color: #dc2626; }
+.tm-popup-btn-danger:hover { background: #fee2e2; }
+[data-theme="dark"] .tm-popup-btn { color: #FAFAFA; }
+[data-theme="dark"] .tm-popup-btn:hover { background: #333; color: #FAFAFA; }
+[data-theme="dark"] .tm-popup-btn-danger { color: #f87171; }
+[data-theme="dark"] .tm-popup-btn-danger:hover { background: #3a1a1a; }
+
+/* ── 진입/퇴장 애니메이션 ── */
+@keyframes tm-enter {
+    from { opacity: 0; transform: scale(0.98) translateY(10px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+@keyframes tm-exit {
+    from { opacity: 1; transform: scale(1)    translateY(0); }
+    to   { opacity: 0; transform: scale(0.98) translateY(10px); }
+}
+#tm-modal.tm-entering { animation: tm-enter 0.22s ease-out both; }
+#tm-modal.tm-leaving  { animation: tm-exit  0.18s ease-in  both; }

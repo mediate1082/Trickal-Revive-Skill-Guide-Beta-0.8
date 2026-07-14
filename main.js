@@ -175,9 +175,11 @@ async function loadExternalData() {
         
         allStateDB = [...buffDescDB, ...debuffDescDB];
 
+        window._tmDB = db;
+
         setupFilterModal();
         document.getElementById('loading-text').classList.add('hidden');
-        handleSortFilter(); 
+        handleSortFilter();
 
         // --- [타이틀 클릭 시 모든 상태 초기화 로직] ---
         const mainTitle = document.querySelector('.main-title');
