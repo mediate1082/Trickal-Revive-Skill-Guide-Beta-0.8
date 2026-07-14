@@ -25,8 +25,11 @@ let _tiers = [];
 let _pool  = [];
 let _dragging   = null;
 let _dragGhost  = null;
+let _dragRAF    = null;
 let _popupId    = null;
 let _pFilter    = '';
+let _addTierId  = null;
+let _addFilter  = '';
 
 // ── Open / Close ──────────────────────────────────────────────────────────────
 window.openTierMaker = function () {
@@ -44,6 +47,7 @@ function _tmClose() {
     const modal = document.getElementById('tm-modal');
     if (!modal) return;
     _tmClosePopupEl();
+    _tmCloseAddOverlay();
     modal.classList.remove('tm-entering');
     modal.classList.add('tm-leaving');
     setTimeout(() => {
@@ -142,6 +146,11 @@ function _tmRender() {
                 ondrop="window._tmDrop(event,'${t.id}')">
                 ${t.chars.map(name => _tmCard(getChar(name))).join('')}
                 ${t.chars.length === 0 ? '<span class="tm-zone-empty">드래그해서 놓기</span>' : ''}
+                <div class="tm-add-slot" onclick="window._tmOpenAddModal('${t.id}')" title="미배치 사도 추가">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                </div>
             </div>
             <div class="tm-row-ctrl">
                 <button class="tm-btn-gear" onclick="window._tmOpenPopup('${t.id}',this)"
@@ -196,6 +205,7 @@ window._tmDragStart = function (e) {
 };
 
 window._tmDragEnd = function (e) {
+    if (_dragRAF) { cancelAnimationFrame(_dragRAF); _dragRAF = null; }
     e.currentTarget.classList.remove('tm-dragging');
     document.querySelectorAll('.tm-over').forEach(el => el.classList.remove('tm-over'));
     if (_dragGhost && _dragGhost.parentNode) _dragGhost.parentNode.removeChild(_dragGhost);
@@ -212,28 +222,32 @@ window._tmDragEnd = function (e) {
 window._tmDragOver = function (e, tid) {
     e.preventDefault();
     e.stopPropagation();
-    document.querySelectorAll('.tm-over').forEach(el => el.classList.remove('tm-over'));
+    if (_dragRAF) return;
+    const cx = e.clientX, cy = e.clientY;
+    _dragRAF = requestAnimationFrame(() => {
+        _dragRAF = null;
+        document.querySelectorAll('.tm-over').forEach(el => el.classList.remove('tm-over'));
 
-    const isPool = tid === 'pool';
-    const zone = isPool ? document.getElementById('tm-pool') : document.getElementById('tm-z-' + tid);
-    if (!zone) return;
-    zone.classList.add('tm-over');
-    if (isPool) return; // 풀은 성격순 자동 정렬이므로 고스트 불필요
+        const isPool = tid === 'pool';
+        const zone = isPool ? document.getElementById('tm-pool') : document.getElementById('tm-z-' + tid);
+        if (!zone) return;
+        zone.classList.add('tm-over');
+        if (isPool) return;
 
-    // 고스트 요소 생성 (최초 1회)
-    if (!_dragGhost) {
-        _dragGhost = document.createElement('div');
-        _dragGhost.className = 'tm-drag-ghost';
-    }
+        if (!_dragGhost) {
+            _dragGhost = document.createElement('div');
+            _dragGhost.className = 'tm-drag-ghost';
+        }
 
-    // 커서 위치에 따라 고스트 삽입 위치 결정
-    const insertBefore = _ghostTarget(zone, e.clientX, e.clientY);
-    if (insertBefore) zone.insertBefore(_dragGhost, insertBefore);
-    else zone.appendChild(_dragGhost);
+        const insertBefore = _ghostTarget(zone, cx, cy);
+        const addSlot = zone.querySelector('.tm-add-slot');
+        if (insertBefore) zone.insertBefore(_dragGhost, insertBefore);
+        else if (addSlot) zone.insertBefore(_dragGhost, addSlot);
+        else zone.appendChild(_dragGhost);
 
-    // 빈 상태 텍스트 숨김
-    const emptyEl = zone.querySelector('.tm-zone-empty');
-    if (emptyEl) emptyEl.style.display = 'none';
+        const emptyEl = zone.querySelector('.tm-zone-empty');
+        if (emptyEl) emptyEl.style.display = 'none';
+    });
 };
 
 window._tmDragLeave = function (e) {
@@ -631,6 +645,99 @@ function _rrect(ctx, x, y, w, h, r) {
     ctx.arcTo(x, y, x + r, y, r);
     ctx.closePath();
 }
+
+// ── 사도 추가 모달 ────────────────────────────────────────────────────────────
+
+function _tmCardPickable(char) {
+    if (!char) return '';
+    const p     = TM_P_COLORS[char.personality] || TM_P_COLORS['공명'];
+    const isRes = char.personality === '공명';
+    const isEld = char.Eldyne && char.Eldyne.trim() !== '' && char.Eldyne !== 'X';
+    const topSt = `background:${isRes ? 'none' : p.bg};border:3px solid ${p.border};border-bottom:none;box-sizing:border-box;`;
+    const eldIcon = isEld
+        ? `<img draggable="false" src="./assets/icons/common_icons/Ingame_Icon_HeroGrow_Hidden.webp" class="eldyne-corner-icon" style="pointer-events:none">`
+        : '';
+    const safeName = char.name.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    return `<div class="char-card tm-card tm-pick-card" draggable="false" data-name="${safeName}"
+        onclick="window._tmPickChar(this.dataset.name)">
+        <div class="${isRes ? 'card-top bg-resonance' : 'card-top'}" style="${topSt};pointer-events:none">
+            <img draggable="false" src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img"
+                style="width:100%;height:100%;object-fit:cover;pointer-events:none"
+                onerror="this.src='./assets/icons/chara_image/default.webp'">
+            <img draggable="false" src="./assets/icons/personality/${char.personality}.webp"
+                style="position:absolute;top:4px;left:4px;width:18px;height:18px;z-index:2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));pointer-events:none">
+            ${eldIcon}
+            <div style="position:absolute;bottom:4px;left:0;width:100%;padding:0 5px;display:flex;justify-content:space-between;align-items:center;z-index:2;pointer-events:none">
+                <img draggable="false" src="./assets/icons/role/${char.role}.webp"
+                    style="width:17px;height:17px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));pointer-events:none">
+                <img draggable="false" src="./assets/icons/line/${char.line}.webp"
+                    style="width:17px;height:17px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));pointer-events:none">
+            </div>
+            <div style="position:absolute;bottom:4px;width:100%;z-index:3;pointer-events:none">${_tmStarHTML(char.star)}</div>
+        </div>
+        <div class="card-bottom tm-card-bottom" style="pointer-events:none">
+            <div class="tm-card-name">${char.name}</div>
+        </div>
+    </div>`;
+}
+
+function _tmRenderAddBody() {
+    const chars  = window._tmDB || [];
+    const getChar = nm => chars.find(c => c.name === nm);
+    const ORDER  = ['순수', '냉정', '광기', '우울', '활발', '공명'];
+    const vis    = _pool.filter(nm => !_addFilter || nm.includes(_addFilter));
+    let html = '';
+    ORDER.forEach(p => {
+        const group = vis.filter(nm => { const c = getChar(nm); return c && c.personality === p; });
+        if (!group.length) return;
+        html += `<div class="tm-pool-group">
+            <div class="tm-pool-group-hdr">
+                <img draggable="false" src="./assets/icons/personality/${p}.webp" class="tm-pool-group-icon">
+                <span>${p}</span>
+            </div>
+            <div class="tm-pool-group-cards">${group.map(nm => _tmCardPickable(getChar(nm))).join('')}</div>
+        </div>`;
+    });
+    const body = document.getElementById('tm-add-pbody');
+    if (body) body.innerHTML = html ||
+        `<span class="tm-zone-empty">${_addFilter ? `"${_addFilter}" 없음` : '미배치 없음'}</span>`;
+}
+
+function _tmCloseAddOverlay() {
+    const ov = document.getElementById('tm-add-overlay');
+    if (ov) ov.style.display = 'none';
+    _addTierId = null;
+    _addFilter = '';
+}
+window._tmCloseAddModal = _tmCloseAddOverlay;
+
+window._tmOpenAddModal = function (tierId) {
+    _addTierId = tierId;
+    _addFilter = '';
+    const tier  = _tiers.find(t => t.id === tierId);
+    const title = document.getElementById('tm-add-ptitle');
+    if (title && tier) title.textContent = tier.name + ' 에 추가';
+    const search = document.getElementById('tm-add-psearch');
+    if (search) search.value = '';
+    _tmRenderAddBody();
+    const ov = document.getElementById('tm-add-overlay');
+    if (ov) ov.style.display = 'flex';
+};
+
+window._tmAddSearch = function (val) {
+    _addFilter = val.trim();
+    _tmRenderAddBody();
+};
+
+window._tmPickChar = function (name) {
+    if (!_addTierId) return;
+    const tier = _tiers.find(t => t.id === _addTierId);
+    if (!tier) return;
+    _pool = _pool.filter(n => n !== name);
+    tier.chars.push(name);
+    _tmRender();
+    _tmRenderAddBody();
+};
 
 // ── Popup 외부 클릭 닫기 ──────────────────────────────────────────────────────
 document.addEventListener('click', e => {
