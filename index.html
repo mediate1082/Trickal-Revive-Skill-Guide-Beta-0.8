@@ -21,7 +21,7 @@
     <script>
         /* ── 캐시 버스팅 버전 ──────────────────────────────
            배포할 때 이 숫자만 올리면 CSS·JS 캐시가 자동으로 갱신됩니다. */
-        var APP_VERSION = '1.3.23';
+        var APP_VERSION = '1.3.24';
         document.write('<link rel="stylesheet" href="style.css?v=' + APP_VERSION + '">');
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -366,7 +366,33 @@
         document.body.appendChild(s);
     })();
 </script>
-<script src="tiermaker.js?v=1.3.15"></script>
+<script src="tiermaker.js?v=1.3.23"></script>
+
+<!-- 모바일 경고 토스트 -->
+<div id="mobile-toast" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    z-index:9999;background:#1e293b;color:#f1f5f9;border-radius:14px;
+    padding:13px 18px 13px 16px;display:none;align-items:center;gap:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);font-size:0.84rem;font-weight:600;
+    font-family:'OneMobilePop',sans-serif;white-space:nowrap;max-width:calc(100vw - 32px);">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FBBF24" stroke-width="2.2"
+         stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span>PC 환경에서 이용하시면 더 편리합니다</span>
+    <button onclick="document.getElementById('mobile-toast').style.display='none';sessionStorage.setItem('mob-warn','1')"
+        style="background:rgba(255,255,255,0.12);border:none;color:#f1f5f9;border-radius:8px;
+        padding:4px 10px;cursor:pointer;font-size:0.8rem;font-family:inherit;flex-shrink:0;">닫기</button>
+</div>
+<script>
+(function(){
+    if(sessionStorage.getItem('mob-warn')) return;
+    if(window.innerWidth < 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)){
+        var t = document.getElementById('mobile-toast');
+        t.style.display = 'flex';
+    }
+})();
+</script>
 
 </body>
 </html>
