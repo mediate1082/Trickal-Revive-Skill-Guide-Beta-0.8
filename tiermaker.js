@@ -415,8 +415,8 @@ window._tmExport = async function () {
     const ICON_SZ = 20;
     const STAR_SZ = 15;
 
-    const active = _tiers.filter(t => t.chars.length > 0);
-    if (!active.length) { alert('배치된 캐릭터가 없습니다.'); return; }
+    const active = _tiers;
+    if (active.every(t => t.chars.length === 0)) { alert('배치된 캐릭터가 없습니다.'); return; }
 
     const chars = window._tmDB || [];
 
