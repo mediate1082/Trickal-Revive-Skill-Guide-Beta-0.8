@@ -577,13 +577,20 @@ if (searchInput) {
 
 function checkTagMatch(list, kw) {
     if (!list || list.length === 0) return false;
-    
+
+    // 검색 키워드가 실제 효과명(state_name)이면 cond 검사를 건너뜀.
+    // 이유: '보호막 파괴 시'처럼 조건 텍스트에 효과명이 포함된 경우의 오탐 방지.
+    // '개전' 같은 순수 조건 키워드는 state_name에 없으므로 cond 검사가 그대로 작동함.
+    // v1.3.6 이전 구버전: if (item.cond && item.cond.includes(targetKw)) return true; (모든 키워드에 cond 검사 적용)
+    const isStateName = allStateDB.some(d => (d.state_name || '').trim() === kw.trim());
+
     return list.some(item => {
         const targetKw = kw.trim();
         const pureName = item.name.split('(')[0].trim();
 
         // ★ 1차 검사: '조건(cond)' 텍스트 안에 필터 키워드(예: "개전")가 포함되어 있는지!
-        if (item.cond && item.cond.includes(targetKw)) return true;
+        // 효과명(state_name)인 키워드는 건너뜀 — '보호막 파괴 시' 조건 오탐 방지
+        if (!isStateName && item.cond && item.cond.includes(targetKw)) return true;
 
         // ★ 2차 검사: 버프 이름(원본)에 키워드가 있는지
         if (item.name.includes(targetKw)) return true;

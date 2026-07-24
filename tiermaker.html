@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>티어 메이커 — 트릭컬 스킬 가이드</title>
+    <script>
+    (function () {
+        var s = localStorage.getItem('theme');
+        var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', s || (d ? 'dark' : 'light'));
+    })();
+    </script>
+    <link rel="icon" href="assets/icons/common_icons/NerIcon.webp" type="image/webp">
+    <script>
+        var APP_VERSION = '1.3.26';
+        document.write('<link rel="stylesheet" href="style.css?v=' + APP_VERSION + '">');
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+</head>
+<body>
+
+<div class="tm-header">
+    <div class="tm-header-left">
+        <a href="./" class="tm-hbtn tm-hbtn-back" aria-label="메인으로 돌아가기" title="메인으로 돌아가기">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                 stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
+            </svg>
+        </a>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 21l8 0"/><path d="M12 17l0 4"/>
+            <path d="M7 4l10 0"/>
+            <path d="M17 4v8a5 5 0 0 1 -10 0v-8"/>
+            <path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+            <path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+        </svg>
+        <span>티어 메이커</span>
+    </div>
+    <div class="tm-header-right">
+        <button class="tm-hbtn tm-hbtn-export" onclick="window._tmExport()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor"
+                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            PNG 저장
+        </button>
+        <button class="tm-hbtn tm-hbtn-reset" onclick="window._tmClearAll()" aria-label="전체 미배치로 이동" title="전체 미배치로 이동">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"/><path d="M8 6V4h8v2"/>
+                <path d="M19 6l-1 14H6L5 6"/>
+            </svg>
+            전체 미배치
+        </button>
+        <button class="tm-hbtn tm-hbtn-reset" onclick="window._tmReset()" aria-label="기본값으로 초기화" title="기본값으로 초기화">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                 stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+            </svg>
+            기본값
+        </button>
+        <button class="tm-hbtn tm-hbtn-theme" onclick="window.toggleTheme()" aria-label="테마 전환" title="테마 전환">
+            <svg class="tm-ti-light" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <svg class="tm-ti-dark" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"/>
+                <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+                <line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/>
+                <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+                <line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<div class="tm-body">
+    <div id="tm-board" class="tm-board"></div>
+
+    <div style="text-align:center;margin:8px 0 20px">
+        <button class="tm-add-tier-btn" onclick="window._tmAddTier()">+ 티어 추가</button>
+    </div>
+
+    <div class="tm-pool-section">
+        <div class="tm-pool-header">
+            <span class="tm-pool-title">미배치</span>
+            <div class="tm-pool-search-wrap">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>
+                </svg>
+                <input id="tm-pool-search" type="text" class="tm-pool-search"
+                    placeholder="이름 검색..."
+                    oninput="window._tmSetFilter(this.value)">
+            </div>
+        </div>
+        <div id="tm-pool" class="tm-pool"
+            ondragover="window._tmDragOver(event,'pool')"
+            ondragleave="window._tmDragLeave(event)"
+            ondrop="window._tmDrop(event,'pool')"></div>
+    </div>
+</div>
+
+<div id="tm-popup" class="tm-popup" style="display:none"></div>
+
+<!-- 사도 추가 패널 -->
+<div id="tm-add-overlay" style="display:none" class="tm-add-overlay"
+    onclick="if(event.target===this)window._tmCloseAddModal()">
+    <div class="tm-add-panel">
+        <div class="tm-add-pheader">
+            <span id="tm-add-ptitle" class="tm-add-ptitle"></span>
+            <div class="tm-add-psearch-wrap">
+                <svg class="tm-add-psearch-icon" viewBox="0 0 24 24" width="13" height="13" fill="none"
+                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input id="tm-add-psearch" type="text" class="tm-add-psearch" placeholder="이름 검색..."
+                    oninput="window._tmAddSearch(this.value)">
+            </div>
+            <button class="tm-add-pclose" onclick="window._tmCloseAddModal()" aria-label="닫기">✕</button>
+        </div>
+        <div id="tm-add-pbody" class="tm-add-pbody"></div>
+    </div>
+</div>
+
+<script src="tiermaker.js?v=1.3.26"></script>
+<script>
+window.toggleTheme = function () {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+};
+
+(async function () {
+    const v = APP_VERSION;
+    const res = await fetch('./data/DB.csv?v=' + v);
+    const text = await res.text();
+    window._tmDB = Papa.parse(text, { header: true, skipEmptyLines: true, trimHeaders: true }).data;
+    window.dispatchEvent(new Event('tm-db-loaded'));
+})();
+</script>
+
+</body>
+</html>

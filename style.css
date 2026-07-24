@@ -1530,6 +1530,9 @@ body.modal-open .tg-subheader {
     background: var(--accent-soft); border-color: var(--accent-green);
     color: var(--text-dark); padding: 0 13px 0 9.5px;
 }
+/* a 태그로 사용할 때 기본 링크 스타일 제거 */
+a.tg-tier-btn { text-decoration: none; }
+
 .tm-btn-text {
     max-width: 0; overflow: hidden;
     opacity: 0; white-space: nowrap; margin-left: 0;
@@ -1567,6 +1570,11 @@ body.modal-open .tg-subheader {
     border-color: var(--accent-green);
 }
 .tm-hbtn-export:hover { background: var(--accent-green); color: #fff; }
+.tm-hbtn-reset {
+    background: transparent; color: var(--text-muted);
+    border-color: var(--border-soft);
+}
+.tm-hbtn-reset:hover { background: #fff7ed; border-color: #fdba74; color: #ea580c; }
 .tm-hbtn-close {
     background: transparent; color: var(--text-muted);
     border-color: var(--border-soft);
@@ -1576,6 +1584,10 @@ body.modal-open .tg-subheader {
 [data-theme="dark"] .tm-hbtn-export {
     background: #1a2e1a; color: #86efac; border-color: #22c55e;
 }
+[data-theme="dark"] .tm-hbtn-reset {
+    background: transparent; color: #909090; border-color: #383838;
+}
+[data-theme="dark"] .tm-hbtn-reset:hover { background: #2a1a0a; border-color: #f97316; color: #f97316; }
 [data-theme="dark"] .tm-hbtn-close {
     background: transparent; color: #909090; border-color: #383838;
 }
@@ -1590,6 +1602,21 @@ body.modal-open .tg-subheader {
 .tm-hbtn-theme:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
 [data-theme="dark"] .tm-hbtn-theme { border-color: #383838; color: #FAFAFA; }
 [data-theme="dark"] .tm-hbtn-theme:hover { background: #2e2e2e; border-color: #555; }
+
+/* ── 티어 메이커 페이지 뒤로가기 버튼 ── */
+.tm-hbtn-back {
+    width: 30px; height: 30px; padding: 0; justify-content: center; border-radius: 8px;
+    background: none; border: 1px solid transparent;
+    color: var(--text-muted); text-decoration: none; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.tm-hbtn-back:hover {
+    background: var(--bg-card); border-color: var(--border-soft);
+    color: var(--text-dark);
+}
+
+/* 드래그 중 + 추가 고스트 버튼 숨김 */
+body.tm-is-dragging .tm-add-slot { display: none; }
 
 /* ── 본문 레이아웃 ── */
 .tm-body { max-width: 1300px; margin: 0 auto; padding: 20px 16px 60px; }

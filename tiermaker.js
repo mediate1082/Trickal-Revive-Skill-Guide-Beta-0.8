@@ -202,11 +202,13 @@ window._tmDragStart = function (e) {
     setTimeout(() => e.currentTarget.classList.add('tm-dragging'), 0);
     e.dataTransfer.effectAllowed = 'move';
     _tmClosePopupEl();
+    document.body.classList.add('tm-is-dragging');
 };
 
 window._tmDragEnd = function (e) {
     if (_dragRAF) { cancelAnimationFrame(_dragRAF); _dragRAF = null; }
     e.currentTarget.classList.remove('tm-dragging');
+    document.body.classList.remove('tm-is-dragging');
     document.querySelectorAll('.tm-over').forEach(el => el.classList.remove('tm-over'));
     if (_dragGhost && _dragGhost.parentNode) _dragGhost.parentNode.removeChild(_dragGhost);
     _dragGhost = null;
@@ -335,12 +337,19 @@ window._tmOpenPopup = function (tierId, btnEl) {
     _popupId = tierId;
     const t = _tiers.find(t => t.id === tierId);
     if (!t) return;
-    const popup  = document.getElementById('tm-popup');
-    const modal  = document.getElementById('tm-modal');
-    const bRect  = btnEl.getBoundingClientRect();
-    const mRect  = modal.getBoundingClientRect();
-    popup.style.top   = (bRect.bottom - mRect.top + modal.scrollTop + 4) + 'px';
-    popup.style.right = (mRect.right - bRect.right + 2) + 'px';
+    const popup = document.getElementById('tm-popup');
+    const modal = document.getElementById('tm-modal');
+    const bRect = btnEl.getBoundingClientRect();
+    if (modal) {
+        const mRect = modal.getBoundingClientRect();
+        popup.style.position = '';
+        popup.style.top   = (bRect.bottom - mRect.top + modal.scrollTop + 4) + 'px';
+        popup.style.right = (mRect.right - bRect.right + 2) + 'px';
+    } else {
+        popup.style.position = 'fixed';
+        popup.style.top   = (bRect.bottom + 4) + 'px';
+        popup.style.right = (window.innerWidth - bRect.right + 2) + 'px';
+    }
     popup.innerHTML = `
         <p class="tm-popup-title">티어 설정 — ${t.name}</p>
         <div class="tm-popup-field">
@@ -745,5 +754,23 @@ document.addEventListener('click', e => {
     const popup = document.getElementById('tm-popup');
     if (popup && !popup.contains(e.target) && !e.target.closest('.tm-row-ctrl')) _tmClosePopupEl();
 });
+
+// 하위 페이지(tiermaker.html): DB 로드 완료 이벤트를 받아 자동 초기화
+window.addEventListener('tm-db-loaded', function () {
+    _tmInit();
+    _tmRender();
+}, { once: true });
+
+window._tmReset = function () {
+    if (!confirm('기본값으로 되돌릴까요?\n현재 티어 배치가 초기화됩니다.')) return;
+    _tmInit();
+    _tmRender();
+};
+
+window._tmClearAll = function () {
+    if (!confirm('모든 사도를 미배치로 이동할까요?')) return;
+    _tiers.forEach(t => { _pool.push(...t.chars); t.chars = []; });
+    _tmRender();
+};
 
 })();
