@@ -360,6 +360,7 @@ body.modal-open .tg-subheader {
     font-size: 0.72rem;
     color: var(--text-muted);
     letter-spacing: 0.01em;
+    word-break: keep-all;
 }
 
 /* span 사이 CSS 구분선 */
@@ -372,6 +373,17 @@ body.modal-open .tg-subheader {
     margin: 0 12px;
     vertical-align: middle;
     opacity: 0.8;
+}
+
+@media (max-width: 600px) {
+    .tg-footer {
+        flex-direction: column;
+        gap: 6px;
+        text-align: center;
+    }
+    .tg-footer span + span::before {
+        display: none;
+    }
 }
 .tg-grid {
     max-width: 980px; margin: 0 auto; padding: 0 16px;
