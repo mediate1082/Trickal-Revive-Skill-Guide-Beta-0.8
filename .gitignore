@@ -1,0 +1,12 @@
+# 미출시 에셋 — 배포/커밋 금지
+# (robocopy 에서도 /XD "dummy" 로 제외됨)
+assets/dummy/
+
+# 로컬 도구·설정
+tools/
+.claude/
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store

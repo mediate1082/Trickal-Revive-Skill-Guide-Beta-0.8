@@ -1973,3 +1973,50 @@ body.tm-is-dragging .tm-add-slot { display: none; }
 [data-theme="dark"] .tm-add-pheader { border-color: #383838; background: #212121; }
 .tm-pick-card { cursor: pointer; }
 .tm-pick-card:hover { transform: translateY(-4px) scale(1.05); box-shadow: 0 8px 20px rgba(0,0,0,0.18) !important; }
+
+/* ── 배틀 아이템 목록 ────────────────────────── */
+.tg-battle-item-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-top: 7px; padding: 4px 10px; border-radius: 7px;
+    background: var(--accent-soft); color: var(--accent-green-strong);
+    border: 1px solid var(--accent-green);
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.74rem;
+    cursor: pointer; transition: background .15s, color .15s;
+}
+.tg-battle-item-btn:hover { background: var(--accent-green); color: #fff; }
+
+.tg-modal-card.is-battle-item { max-width: 720px; }
+
+.tg-bi-hint {
+    margin: 0 0 12px; padding: 8px 11px; border-radius: 8px; font-size: 0.78rem;
+    background: var(--stat-box-bg); border: 1px solid var(--border-soft);
+    color: var(--text-muted);
+}
+.tg-bi-table { border: 1px solid var(--border-soft); border-radius: 11px; overflow: hidden; }
+.tg-bi-row {
+    display: grid; grid-template-columns: 190px 1fr; gap: 12px;
+    padding: 10px 13px; border-bottom: 1px solid var(--border-soft);
+    font-size: 0.83rem; align-items: center;
+}
+.tg-bi-row:last-child { border-bottom: none; }
+.tg-bi-row.is-head {
+    background: var(--stat-box-bg); color: var(--text-muted);
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.76rem;
+}
+.tg-bi-row:not(.is-head):hover { background: var(--accent-soft); }
+.tg-bi-name {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    font-family: 'OneMobilePop', sans-serif; color: var(--text-dark);
+}
+.tg-bi-icon { width: 22px; height: 22px; object-fit: contain; }
+.tg-bi-scope {
+    font-style: normal; font-size: 0.68rem; padding: 1px 6px; border-radius: 20px;
+    background: var(--buff-pale); color: var(--buff-text);
+}
+.tg-bi-row[data-scope="파티"] .tg-bi-scope { background: var(--neutral-pale); color: var(--neutral-text); }
+.tg-bi-effect { color: var(--text-body); line-height: 1.5; }
+
+@media (max-width: 560px) {
+    .tg-bi-row { grid-template-columns: 1fr; gap: 5px; }
+    .tg-bi-row.is-head { display: none; }
+}
