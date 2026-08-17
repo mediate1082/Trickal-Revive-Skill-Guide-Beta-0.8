@@ -156,16 +156,7 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
                     ${targets[index] ? `<span class="tg-effect-item-chip" data-kind="target">${targets[index]}</span>` : ''}
                 </div>
                 <div class="tg-effect-item-desc">${info ? info.description : "상세 정보가 없습니다."}</div>
-                ${hasBattleItemTag(info) ? `
-                <button class="tg-battle-item-btn" onclick="window.openBattleItemModal()">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor"
-                         stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5" rx="1"/>
-                        <path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
-                        <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-                    </svg>
-                    배틀 아이템 목록
-                </button>` : ''}
+                ${renderBattleItems(info)}
             </div>
         </div>`;
     }).join('');
@@ -177,69 +168,39 @@ function hasBattleItemTag(info) {
     return info.tag.split(',').map(t => t.trim()).includes('배틀 아이템 생성');
 }
 
-/* ── 배틀 아이템 목록 모달 ─────────────────────────────────────────────
- * 리코타 어사이드(퐁듀 분수)·아르코 응원봉 등에서 생성되는 아이템 일람.
- * 데이터는 data/battle_item_DB.csv, 여러 사도가 공유하므로 별도 표로 관리한다. */
-window.openBattleItemModal = function () {
-    const list = window._battleItemDB || [];
-    let el = document.getElementById('modal-battle-item');
+/* 부가 효과 박스 안에 그 사도가 생성하는 배틀 아이템만 접이식으로 표시.
+ * 어떤 아이템이 나오는지는 상태 이름으로 판별한다.
+ *   "응원봉 생성"          → 이름이 들어간 아이템만 (응원봉)
+ *   "무작위 배틀 아이템 생성" → 전부
+ * 별도 매핑 표 없이 동작하므로, 새 상태가 생겨도 이름만 맞으면 자동으로 잡힌다. */
+function renderBattleItems(info) {
+    if (!hasBattleItemTag(info)) return '';
+    const all = window._battleItemDB || [];
+    if (!all.length) return '';
 
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'modal-battle-item';
-        el.className = 'tg-modal-overlay hidden';
-        el.onclick = e => { if (e.target === el) window.closeBattleItemModal(); };
-        document.body.appendChild(el);
-    }
+    const named = all.filter(b => b.item_name && info.state_name.includes(b.item_name));
+    const list  = named.length ? named : all;
 
-    // 아이콘은 icon 열이 있으면 그것을, 없으면 '{아이템명}.webp' 를 찾는다
-    const rows = list.filter(r => r.item_name).map(r => `
-        <div class="tg-bi-row" data-scope="${r.scope || ''}">
-            <div class="tg-bi-name">
-                <img class="tg-bi-icon"
-                     src="./assets/icons/active_items/${r.icon || r.item_name + '.webp'}"
-                     onerror="this.style.display='none'">
-                <span>${r.item_name}</span>
-                ${r.scope ? `<em class="tg-bi-scope">${r.scope}</em>` : ''}
+    // 목록이 짧으면 펼친 채로, 길면 접어서 (리코타 10종 / 아르코 1종)
+    const open = list.length <= 2 ? ' open' : '';
+
+    const rows = list.map(b => `
+        <div class="tg-bi-item">
+            <img class="tg-bi-ic" src="./assets/icons/active_items/${b.icon || b.item_name + '.webp'}"
+                 onerror="this.style.display='none'">
+            <div class="tg-bi-txt">
+                <span class="tg-bi-nm">${b.item_name}</span>
+                ${b.scope ? `<em class="tg-bi-sc" data-scope="${b.scope}">${b.scope}</em>` : ''}
+                <div class="tg-bi-ef">${(b.effect || '').replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}</div>
             </div>
-            <div class="tg-bi-effect">${(r.effect || '').replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}</div>
         </div>`).join('');
 
-    el.innerHTML = `
-        <div class="tg-modal-card is-battle-item" onclick="event.stopPropagation()">
-            <div class="tg-modal-header">
-                <div class="tg-modal-title-wrap">
-                    <div class="tg-modal-eyebrow"><span style="color:#7a806d;">Battle Item</span></div>
-                    <h3 class="tg-modal-title">배틀 <em>아이템</em> 목록</h3>
-                </div>
-                <span class="tg-modal-count">${list.length}종</span>
-                <button class="tg-modal-close" onclick="window.closeBattleItemModal()" aria-label="닫기">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                         stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="tg-modal-body">
-                <p class="tg-bi-hint">생성되는 아이템은 무작위이며, 획득한 아군에게 효과가 적용됩니다.</p>
-                <div class="tg-bi-table">
-                    <div class="tg-bi-row is-head"><div>이름</div><div>효과</div></div>
-                    ${rows || '<div class="tg-bi-row"><div>—</div><div>데이터가 없습니다.</div></div>'}
-                </div>
-            </div>
-        </div>`;
-
-    el.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-};
-
-window.closeBattleItemModal = function () {
-    const el = document.getElementById('modal-battle-item');
-    if (el) el.classList.add('hidden');
-    // 사도 상세 모달이 아직 열려 있으면 스크롤 잠금을 유지
-    const detail = document.getElementById('modal-detail');
-    if (!detail || detail.classList.contains('hidden')) document.body.style.overflow = '';
-};
+    return `
+    <details class="tg-bi-inline"${open}>
+        <summary>생성 가능한 배틀 아이템 <b>${list.length}종</b></summary>
+        <div class="tg-bi-body">${rows}</div>
+    </details>`;
+}
 
 // 어사이드 전용 헬퍼 함수 (전체 버전)
 const renderAsideTabContent = (char, asideData) => {

@@ -179,6 +179,7 @@ async function loadExternalData() {
         
         allStateDB = [...buffDescDB, ...debuffDescDB];
         window._battleItemDB = battleItemDB;
+        syncBattleItemTags();
 
         window._tmDB = db;
 
@@ -245,12 +246,176 @@ async function loadExternalData() {
                     if (asideCount) asideCount.innerText = '';
                 }
 
+                // 9. [추가] 표시 필터(티어/성격/역할/배치/성급) 초기화
+                if (typeof window.clearAttrFilter === 'function') window.clearAttrFilter();
+
                 handleSortFilter(); // 필터링 실행
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
             };
         }
     } catch (e) { console.error("로드 실패:", e); }
+}
+
+/* ── 표시 필터 (티어 / 성격 / 역할 / 배치 / 성급) ──────────────
+ * 기본은 전부 켜짐. 체크를 끄면 그 값을 가진 사도가 목록에서 빠진다.
+ * hiddenAttrs 에는 '숨길 값'만 담으므로, 비어 있으면 그 항목은 전체 표시.
+ * 카테고리 간에는 AND (각 카테고리를 순서대로 통과해야 표시). */
+/* 분류별 대표색 — tools/분류_컬러코드.txt 와 동일하게 유지할 것 */
+const ATTR_COLORS = {
+    tier:        { '메타픽': '#E91E63', '성격덱': '#2980B9', '메타 부적합': '#7F8C8D',
+                   '태생 1성': '#BCD3C7', '연구 중': '#E67E22' },
+    personality: { '순수': '#66C17C', '냉정': '#85BAEC', '광기': '#EE839D',
+                   '우울': '#C784ED', '활발': '#ECDC85', '공명': 'rainbow' },
+    role:        { '딜러': '#F1554C', '서포터': '#FDAD30', '탱커': '#4E86F0' },
+    // 전체열은 인게임 기준 #FFFFFF 지만 흰 배경에서 안 보여 옅은 베이지로 대체
+    line:        { '전열': '#E65A5B', '중열': '#57BD40', '후열': '#5493ED', '전체열': '#E3D2AC' },
+};
+const ATTR_CATS = [
+    { key: 'tier', label: '티어',
+      fmt: v => v.replace(/^\[\d+\]\s*/, '') || '미분류',
+      // 티어는 아이콘이 없어 왼쪽 세로 바 색으로만 구분
+      sort: (a, b) => (parseInt(a.match(/^\[(\d+)\]/)?.[1] ?? '99') - parseInt(b.match(/^\[(\d+)\]/)?.[1] ?? '99')) || a.localeCompare(b) },
+    { key: 'personality', label: '성격', order: ['순수', '냉정', '광기', '우울', '활발', '공명'],
+      mark: v => `<img class="tg-attr-ic" src="./assets/icons/personality/${v}.webp" alt="">` },
+    { key: 'role', label: '역할',
+      mark: v => `<img class="tg-attr-ic" src="./assets/icons/role/${v}.webp" alt="">` },
+    { key: 'line', label: '배치', order: ['전열', '중열', '후열', '전체열'],
+      mark: v => `<img class="tg-attr-ic" src="./assets/icons/line/${v}.webp" alt="">` },
+    { key: 'star', label: '성급', sort: (a, b) => (+b) - (+a),
+      // 인게임 별 아이콘 (3성=금별 / 2성 이하=초록별) — makeStarHTML 과 같은 규칙
+      fmt: v => {
+          const n = parseInt(v) || 0;
+          const img = n >= 3 ? 'star3.webp' : 'star2.webp';
+          return `<span class="tg-attr-stars">` +
+              `<img src="./assets/icons/common_icons/${img}" alt="">`.repeat(n) + `</span>`;
+      } },
+];
+
+/* 해당 값의 대표색 (없으면 null). 티어는 [n] 접두사를 뗀 이름으로 조회 */
+function attrColor(cat, val) {
+    const key = cat.key === 'tier' ? val.replace(/^\[\d+\]\s*/, '') : val;
+    return ATTR_COLORS[cat.key]?.[key] || null;
+}
+let hiddenAttrs  = {};   // 실제 적용된 상태
+let pendingAttrs = {};   // 모달에서 편집 중인 상태
+ATTR_CATS.forEach(c => { hiddenAttrs[c.key] = new Set(); pendingAttrs[c.key] = new Set(); });
+
+/* 해당 카테고리가 가질 수 있는 값 목록 (DB에서 추출, 정의된 순서 우선) */
+function attrValues(cat) {
+    const vals = [...new Set(db.map(c => (c[cat.key] || '').trim()).filter(v => v !== ''))];
+    if (cat.order) {
+        const known = cat.order.filter(v => vals.includes(v));
+        return [...known, ...vals.filter(v => !cat.order.includes(v)).sort()];
+    }
+    return vals.sort(cat.sort || ((a, b) => a.localeCompare(b)));
+}
+
+/* 사도 하나가 현재 표시 필터를 통과하는지 */
+function passesAttrFilter(char) {
+    return ATTR_CATS.every(c => !hiddenAttrs[c.key].has((char[c.key] || '').trim()));
+}
+
+function _attrHiddenCount(src) {
+    return ATTR_CATS.reduce((n, c) => n + src[c.key].size, 0);
+}
+
+function _updateAttrFilterCount() {
+    const n = _attrHiddenCount(hiddenAttrs);
+    const b = document.getElementById('attr-filter-count');
+    if (b) b.innerText = n > 0 ? String(n) : '';
+    const mc = document.getElementById('modal-attr-count');
+    if (mc) { mc.hidden = n === 0; if (n > 0) mc.textContent = `${n}개 숨김`; }
+}
+
+function renderAttrFilter() {
+    const wrap = document.getElementById('attr-filter-group');
+    if (!wrap) return;
+    wrap.innerHTML = ATTR_CATS.map(c => {
+        const vals = attrValues(c);
+        const on = vals.filter(v => !pendingAttrs[c.key].has(v)).length;
+        const items = vals.map(v => {
+            const col = attrColor(c, v);
+            // 공명은 단색이 없어 무지개 그라데이션으로 따로 처리
+            const style = col === 'rainbow' ? ' data-rainbow="1"'
+                        : col ? ` style="--cat:${col}"`
+                        : '';
+            return `
+            <label class="filter-label"${style}>
+                <input type="checkbox" ${pendingAttrs[c.key].has(v) ? '' : 'checked'}
+                       onchange="window.toggleAttrValue('${c.key}', ${JSON.stringify(v).replace(/"/g, '&quot;')})">
+                ${c.mark ? c.mark(v) : ''}
+                <span class="tg-name">${(c.fmt ? c.fmt(v) : v)}</span>
+            </label>`;
+        }).join('');
+        return `
+        <div class="tg-attr-cat">
+            <div class="tg-section-head">
+                <span class="tg-section-title">${c.label} <em class="tg-attr-cnt">${on}/${vals.length}</em></span>
+                <button class="tg-section-action" onclick="window.toggleAttrCategory('${c.key}')">
+                    ${on === 0 ? '모두 켜기' : '모두 끄기'}
+                </button>
+            </div>
+            <div class="tg-filter-grid tg-attr-grid">${items}</div>
+        </div>`;
+    }).join('');
+}
+
+window.toggleAttrValue = function (key, val) {
+    const s = pendingAttrs[key];
+    s.has(val) ? s.delete(val) : s.add(val);
+    renderAttrFilter();
+};
+window.toggleAttrCategory = function (key) {
+    const cat = ATTR_CATS.find(c => c.key === key);
+    const vals = attrValues(cat);
+    // 하나라도 켜져 있으면 전부 끄고, 전부 꺼져 있으면 전부 켠다
+    pendingAttrs[key] = vals.some(v => !pendingAttrs[key].has(v)) ? new Set(vals) : new Set();
+    renderAttrFilter();
+};
+window.openAttrFilter = function () {
+    ATTR_CATS.forEach(c => pendingAttrs[c.key] = new Set(hiddenAttrs[c.key]));
+    renderAttrFilter();
+    document.getElementById('modal-attr-filter').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
+    initScrollFade(document.getElementById('attr-filter-scroll'));
+};
+window.closeAttrFilter = function () {
+    document.getElementById('modal-attr-filter').classList.add('hidden');
+    document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
+};
+window.applyAttrFilter = function () {
+    ATTR_CATS.forEach(c => hiddenAttrs[c.key] = new Set(pendingAttrs[c.key]));
+    _updateAttrFilterCount();
+    window.closeAttrFilter();
+    handleSortFilter(); triggerGridRefresh();
+};
+window.resetAttrFilter = function () {
+    ATTR_CATS.forEach(c => pendingAttrs[c.key] = new Set());
+    renderAttrFilter();
+};
+/* 모달을 열지 않고 상태만 초기화 (타이틀 클릭 / 전체 해제용) */
+window.clearAttrFilter = function () {
+    ATTR_CATS.forEach(c => { hiddenAttrs[c.key] = new Set(); pendingAttrs[c.key] = new Set(); });
+    _updateAttrFilterCount();
+};
+
+/* 배틀 아이템 태그 → '무작위 배틀 아이템 생성' 상태 태그로 동기화.
+ * battle_item_DB.csv 를 단일 출처로 삼아, 아이템이 추가/수정돼도
+ * 부가 효과 필터가 자동으로 따라오게 한다. (수기 관리 시 어긋나는 것을 방지) */
+function syncBattleItemTags() {
+    const st = allStateDB.find(d => d.state_name === '무작위 배틀 아이템 생성');
+    if (!st || !battleItemDB.length) return;
+
+    const tags = new Set();
+    battleItemDB.forEach(r => (r.tag || '').split(',').forEach(t => {
+        const v = t.trim();
+        if (v) tags.add(v);
+    }));
+    tags.add('배틀 아이템 생성');          // 생성 효과 자체로도 검색되도록
+    st.tag = [...tags].join(',');
 }
 
 function setupFilterModal() { refreshFilterList(); }
@@ -326,6 +491,18 @@ function updateFilterTags() {
         });
     });
 
+    // 표시 필터 칩 — 카테고리별로 몇 개를 숨겼는지 한 칩에 묶는다
+    ATTR_CATS.forEach(c => {
+        const n = hiddenAttrs[c.key].size;
+        if (!n) return;
+        makeChip(`${c.label} ${n}개 숨김`, 'tg-chip-attr', () => {
+            hiddenAttrs[c.key] = new Set();
+            pendingAttrs[c.key] = new Set();
+            _updateAttrFilterCount();
+            handleSortFilter(); triggerGridRefresh();
+        });
+    });
+
     if (chips.length > 1) {
         const clearChip = document.createElement('div');
         clearChip.className = 'tg-chip tg-chip-clear';
@@ -338,6 +515,7 @@ function updateFilterTags() {
             document.querySelectorAll('#filter-checkbox-group input:checked').forEach(cb => cb.checked = false);
             window.activeAsideFilters = { targets: [], effects: [] };
             _updateAsideFilterCount();
+            window.clearAttrFilter();
             handleSortFilter(); triggerGridRefresh();
         };
         chips.push(clearChip);
@@ -439,6 +617,8 @@ function handleSortFilter() {
         const nameMatch = _matchesKorQuery(char.name || "", query);
         if (!nameMatch) return false;
 
+        if (!passesAttrFilter(char)) return false;
+
         if (window.activeAsideFilters) {
             const aData = asideDB.find(a => a.chara_name === char.name);
             const selT = activeAsideFilters.targets.filter(t => !t.includes('무관'));
@@ -508,7 +688,17 @@ function handleSortFilter() {
     });
 
     filtered.sort((a, b) => {
-        let res = (sort === 'name') ? a.name.localeCompare(b.name) : (a[sort] || "").localeCompare(b[sort] || "") || a.name.localeCompare(b.name);
+        let res;
+        if (sort === 'release') {
+            // 출시순: 숫자 오름차순. 번호 미입력 사도는 항상 뒤로 밀되 이름순 유지
+            const na = parseInt(a.release, 10), nb = parseInt(b.release, 10);
+            res = (isNaN(na) ? Infinity : na) - (isNaN(nb) ? Infinity : nb);
+            if (!res || isNaN(res)) res = a.name.localeCompare(b.name);
+        } else if (sort === 'name') {
+            res = a.name.localeCompare(b.name);
+        } else {
+            res = (a[sort] || "").localeCompare(b[sort] || "") || a.name.localeCompare(b.name);
+        }
         return isAscending ? res : -res;
     });
 
@@ -516,7 +706,7 @@ function handleSortFilter() {
 
     const grid = document.getElementById('main-grid');
     grid.innerHTML = "";
-    if (sort === 'name') {
+    if (sort === 'name' || sort === 'release') {
         displayCards(filtered, 'main-grid');
     } else {
         const groups = filtered.reduce((acc, o) => { 
@@ -915,6 +1105,7 @@ initSortDropdown(
     document.getElementById('sortDropdown'),
     [
         { value: 'name',        label: '이름순' },
+        { value: 'release',     label: '출시순' },
         { value: 'tier',        label: '티어순' },
         { value: 'personality', label: '성격순' },
         { value: 'role',        label: '역할순' },
@@ -943,6 +1134,7 @@ window.addEventListener('keydown', (e) => {
         }
         if (typeof window.closeFilterModal === 'function') window.closeFilterModal();
         if (typeof window.closeAsideFilter === 'function') window.closeAsideFilter();
+        if (typeof window.closeAttrFilter === 'function') window.closeAttrFilter();
     }
 
     if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && isDetailVisible) {
