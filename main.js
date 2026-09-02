@@ -282,6 +282,14 @@ const ATTR_CATS = [
       mark: v => `<img class="tg-attr-ic" src="./assets/icons/role/${v}.webp" alt="">` },
     { key: 'line', label: '배치', order: ['전열', '중열', '후열', '전체열'],
       mark: v => `<img class="tg-attr-ic" src="./assets/icons/line/${v}.webp" alt="">` },
+    { key: 'Eldyne', label: '엘다인',
+      // 값이 비어 있으면 '일반 사도'. 이 카테고리만 빈 값도 선택지로 노출한다
+      allowEmpty: true,
+      fmt: v => v || '일반 사도',
+      sort: (a, b) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b)),
+      mark: v => v
+          ? `<img class="tg-attr-ic" src="./assets/icons/common_icons/Ingame_Icon_HeroGrow_Hidden.webp" alt="">`
+          : '' },
     { key: 'star', label: '성급', sort: (a, b) => (+b) - (+a),
       // 인게임 별 아이콘 (3성=금별 / 2성 이하=초록별) — makeStarHTML 과 같은 규칙
       fmt: v => {
@@ -303,7 +311,8 @@ ATTR_CATS.forEach(c => { hiddenAttrs[c.key] = new Set(); pendingAttrs[c.key] = n
 
 /* 해당 카테고리가 가질 수 있는 값 목록 (DB에서 추출, 정의된 순서 우선) */
 function attrValues(cat) {
-    const vals = [...new Set(db.map(c => (c[cat.key] || '').trim()).filter(v => v !== ''))];
+    const raw = db.map(c => (c[cat.key] || '').trim());
+    const vals = [...new Set(cat.allowEmpty ? raw : raw.filter(v => v !== ''))];
     if (cat.order) {
         const known = cat.order.filter(v => vals.includes(v));
         return [...known, ...vals.filter(v => !cat.order.includes(v)).sort()];
