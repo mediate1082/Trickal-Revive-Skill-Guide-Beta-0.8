@@ -217,8 +217,10 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     background: var(--nav-bg); border: 1px solid var(--border-soft);
     border-radius: 18px; padding: 10px 12px;
     display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-    box-shadow: 0 2px 8px var(--shadow-soft);
+    /* 카드 위에 떠 있는 상태이므로 그림자를 조금 더 준다 */
+    box-shadow: 0 4px 14px rgba(63, 79, 31, 0.13);
 }
+[data-theme="dark"] .tg-nav { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45); }
 .tg-nav-left { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 1 1 auto; }
 .tg-nav-search { flex: 0 0 auto; min-width: 220px; width: 300px; max-width: 100%; }
 
@@ -330,11 +332,15 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     position: sticky;
     top: 0;
     z-index: 50;
-    background: var(--bg-main);
-    border-bottom: 1px solid var(--border-soft);
-    box-shadow: 0 2px 6px var(--shadow-soft);
+    /* 배경·테두리를 비워 전체 폭 띠가 따라오지 않게 한다.
+       실제로 떠다니는 것은 안쪽 .tg-nav 박스뿐. */
+    background: transparent;
+    border-bottom: none;
+    box-shadow: none;
+    pointer-events: none;                 /* 빈 여백이 아래 카드 클릭을 막지 않도록 */
     transition: transform 0.25s cubic-bezier(.4,0,.2,1);
 }
+.tg-subheader > * { pointer-events: auto; }
 body.modal-open .tg-subheader {
     transform: translateY(-100%);
 }
