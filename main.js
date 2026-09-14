@@ -3,6 +3,22 @@ const { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQ
 
 /* 테마 로직은 theme.js 로 분리됨 (window.toggleTheme) */
 
+/* 필터 박스가 상단에 고정(stuck)됐는지 감지해 .is-stuck 을 붙인다.
+   높이 0 인 감시자를 박스 바로 위에 두고, 그것이 화면 위로 사라지면 고정된 상태.
+   레이아웃에 영향을 주지 않도록 height 0 을 유지한다. */
+(function watchStuck() {
+    const sub = document.querySelector('.tg-subheader');
+    if (!sub || !('IntersectionObserver' in window)) return;
+    const mark = document.createElement('div');
+    mark.setAttribute('aria-hidden', 'true');
+    mark.style.cssText = 'height:0;margin:0;padding:0;border:0;';
+    sub.parentNode.insertBefore(mark, sub);
+    new IntersectionObserver(
+        ([e]) => sub.classList.toggle('is-stuck', !e.isIntersecting),
+        { threshold: 0 }
+    ).observe(mark);
+})();
+
 // [2] 전역 변수 설정
 let db = [], 
     debuffDB = [], 
@@ -410,7 +426,6 @@ function _updateAsideFilterCount() {
 function updateFilterTags() {
     const container = document.getElementById('active-filters');
     if (!container) return;
-    container.innerHTML = '';
 
     const hasSearch = document.getElementById('search-input').value.trim() !== '';
     const hasState = selectedStatees && selectedStatees.size > 0;
@@ -499,10 +514,16 @@ function updateFilterTags() {
     }
 
     if (chips.length === 0) {
-        container.style.display = 'none';
+        /* 접히는 동안 내용이 남아 있어야 높이가 줄어드는 게 보인다.
+           전환이 끝난 뒤에 비운다. */
+        container.classList.remove('is-open');
+        clearTimeout(container._clearTimer);
+        container._clearTimer = setTimeout(() => { container.innerHTML = ''; }, 260);
         return;
     }
-    container.style.display = '';
+    clearTimeout(container._clearTimer);
+    container.innerHTML = '';
+    container.classList.add('is-open');
     const chipsDiv = document.createElement('div');
     chipsDiv.className = 'tg-chips';
     chips.forEach(c => chipsDiv.appendChild(c));

@@ -212,10 +212,11 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 .tg-help-btn:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
 
 /* ── Nav / Filter Bar ───────────────────── */
-.tg-nav-wrap { max-width: var(--page-width); margin: 0 auto; padding: 14px 16px 20px; }
+/* 좌우 8px 은 의도적으로 그리드보다 넓다. 떠 있는 층이라는 신호. */
+.tg-nav-wrap { max-width: var(--page-width); margin: 0 auto; padding: 14px 8px 20px; }
 .tg-nav {
     background: var(--nav-bg); border: 1px solid var(--border-soft);
-    border-radius: 18px; padding: 10px 12px;
+    border-radius: 18px; padding: 14px 14px;
     display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
     /* 카드 위에 떠 있는 상태이므로 그림자를 조금 더 준다 */
     box-shadow: 0 4px 14px rgba(63, 79, 31, 0.13);
@@ -342,26 +343,49 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 }
 /* 실제 조작 대상만 클릭을 받는다. 래퍼의 여백까지 auto 로 두면
    그 아래를 지나는 카드가 눌리지 않는다. */
-.tg-subheader .tg-nav,
-.tg-subheader .tg-chips { pointer-events: auto; }
-/* 박스 뒤 배경 — 스크롤한 카드가 박스 위로 삐져나오는 것을 가린다.
-   색을 --grid-bg 로 맞춰 아래 그리드와 이어 보이게 하고(정지 상태에서 경계가 안 생김),
-   맨 아래 14px 만 페이드시켜 카드가 잘리는 선이 드러나지 않게 한다. */
-.tg-subheader::before {
-    content: '';
-    position: absolute; left: 0; right: 0; top: 0; bottom: 0;
-    background: linear-gradient(to bottom,
-        var(--grid-bg) calc(100% - 14px), transparent 100%);
-    pointer-events: none;
-    z-index: -1;
+.tg-subheader .tg-nav { pointer-events: auto; }
+
+/* 정지 상태에서는 아래 그리드와 같은 색으로 칠해 경계를 없앤다.
+   (--bg-main #F7FBEF 과 --grid-bg #F2F8E6 이 맞닿으면 근거 없는 선이 보인다)
+   고정되면 투명으로 돌아가 전체 폭 띠가 생기지 않는다. */
+.tg-subheader:not(.is-stuck) { background: var(--grid-bg); }
+
+/* 상단에 고정된 동안에만 박스에 배경을 준다.
+   정지 상태에서는 배경이 없어 그리드와 경계가 생기지 않는다.
+   전체 폭 띠를 쓰지 않으므로 카드가 화면을 가로지르는 선에 잘리지 않는다. */
+.tg-subheader.is-stuck .tg-nav {
+    background: color-mix(in srgb, var(--nav-bg) 78%, transparent);
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    box-shadow: 0 6px 20px rgba(63, 79, 31, 0.16);
+}
+[data-theme="dark"] .tg-subheader.is-stuck .tg-nav {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+/* backdrop-filter 미지원 브라우저는 불투명 배경으로 떨어진다 */
+@supports not (backdrop-filter: blur(1px)) {
+    .tg-subheader.is-stuck .tg-nav { background: var(--nav-bg); }
 }
 body.modal-open .tg-subheader {
     transform: translateY(-100%);
 }
 
 /* ── Active Filter Chips ─────────────────── */
-.tg-chips-wrap { max-width: var(--page-width); margin: 0 auto; padding: 0 16px 10px; }
-.tg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* 칩 영역 — 배경을 그리드와 같은 색으로 전체 폭에 깔아 경계가 생기지 않게 한다.
+   가운데 정렬은 안쪽 .tg-chips 가 맡는다. */
+.tg-chips-wrap {
+    background: var(--grid-bg);
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.24s cubic-bezier(.4,0,.2,1);
+}
+.tg-chips-wrap.is-open { max-height: 140px; }
+/* ⚠ 배경을 가진 이 래퍼에는 opacity 전환을 걸지 말 것.
+   반투명해지는 순간 뒤의 --bg-main 이 비쳐 더 밝은 띠가 생긴다.
+   페이드가 필요하면 배경이 없는 안쪽 .tg-chips 에 건다. */
+.tg-chips { opacity: 0; transition: opacity 0.16s ease; }
+.tg-chips-wrap.is-open .tg-chips { opacity: 1; }
+.tg-chips { max-width: var(--page-width); margin: 0 auto; padding: 0 16px 10px;
+            display: flex; flex-wrap: wrap; gap: 6px; }
 .tg-chip {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 5px 12px; border-radius: 999px;
