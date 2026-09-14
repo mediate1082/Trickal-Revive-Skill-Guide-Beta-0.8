@@ -2,4 +2,4 @@
    배포할 때 이 숫자만 올리면 CSS·JS·CSV 캐시가 전 페이지에서 갱신됩니다.
    index.html, tiermaker.html 등 모든 페이지가 이 파일 하나를 참조합니다.
    ⚠ 이 파일 자체는 캐시 버스팅 대상이 아니므로 짧은 캐시가 걸릴 수 있습니다. */
-var APP_VERSION = '1.4.2';
+var APP_VERSION = '1.4.3';

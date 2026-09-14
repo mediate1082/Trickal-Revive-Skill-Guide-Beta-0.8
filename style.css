@@ -61,6 +61,9 @@
     --tier-1star:   #BCD3C7;
     --tier-default: #e67e22;
     --inset-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08);
+    /* 본문 최대 폭 — 헤더·네비·칩·카드 그리드·추천 페이지가 모두 이 값을 쓴다.
+       카드 6칸을 유지하려면 1160px 이상이어야 한다. */
+    --page-width: 1160px;
 
     /* 신규 토큰 — 다크 모드 대응 */
     --modal-card-bg:            #FFFFFF;
@@ -181,7 +184,7 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     padding: 0;
 }
 .tg-header-inner {
-    max-width: 980px; margin: 0 auto; padding: 10px 16px;
+    max-width: var(--page-width); margin: 0 auto; padding: 10px 16px;
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
 }
 .tg-accent-strip { height: 3px; background: var(--accent-green); }
@@ -209,7 +212,7 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 .tg-help-btn:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
 
 /* ── Nav / Filter Bar ───────────────────── */
-.tg-nav-wrap { max-width: 980px; margin: 0 auto; padding: 8px 16px 10px; }
+.tg-nav-wrap { max-width: var(--page-width); margin: 0 auto; padding: 8px 16px 10px; }
 .tg-nav {
     background: var(--nav-bg); border: 1px solid var(--border-soft);
     border-radius: 18px; padding: 10px 12px;
@@ -337,7 +340,7 @@ body.modal-open .tg-subheader {
 }
 
 /* ── Active Filter Chips ─────────────────── */
-.tg-chips-wrap { max-width: 980px; margin: 0 auto; padding: 0 16px 10px; }
+.tg-chips-wrap { max-width: var(--page-width); margin: 0 auto; padding: 0 16px 10px; }
 .tg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .tg-chip {
     display: inline-flex; align-items: center; gap: 6px;
@@ -399,7 +402,7 @@ body.modal-open .tg-subheader {
     }
 }
 .tg-grid {
-    max-width: 980px; margin: 0 auto; padding: 0 16px;
+    max-width: var(--page-width); margin: 0 auto; padding: 0 16px;
     display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px;
 }
 
@@ -2170,7 +2173,7 @@ body.tm-is-dragging .tm-add-slot { display: none; }
 .rc-brand-icon { width: 52px; height: 52px; flex-shrink: 0; object-fit: contain; }
 .rc-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
 
-.rc-main { max-width: 980px; margin: 0 auto; padding: 22px 16px 60px; }
+.rc-main { max-width: var(--page-width); margin: 0 auto; padding: 22px 16px 60px; }
 
 .rc-help {
     background: var(--accent-soft); border: 1px solid var(--border-soft);
