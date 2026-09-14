@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사도 추천 — 트릭컬 스킬 가이드</title>
+    <meta property="og:title" content="콘텐츠별 사도 추천 — 트릭컬 스킬 가이드">
+    <meta property="og:description" content="리세마라, 뉴비, 레이드 등 콘텐츠별로 유용한 사도를 정리했습니다">
+    <script src="theme.js"></script>
+    <link rel="icon" href="assets/icons/common_icons/NerIcon.webp" type="image/webp">
+    <script src="version.js"></script>
+    <script>
+        document.write('<link rel="stylesheet" href="style.css?v=' + APP_VERSION + '">');
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+</head>
+<body>
+
+<header class="tg-header">
+    <div class="tg-header-inner">
+        <a href="./" class="rc-brand" aria-label="메인으로 돌아가기" title="메인으로 돌아가기">
+            <img class="rc-brand-icon" src="assets/icons/common_icons/아이콘_침략.png" alt="">
+            <span class="rc-brand-text">
+                <span class="tg-eyebrow">Chara Recommend</span>
+                <span class="tg-title main-title">사도 <em>추천</em></span>
+            </span>
+        </a>
+
+        <div style="display:flex;align-items:center;gap:8px;">
+            <a href="./tiermaker.html" class="tg-tier-btn" aria-label="티어 메이커" title="티어 메이커">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
+                    <path d="M8 21l8 0"/><path d="M12 17l0 4"/><path d="M7 4l10 0"/>
+                    <path d="M17 4v8a5 5 0 0 1 -10 0v-8"/>
+                    <path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+                    <path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
+                </svg>
+                <span class="tm-btn-text">티어 메이커</span>
+            </a>
+            <button id="theme-toggle" class="tg-theme-toggle" aria-label="테마 전환" title="테마 전환" onclick="window.toggleTheme()"></button>
+            <button class="tg-help-btn" aria-label="도움말" title="도움말" onclick="document.getElementById('rc-help').hidden = !document.getElementById('rc-help').hidden">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 8C8 5.79 9.79 4 12 4s4 1.79 4 4c0 2.5-4 4-4 6"/>
+                    <circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="rc-main">
+    <div id="rc-help" class="rc-help" hidden>
+        <b>이 페이지는 콘텐츠별로 어떤 사도를 키우면 좋은지 정리한 문서입니다.</b>
+        소분류 제목에 마우스를 올리면 해당 콘텐츠 설명이 나옵니다.
+        추천 순서는 왼쪽이 우선순위가 높습니다. 사도 카드에 마우스를 올리면 추천 이유를 볼 수 있습니다.
+    </div>
+
+    <div id="rc-body">
+        <div class="rc-loading">데이터 로딩 중…</div>
+    </div>
+</main>
+
+<div id="modal-detail" class="modal-overlay hidden">
+    <!-- ui.js의 openDetailModal이 이 안을 innerHTML로 완전히 채움 -->
+</div>
+
+<footer class="tg-footer">
+    <span>트릭컬 리바이브 © EPIDGames · 스킬 가이드 제작 by mediate1082</span>
+    <span>트릭컬 커뮤니티 공동 연구를 기반으로 작성됩니다</span>
+</footer>
+
+<script>
+    (function () {
+        var t = document.createElement('script');
+        t.type = 'module';
+        t.src = 'recommend.js?v=' + APP_VERSION;
+        document.body.appendChild(t);
+    })();
+</script>
+</body>
+</html>

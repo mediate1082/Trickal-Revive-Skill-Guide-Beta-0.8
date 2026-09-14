@@ -4,16 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>티어 메이커 — 트릭컬 스킬 가이드</title>
-    <script>
-    (function () {
-        var s = localStorage.getItem('theme');
-        var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.setAttribute('data-theme', s || (d ? 'dark' : 'light'));
-    })();
-    </script>
+    <script src="theme.js"></script>
     <link rel="icon" href="assets/icons/common_icons/NerIcon.webp" type="image/webp">
+    <script src="version.js"></script>
     <script>
-        var APP_VERSION = '1.3.52';
         document.write('<link rel="stylesheet" href="style.css?v=' + APP_VERSION + '">');
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -22,6 +16,13 @@
 
 <div class="tm-header">
     <div class="tm-header-left">
+            <a href="./recommend.html" class="tg-tier-btn" aria-label="사도 추천" title="콘텐츠별 사도 추천">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M15 9 L10.5 10.5 L9 15 L13.5 13.5 Z"/>
+                </svg>
+                <span class="tm-btn-text">사도 추천</span>
+            </a>
         <a href="./" class="tm-hbtn tm-hbtn-back" aria-label="메인으로 돌아가기" title="메인으로 돌아가기">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
                  stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -129,21 +130,42 @@
     </div>
 </div>
 
-<script src="tiermaker.js?v=1.3.52"></script>
 <script>
-window.toggleTheme = function () {
-    const cur = document.documentElement.getAttribute('data-theme');
-    const next = cur === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-};
-
+    document.write('<scr' + 'ipt src="tiermaker.js?v=' + APP_VERSION + '"><\/scr' + 'ipt>');
+</script>
+<script>
 (async function () {
     const v = APP_VERSION;
     const res = await fetch('./data/DB.csv?v=' + v);
     const text = await res.text();
     window._tmDB = Papa.parse(text, { header: true, skipEmptyLines: true, trimHeaders: true }).data;
     window.dispatchEvent(new Event('tm-db-loaded'));
+})();
+</script>
+
+<!-- 모바일 경고 토스트 — 드래그 앤 드롭이 터치에서 동작하지 않아 티어 메이커에만 표시 -->
+<div id="mobile-toast" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    z-index:1500;background:var(--text-dark);color:#fff;border-radius:14px;
+    padding:13px 18px 13px 16px;display:none;align-items:center;gap:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);font-size:0.84rem;font-weight:600;
+    font-family:'OneMobilePop',sans-serif;white-space:nowrap;max-width:calc(100vw - 32px);">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FBBF24" stroke-width="2.2"
+         stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span>티어 메이커는 PC 환경에서 이용해 주세요</span>
+    <button onclick="document.getElementById('mobile-toast').style.display='none';sessionStorage.setItem('mob-warn','1')"
+        style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:8px;
+        padding:4px 10px;cursor:pointer;font-size:0.8rem;font-family:inherit;flex-shrink:0;">닫기</button>
+</div>
+<script>
+(function(){
+    if(sessionStorage.getItem('mob-warn')) return;
+    if(window.innerWidth < 768 || /Mobi|Android|iPhone/i.test(navigator.userAgent)){
+        var t = document.getElementById('mobile-toast');
+        t.style.display = 'flex';
+    }
 })();
 </script>
 

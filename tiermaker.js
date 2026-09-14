@@ -670,7 +670,7 @@ function _tmCardPickable(char) {
     return `<div class="char-card tm-card tm-pick-card" draggable="false" data-name="${safeName}"
         onclick="window._tmPickChar(this.dataset.name)">
         <div class="${isRes ? 'card-top bg-resonance' : 'card-top'}" style="${topSt};pointer-events:none">
-            <img draggable="false" src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img"
+            <img draggable="false" src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img" loading="lazy" decoding="async"
                 style="width:100%;height:100%;object-fit:cover;pointer-events:none"
                 onerror="this.src='./assets/icons/chara_image/default.webp'">
             <img draggable="false" src="./assets/icons/personality/${char.personality}.webp"

@@ -1,39 +1,7 @@
 const { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter, renderFilterCheckbox, updateSegmentedIndicator }
     = await import('./ui.js?v=' + (window.APP_VERSION || ''));
 
-// ── 테마 (라이트/다크) ─────────────────────────
-const _SVG_SUN  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>`;
-const _SVG_MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
-
-function _updateThemeIcon(theme) {
-    const btn = document.getElementById('theme-toggle');
-    if (btn) btn.innerHTML = theme === 'dark' ? _SVG_SUN : _SVG_MOON;
-}
-
-(function initTheme() {
-    const saved = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = saved || (prefersDark ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', theme);
-    _updateThemeIcon(theme);
-})();
-
-window.toggleTheme = function () {
-    const btn = document.getElementById('theme-toggle');
-    const current = document.documentElement.getAttribute('data-theme') || 'light';
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-    _updateThemeIcon(next);
-
-    if (btn) {
-        btn.classList.remove('is-pulsing');
-        // eslint-disable-next-line no-unused-expressions
-        btn.offsetWidth;
-        btn.classList.add('is-pulsing');
-        btn.addEventListener('animationend', () => btn.classList.remove('is-pulsing'), { once: true });
-    }
-};
+/* 테마 로직은 theme.js 로 분리됨 (window.toggleTheme) */
 
 // [2] 전역 변수 설정
 let db = [], 
@@ -867,7 +835,10 @@ async function displayCards(data, id, append = false) {
     
     const activeContext = data; 
 
-    data.forEach(char => {
+    /* 첫 화면에 보이는 앞쪽 카드는 즉시 로드, 나머지만 지연.
+       전부 lazy 로 두면 초기 표시가 오히려 늦어진다. */
+    const EAGER_COUNT = 10;
+    data.forEach((char, _idx) => {
         const card = document.createElement('div');
         const pData = PERSONALITY_COLORS[char.personality] || PERSONALITY_COLORS['공명'];
         const isResonance = char.personality === '공명';
@@ -897,7 +868,7 @@ async function displayCards(data, id, append = false) {
 
         card.innerHTML = `
             <div class="${topBgClass}" style="${topStyle}">
-                <img src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img"
+                <img src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img" loading="${_idx < EAGER_COUNT ? 'eager' : 'lazy'}" decoding="async"
                     style="width: 100%; height: 100%; object-fit: cover;"
                     onerror="this.src='./assets/icons/chara_image/default.webp'">
                 
@@ -915,13 +886,13 @@ async function displayCards(data, id, append = false) {
 
             <div class="card-bottom" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80px; padding: 8px 6px; border-radius: 0 0 15px 15px;">
 
-                <div class="char-name" style="font-size: 1rem; font-weight: 800; margin-bottom: 8px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                <div class="char-name" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 8px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${char.name}
                 </div>
                 
                 <div style="display: flex; align-items: center; width: 100%; gap: 4px; padding: 0 4px;">
                     ${makeSkillGauge('저', char.low_grade)}
-                    <div style="width: 1px; height: 10px; background: #eee; flex-shrink: 0;"></div>
+                    <div style="width: 1px; height: 10px; background: var(--border-soft); flex-shrink: 0;"></div>
                     ${makeSkillGauge('고', char.high_grade)}
                 </div>
             </div>`;
@@ -932,18 +903,16 @@ async function displayCards(data, id, append = false) {
 
 // 등급 텍스트에 따른 게이지 정보를 반환하는 헬퍼 함수
 function getGaugeInfo(grade) {
-    if (!grade || grade === 'X') return { width: '0%', color: '#cbd5e1', label: 'X' };
+    /* color = 막대 채움, text = 라벨 글자.
+       라벨은 흰 카드 위 대비를 맞추려고 더 진한 토큰을 쓴다 (다크에서는 자동으로 밝아짐). */
+    if (!grade || grade === 'X')
+        return { width: '0%', color: 'var(--grade-x)', text: 'var(--grade-x-text)', label: 'X' };
     const g = grade.trim();
-    // 텍스트에서 숫자와 기호만 추출 (예: "~ Lv. 10+" -> "10+")
     const label = g.match(/\d+[\+\-]?/g) ? g.match(/\d+[\+\-]?/g)[0] : g;
-    // 1. [초록색] 10+ (100% 게이지)
-    if (g.includes('10+')) { return { width: '100%', color: '#22C55E', label };}
-    // 2. [주황색] 7+ (65% 게이지)
-    if (g.includes('7+')) {return { width: '65%', color: '#F59E0B', label }; }
-    // 3. [빨간색] 7- (30% 게이지)
-    if (g.includes('7-')) {return { width: '30%', color: '#EF4444', label };}
-    // 기본값 (예외 상황 대비)
-    return { width: '40%', color: '#94a3b8', label };
+    if (g.includes('10+')) return { width: '100%', color: 'var(--grade-10)', text: 'var(--grade-10-text)', label };
+    if (g.includes('7+'))  return { width: '65%',  color: 'var(--grade-7p)', text: 'var(--grade-7p-text)', label };
+    if (g.includes('7-'))  return { width: '30%',  color: 'var(--grade-7m)', text: 'var(--grade-7m-text)', label };
+    return { width: '40%', color: 'var(--grade-x)', text: 'var(--grade-x-text)', label };
 }
 
 // 게이지 바 HTML을 생성하는 함수
@@ -951,11 +920,11 @@ function makeSkillGauge(typeLabel, grade) {
     const info = getGaugeInfo(grade);
     return `
         <div style="display: flex; align-items: center; gap: 2px; flex: 1; min-width: 0;">
-            <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 800; flex-shrink: 0;">${typeLabel}</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 800; flex-shrink: 0;">${typeLabel}</span>
             <div style="flex: 1; height: 5px; background: var(--border-soft); border-radius: 3px; overflow: hidden; min-width: 0;">
                 <div style="width: ${info.width}; background: ${info.color}; height: 100%; border-radius: 3px;"></div>
             </div>
-            <span style="font-size: 0.6rem; color: ${info.color}; font-weight: 800; flex-shrink: 0; min-width: 14px; text-align: right;">${info.label}</span>
+            <span style="font-size: 0.75rem; color: ${info.text}; font-weight: 800; flex-shrink: 0; min-width: 18px; text-align: right;">${info.label}</span>
         </div>
     `;
 }

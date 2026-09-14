@@ -20,7 +20,6 @@
     /* Legacy */
     --card-bg: #ECF7CD;
     --color-O: #27ae60; --color-delta: #d35400; --color-X: #c0392b;
-    --max-width: 1200px;
     /* 의미 컬러 (필터 모달) */
     --buff:        #348AF1;
     --buff-pale:   #DCEBFD;
@@ -50,6 +49,12 @@
     --grade-7p:  #F59E0B;
     --grade-7m:  #EF4444;
     --grade-x:   #94a3b8;
+    /* 게이지 라벨 전용 — 막대는 --grade-*, 글자는 아래 값.
+       라이트는 흰 카드 위 4.5:1 이상을 맞추려고 더 진하다. */
+    --grade-10-text: #15803D;
+    --grade-7p-text: #B45309;
+    --grade-7m-text: #B91C1C;
+    --grade-x-text:  #64748B;
     --tier-meta:    #E91E63;
     --tier-pers:    #2980B9;
     --tier-unfit:   #7F8C8D;
@@ -67,7 +72,7 @@
     --switch-off-bg:            #d6dec0;
     --attr-pill-bg:             #F4F8E6;
     --footer-bg:                #FFFFFF;
-    --overlay-bg:               rgba(63,79,31,0.45);
+    --overlay-bg:               rgba(0,0,0,0.8);
     --recommend-summary-bg:     #FFF7ED;
     --recommend-summary-border: #fed7aa;
     --recommend-note-bg:        #FFFBEB;
@@ -127,6 +132,11 @@
     --grade-10:      #4ADE80;
     --grade-7p:      #FBBF24;
     --grade-7m:      #F87171;
+    /* 다크 카드(--modal-card-bg) 위에서는 밝은 쪽이 읽힌다 */
+    --grade-10-text: #4ADE80;
+    --grade-7p-text: #FBBF24;
+    --grade-7m-text: #F87171;
+    --grade-x-text:  #A1A1AA;
 
     /* ── 신규 토큰 다크 값 ── */
     --modal-card-bg:            #27272A;
@@ -138,7 +148,7 @@
     --switch-off-bg:            #3F3F45;
     --attr-pill-bg:             #2D2D31;
     --footer-bg:                #232327;
-    --overlay-bg:               rgba(0,0,0,0.7);
+    --overlay-bg:               rgba(0,0,0,0.8);
     --recommend-summary-bg:     #2A1F10;
     --recommend-summary-border: #4A3818;
     --recommend-note-bg:        #2A2410;
@@ -338,10 +348,10 @@ body.modal-open .tg-subheader {
 }
 .tg-chip .tg-x { opacity: 0.45; cursor: pointer; font-size: 0.7rem; transition: opacity 0.1s, color 0.1s; }
 .tg-chip .tg-x:hover { opacity: 1; color: #DC2626; }
-.tg-chip-buff    { background: #DBEAFE; border-color: #93C5FD; color: #1D4ED8; }
-.tg-chip-debuff  { background: #FFE4E6; border-color: #FCA5A5; color: #BE123C; }
-.tg-chip-neutral { background: #F3E8FF; border-color: #C084FC; color: #7E22CE; }
-.tg-chip-aside  { background: #EDE9FE; border-color: #C4B5FD; color: #5B21B6; }
+.tg-chip-buff    { background: var(--buff-pale); border-color: var(--buff-soft); color: var(--buff-text); }
+.tg-chip-debuff  { background: var(--debuff-pale); border-color: var(--debuff-soft); color: var(--debuff-text); }
+.tg-chip-neutral { background: var(--neutral-pale); border-color: var(--neutral-soft); color: var(--neutral-text); }
+.tg-chip-aside  { background: var(--aside-accent-soft); border-color: var(--aside-accent-border); color: var(--aside-accent-strong); }
 .tg-chip-clear  { background: var(--modal-card-bg); border-color: var(--border-soft); color: var(--text-muted); cursor: pointer; }
 .tg-chip-clear:hover { background: #FEF2F2; border-color: #FCA5A5; color: #DC2626; }
 
@@ -390,7 +400,7 @@ body.modal-open .tg-subheader {
 }
 .tg-grid {
     max-width: 980px; margin: 0 auto; padding: 0 16px;
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 14px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px;
 }
 
 /* ── Responsive ──────────────────────── */
@@ -491,15 +501,15 @@ body.modal-open .tg-subheader {
     .card-bottom div[style*="gap: 4px"] { gap: 2px !important; }
     .card-bottom div[style*="min-width: 0"] { gap: 1px !important; }
     .card-bottom div[style*="height: 5px"] { min-width: 0 !important; }
-    .card-bottom span { font-size: 0.6rem !important; min-width: auto !important; }
-    .card-bottom span[style*="text-align: right"] { font-size: 0.6rem !important; min-width: 15px !important; }
+    .card-bottom span { font-size: 0.7rem !important; min-width: auto !important; }
+    .card-bottom span[style*="text-align: right"] { font-size: 0.7rem !important; min-width: 17px !important; }
 }
 
 /* ═══════════════════════════════════════════
    MODALS
 ═══════════════════════════════════════════ */
 
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100%; background: var(--overlay-bg); display: flex; justify-content: center; align-items: center; z-index: 2000; }
 .modal-content {
     background: var(--modal-card-bg); width: 92%; max-width: 500px; padding: 0; border-radius: 20px;
     max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; position: relative;
@@ -537,7 +547,7 @@ body.modal-open .tg-subheader {
 ════════════════════════════════════ */
 .tg-modal-overlay {
     position: fixed; inset: 0; width: 100vw;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--overlay-bg);
     display: flex; align-items: center; justify-content: center;
     z-index: 2000; padding: 16px;
     animation: tg-fade 0.18s ease-out;
@@ -812,6 +822,39 @@ body.modal-open .tg-subheader {
 .group-title[data-line="후열"]   { background: #e8f4fc; border-color: #3498DB; color: #1a4f7a; }
 .group-title[data-line="전체열"] { background: #eaecee; border-color: #2C3E50; color: #1a252f; }
 
+
+/* 정렬 그룹 타이틀 — 다크 전용. 라이트 파스텔이 다크에서 형광으로 뜨는 문제 보정.
+   배경은 카드색에 accent 를 섞고, 글자는 accent 를 그대로 쓴다. */
+[data-theme="dark"] .group-title[data-tier],
+[data-theme="dark"] .group-title[data-personality],
+[data-theme="dark"] .group-title[data-role],
+[data-theme="dark"] .group-title[data-line] {
+    background: color-mix(in srgb, var(--gt-accent) 16%, var(--modal-card-bg));
+    color: color-mix(in srgb, var(--gt-accent) 70%, #FFFFFF);
+}
+[data-theme="dark"] .group-title[data-tier="메타픽"]      { --gt-accent: #E91E63; }
+[data-theme="dark"] .group-title[data-tier="성격덱"]      { --gt-accent: #2980B9; }
+[data-theme="dark"] .group-title[data-tier="연구 중"]     { --gt-accent: #E67E22; }
+[data-theme="dark"] .group-title[data-tier="메타 부적합"]  { --gt-accent: #7F8C8D; }
+[data-theme="dark"] .group-title[data-tier="태생 1성"]    { --gt-accent: #BCD3C7; }
+[data-theme="dark"] .group-title[data-personality="순수"] { --gt-accent: #66C17C; }
+[data-theme="dark"] .group-title[data-personality="냉정"] { --gt-accent: #85BAEC; }
+[data-theme="dark"] .group-title[data-personality="광기"] { --gt-accent: #EE839D; }
+[data-theme="dark"] .group-title[data-personality="우울"] { --gt-accent: #C784ED; }
+[data-theme="dark"] .group-title[data-personality="활발"] { --gt-accent: #ECDC85; }
+[data-theme="dark"] .group-title[data-role="딜러"]        { --gt-accent: #E85050; }
+[data-theme="dark"] .group-title[data-role="서포터"]      { --gt-accent: #F5A623; }
+[data-theme="dark"] .group-title[data-role="탱커"]        { --gt-accent: #4A7BD5; }
+[data-theme="dark"] .group-title[data-line="전열"]        { --gt-accent: #E74C3C; }
+[data-theme="dark"] .group-title[data-line="중열"]        { --gt-accent: #27AE60; }
+[data-theme="dark"] .group-title[data-line="후열"]        { --gt-accent: #3498DB; }
+[data-theme="dark"] .group-title[data-line="전체열"]      { --gt-accent: #7A8FA6; }
+/* 공명은 무지개 그라데이션이라 다크에서는 채도만 낮춘다 */
+[data-theme="dark"] .group-title[data-personality="공명"] {
+    filter: saturate(0.55) brightness(0.5);
+    color: #F4E9FF;
+}
+
 /* 필터 적용 시 카드 목록 갱신 애니메이션 */
 @keyframes tg-grid-refresh {
     from { opacity: 0.3; transform: translateY(5px); }
@@ -834,7 +877,7 @@ body.modal-open .tg-subheader {
 /* ── 오버레이 ──────────────────────────── */
 #modal-detail {
     position: fixed; inset: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--overlay-bg);
     backdrop-filter: blur(3px);
     display: flex; align-items: center; justify-content: center;
     z-index: 2000; padding: 16px;
@@ -911,7 +954,7 @@ body.modal-open .tg-subheader {
     display: inline-block; padding: 3px 11px; border-radius: 999px;
     font-size: 0.74rem; font-weight: 800;
     background: var(--tier-color);
-    color: color-mix(in srgb, var(--tier-color) 8%, #fff);
+    color: color-mix(in srgb, var(--tier-color) 8%, var(--modal-card-bg));
     border: none;
     box-shadow: 0 1px 3px color-mix(in srgb, var(--tier-color) 35%, transparent);
 }
@@ -925,7 +968,7 @@ body.modal-open .tg-subheader {
     padding: 3px 11px 3px 9px; border-radius: 999px;
     font-size: 0.74rem; font-weight: 800;
     background: var(--eldyne-color);
-    color: color-mix(in srgb, var(--eldyne-color) 8%, #fff);
+    color: color-mix(in srgb, var(--eldyne-color) 8%, var(--modal-card-bg));
     border: none;
     box-shadow: 0 1px 3px color-mix(in srgb, var(--eldyne-color) 35%, transparent);
     line-height: 1.2; white-space: nowrap;
@@ -1040,7 +1083,7 @@ body.modal-open .tg-subheader {
 .tg-skill-card[data-type="high"]             { --card-accent: var(--skill-high); }
 .tg-skill-card[data-type="high"] .tg-skill-card-icon {
     border-color: var(--skill-high);
-    background: color-mix(in srgb, var(--skill-high) 12%, #fff);
+    background: color-mix(in srgb, var(--skill-high) 12%, var(--modal-card-bg));
 }
 .tg-skill-card[data-type="high"].is-pvp      { --card-accent: var(--skill-pvp); }
 .tg-skill-card[data-type="normal"],
@@ -1055,7 +1098,7 @@ body.modal-open .tg-subheader {
 .tg-skill-card-icon {
     width: 58px; height: 58px; border-radius: 13px;
     border: 3px solid var(--card-accent); object-fit: cover;
-    background: color-mix(in srgb, var(--card-accent) 12%, #fff);
+    background: color-mix(in srgb, var(--card-accent) 12%, var(--modal-card-bg));
     display: inline-flex; align-items: center; justify-content: center;
 }
 .tg-skill-card-icon-badge {
@@ -1094,7 +1137,7 @@ body.modal-open .tg-subheader {
 /* ── PvE/PvP 모드 스위치 ─────────────── */
 .tg-mode-switch-mini {
     position: relative; display: flex;
-    background: color-mix(in srgb, var(--card-accent) 14%, #fff);
+    background: color-mix(in srgb, var(--card-accent) 14%, var(--modal-card-bg));
     padding: 3px; border-radius: 11px;
     border: 1px solid color-mix(in srgb, var(--card-accent) 30%, transparent);
     flex-shrink: 0;
@@ -1189,7 +1232,7 @@ body.modal-open .tg-subheader {
 .tg-skill-card-body:not(:has(.tg-effect-item:not(.is-hidden))) .tg-effect-empty { display: block; }
 .tg-effect-item-icon {
     width: 36px; height: 36px; flex-shrink: 0; border-radius: 8px;
-    background: color-mix(in srgb, var(--effect-color) 12%, #fff);
+    background: color-mix(in srgb, var(--effect-color) 12%, var(--modal-card-bg));
     display: inline-flex; align-items: center; justify-content: center; overflow: hidden;
 }
 .tg-effect-item-icon img { width: 100%; height: 100%; object-fit: cover; }
@@ -1626,7 +1669,7 @@ a.tg-tier-btn { text-decoration: none; }
     transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .tm-hbtn-back:hover {
-    background: var(--bg-card); border-color: var(--border-soft);
+    background: var(--modal-card-bg); border-color: var(--border-soft);
     color: var(--text-dark);
 }
 
@@ -2118,4 +2161,96 @@ body.tm-is-dragging .tm-add-slot { display: none; }
 [data-theme="dark"] .tg-chip-attr { background: #45280F; color: #FDBA74; border-color: #7C3A12; }
 @media (max-width: 600px) {
     .tg-attr-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   사도 추천 페이지 (recommend.html)
+   ══════════════════════════════════════════════════════════════ */
+.rc-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+.rc-brand-icon { width: 52px; height: 52px; flex-shrink: 0; object-fit: contain; }
+.rc-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+
+.rc-main { max-width: 980px; margin: 0 auto; padding: 22px 16px 60px; }
+
+.rc-help {
+    background: var(--accent-soft); border: 1px solid var(--border-soft);
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 20px;
+    font-size: .86rem; color: var(--text-dark); line-height: 1.65;
+}
+.rc-loading { text-align: center; padding: 60px 0; color: var(--text-muted); }
+.rc-warn {
+    background: #FFF4E5; border: 1px solid #F5C98A; color: #8A5A12;
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: .84rem;
+}
+
+/* 대분류 탭 */
+.rc-tabbar {
+    display: flex; flex-wrap: wrap; gap: 7px;
+    position: sticky; top: 0; z-index: 30;
+    padding: 12px 16px; margin: -22px -16px 4px;
+    background: var(--bg-main);
+    border-bottom: 2px solid var(--border-soft);
+}
+.rc-tab {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 16px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--border-soft); background: var(--modal-card-bg);
+    font: inherit; font-size: .92rem; font-weight: 700; color: var(--text-muted);
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.rc-tab:hover { border-color: var(--accent-green); color: var(--text-dark); }
+.rc-tab.on {
+    background: var(--accent-green-strong); border-color: var(--accent-green-strong);
+    color: #fff; font-weight: 800;
+}
+.rc-tab-icon { font-size: 1.05rem; line-height: 1; }
+.rc-panel { padding-top: 20px; }
+
+.rc-sec { margin-bottom: 26px; }
+.rc-sec-title {
+    display: flex; align-items: center; gap: 7px;
+    margin: 0 0 12px; font-size: 1.12rem; font-weight: 800; color: var(--text-dark);
+}
+.rc-sec-mark {
+    width: 18px; height: 18px; border-radius: 50%; flex: none;
+    background: var(--accent-green-strong); color: #fff;
+    font-size: .72rem; font-weight: 800; line-height: 18px; text-align: center;
+    cursor: help;
+}
+
+.rc-role { margin: 0 0 16px 4px; }
+.rc-role-title {
+    display: flex; align-items: center; gap: 7px;
+    margin: 0 0 9px; font-size: .95rem; font-weight: 800; color: var(--text-muted);
+}
+.rc-role-title img { width: 24px; height: 24px; }
+
+.rc-cards { display: flex; flex-wrap: wrap; gap: 12px; }
+.rc-card { width: 178px; flex: none; cursor: pointer; }
+
+/* 말풍선 툴팁 — 소분류 설명 / 사도 추천 이유 공용 */
+.rc-tip { position: relative; }
+.rc-tip::after {
+    content: attr(data-tip);
+    position: absolute; left: 50%; bottom: calc(100% + 9px); transform: translateX(-50%);
+    width: max-content; max-width: 270px;
+    background: var(--text-dark); color: #fff;
+    padding: 8px 11px; border-radius: 9px;
+    font-size: .78rem; font-weight: 500; line-height: 1.5; text-align: left;
+    white-space: normal; opacity: 0; pointer-events: none;
+    transition: opacity .14s ease; z-index: 60;
+}
+.rc-tip::before {
+    content: ''; position: absolute; left: 50%; bottom: calc(100% + 3px);
+    transform: translateX(-50%);
+    border: 6px solid transparent; border-top-color: var(--text-dark);
+    opacity: 0; pointer-events: none; transition: opacity .14s ease; z-index: 60;
+}
+.rc-tip:hover::after, .rc-tip:hover::before,
+.rc-tip:focus-visible::after, .rc-tip:focus-visible::before { opacity: 1; }
+
+@media (max-width: 600px) {
+    .rc-brand-icon { width: 40px; height: 40px; }
+    .rc-cards { gap: 9px; }
+    .rc-card { width: calc(50% - 5px); }
 }
