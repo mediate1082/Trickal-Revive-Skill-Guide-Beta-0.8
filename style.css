@@ -212,7 +212,7 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 .tg-help-btn:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
 
 /* ── Nav / Filter Bar ───────────────────── */
-.tg-nav-wrap { max-width: var(--page-width); margin: 0 auto; padding: 8px 16px 10px; }
+.tg-nav-wrap { max-width: var(--page-width); margin: 0 auto; padding: 14px 16px 20px; }
 .tg-nav {
     background: var(--nav-bg); border: 1px solid var(--border-soft);
     border-radius: 18px; padding: 10px 12px;
@@ -341,6 +341,16 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     transition: transform 0.25s cubic-bezier(.4,0,.2,1);
 }
 .tg-subheader > * { pointer-events: auto; }
+/* 박스 뒤 페이드 — 스크롤한 카드가 박스 위로 삐져나오는 것을 가린다.
+   전체 폭 띠와 달리 경계선이 없어 박스만 떠 있는 인상이 유지된다. */
+.tg-subheader::before {
+    content: '';
+    position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+    background: linear-gradient(to bottom,
+        var(--bg-main) 0%, var(--bg-main) 62%, transparent 100%);
+    pointer-events: none;
+    z-index: -1;
+}
 body.modal-open .tg-subheader {
     transform: translateY(-100%);
 }
