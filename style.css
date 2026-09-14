@@ -340,14 +340,18 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     pointer-events: none;                 /* 빈 여백이 아래 카드 클릭을 막지 않도록 */
     transition: transform 0.25s cubic-bezier(.4,0,.2,1);
 }
-.tg-subheader > * { pointer-events: auto; }
-/* 박스 뒤 페이드 — 스크롤한 카드가 박스 위로 삐져나오는 것을 가린다.
-   전체 폭 띠와 달리 경계선이 없어 박스만 떠 있는 인상이 유지된다. */
+/* 실제 조작 대상만 클릭을 받는다. 래퍼의 여백까지 auto 로 두면
+   그 아래를 지나는 카드가 눌리지 않는다. */
+.tg-subheader .tg-nav,
+.tg-subheader .tg-chips { pointer-events: auto; }
+/* 박스 뒤 배경 — 스크롤한 카드가 박스 위로 삐져나오는 것을 가린다.
+   색을 --grid-bg 로 맞춰 아래 그리드와 이어 보이게 하고(정지 상태에서 경계가 안 생김),
+   맨 아래 14px 만 페이드시켜 카드가 잘리는 선이 드러나지 않게 한다. */
 .tg-subheader::before {
     content: '';
     position: absolute; left: 0; right: 0; top: 0; bottom: 0;
     background: linear-gradient(to bottom,
-        var(--bg-main) 0%, var(--bg-main) 62%, transparent 100%);
+        var(--grid-bg) calc(100% - 14px), transparent 100%);
     pointer-events: none;
     z-index: -1;
 }
