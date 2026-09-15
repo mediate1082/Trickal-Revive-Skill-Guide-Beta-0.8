@@ -162,13 +162,26 @@ function _placeTip(anchor) {
     const r = anchor.getBoundingClientRect();
     const t = tip.getBoundingClientRect();
     const M = 8;
+    const GAP = 10;                               // 꼬리(13px 회전) 자리
     let left = r.left + r.width / 2 - t.width / 2;
     left = Math.max(M, Math.min(left, window.innerWidth - t.width - M));
-    let top = r.bottom + M;                       // 기본은 용어 아래
+
+    let top = r.bottom + GAP;                     // 기본은 용어 아래
+    let above = false;
     if (top + t.height > window.innerHeight - M) {
-        const above = r.top - t.height - M;       // 아래가 좁으면 위로 뒤집는다
-        top = above >= M ? above : Math.max(M, window.innerHeight - t.height - M);
+        const up = r.top - t.height - GAP;        // 아래가 좁으면 위로 뒤집는다
+        if (up >= M) { top = up; above = true; }
+        else top = Math.max(M, window.innerHeight - t.height - M);
     }
+    tip.classList.toggle('is-above', above);
+
+    /* 꼬리는 툴팁이 아니라 **용어**를 가리켜야 한다.
+       화면 가장자리에서 툴팁이 좌우로 당겨지면 둘의 중심이 어긋나므로
+       용어 중심을 툴팁 기준 좌표로 환산해 넣는다. */
+    const anchorCx = r.left + r.width / 2;
+    const tailX = Math.max(14, Math.min(anchorCx - left, t.width - 14));
+    tip.style.setProperty('--tail-x', `${Math.round(tailX)}px`);
+
     tip.style.left = `${Math.round(left)}px`;
     tip.style.top = `${Math.round(top)}px`;
 }
