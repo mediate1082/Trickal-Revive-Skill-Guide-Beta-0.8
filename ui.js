@@ -68,7 +68,24 @@ function splitGlossary(raw) {
         terms.unshift({ term, def });
         end = i;
     }
-    return { body: lines.slice(0, end).join('<br>'), terms };
+    /* 본문 **중간**에 낀 용어 줄도 걷어낸다.
+       게임은 용어 풀이 줄을 통째로 색 태그로 감싼다. 구조적 서술('전열 배치 : …')은
+       감싸지 않으므로 이게 정확한 구분 신호가 된다.
+       티그(영웅) 저학년의 '훈련의 성과 : …' 한 줄이 여기 해당한다 (전체 1건). */
+    const body = [];
+    for (let i = 0; i < end; i++) {
+        const fm = lines[i].trim().match(/^<color=[^>]+>([\s\S]*?)<\/color>$/);
+        if (fm) {
+            const inner = fm[1].replace(/<[^>]+>/g, '').trim();
+            const g = inner.match(_TERM_LINE);
+            if (g && _isTermLine(g[1].trim(), g[2].trim())) {
+                terms.push({ term: g[1].trim(), def: g[2].trim() });
+                continue;
+            }
+        }
+        body.push(lines[i]);
+    }
+    return { body: body.join('<br>'), terms };
 }
 
 /* allStateDB(버프+디버프 병합) 에서 용어 하나를 찾는다.
@@ -120,11 +137,44 @@ function wrapTerms(bodyHtml, terms, ctx) {
     }).join('');
 }
 
+/* 게임이 용어에 직접 달아둔 색 태그에서 용어를 거둔다.
+
+   인게임 텍스트는 용어를 <color=#F55471>기절</color> 로 감싼다 (399회, 색상값 하나).
+   꼬리 정의가 생략된 경우에도 색 태그는 남아 있어서, 꼬리만 보면 놓치는 것을 잡는다.
+   (티그(영웅) 저학년: 설명이 길어져 기절·넉백의 정의만 빠지고 색 태그는 그대로다)
+
+   · 'X : Y' 형태는 꼬리 줄 자체가 감싸인 것이므로 건너뛴다
+   · '<color=…>기절, 넉백</color>' 처럼 한 태그에 여럿이 들어가기도 한다 */
+function collectColorTerms(html) {
+    const out = new Set();
+    const re = /<color=[^>]+>([\s\S]*?)<\/color>/g;
+    let m;
+    while ((m = re.exec(html))) {
+        const inner = m[1].replace(/<[^>]+>/g, '').trim();
+        if (!inner || _TERM_LINE.test(inner)) continue;
+        inner.split(/\s*[,/]\s*/).forEach(p => {
+            const s = p.trim();
+            if (s && s.length <= 20) out.add(s);
+        });
+    }
+    return out;
+}
+
 /* 설명문 렌더 진입점 — 이 한 줄만 부르면 된다. */
 function renderDesc(raw, ctx) {
     if (!raw) return '';
     const { body, terms } = splitGlossary(raw);
-    return wrapTerms(body, terms, ctx);
+
+    const defs = new Map(terms.map(t => [t.term, t.def]));   // 꼬리에서 온 것 (정의 포함)
+    collectColorTerms(body).forEach(t => { if (!defs.has(t)) defs.set(t, null); });
+
+    /* 마스터에도 없고 꼬리 정의도 없으면 띄울 내용이 없다. 하이라이트하지 않는다.
+       (현재 '자랑하고 싶음', '빠직', '삼키기' 3종이 여기 해당) */
+    const usable = [];
+    defs.forEach((def, term) => {
+        if (def || lookupTerm(term, ctx)) usable.push({ term, def });
+    });
+    return wrapTerms(body, usable, ctx);
 }
 
 /* ── 용어 툴팁 ──────────────────────────────────────────────
