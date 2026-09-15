@@ -450,6 +450,48 @@ body.modal-open .tg-subheader {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px;
 }
 
+/* ── 빈 상태 (검색·필터 결과 0건) ───────────────────────
+   .tg-grid 의 자식이므로 grid-column 으로 전 열을 차지해야 한다.
+   그렇지 않으면 첫 칸(170px)에 끼어 찌그러진다. */
+.tg-no-results {
+    grid-column: 1 / -1;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: 56px 20px 64px;
+    animation: tg-no-results-in 0.24s cubic-bezier(.4, 0, .2, 1);
+}
+.tg-no-results-icon {
+    width: 88px; height: auto; margin-bottom: 18px;
+    opacity: 0.9;
+    /* 원본이 밝은 로즈라 어두운 배경에서 떠 보인다. 다크에서만 살짝 눌러준다. */
+}
+[data-theme="dark"] .tg-no-results-icon { opacity: 0.75; }
+
+.tg-no-results-title {
+    margin: 0; font-size: 1.05rem; font-weight: 800; line-height: 1.55;
+    color: var(--text-dark);
+    max-width: 26em; text-wrap: balance;
+}
+.tg-no-results-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+.tg-no-results-btn {
+    padding: 8px 16px; border-radius: 999px; cursor: pointer;
+    font-size: 0.82rem; font-weight: 700; font-family: inherit;
+    color: var(--text-dark);
+    background: var(--nav-bg);
+    border: 1.5px solid var(--border-soft);
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+.tg-no-results-btn:hover { background: var(--grid-bg); border-color: var(--text-muted); }
+.tg-no-results-btn:active { transform: translateY(1px); }
+.tg-no-results-btn:focus-visible { outline: 2px solid var(--grade-10); outline-offset: 2px; }
+
+@keyframes tg-no-results-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tg-no-results { animation: none; }
+}
+
 /* ── Responsive ──────────────────────── */
 @media (max-width: 720px) {
     .tg-nav { padding: 8px 10px; gap: 6px; }

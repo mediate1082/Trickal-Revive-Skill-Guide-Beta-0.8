@@ -423,6 +423,43 @@ function _updateAsideFilterCount() {
     if (mc) { mc.hidden = n === 0; if (n > 0) mc.textContent = `${n}개`; }
 }
 
+/* 검색어를 제외한 활성 필터 개수.
+   빈 상태에서 "필터 때문인지 검색어 때문인지" 를 가르는 데 쓴다. */
+function countActiveFilters() {
+    const aside = window.activeAsideFilters || { targets: [], effects: [] };
+    const asideN = aside.targets.filter(v => !v.includes('무관')).length
+                 + aside.effects.filter(v => !v.includes('무관')).length;
+    const attrN = ATTR_CATS.reduce((n, c) => n + hiddenAttrs[c.key].size, 0);
+    return (selectedStatees ? selectedStatees.size : 0) + asideN + attrN;
+}
+
+/* 검색어·상태이상·어사이드·표시 필터를 한 번에 해제.
+   '전체 해제' 칩과 빈 상태 버튼이 **같은 경로**를 쓰게 하려고 함수로 뺐다.
+   복제해두면 나중에 필터 종류가 늘 때 한쪽만 고치게 된다. */
+window.clearAllFilters = function () {
+    const input = document.getElementById('search-input');
+    if (input) input.value = '';
+    const clearBtn = document.getElementById('search-clear-btn');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    selectedStatees.clear();
+    document.querySelectorAll('#filter-checkbox-group input:checked').forEach(cb => cb.checked = false);
+    window.activeAsideFilters = { targets: [], effects: [] };
+    _updateAsideFilterCount();
+    window.clearAttrFilter();
+    handleSortFilter();
+    triggerGridRefresh();
+};
+
+/* 검색어만 지운다 (필터는 유지). */
+window.clearSearchOnly = function () {
+    const input = document.getElementById('search-input');
+    if (input) input.value = '';
+    const clearBtn = document.getElementById('search-clear-btn');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    handleSortFilter();
+    triggerGridRefresh();
+};
+
 function updateFilterTags() {
     const container = document.getElementById('active-filters');
     if (!container) return;
@@ -499,17 +536,7 @@ function updateFilterTags() {
         const clearChip = document.createElement('div');
         clearChip.className = 'tg-chip tg-chip-clear';
         clearChip.innerHTML = '<span>전체 해제</span>';
-        clearChip.onclick = () => {
-            document.getElementById('search-input').value = '';
-            const clearBtn = document.getElementById('search-clear-btn');
-            if (clearBtn) clearBtn.classList.add('hidden');
-            selectedStatees.clear();
-            document.querySelectorAll('#filter-checkbox-group input:checked').forEach(cb => cb.checked = false);
-            window.activeAsideFilters = { targets: [], effects: [] };
-            _updateAsideFilterCount();
-            window.clearAttrFilter();
-            handleSortFilter(); triggerGridRefresh();
-        };
+        clearChip.onclick = () => window.clearAllFilters();
         chips.push(clearChip);
     }
 
@@ -704,6 +731,17 @@ function handleSortFilter() {
 
     const grid = document.getElementById('main-grid');
     grid.innerHTML = "";
+
+    /* 결과 0건 — 예전에는 그리드가 그냥 비어서 푸터가 위로 올라붙었다.
+       "없다"만 알리지 말고 **무엇을 풀면 되는지**까지 보여준다. */
+    if (filtered.length === 0) {
+        renderEmptyState(grid, query, countActiveFilters());
+        document.getElementById('filter-count').innerText = selectedStatees.size > 0 ? String(selectedStatees.size) : '';
+        _updateAsideFilterCount();
+        updateFilterTags();
+        return;
+    }
+
     if (sort === 'name' || sort === 'release') {
         displayCards(filtered, 'main-grid');
     } else {
@@ -934,6 +972,48 @@ function getGaugeInfo(grade) {
     if (g.includes('7+'))  return { width: '65%',  color: 'var(--grade-7p)', text: 'var(--grade-7p-text)', label };
     if (g.includes('7-'))  return { width: '30%',  color: 'var(--grade-7m)', text: 'var(--grade-7m-text)', label };
     return { width: '40%', color: 'var(--grade-x)', text: 'var(--grade-x-text)', label };
+}
+
+/* 검색·필터 결과가 0건일 때 그리드 자리에 들어가는 안내.
+   원인(검색어 / 필터 / 둘 다)에 따라 문구와 버튼이 달라진다.
+   버튼은 window.clearAllFilters / clearSearchOnly 를 그대로 호출해
+   '전체 해제' 칩과 동작이 갈라지지 않게 한다. */
+function renderEmptyState(grid, query, filterCount) {
+    const hasQuery = !!query;
+    const hasFilter = filterCount > 0;
+    /* 긴 검색어가 제목을 밀어내지 않게 잘라서 보여준다 (필터링 자체는 원문 그대로). */
+    const shown = escapeHtml(query.length > 16 ? query.slice(0, 16) + '…' : query);
+
+    let title;
+    const buttons = [];
+    if (hasQuery && hasFilter) {
+        title = `‘${shown}’ 와 필터 ${filterCount}개를 모두 만족하는 사도가 없어요`;
+    } else if (hasQuery) {
+        title = `‘${shown}’ 와 일치하는 사도가 없어요`;
+    } else if (hasFilter) {
+        title = '조건에 맞는 사도가 없어요';
+    } else {
+        // 검색어도 필터도 없는데 0건이면 데이터 로딩 쪽 문제다
+        title = '사도 목록을 불러오지 못했어요';
+        buttons.push(`<button class="tg-no-results-btn" onclick="location.reload()">새로고침</button>`);
+    }
+
+    if (hasQuery) buttons.push(`<button class="tg-no-results-btn" onclick="window.clearSearchOnly()">검색어 지우기</button>`);
+    if (hasFilter) buttons.push(`<button class="tg-no-results-btn" onclick="window.clearAllFilters()">필터 초기화</button>`);
+
+    const box = document.createElement('div');
+    box.className = 'tg-no-results';
+    box.innerHTML = `
+        <img class="tg-no-results-icon" src="./assets/icons/common_icons/Icon_MustHeroWarning.webp" alt="" aria-hidden="true">
+        <p class="tg-no-results-title">${title}</p>
+        <div class="tg-no-results-actions">${buttons.join('')}</div>
+    `;
+    grid.appendChild(box);
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 // 게이지 바 HTML을 생성하는 함수
