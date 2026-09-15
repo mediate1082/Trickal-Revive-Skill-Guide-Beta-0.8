@@ -84,11 +84,11 @@ function splitGlossary(raw, ctx) {
 
     while (body.length && !body[body.length - 1].replace(/<[^>]+>/g, '').trim()) body.pop();
 
-    /* 인게임 색 태그는 용어를 가려내는 데만 쓰고 출력에서는 벗긴다.
-       <color=…> 는 표준 태그가 아니라 브라우저가 무시할 뿐이고, 하이라이트는
-       --term-accent 로 따로 칠하므로 남겨둘 이유가 없다. */
-    const clean = body.join('<br>').replace(/<\/?color(?:=[^>]*)?>/g, '');
-    return { body: clean, terms };
+    /* ⚠ 색 태그를 여기서 벗기지 말 것.
+       renderDesc 가 이 body 에서 collectColorTerms() 로 용어를 거둔다.
+       먼저 벗기면 꼬리 정의 없이 색 태그만 있는 용어를 통째로 놓친다
+       (나이아 저학년의 '기절'). 벗기는 것은 용어를 다 거둔 뒤 renderDesc 가 한다. */
+    return { body: body.join('<br>'), terms };
 }
 
 /* allStateDB(버프+디버프 병합) 에서 용어 하나를 찾는다.
@@ -168,16 +168,21 @@ function renderDesc(raw, ctx) {
     if (!raw) return '';
     const { body, terms } = splitGlossary(raw, ctx);
 
-    const defs = new Map(terms.map(t => [t.term, t.def]));   // 꼬리에서 온 것 (정의 포함)
+    const defs = new Map(terms.map(t => [t.term, t.def]));   // 풀이 줄에서 온 것 (정의 포함)
     collectColorTerms(body).forEach(t => { if (!defs.has(t)) defs.set(t, null); });
 
-    /* 마스터에도 없고 꼬리 정의도 없으면 띄울 내용이 없다. 하이라이트하지 않는다.
+    /* 마스터에도 없고 풀이 줄도 없으면 띄울 내용이 없다. 하이라이트하지 않는다.
        (현재 '자랑하고 싶음', '빠직', '삼키기' 3종이 여기 해당) */
     const usable = [];
     defs.forEach((def, term) => {
         if (def || lookupTerm(term, ctx)) usable.push({ term, def });
     });
-    return wrapTerms(body, usable, ctx);
+
+    /* 용어를 다 거둔 **뒤에** 색 태그를 벗긴다.
+       <color=…> 는 표준 태그가 아니라 브라우저가 무시할 뿐이고, 하이라이트는
+       --term-accent 로 따로 칠하므로 출력에 남길 이유가 없다. */
+    const clean = body.replace(/<\/?color(?:=[^>]*)?>/g, '');
+    return wrapTerms(clean, usable, ctx);
 }
 
 /* ── 용어 툴팁 ──────────────────────────────────────────────
