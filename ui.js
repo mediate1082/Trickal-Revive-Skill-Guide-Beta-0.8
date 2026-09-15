@@ -319,6 +319,13 @@ export function openDetailModal(char, dataContext) {
         const maxSP   = parseInt(spData['최대 SP']);
         const startSP = parseInt(spData['시작 SP']);
         const tickSP  = parseInt(spData['틱당 SP']);
+
+        /* 수치 미입력 행 방어 — sp_DB 에 이름만 있고 값이 빈 사도가 있다.
+           그대로 두면 parseInt('') 가 NaN 이 되어 'NaN / NaN', '약 NaN초' 가 노출된다.
+           측정이 비정기라 빈 행은 앞으로도 생긴다. 값이 갖춰질 때까지 블록을 통째로 숨긴다. */
+        if (!Number.isFinite(maxSP) || !Number.isFinite(startSP)
+            || !Number.isFinite(tickSP) || maxSP <= 0 || tickSP <= 0) return '';
+
         const pct     = Math.round((startSP / maxSP) * 100);
 
         const ticks   = Math.ceil((maxSP - startSP) / tickSP);
