@@ -54,37 +54,35 @@ function _isTermLine(term, def) {
 /* 설명문을 { body, terms } 로 가른다.
    꼬리에서 위로 올라가며 연속된 용어 줄만 걷어낸다.
    중간에 섞인 'X : Y' 는 건드리지 않는다 (바롱 어사이드2 의 '첫 번째 효과' 등). */
-function splitGlossary(raw) {
+function splitGlossary(raw, ctx) {
     const lines = String(raw || '').split(/<br\s*\/?>|\\n|\n/);
     const terms = [];
-    let end = lines.length;
-    for (let i = lines.length - 1; i >= 0; i--) {
-        const plain = lines[i].replace(/<[^>]+>/g, '').trim();
-        if (!plain) { if (i === end - 1) end = i; continue; }
-        const m = plain.match(_TERM_LINE);
-        if (!m) break;
-        const term = m[1].trim(), def = m[2].trim();
-        if (!_isTermLine(term, def)) break;
-        terms.unshift({ term, def });
-        end = i;
-    }
-    /* 본문 **중간**에 낀 용어 줄도 걷어낸다.
-       게임은 용어 풀이 줄을 통째로 색 태그로 감싼다. 구조적 서술('전열 배치 : …')은
-       감싸지 않으므로 이게 정확한 구분 신호가 된다.
-       티그(영웅) 저학년의 '훈련의 성과 : …' 한 줄이 여기 해당한다 (전체 1건). */
     const body = [];
-    for (let i = 0; i < end; i++) {
-        const fm = lines[i].trim().match(/^<color=[^>]+>([\s\S]*?)<\/color>$/);
-        if (fm) {
-            const inner = fm[1].replace(/<[^>]+>/g, '').trim();
-            const g = inner.match(_TERM_LINE);
-            if (g && _isTermLine(g[1].trim(), g[2].trim())) {
-                terms.push({ term: g[1].trim(), def: g[2].trim() });
+
+    for (const line of lines) {
+        const s = line.trim();
+        const fm = s.match(/^<color=[^>]+>([\s\S]*?)<\/color>$/);   // 줄 전체가 색 태그
+        const inner = (fm ? fm[1] : s).replace(/<[^>]+>/g, '').trim();
+        const m = inner.match(_TERM_LINE);
+        if (m) {
+            const term = m[1].trim(), def = m[2].trim();
+            /* 걷어내는 조건 — 둘 다 만족해야 한다.
+               (1) 모양이 용어 풀이여야 한다 (_isTermLine: 수치·서수·배치열 제외)
+               (2) 게임이 용어로 표시했거나(줄 전체 색 태그) 마스터에 등록된 상태이상이어야 한다
+
+               (2)가 없으면 **본문이 날아간다.** 셰이디(역전) 저학년의
+               '스피키의 호박 : 가운데에 있는 아군에게 호박을 던진다.' 세 줄,
+               네티 일반공격의 광물 세 줄, 슈로·포셔·앨리스의 선택지 나열이
+               전부 'X : Y' 모양이지만 스킬 본문이다. 위치로는 구분되지 않는다. */
+            if (_isTermLine(term, def) && (fm || lookupTerm(term, ctx))) {
+                terms.push({ term, def });
                 continue;
             }
         }
-        body.push(lines[i]);
+        body.push(line);
     }
+
+    while (body.length && !body[body.length - 1].replace(/<[^>]+>/g, '').trim()) body.pop();
     return { body: body.join('<br>'), terms };
 }
 
@@ -163,7 +161,7 @@ function collectColorTerms(html) {
 /* 설명문 렌더 진입점 — 이 한 줄만 부르면 된다. */
 function renderDesc(raw, ctx) {
     if (!raw) return '';
-    const { body, terms } = splitGlossary(raw);
+    const { body, terms } = splitGlossary(raw, ctx);
 
     const defs = new Map(terms.map(t => [t.term, t.def]));   // 꼬리에서 온 것 (정의 포함)
     collectColorTerms(body).forEach(t => { if (!defs.has(t)) defs.set(t, null); });
