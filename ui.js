@@ -36,6 +36,8 @@ const COLORS = {
 
 const _TERM_LINE   = /^\s*([^:<>\n]{1,20}?)\s*:\s*(.+?)\s*$/;
 const _TERM_ORDINAL = /^(첫|두|세|네|다섯|여섯)\s*번째/;
+/* '전열 배치 : 교차 베기로 …' 처럼 배치열별 효과를 늘어놓는 것도 용어가 아니라 본문 */
+const _TERM_LINE_POS = /배치\s*$/;
 
 /* 꼬리 줄이 '용어 풀이'인지 판정.
    - '첫 번째 효과 : …' 는 용어가 아니라 본문의 구조적 서술이다
@@ -43,7 +45,7 @@ const _TERM_ORDINAL = /^(첫|두|세|네|다섯|여섯)\s*번째/;
      (진짜 용어 풀이는 '…한다 / …된다 / …의미한다' 로 끝난다) */
 function _isTermLine(term, def) {
     if (!term || !def) return false;
-    if (_TERM_ORDINAL.test(term)) return false;
+    if (_TERM_ORDINAL.test(term) || _TERM_LINE_POS.test(term)) return false;
     if (/[0-9{}%]/.test(term)) return false;
     if (def.length < 7) return false;
     return /다$/.test(def.replace(/[.\s]+$/, ''));
