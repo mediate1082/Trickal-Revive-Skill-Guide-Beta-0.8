@@ -295,8 +295,68 @@
         <!-- ui.js의 openDetailModal이 이 안을 innerHTML로 완전히 채움 -->
     </div>
 </div>
-    <div id="modal-info" class="modal-overlay hidden" onclick="closeModal('modal-info')">
-        <div class="modal-content" onclick="event.stopPropagation()"><h3 style="margin:0;">범례</h3><p id="info-content" style="white-space:pre-wrap;"></p><button class="btn" style="width:100%; margin-top:15px;" onclick="closeModal('modal-info')">닫기</button></div>
+    <div id="modal-info" class="tg-modal-overlay hidden" onclick="closeModal('modal-info')">
+        <div class="tg-modal-card" onclick="event.stopPropagation()">
+            <div class="tg-modal-header">
+                <div class="tg-modal-title-wrap">
+                    <div class="tg-modal-eyebrow">GUIDE INFO</div>
+                    <h3 class="tg-modal-title">스킬 가이드 <em>도움말</em></h3>
+                </div>
+                <button class="tg-modal-close" onclick="closeModal('modal-info')" aria-label="닫기">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="tg-modal-body">
+                <div class="tg-filter-scroll">
+
+                    <section class="tg-help-sec">
+                        <h4 class="tg-help-h">스킬 강화 추천도</h4>
+                        <!-- 게이지 샘플은 카드와 같은 makeSkillGauge() 로 그린다 (main.js: openInfoModal) -->
+                        <ul class="tg-help-grades" id="help-grades"></ul>
+                    </section>
+
+                    <section class="tg-help-sec tg-help-caution">
+                        <h4 class="tg-help-h">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+                                <line x1="12" y1="7" x2="12" y2="13"/><circle cx="12" cy="17.5" r="1.1" fill="currentColor" stroke="none"/>
+                                <circle cx="12" cy="12" r="9.2" stroke-width="2"/>
+                            </svg>
+                            오해하기 쉬운 것
+                        </h4>
+                        <p><b>강화 추천도는 사도끼리의 우선순위가 아니에요.</b> 그 사도를 쓸 때 어디에 재화를 넣을지를 말합니다.</p>
+                        <p>메타 부적합 사도가 <code>10+ / 10+</code> 이라도 메타픽보다 먼저 키우라는 뜻이 아니라, <b>그 사도를 쓴다면 두 스킬 다 올리라</b>는 뜻이에요.</p>
+                    </section>
+
+                    <section class="tg-help-sec">
+                        <h4 class="tg-help-h">알아두면 편한 것</h4>
+                        <dl class="tg-help-tips">
+                            <dt>카드를 누르면</dt>
+                            <dd>강화 추천 · 부가 효과 · 스킬 정보 · 어사이드를 한 번에 볼 수 있어요.</dd>
+
+                            <dt>검색</dt>
+                            <dd>네르는 초성 <code>ㄴㄹ</code>, 영타 <code>spfm</code> 으로도 찾을 수 있어요.</dd>
+
+                            <dt>부가 효과 필터</dt>
+                            <dd>보유한 버프 · 디버프로 사도를 찾아요.</dd>
+
+                            <dt>어사이드 ★3 필터</dt>
+                            <dd>사도의 어사이드 ★3 효과로 찾아요.</dd>
+
+                            <dt>표시 필터</dt>
+                            <dd>성격 · 배치 · 역할 · 티어 · 엘다인으로 사도를 걸러내요.</dd>
+                        </dl>
+                    </section>
+
+                    <section class="tg-help-sec">
+                        <h4 class="tg-help-h">문의</h4>
+                        <p>문의나 제보는 <b>트릭컬 갤러리 호출벨</b>로 부탁드려요.</p>
+                    </section>
+
+                </div>
+            </div>
+        </div>
     </div>
 
     <button id="top-btn" onclick="scrollToTop()">▲<div style="font-size:0.7rem;">TOP</div></button>

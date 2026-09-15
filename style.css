@@ -450,6 +450,70 @@ body.modal-open .tg-subheader {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px;
 }
 
+/* ── 도움말 모달 (#modal-info) ──────────────────────────
+   범례 + 주의 + 기능 안내. 등급 샘플은 main.js 가 makeSkillGauge() 로 채운다. */
+.tg-help-sec { margin-bottom: 26px; }
+.tg-help-sec:last-child { margin-bottom: 4px; }
+
+/* 위계 — 섹션 1.0rem / 항목 0.82rem / 본문 0.84rem.
+   크기를 한 단계 안에 몰아넣으면 굵기만으로는 층이 안 보인다.
+   섹션 헤더에는 밑줄을 둬서 시작점을 확실히 한다. */
+.tg-help-h {
+    display: flex; align-items: center; gap: 6px;
+    margin: 0 0 12px; padding-bottom: 7px;
+    font-size: 1.12rem; font-weight: 800; line-height: 1.3;
+    color: var(--text-dark); letter-spacing: 0.01em;
+    border-bottom: 1px solid var(--border-soft);
+}
+.tg-help-sec p {
+    margin: 0 0 8px; font-size: 0.94rem; line-height: 1.72;
+    color: var(--text-muted);
+}
+.tg-help-sec p:last-child { margin-bottom: 0; }
+.tg-help-sec b { color: var(--text-dark); font-weight: 800; }
+.tg-help-sec code {
+    font-family: inherit; font-weight: 800; font-size: 0.95em;
+    padding: 1px 5px; border-radius: 5px;
+    background: var(--grid-bg); color: var(--text-dark);
+}
+
+/* 주의 섹션 — 오해를 바로잡는 내용이라 왼쪽 띠로 무게를 준다 */
+.tg-help-caution {
+    padding: 12px 14px; border-radius: 12px;
+    background: var(--grid-bg);
+    border-left: 3px solid var(--grade-7m);
+}
+.tg-help-caution .tg-help-h {
+    color: var(--grade-7m-text);
+    border-bottom: none; padding-bottom: 0; margin-bottom: 9px;
+    font-size: 1.02rem;   /* 박스 안이라 한 단계 낮춘다 */
+}
+
+/* 등급 샘플 — 게이지 폭을 고정해 세 줄의 설명 시작점을 맞춘다 */
+.tg-help-grades { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.tg-help-grades li { display: flex; align-items: center; gap: 12px; }
+.tg-help-gauge { flex: 0 0 96px; display: flex; align-items: center; }
+.tg-help-gauge-text { font-size: 0.94rem; line-height: 1.6; color: var(--text-muted); }
+
+/* 기능 안내 — 용어와 설명을 두 열로 */
+.tg-help-tips { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; align-items: baseline; }
+.tg-help-tips dt {
+    font-size: 0.9rem; font-weight: 800; color: var(--text-dark);
+    white-space: nowrap;
+}
+.tg-help-tips dd { margin: 0; font-size: 0.92rem; line-height: 1.62; color: var(--text-muted); }
+
+@media (max-width: 480px) {
+    /* 좁은 화면에서는 용어를 위에, 설명을 아래로. 글자도 한 단계 낮춘다 */
+    .tg-help-tips { grid-template-columns: 1fr; gap: 2px; }
+    .tg-help-tips dd { margin-bottom: 9px; font-size: 0.87rem; }
+    .tg-help-tips dt { font-size: 0.85rem; }
+    .tg-help-gauge { flex-basis: 84px; }
+    .tg-help-h { font-size: 1.02rem; }
+    .tg-help-caution .tg-help-h { font-size: 0.95rem; }
+    .tg-help-sec p, .tg-help-gauge-text { font-size: 0.88rem; }
+}
+
 /* ── 빈 상태 (검색·필터 결과 0건) ───────────────────────
    .tg-grid 의 자식이므로 grid-column 으로 전 열을 차지해야 한다.
    그렇지 않으면 첫 칸(170px)에 끼어 찌그러진다. */

@@ -34,7 +34,7 @@ let db = [],
     battleItemDB = []; // 쉼표로 연결하여 let 선언 공유
     
 
-let infoText = "", isAscending = true, selectedStatees = new Set(), pendingStatees = new Set(), currentFilterTab = 'all';
+let isAscending = true, selectedStatees = new Set(), pendingStatees = new Set(), currentFilterTab = 'all';
 
 // [3] HTML onclick 이벤트와 연결하기
 window.openDetailModal = (char) => {
@@ -132,12 +132,12 @@ function makeStarHTML(rarity) {
 async function loadExternalData() {
     try {
         const v = window.APP_VERSION || '';
-        const [res1, res2, res3, res4, res5, res6, res7, res8, res9, res10, res11, res12] = await Promise.all([
+        // info.txt 는 도움말 모달이 HTML 로 옮겨가면서 폐기됨 (v1.4.13)
+        const [res1, res2, res3, res4, res6, res7, res8, res9, res10, res11, res12] = await Promise.all([
             fetch(`./data/DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_desc_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/high_skill_DB.csv?v=${v}`).then(res => res.text()),
-            fetch(`./data/info.txt?v=${v}`).then(res => res.text()),
             fetch(`./data/buff_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/buff_desc_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/normal_Atk_DB.csv?v=${v}`).then(res => res.text()),
@@ -152,7 +152,6 @@ async function loadExternalData() {
         debuffDB = Papa.parse(res2, cfg).data;
         debuffDescDB = Papa.parse(res3, cfg).data;
         highSkillDB = Papa.parse(res4, cfg).data;
-        infoText = res5;
         buffDB = Papa.parse(res6, cfg).data;
         buffDescDB = Papa.parse(res7, cfg).data;
         normalAtkDB = Papa.parse(res8, cfg).data;
@@ -1112,7 +1111,28 @@ function resetFilters() {
     handleSortFilter();
     triggerGridRefresh();
 }
-function openInfoModal() { document.getElementById('info-content').innerText = infoText; document.getElementById('modal-info').classList.remove('hidden'); document.body.style.overflow='hidden'; document.body.classList.add('modal-open'); }
+/* 도움말 모달.
+   등급 샘플은 카드와 **같은 makeSkillGauge()** 로 그린다.
+   따로 하드코딩하면 v1.4.2 때처럼 등급 색을 바꿀 때 범례만 옛 색으로 남는다. */
+const HELP_GRADES = [
+    ['~ Lv. 10+', '최대까지 올릴 핵심 스킬이에요.'],
+    ['~ Lv. 7+',  '상급 마시멜로를 쓰지 않는 선까지만 올려도 충분해요.'],
+    ['~ Lv. 7-',  '올려도 체감이 적어서 가장 나중에 올리면 돼요.'],
+];
+
+function openInfoModal() {
+    const list = document.getElementById('help-grades');
+    if (list && !list.childElementCount) {
+        list.innerHTML = HELP_GRADES.map(([grade, text]) => `
+            <li>
+                <span class="tg-help-gauge">${makeSkillGauge('', grade)}</span>
+                <span class="tg-help-gauge-text">${text}</span>
+            </li>`).join('');
+    }
+    document.getElementById('modal-info').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
+}
 function closeModal(id) {
     // 1. 상세 정보 모달(modal-detail)을 닫을 때만 플래그 상태 리셋
     if (id === 'modal-detail') {
