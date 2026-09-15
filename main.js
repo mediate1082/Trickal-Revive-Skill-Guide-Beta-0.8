@@ -80,6 +80,8 @@ window.toggleQuickFilter = (type) => toggleQuickFilter(type);
 
 window.handleSortFilter = handleSortFilter;
 window.toggleOrder = toggleOrder;
+/* index.html 의 인라인 onchange 에서 부른다. main.js 는 모듈이라 함수 선언만으로는 전역이 되지 않는다. */
+window.triggerGridRefresh = triggerGridRefresh;
 window.updateAsideFilterCount = _updateAsideFilterCount;
 window.openFilterModal = openFilterModal;
 window.closeFilterModal = closeFilterModal;
@@ -785,7 +787,7 @@ window.clearSearch = () => {
     
     // 원래 검색창이 하던 '정렬 및 필터' 로직을 그대로 실행 (전체 목록 복구)
     if (typeof handleSortFilter === 'function') {
-        handleSortFilter();
+        handleSortFilter(); triggerGridRefresh();
     }
     
     searchInput.focus(); // 바로 다시 검색할 수 있게 포커스
@@ -1029,7 +1031,7 @@ function makeSkillGauge(typeLabel, grade) {
     `;
 }
 
-function toggleOrder() { isAscending = !isAscending; document.getElementById('order-btn').innerText = isAscending ? "▲" : "▼"; handleSortFilter(); }
+function toggleOrder() { isAscending = !isAscending; document.getElementById('order-btn').innerText = isAscending ? "▲" : "▼"; handleSortFilter(); triggerGridRefresh(); }
 function triggerGridRefresh() {
     const grid = document.getElementById('main-grid');
     if (!grid) return;
@@ -1213,7 +1215,7 @@ initSortDropdown(
     'name',
     (v) => {
         document.getElementById('sort-select').value = v;
-        handleSortFilter();
+        handleSortFilter(); triggerGridRefresh();
     }
 );
 

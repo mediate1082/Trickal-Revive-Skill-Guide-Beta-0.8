@@ -366,9 +366,11 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 @supports not (backdrop-filter: blur(1px)) {
     .tg-subheader.is-stuck .tg-nav { background: var(--nav-bg); }
 }
-body.modal-open .tg-subheader {
-    transform: translateY(-100%);
-}
+/* 모달이 열렸을 때 내비바를 위로 치우던 규칙은 제거했다 (v1.4.14).
+   · 모달 오버레이가 z-index 2000, 내비바가 50 이라 어차피 완전히 덮인다
+   · v1.4.4 에서 .tg-subheader 에 transform 전환을 넣은 뒤로는 그 이동이 눈에 보여,
+     모달을 열 때마다 내비바가 슬쩍 올라갔다 내려오는 것처럼 보였다
+   되살릴 일이 있다면 transition 을 함께 끊을 것. */
 
 /* ── Active Filter Chips ─────────────────── */
 /* 칩 영역 — 배경을 그리드와 같은 색으로 전체 폭에 깔아 경계가 생기지 않게 한다.
@@ -475,6 +477,36 @@ body.modal-open .tg-subheader {
     font-family: inherit; font-weight: 800; font-size: 0.95em;
     padding: 1px 5px; border-radius: 5px;
     background: var(--grid-bg); color: var(--text-dark);
+}
+
+/* 도움말 안 외부 링크 (호출벨) — 밑줄이 왼쪽에서 자라 들어온다.
+   background-size 전환이라 레이아웃을 건드리지 않는다 (text-decoration 은 전환이 안 먹는다). */
+.tg-help-link {
+    display: inline-flex; align-items: center; gap: 3px;
+    color: var(--accent-green-strong); font-weight: 800;
+    text-decoration: none;
+    background-image: linear-gradient(var(--accent-green-strong), var(--accent-green-strong));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1.5px;
+    transition: background-size 0.22s cubic-bezier(.4,0,.2,1), color 0.15s ease;
+}
+.tg-help-link:hover,
+.tg-help-link:focus-visible { background-size: 100% 1.5px; }
+.tg-help-link:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 3px; border-radius: 3px; }
+.tg-help-link:active { opacity: 0.75; }
+
+/* 새 창으로 열린다는 표시. 평소엔 살짝 물러나 있다가 호버에서 함께 뜬다 */
+.tg-help-link-ic {
+    flex-shrink: 0; opacity: 0.55;
+    transform: translate(0, 0);
+    transition: opacity 0.18s ease, transform 0.18s cubic-bezier(.4,0,.2,1);
+}
+.tg-help-link:hover .tg-help-link-ic,
+.tg-help-link:focus-visible .tg-help-link-ic { opacity: 1; transform: translate(1px, -1px); }
+
+@media (prefers-reduced-motion: reduce) {
+    .tg-help-link, .tg-help-link-ic { transition: none; }
 }
 
 /* 주의 섹션 — 오해를 바로잡는 내용이라 왼쪽 띠로 무게를 준다 */

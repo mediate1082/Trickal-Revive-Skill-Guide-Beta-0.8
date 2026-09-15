@@ -238,9 +238,9 @@
             <div class="tg-mode-row">
                 <span class="tg-mode-label">조건 모드</span>
                 <div class="tg-mode-switch">
-                    <input type="radio" name="filter-mode" id="mode-or" value="OR" checked onchange="handleSortFilter()">
+                    <input type="radio" name="filter-mode" id="mode-or" value="OR" checked onchange="handleSortFilter(); triggerGridRefresh()">
                     <label for="mode-or">OR · 하나라도</label>
-                    <input type="radio" name="filter-mode" id="mode-and" value="AND" onchange="handleSortFilter()">
+                    <input type="radio" name="filter-mode" id="mode-and" value="AND" onchange="handleSortFilter(); triggerGridRefresh()">
                     <label for="mode-and">AND · 모두</label>
                     <div class="tg-mode-glider"></div>
                 </div>
@@ -251,7 +251,7 @@
                     <span class="tg-toggle-row-hint">자기 자신에게만 발동하는 버프/디버프 숨김</span>
                 </div>
                 <label class="tg-switch">
-                    <input type="checkbox" id="exclude-self-toggle" onchange="handleSortFilter()">
+                    <input type="checkbox" id="exclude-self-toggle" onchange="handleSortFilter(); triggerGridRefresh()">
                     <span class="tg-switch-slider"></span>
                 </label>
             </div>
@@ -351,7 +351,7 @@
 
                     <section class="tg-help-sec">
                         <h4 class="tg-help-h">문의</h4>
-                        <p>문의나 제보는 <b>트릭컬 갤러리 호출벨</b>로 부탁드려요.</p>
+                        <p>문의나 제보는 <a class="tg-help-link" href="https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&amp;no=3452718" target="_blank" rel="noopener noreferrer">트릭컬 갤러리 호출벨<svg class="tg-help-link-ic" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M18 14.5V19a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 19V8a1.5 1.5 0 0 1 1.5-1.5H10"/></svg></a>로 부탁드려요.</p>
                     </section>
 
                 </div>
