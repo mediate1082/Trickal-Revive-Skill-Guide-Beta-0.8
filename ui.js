@@ -17,6 +17,218 @@ const COLORS = {
     textMain: '#020817'
 };
 
+/* ══════════════════════════════════════════════════════════════════════════
+   용어 사전 — 설명문 꼬리의 "용어 : 설명" 블록을 잘라내고,
+   본문에 나온 그 용어에 하이라이트 + 툴팁을 단다.
+
+   인게임 텍스트는 설명 끝에 용어 풀이를 줄줄이 붙인다.
+
+       저학년 스킬 사용 중, 변이, 기절, 넉백, 도발에 면역이 된다.
+       …
+       변이 : 사물로 변경되며 행동불가 상태가 된다.      ← 이 블록을
+       기절 : 행동불가 상태가 된다.                      ← 통째로 걷어내고
+       넉백 : 행동불가 상태로 뒤로 밀린다.                ← 본문의 '변이·기절·…'
+       도발 : 도발한 대상을 기본 공격으로 공격한다.        ← 에 툴팁을 단다
+
+   원본 CSV 는 건드리지 않는다. 렌더링 시점에만 처리하므로
+   인게임 텍스트를 그대로 붙여넣는 기존 입력 흐름이 유지되고, 신규 사도도 자동 적용된다.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const _TERM_LINE   = /^\s*([^:<>\n]{1,20}?)\s*:\s*(.+?)\s*$/;
+const _TERM_ORDINAL = /^(첫|두|세|네|다섯|여섯)\s*번째/;
+
+/* 꼬리 줄이 '용어 풀이'인지 판정.
+   - '첫 번째 효과 : …' 는 용어가 아니라 본문의 구조적 서술이다
+   - 'HP 회복 : 최대 HP의 15%' 처럼 정의가 수치면 용어가 아니다
+     (진짜 용어 풀이는 '…한다 / …된다 / …의미한다' 로 끝난다) */
+function _isTermLine(term, def) {
+    if (!term || !def) return false;
+    if (_TERM_ORDINAL.test(term)) return false;
+    if (/[0-9{}%]/.test(term)) return false;
+    if (def.length < 7) return false;
+    return /다$/.test(def.replace(/[.\s]+$/, ''));
+}
+
+/* 설명문을 { body, terms } 로 가른다.
+   꼬리에서 위로 올라가며 연속된 용어 줄만 걷어낸다.
+   중간에 섞인 'X : Y' 는 건드리지 않는다 (바롱 어사이드2 의 '첫 번째 효과' 등). */
+function splitGlossary(raw) {
+    const lines = String(raw || '').split(/<br\s*\/?>|\\n|\n/);
+    const terms = [];
+    let end = lines.length;
+    for (let i = lines.length - 1; i >= 0; i--) {
+        const plain = lines[i].replace(/<[^>]+>/g, '').trim();
+        if (!plain) { if (i === end - 1) end = i; continue; }
+        const m = plain.match(_TERM_LINE);
+        if (!m) break;
+        const term = m[1].trim(), def = m[2].trim();
+        if (!_isTermLine(term, def)) break;
+        terms.unshift({ term, def });
+        end = i;
+    }
+    return { body: lines.slice(0, end).join('<br>'), terms };
+}
+
+/* allStateDB(버프+디버프 병합) 에서 용어 하나를 찾는다.
+   버프·디버프 양쪽에 등록된 상태는 neutral (개전 효과, 최고로 멋진 요정). */
+function lookupTerm(name, ctx) {
+    const all = ctx?.allStateDB || [];
+    const deb = ctx?.debuffDescDB || [];
+    const hit = all.filter(r => (r.state_name || '').trim() === name);
+    if (!hit.length) return null;
+    const nDebuff = deb.filter(r => (r.state_name || '').trim() === name).length;
+    const nBuff = hit.length - nDebuff;
+    const kind = (nBuff && nDebuff) ? 'neutral' : (nBuff ? 'buff' : 'debuff');
+    const row = hit[0];
+    const icon = (row.icon_file || '').trim();
+    return {
+        name, kind,
+        desc: (row.description || '').trim(),
+        icon: (icon && !icon.includes('아이콘 없음')) ? `./assets/icons/state/${icon}` : ''
+    };
+}
+
+function _escAttr(s) {
+    return String(s).replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function _escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+/* 본문 HTML 안에서 용어를 버튼으로 감싼다.
+   · 태그 안쪽(<span style="…">)은 건드리지 않는다
+   · 긴 용어부터 치환해야 '기절 면역' 이 '기절' 에 먼저 잘리지 않는다
+   · 등장하는 모든 위치를 표시한다 (첫 등장만 하면 뒤쪽을 호버한 사람이 당황한다) */
+function wrapTerms(bodyHtml, terms, ctx) {
+    if (!terms.length) return bodyHtml;
+    const sorted = [...terms].sort((a, b) => b.term.length - a.term.length);
+    const re = new RegExp('(' + sorted.map(t => _escRe(t.term)).join('|') + ')', 'g');
+    const byName = new Map(terms.map(t => [t.term, t]));
+
+    return bodyHtml.split(/(<[^>]+>)/).map(seg => {
+        if (seg.startsWith('<')) return seg;
+        return seg.replace(re, (m) => {
+            const info = lookupTerm(m, ctx);
+            const fallback = byName.get(m);
+            // 마스터에 없으면 인게임 꼬리 설명을 그대로 툴팁 내용으로 쓴다
+            const data = info || { name: m, kind: 'plain', desc: fallback ? fallback.def : '', icon: '' };
+            return `<button type="button" class="tg-term" data-kind="${data.kind}"`
+                 + ` data-name="${_escAttr(data.name)}" data-desc="${_escAttr(data.desc)}"`
+                 + ` data-icon="${_escAttr(data.icon)}" aria-label="${_escAttr(data.name)} 설명 보기">${m}</button>`;
+        });
+    }).join('');
+}
+
+/* 설명문 렌더 진입점 — 이 한 줄만 부르면 된다. */
+function renderDesc(raw, ctx) {
+    if (!raw) return '';
+    const { body, terms } = splitGlossary(raw);
+    return wrapTerms(body, terms, ctx);
+}
+
+/* ── 용어 툴팁 ──────────────────────────────────────────────
+   툴팁 노드는 body 밑에 **하나만** 두고 재사용한다.
+   모달 본문이 overflow 로 잘리기 때문에 용어 옆에 absolute 로 붙이면 잘려나간다.
+   position: fixed + getBoundingClientRect 로 매번 좌표를 계산한다.       */
+let _tip = null, _tipPinned = false, _tipAnchor = null;
+
+function _ensureTip() {
+    if (_tip) return _tip;
+    _tip = document.createElement('div');
+    _tip.className = 'tg-term-tip';
+    _tip.setAttribute('role', 'tooltip');
+    _tip.hidden = true;
+    document.body.appendChild(_tip);
+    return _tip;
+}
+
+function _fillTip(btn) {
+    const tip = _ensureTip();
+    const name = btn.dataset.name || '';
+    const desc = btn.dataset.desc || '';
+    const icon = btn.dataset.icon || '';
+    tip.dataset.kind = btn.dataset.kind || 'plain';
+    tip.innerHTML =
+        `<div class="tg-term-tip-head">`
+      + (icon ? `<img class="tg-term-tip-ic" src="${_escAttr(icon)}" alt="" onerror="this.remove()">` : '')
+      + `<span class="tg-term-tip-name">${_escAttr(name)}</span></div>`
+      + (desc ? `<p class="tg-term-tip-desc">${_escAttr(desc)}</p>` : '');
+}
+
+function _placeTip(anchor) {
+    const tip = _ensureTip();
+    tip.hidden = false;
+    tip.style.left = '0px';
+    tip.style.top = '0px';
+    const r = anchor.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    const M = 8;
+    let left = r.left + r.width / 2 - t.width / 2;
+    left = Math.max(M, Math.min(left, window.innerWidth - t.width - M));
+    let top = r.bottom + M;                       // 기본은 용어 아래
+    if (top + t.height > window.innerHeight - M) {
+        const above = r.top - t.height - M;       // 아래가 좁으면 위로 뒤집는다
+        top = above >= M ? above : Math.max(M, window.innerHeight - t.height - M);
+    }
+    tip.style.left = `${Math.round(left)}px`;
+    tip.style.top = `${Math.round(top)}px`;
+}
+
+function showTermTip(btn, pinned) {
+    _fillTip(btn);
+    _placeTip(btn);
+    _tipAnchor = btn;
+    _tipPinned = !!pinned;
+    _tip.classList.toggle('is-pinned', _tipPinned);
+    btn.setAttribute('aria-expanded', String(_tipPinned));
+}
+
+function hideTermTip() {
+    if (_tipAnchor) _tipAnchor.setAttribute('aria-expanded', 'false');
+    if (_tip) { _tip.hidden = true; _tip.classList.remove('is-pinned'); }
+    _tipAnchor = null;
+    _tipPinned = false;
+}
+
+/* 이벤트는 document 에 한 번만 위임한다.
+   호버로 미리보기 → 클릭·탭으로 고정 → 바깥 클릭·Esc·재클릭으로 해제.
+   호버 전용으로 만들면 터치 기기에서 설명을 영영 볼 수 없다. */
+(function initTermTip() {
+    if (window.__tgTermTipReady) return;
+    window.__tgTermTipReady = true;
+
+    document.addEventListener('mouseover', (e) => {
+        const btn = e.target.closest?.('.tg-term');
+        if (!btn || _tipPinned) return;
+        showTermTip(btn, false);
+    });
+    document.addEventListener('mouseout', (e) => {
+        const btn = e.target.closest?.('.tg-term');
+        if (!btn || _tipPinned) return;
+        if (_tipAnchor === btn) hideTermTip();
+    });
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest?.('.tg-term');
+        if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (_tipPinned && _tipAnchor === btn) hideTermTip();
+            else showTermTip(btn, true);
+            return;
+        }
+        if (_tipPinned && !e.target.closest?.('.tg-term-tip')) hideTermTip();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && _tipAnchor) {
+            const a = _tipAnchor;
+            hideTermTip();
+            a.focus?.();
+        }
+    });
+    // 모달 본문이 스크롤되면 좌표가 어긋난다. 따라다니게 하지 말고 닫는다.
+    document.addEventListener('scroll', () => { if (_tipAnchor) hideTermTip(); }, true);
+    window.addEventListener('resize', () => { if (_tipAnchor) hideTermTip(); });
+})();
+
 // [추가] 색상 판별 함수 (파일 어디서든 접근 가능하도록 밖으로 추출)
 const getGradeColor = (grade) => {
     if (!grade || grade === 'X') return '#94a3b8';
@@ -238,7 +450,7 @@ const renderAsideTabContent = (char, asideData) => {
                     </div>
                 </div>
                 <div class="tg-skill-card-body">
-                    <div class="tg-aside-desc">${desc?.replace(/\\n/g, '<br>')}</div>
+                    <div class="tg-aside-desc">${renderDesc(desc, currentDataContext)}</div>
                     ${(template && value) ? `<div class="tg-skill-stat-box">${parseSkillLevelText(template, value)}</div>` : ''}
                     ${(i === 3 && asideData.aside_3_global) ? renderAsideGlobalBox(char, asideData) : ''}
                 </div>
@@ -521,7 +733,7 @@ export function openDetailModal(char, dataContext) {
         let maxL = 1;
         for (let i = 1; i <= 13; i++) { if (lowSkillData[`Lv.${i}`]) maxL = i; }
         lowDetail = `
-            <div class="tg-skill-desc">${lowSkillData.low_skill_desc?.replace(/\\n/g, '<br>')}</div>
+            <div class="tg-skill-desc">${renderDesc(lowSkillData.low_skill_desc, currentDataContext)}</div>
             <div id="low-skill-stat-text" class="tg-skill-stat-box">${parseSkillLevelText(lowSkillData.low_skill_stat_template, lowSkillData['Lv.1'])}</div>
             <div class="tg-lv-slider" style="--lv-progress:0%">
                 <input type="range" min="1" max="${maxL}" value="1" id="low-skill-slider" oninput="window.updateLowSkillLv(this.value, '${char.name}')">
@@ -535,7 +747,7 @@ export function openDetailModal(char, dataContext) {
         for (let i = 1; i <= 13; i++) { if (skillData[`Lv.${i}(PvE)`]) maxH = i; }
         highDetail = `
             <div id="high-cooldown-text" class="tg-skill-cooldown"><img class="tg-skill-cooldown-icon" src="./assets/icons/common_icons/재사용 대기시간.webp" alt="">재사용 대기시간 <b>${skillData['high_cooldown(PvE)']}초</b></div>
-            <div class="tg-skill-desc">${skillData['high_skill_desc']?.replace(/\\n/g, '<br>')}</div>
+            <div class="tg-skill-desc">${renderDesc(skillData['high_skill_desc'], currentDataContext)}</div>
             <div id="high-skill-stat-text" class="tg-skill-stat-box">${parseSkillLevelText(skillData['high_skill_stat_template'], skillData['Lv.1(PvE)'])}</div>
             <div class="tg-lv-slider" style="--lv-progress:0%">
                 <input type="range" min="1" max="${maxH}" value="1" id="high-skill-slider" oninput="window.updateHighSkillLv(this.value, '${char.name}')">
@@ -547,7 +759,7 @@ export function openDetailModal(char, dataContext) {
     if (normalAtkData) {
         const normalContent = `
             <div class="tg-normal-section">
-                <div class="tg-skill-desc">${normalAtkData.basic_atk_desc ? normalAtkData.basic_atk_desc.replace(/\\n/g, '<br>') : ''}</div>
+                <div class="tg-skill-desc">${renderDesc(normalAtkData.basic_atk_desc, currentDataContext)}</div>
                 <div class="tg-skill-stat-box">${parseSkillLevelText(normalAtkData.basic_stat_template, normalAtkData.basic_atk_value)}</div>
             </div>
             ${(normalAtkData.enhance_atk_desc && normalAtkData.enhance_atk_desc !== 'X') ? `
@@ -557,7 +769,7 @@ export function openDetailModal(char, dataContext) {
                     <div class="tg-normal-sub-type">일반 공격</div>
                     <div class="tg-normal-sub-name">강화 공격</div>
                 </div>
-                <div class="tg-skill-desc">${normalAtkData.enhance_atk_desc.replace(/\\n/g, '<br>')}</div>
+                <div class="tg-skill-desc">${renderDesc(normalAtkData.enhance_atk_desc, currentDataContext)}</div>
                 <div class="tg-skill-stat-box">${parseSkillLevelText(normalAtkData.enhance_stat_template, normalAtkData.enhance_atk_value)}</div>
             </div>` : ''}`;
         normalAtkHTML = renderEffectCard('normal', { low_skill_name: "기본 공격" }, null, null, null, dataContext, normalContent, false);

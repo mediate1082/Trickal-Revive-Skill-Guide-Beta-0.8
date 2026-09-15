@@ -14,6 +14,7 @@
     --text-muted: #7A806D;
     --accent-green: #B9DD63;
     --accent-green-strong: #8FB93E;
+    --term-accent: #DE3503;      /* 용어 하이라이트 (라이트) — 대비 4.55:1 on #fff */
     --accent-soft: #EAF6C8;
     --border-soft: #E3E8D5;
     --shadow-soft: rgba(63, 79, 31, 0.08);
@@ -90,6 +91,7 @@
    배경·표면은 무채, 액센트(그린)만 아이덴티티로 유지
 ════════════════════════════════════════ */
 [data-theme="dark"] {
+    --term-accent: #FC5220;      /* 다크에서는 같은 색상·채도로 명도만 올린다 — 4.52:1 */
     /* ── 배경 계층 ── */
     --bg-main:        #18181B;
     --grid-bg:        #131316;
@@ -451,6 +453,55 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     max-width: var(--page-width); margin: 0 auto; padding: 0 16px;
     display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px;
 }
+
+/* ── 용어 하이라이트 + 툴팁 ─────────────────────────────
+   인게임 설명문 꼬리의 "용어 : 설명" 블록을 걷어내고(ui.js: splitGlossary),
+   본문의 그 용어를 버튼으로 감싼다. button 이라 키보드 포커스·Enter 가 공짜다. */
+.tg-term {
+    font: inherit; color: var(--term-accent);
+    font-weight: 800;
+    background: none; border: 0; padding: 0; margin: 0;
+    cursor: help;
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 2px;
+    text-decoration-color: color-mix(in srgb, var(--term-accent) 45%, transparent);
+    transition: text-decoration-color 0.15s ease, background-color 0.15s ease;
+    border-radius: 3px;
+}
+.tg-term:hover,
+.tg-term[aria-expanded="true"] {
+    text-decoration-color: var(--term-accent);
+    background: color-mix(in srgb, var(--term-accent) 12%, transparent);
+}
+.tg-term:focus-visible { outline: 2px solid var(--term-accent); outline-offset: 2px; }
+
+/* 툴팁은 body 밑 노드 하나를 재사용한다.
+   모달 본문이 overflow 로 잘리므로 용어 옆에 absolute 로 붙이면 잘려나간다.
+   fixed 로 띄우고 좌표는 ui.js 의 _placeTip() 이 매번 계산한다. */
+.tg-term-tip {
+    position: fixed; z-index: 2600;
+    max-width: min(300px, calc(100vw - 32px));
+    padding: 10px 12px; border-radius: 12px;
+    background: var(--modal-card-bg);
+    border: 1.5px solid var(--border-soft);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.18), 0 2px 6px rgba(0,0,0,0.08);
+    pointer-events: none;                 /* 호버 미리보기는 마우스를 통과시킨다 */
+    animation: tg-fade 0.12s ease-out;
+}
+.tg-term-tip.is-pinned { pointer-events: auto; }   /* 고정 상태에서만 안쪽 선택 가능 */
+
+.tg-term-tip-head { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.tg-term-tip-ic { width: 20px; height: 20px; flex-shrink: 0; object-fit: contain; }
+.tg-term-tip-name { font-size: 0.9rem; font-weight: 800; color: var(--text-dark); }
+.tg-term-tip-desc { margin: 0; font-size: 0.84rem; line-height: 1.6; color: var(--text-muted); }
+
+/* 버프/디버프/혼합 — 왼쪽 띠로만 구분한다 (인라인 글자색은 하나로 통일) */
+.tg-term-tip[data-kind="buff"]    { border-left: 3px solid var(--buff-text); }
+.tg-term-tip[data-kind="debuff"]  { border-left: 3px solid var(--debuff-text); }
+.tg-term-tip[data-kind="neutral"] { border-left: 3px solid var(--neutral-text); }
+
+@media (prefers-reduced-motion: reduce) { .tg-term-tip { animation: none; } }
 
 /* ── 도움말 모달 (#modal-info) ──────────────────────────
    범례 + 주의 + 기능 안내. 등급 샘플은 main.js 가 makeSkillGauge() 로 채운다. */
