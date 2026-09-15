@@ -83,7 +83,12 @@ function splitGlossary(raw, ctx) {
     }
 
     while (body.length && !body[body.length - 1].replace(/<[^>]+>/g, '').trim()) body.pop();
-    return { body: body.join('<br>'), terms };
+
+    /* 인게임 색 태그는 용어를 가려내는 데만 쓰고 출력에서는 벗긴다.
+       <color=…> 는 표준 태그가 아니라 브라우저가 무시할 뿐이고, 하이라이트는
+       --term-accent 로 따로 칠하므로 남겨둘 이유가 없다. */
+    const clean = body.join('<br>').replace(/<\/?color(?:=[^>]*)?>/g, '');
+    return { body: clean, terms };
 }
 
 /* allStateDB(버프+디버프 병합) 에서 용어 하나를 찾는다.
