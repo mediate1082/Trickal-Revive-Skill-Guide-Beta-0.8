@@ -1,0 +1,19 @@
+# 줄 끝 변환을 하지 않는다.
+#
+# 이 저장소의 CSV 는 **따옴표 안에 CRLF 가 들어 있는 셀**이 있다
+# (aside_DB · high_skill_DB · normal_Atk_DB — 여러 줄짜리 설명문).
+# core.autocrlf 가 켜져 있으면 git 이 커밋할 때 그 \r 을 지워버려서
+# 저장된 내용이 실제 파일과 달라진다. 실제로 배포 레포에서
+# low_skill_DB.csv 의 CRLF 160개가 그렇게 사라져 있었다.
+#
+# 보관이 목적인 저장소이므로 바이트를 그대로 둔다.
+* -text
+
+# 아래는 diff 를 사람이 읽을 수 있게 텍스트로 취급하되, 줄 끝은 건드리지 않는다
+*.js   diff
+*.html diff
+*.css  diff
+*.md   diff
+*.py   diff
+*.json diff
+*.csv  diff

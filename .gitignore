@@ -1,12 +1,21 @@
-# 미출시 에셋 — 배포/커밋 금지
-# (robocopy 에서도 /XD "dummy" 로 제외됨)
+# 이 파일은 두 저장소가 함께 쓴다.
+#   · 작업 폴더  Desktop\트릭컬 스킬 가이드            (비공개 — 전체 보관)
+#   · 배포 레포  Documents\Trickal-Revive-…-Beta-0.8  (공개 — GitHub Pages)
+# robocopy 가 작업 폴더 → 배포 레포로 복사하면서 tools/ .claude/ *.md 를 제외하므로,
+# 배포 레포에는 그것들이 애초에 도착하지 않는다. 여기서 또 무시할 필요가 없고,
+# 무시하면 작업 폴더에서 정작 보관해야 할 도구가 빠진다.
+
+# 미출시 에셋 — 배포·커밋 금지 (robocopy 에서도 /XD "dummy" 로 제외)
 assets/dummy/
 
-# 로컬 도구·설정
-tools/
-.claude/
+# 편집기가 저장 직전에 만드는 백업본
+*.bak-*
 
-# OS
+# 파이썬 캐시
+__pycache__/
+*.pyc
+
+# OS · OneDrive 잔재 (폴더 안에 *_desktop.ini 형태로도 생긴다)
 Thumbs.db
-desktop.ini
+*desktop.ini
 .DS_Store
