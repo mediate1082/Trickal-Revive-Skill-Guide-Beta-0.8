@@ -524,7 +524,7 @@ const renderAsideTabContent = (char, asideData) => {
                 </div>
                 <div class="tg-skill-card-body">
                     <div class="tg-aside-desc" data-src="aside_DB.csv|${char.name}|aside${i}_desc">${renderDesc(desc, currentDataContext)}</div>
-                    ${(template && value) ? `<div class="tg-skill-stat-box">${parseSkillLevelText(template, value)}</div>` : ''}
+                    ${(template && value) ? `<div class="tg-skill-stat-box" data-src="aside_DB.csv|${char.name}|aside${i}_stat_template">${parseSkillLevelText(template, value)}</div>` : ''}
                     ${(i === 3 && asideData.aside_3_global) ? renderAsideGlobalBox(char, asideData) : ''}
                 </div>
             </div>`;
@@ -807,7 +807,7 @@ export function openDetailModal(char, dataContext) {
         for (let i = 1; i <= 13; i++) { if (lowSkillData[`Lv.${i}`]) maxL = i; }
         lowDetail = `
             <div class="tg-skill-desc" data-src="low_skill_DB.csv|${char.name}|low_skill_desc">${renderDesc(lowSkillData.low_skill_desc, currentDataContext)}</div>
-            <div id="low-skill-stat-text" class="tg-skill-stat-box">${parseSkillLevelText(lowSkillData.low_skill_stat_template, lowSkillData['Lv.1'])}</div>
+            <div id="low-skill-stat-text" class="tg-skill-stat-box" data-src="low_skill_DB.csv|${char.name}|low_skill_stat_template">${parseSkillLevelText(lowSkillData.low_skill_stat_template, lowSkillData['Lv.1'])}</div>
             <div class="tg-lv-slider" style="--lv-progress:0%">
                 <input type="range" min="1" max="${maxL}" value="1" id="low-skill-slider" oninput="window.updateLowSkillLv(this.value, '${char.name}')">
                 <div class="tg-lv-ticks">${makeTicks(maxL)}</div>
@@ -821,7 +821,7 @@ export function openDetailModal(char, dataContext) {
         highDetail = `
             <div id="high-cooldown-text" class="tg-skill-cooldown"><img class="tg-skill-cooldown-icon" src="./assets/icons/common_icons/재사용 대기시간.webp" alt="">재사용 대기시간 <b>${skillData['high_cooldown(PvE)']}초</b></div>
             <div class="tg-skill-desc" data-src="high_skill_DB.csv|${char.name}|high_skill_desc">${renderDesc(skillData['high_skill_desc'], currentDataContext)}</div>
-            <div id="high-skill-stat-text" class="tg-skill-stat-box">${parseSkillLevelText(skillData['high_skill_stat_template'], skillData['Lv.1(PvE)'])}</div>
+            <div id="high-skill-stat-text" class="tg-skill-stat-box" data-src="high_skill_DB.csv|${char.name}|high_skill_stat_template">${parseSkillLevelText(skillData['high_skill_stat_template'], skillData['Lv.1(PvE)'])}</div>
             <div class="tg-lv-slider" style="--lv-progress:0%">
                 <input type="range" min="1" max="${maxH}" value="1" id="high-skill-slider" oninput="window.updateHighSkillLv(this.value, '${char.name}')">
                 <div class="tg-lv-ticks">${makeTicks(maxH)}</div>
@@ -833,7 +833,7 @@ export function openDetailModal(char, dataContext) {
         const normalContent = `
             <div class="tg-normal-section">
                 <div class="tg-skill-desc" data-src="normal_Atk_DB.csv|${char.name}|basic_atk_desc">${renderDesc(normalAtkData.basic_atk_desc, currentDataContext)}</div>
-                <div class="tg-skill-stat-box">${parseSkillLevelText(normalAtkData.basic_stat_template, normalAtkData.basic_atk_value)}</div>
+                <div class="tg-skill-stat-box" data-src="normal_Atk_DB.csv|${char.name}|basic_stat_template">${parseSkillLevelText(normalAtkData.basic_stat_template, normalAtkData.basic_atk_value)}</div>
             </div>
             ${(normalAtkData.enhance_atk_desc && normalAtkData.enhance_atk_desc !== 'X') ? `
             <div class="tg-skill-card-divider"></div>
@@ -843,7 +843,7 @@ export function openDetailModal(char, dataContext) {
                     <div class="tg-normal-sub-name">강화 공격</div>
                 </div>
                 <div class="tg-skill-desc" data-src="normal_Atk_DB.csv|${char.name}|enhance_atk_desc">${renderDesc(normalAtkData.enhance_atk_desc, currentDataContext)}</div>
-                <div class="tg-skill-stat-box">${parseSkillLevelText(normalAtkData.enhance_stat_template, normalAtkData.enhance_atk_value)}</div>
+                <div class="tg-skill-stat-box" data-src="normal_Atk_DB.csv|${char.name}|enhance_stat_template">${parseSkillLevelText(normalAtkData.enhance_stat_template, normalAtkData.enhance_atk_value)}</div>
             </div>` : ''}`;
         normalAtkHTML = renderEffectCard('normal', { low_skill_name: "기본 공격" }, null, null, null, dataContext, normalContent, false);
     }
