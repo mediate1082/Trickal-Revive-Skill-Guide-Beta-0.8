@@ -396,7 +396,7 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
             <div class="tg-skill-card-icon-wrap"${nameIconAttr}>
                 <div class="tg-skill-card-icon-rel">
                     ${typeBadgeHTML}
-                    <img class="tg-skill-card-icon" src="${iconPath}" onerror="this.src='./assets/icons/skills/default.webp'">
+                    <img class="tg-skill-card-icon" src="${iconPath}" onerror="this.onerror=null;this.removeAttribute('src')">
                     ${lvBadgeHTML}
                 </div>
                 <div class="tg-skill-card-titles">
@@ -442,7 +442,7 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
         return `
         <div class="tg-effect-item" data-kind="${isDebuff ? 'debuff' : 'buff'}"
              data-cond="${conds[index] || ''}" data-target="${targets[index] || ''}">
-            <div class="tg-effect-item-icon"><img src="${iconSrc}" onerror="this.src='./assets/icons/state/${defaultIcon}'"></div>
+            <div class="tg-effect-item-icon"><img src="${iconSrc}" onerror="this.onerror=null;this.src='./assets/icons/state/${defaultIcon}'"></div>
             <div class="tg-effect-item-body">
                 <div class="tg-effect-item-head">
                     <strong class="tg-effect-item-name">${raw}</strong>
@@ -501,7 +501,7 @@ const renderAsideTabContent = (char, asideData) => {
     if (!asideData || !asideData.aside1_name) {
         return `
             <div class="tg-empty-state">
-                <img src="./assets/icons/common_icons/empty.webp" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
+                <img src="./assets/icons/common_icons/empty.webp" onerror="this.onerror=null;this.src='./assets/icons/state/버프_아이콘 없음.webp'">
                 <div class="tg-empty-state-text">아직 사념이 깊지 않은 것 같다...</div>
             </div>`;
     }
@@ -523,7 +523,7 @@ const renderAsideTabContent = (char, asideData) => {
                     <div class="tg-skill-card-icon-wrap" data-nameicon="aside${i}|${char.name}">
                         <div class="tg-skill-card-icon-rel">
                             <img class="tg-skill-card-icon" src="./assets/icons/aside/aside_${i}/${icon}"
-                                 onerror="this.src='./assets/icons/skills/default.webp'">
+                                 onerror="this.onerror=null;this.removeAttribute('src')">
                         </div>
                         <div class="tg-skill-card-titles">
                             <span class="tg-skill-card-type-label">어사이드 ★${i}</span>
@@ -556,7 +556,7 @@ function renderAsideGlobalBox(char, asideData) {
         return `
         <div class="tg-aside-global-item">
             <div class="tg-aside-global-item-left">
-                <img src="./assets/icons/base_stat/${pureStat}.webp" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
+                <img src="./assets/icons/base_stat/${pureStat}.webp" onerror="this.onerror=null;this.src='./assets/icons/state/버프_아이콘 없음.webp'">
                 <span class="tg-aside-global-item-label">전체 ${pureStat}</span>
             </div>
             <span class="tg-aside-global-item-value">${prefix}<span class="num">${numberPart}</span>${suffix}</span>
@@ -880,7 +880,7 @@ export function openDetailModal(char, dataContext) {
                없는 사도한테 태그를 다는 게 바로 이 경우다 */
             return `
                 <div class="tg-empty-state" data-tagsrc="${char.name}|">
-                    <img src="./assets/icons/common_icons/empty.webp" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
+                    <img src="./assets/icons/common_icons/empty.webp" onerror="this.onerror=null;this.src='./assets/icons/state/버프_아이콘 없음.webp'">
                     <div class="tg-empty-state-text">부가 효과가 없어용...</div>
                 </div>`;
         }
@@ -908,7 +908,9 @@ export function openDetailModal(char, dataContext) {
         { label: char.line,        path: `./assets/icons/line/${char.line}.webp` },
         { label: char.atk_type,   path: `./assets/icons/atk_type/공격 타입_${char.atk_type}.webp` },
     ];
-    const attrsHTML = attrIcons.map(a => `
+    /* 값이 비면 경로가 '…/personality/.webp' 가 되어 404 를 부른다.
+       아예 칩을 그리지 않는다 — 빈 값은 보여줄 것도 없다. */
+    const attrsHTML = attrIcons.filter(a => String(a.label ?? '').trim()).map(a => `
         <span class="tg-detail-attr">
             <img class="tg-detail-attr-icon" src="${a.path}" onerror="this.style.display='none'" alt="">
             <span>${a.label}</span>
@@ -926,7 +928,7 @@ export function openDetailModal(char, dataContext) {
         <div class="tg-modal-card">
             <div class="tg-detail-header">
                 <div class="tg-detail-header-row">
-                    <img class="tg-detail-portrait" data-db="${char.name}" src="./assets/images/${char.name}.webp" onerror="this.src='./assets/images/default.webp'" alt="${char.name}">
+                    <img class="tg-detail-portrait" data-db="${char.name}" src="./assets/images/${char.name}.webp" onerror="this.onerror=null;this.removeAttribute('src')" alt="${char.name}">
                     <div class="tg-detail-meta">
                         <span class="tg-detail-eyebrow">${char.title || 'APOSTLE DETAIL'}</span>
                         <div class="tg-detail-name-row">
@@ -973,7 +975,7 @@ export function openDetailModal(char, dataContext) {
                                 <div class="tg-skill-card-head">
                                     <div class="tg-skill-card-icon-wrap">
                                         <div class="tg-skill-card-icon-rel">
-                                            <img class="tg-skill-card-icon" src="./assets/images/${char.name}.webp" onerror="this.src='./assets/images/default.webp'">
+                                            <img class="tg-skill-card-icon" src="./assets/images/${char.name}.webp" onerror="this.onerror=null;this.removeAttribute('src')">
                                         </div>
                                         <div class="tg-skill-card-titles">
                                             <span class="tg-skill-card-type-label">종합</span>
