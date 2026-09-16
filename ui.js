@@ -526,7 +526,7 @@ const renderAsideTabContent = (char, asideData) => {
                         </div>
                     </div>
                 </div>
-                <div class="tg-skill-card-body"${i === 3 ? ` data-aside3="${char.name}"` : ''}>
+                <div class="tg-skill-card-body"${(i === 3 && !asideData.aside_3_global) ? ` data-aside3="${char.name}"` : ''}>
                     <div class="tg-aside-desc" data-src="aside_DB.csv|${char.name}|aside${i}_desc">${renderDesc(desc, currentDataContext)}</div>
                     ${(template && value) ? `<div class="tg-skill-stat-box" data-src="aside_DB.csv|${char.name}|aside${i}_stat_template">${parseSkillLevelText(template, value)}</div>` : ''}
                     ${(i === 3 && asideData.aside_3_global) ? renderAsideGlobalBox(char, asideData) : ''}
@@ -558,8 +558,11 @@ function renderAsideGlobalBox(char, asideData) {
         </div>`;
     }).join('');
 
+    /* data-aside3 — 편집기의 ★3 전체 능력치·태그 진입점.
+       이 박스는 aside_3_global 이 있어야 그려지므로, 없을 때는
+       renderAsideTabContent 가 카드 본문에 대신 달아준다. */
     return `
-    <div class="tg-aside-global-box">
+    <div class="tg-aside-global-box" data-aside3="${char.name}">
         <div class="tg-aside-global-title"><strong>사도 전체 능력치</strong></div>
         <div class="tg-aside-global-list">${items}</div>
         <div class="tg-aside-global-footer">사도 전체 능력치 효과는 모든 사도에게 적용됩니다.</div>
