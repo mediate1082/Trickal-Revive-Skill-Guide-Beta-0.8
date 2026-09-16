@@ -381,6 +381,10 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
         ? makeGradeBadge(currentApostle[type === 'low' ? 'low_grade' : 'high_grade'])
         : '';
 
+    /* 편집기(tools/editor.js)가 부가 효과 태그 편집 진입점으로 쓴다.
+       customContent 가 있는 카드는 탭0·탭2의 재활용이라 태그와 무관하므로 제외한다. */
+    const tagSrcAttr = customContent ? '' : ` data-tagsrc="${currentApostle?.name || ''}|${type}"`;
+
     return `
     <div class="tg-skill-card" data-type="${type}">
         <div class="tg-skill-card-head">
@@ -400,7 +404,7 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
             </div>
             ${modeToggleHTML}
         </div>
-        <div class="tg-skill-card-body">
+        <div class="tg-skill-card-body"${tagSrcAttr}>
             ${customContent ? customContent : renderEffectItems(buffString, condString, targetString, ctx.allStateDB, ctx.debuffDescDB)}
             ${!customContent ? '<div class="tg-effect-empty">표시할 효과가 없습니다</div>' : ''}
         </div>
