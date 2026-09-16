@@ -919,7 +919,7 @@ export function openDetailModal(char, dataContext) {
         <div class="tg-modal-card">
             <div class="tg-detail-header">
                 <div class="tg-detail-header-row">
-                    <img class="tg-detail-portrait" src="./assets/images/${char.name}.webp" onerror="this.src='./assets/images/default.webp'" alt="${char.name}">
+                    <img class="tg-detail-portrait" data-db="${char.name}" src="./assets/images/${char.name}.webp" onerror="this.src='./assets/images/default.webp'" alt="${char.name}">
                     <div class="tg-detail-meta">
                         <span class="tg-detail-eyebrow">${char.title || 'APOSTLE DETAIL'}</span>
                         <div class="tg-detail-name-row">
