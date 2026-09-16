@@ -876,8 +876,10 @@ export function openDetailModal(char, dataContext) {
             if (a.n && a.n !== 'X' && a.n.trim() !== "") html += renderEffectCard('aside', asideData, a.n, a.c, a.t, dataContext);
         }
         if (!html.trim()) {
+            /* 카드가 하나도 없어도 편집기 진입점은 남아야 한다 —
+               없는 사도한테 태그를 다는 게 바로 이 경우다 */
             return `
-                <div class="tg-empty-state">
+                <div class="tg-empty-state" data-tagsrc="${char.name}|">
                     <img src="./assets/icons/common_icons/empty.webp" onerror="this.src='./assets/icons/state/버프_아이콘 없음.webp'">
                     <div class="tg-empty-state-text">부가 효과가 없어용...</div>
                 </div>`;
