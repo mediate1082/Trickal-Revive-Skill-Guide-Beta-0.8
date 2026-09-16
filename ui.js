@@ -526,9 +526,9 @@ const renderAsideTabContent = (char, asideData) => {
                         </div>
                     </div>
                 </div>
-                <div class="tg-skill-card-body"${(i === 3 && !asideData.aside_3_global) ? ` data-aside3="${char.name}"` : ''}>
+                <div class="tg-skill-card-body"${(i === 3 && !asideData.aside_3_global) ? ` data-aside3="${char.name}"` : ''}${(i === 3 && !(template && value)) ? ` data-aside3tags="${char.name}"` : ''}>
                     <div class="tg-aside-desc" data-src="aside_DB.csv|${char.name}|aside${i}_desc">${renderDesc(desc, currentDataContext)}</div>
-                    ${(template && value) ? `<div class="tg-skill-stat-box" data-src="aside_DB.csv|${char.name}|aside${i}_stat_template">${parseSkillLevelText(template, value)}</div>` : ''}
+                    ${(template && value) ? `<div class="tg-skill-stat-box" data-src="aside_DB.csv|${char.name}|aside${i}_stat_template"${i === 3 ? ` data-aside3tags="${char.name}"` : ''}>${parseSkillLevelText(template, value)}</div>` : ''}
                     ${(i === 3 && asideData.aside_3_global) ? renderAsideGlobalBox(char, asideData) : ''}
                 </div>
             </div>`;
