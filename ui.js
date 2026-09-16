@@ -365,6 +365,11 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
         }
     }
 
+    /* 편집기 진입점 — '스킬 정보' 탭에서만. 같은 카드가 탭0·탭1 에도 그려지는데
+       거기까지 달면 한 사도에 같은 진입점이 셋이 된다. */
+    const nameIconAttr = (showBadge && (type === 'low' || type === 'high'))
+        ? ` data-nameicon="${type}|${currentApostle?.name || ''}"` : '';
+
     const lvBadgeHTML = (showBadge && (type === 'low' || type === 'high'))
         ? `<div id="${type}-badge" class="tg-skill-card-icon-lv">Lv.1</div>`
         : '';
@@ -388,7 +393,7 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
     return `
     <div class="tg-skill-card" data-type="${type}">
         <div class="tg-skill-card-head">
-            <div class="tg-skill-card-icon-wrap">
+            <div class="tg-skill-card-icon-wrap"${nameIconAttr}>
                 <div class="tg-skill-card-icon-rel">
                     ${typeBadgeHTML}
                     <img class="tg-skill-card-icon" src="${iconPath}" onerror="this.src='./assets/icons/skills/default.webp'">
@@ -515,7 +520,7 @@ const renderAsideTabContent = (char, asideData) => {
         html += `
             <div class="tg-aside-card">
                 <div class="tg-skill-card-head">
-                    <div class="tg-skill-card-icon-wrap">
+                    <div class="tg-skill-card-icon-wrap" data-nameicon="aside${i}|${char.name}">
                         <div class="tg-skill-card-icon-rel">
                             <img class="tg-skill-card-icon" src="./assets/icons/aside/aside_${i}/${icon}"
                                  onerror="this.src='./assets/icons/skills/default.webp'">
