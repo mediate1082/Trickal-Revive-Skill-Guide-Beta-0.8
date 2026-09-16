@@ -636,8 +636,11 @@ export function openDetailModal(char, dataContext) {
             </div>`;
         }
 
+        /* data-sp — 편집기의 SP 수치 진입점.
+           이 블록은 네 수치가 다 유효해야 그려지므로, 값이 비면 사라진다.
+           그래서 편집기는 툴바에도 같은 입구를 둔다. */
         return `
-        <div class="tg-sp-box">
+        <div class="tg-sp-box" data-sp="${char.name}">
             <div class="tg-sp-header">
                 <span class="tg-sp-icon"><img src="./assets/icons/base_stat/SP.webp" alt="SP"></span>
                 <span class="tg-sp-title">SP 정보</span>
