@@ -54,7 +54,7 @@ function _isTermLine(term, def) {
 /* 설명문을 { body, terms } 로 가른다.
    꼬리에서 위로 올라가며 연속된 용어 줄만 걷어낸다.
    중간에 섞인 'X : Y' 는 건드리지 않는다 (바롱 어사이드2 의 '첫 번째 효과' 등). */
-function splitGlossary(raw, ctx) {
+export function splitGlossary(raw, ctx) {
     const lines = String(raw || '').split(/<br\s*\/?>|\\n|\n/);
     const terms = [];
     const body = [];
@@ -93,7 +93,7 @@ function splitGlossary(raw, ctx) {
 
 /* allStateDB(버프+디버프 병합) 에서 용어 하나를 찾는다.
    버프·디버프 양쪽에 등록된 상태는 neutral (개전 효과, 최고로 멋진 요정). */
-function lookupTerm(name, ctx) {
+export function lookupTerm(name, ctx) {
     const all = ctx?.allStateDB || [];
     const deb = ctx?.debuffDescDB || [];
     const hit = all.filter(r => (r.state_name || '').trim() === name);
@@ -148,7 +148,7 @@ function wrapTerms(bodyHtml, terms, ctx) {
 
    · 'X : Y' 형태는 꼬리 줄 자체가 감싸인 것이므로 건너뛴다
    · '<color=…>기절, 넉백</color>' 처럼 한 태그에 여럿이 들어가기도 한다 */
-function collectColorTerms(html) {
+export function collectColorTerms(html) {
     const out = new Set();
     const re = /<color=[^>]+>([\s\S]*?)<\/color>/g;
     let m;
@@ -164,7 +164,7 @@ function collectColorTerms(html) {
 }
 
 /* 설명문 렌더 진입점 — 이 한 줄만 부르면 된다. */
-function renderDesc(raw, ctx) {
+export function renderDesc(raw, ctx) {
     if (!raw) return '';
     const { body, terms } = splitGlossary(raw, ctx);
 
@@ -523,7 +523,7 @@ const renderAsideTabContent = (char, asideData) => {
                     </div>
                 </div>
                 <div class="tg-skill-card-body">
-                    <div class="tg-aside-desc">${renderDesc(desc, currentDataContext)}</div>
+                    <div class="tg-aside-desc" data-src="aside_DB.csv|${char.name}|aside${i}_desc">${renderDesc(desc, currentDataContext)}</div>
                     ${(template && value) ? `<div class="tg-skill-stat-box">${parseSkillLevelText(template, value)}</div>` : ''}
                     ${(i === 3 && asideData.aside_3_global) ? renderAsideGlobalBox(char, asideData) : ''}
                 </div>
@@ -806,7 +806,7 @@ export function openDetailModal(char, dataContext) {
         let maxL = 1;
         for (let i = 1; i <= 13; i++) { if (lowSkillData[`Lv.${i}`]) maxL = i; }
         lowDetail = `
-            <div class="tg-skill-desc">${renderDesc(lowSkillData.low_skill_desc, currentDataContext)}</div>
+            <div class="tg-skill-desc" data-src="low_skill_DB.csv|${char.name}|low_skill_desc">${renderDesc(lowSkillData.low_skill_desc, currentDataContext)}</div>
             <div id="low-skill-stat-text" class="tg-skill-stat-box">${parseSkillLevelText(lowSkillData.low_skill_stat_template, lowSkillData['Lv.1'])}</div>
             <div class="tg-lv-slider" style="--lv-progress:0%">
                 <input type="range" min="1" max="${maxL}" value="1" id="low-skill-slider" oninput="window.updateLowSkillLv(this.value, '${char.name}')">
@@ -820,7 +820,7 @@ export function openDetailModal(char, dataContext) {
         for (let i = 1; i <= 13; i++) { if (skillData[`Lv.${i}(PvE)`]) maxH = i; }
         highDetail = `
             <div id="high-cooldown-text" class="tg-skill-cooldown"><img class="tg-skill-cooldown-icon" src="./assets/icons/common_icons/재사용 대기시간.webp" alt="">재사용 대기시간 <b>${skillData['high_cooldown(PvE)']}초</b></div>
-            <div class="tg-skill-desc">${renderDesc(skillData['high_skill_desc'], currentDataContext)}</div>
+            <div class="tg-skill-desc" data-src="high_skill_DB.csv|${char.name}|high_skill_desc">${renderDesc(skillData['high_skill_desc'], currentDataContext)}</div>
             <div id="high-skill-stat-text" class="tg-skill-stat-box">${parseSkillLevelText(skillData['high_skill_stat_template'], skillData['Lv.1(PvE)'])}</div>
             <div class="tg-lv-slider" style="--lv-progress:0%">
                 <input type="range" min="1" max="${maxH}" value="1" id="high-skill-slider" oninput="window.updateHighSkillLv(this.value, '${char.name}')">
@@ -832,7 +832,7 @@ export function openDetailModal(char, dataContext) {
     if (normalAtkData) {
         const normalContent = `
             <div class="tg-normal-section">
-                <div class="tg-skill-desc">${renderDesc(normalAtkData.basic_atk_desc, currentDataContext)}</div>
+                <div class="tg-skill-desc" data-src="normal_Atk_DB.csv|${char.name}|basic_atk_desc">${renderDesc(normalAtkData.basic_atk_desc, currentDataContext)}</div>
                 <div class="tg-skill-stat-box">${parseSkillLevelText(normalAtkData.basic_stat_template, normalAtkData.basic_atk_value)}</div>
             </div>
             ${(normalAtkData.enhance_atk_desc && normalAtkData.enhance_atk_desc !== 'X') ? `
@@ -842,7 +842,7 @@ export function openDetailModal(char, dataContext) {
                     <div class="tg-normal-sub-type">일반 공격</div>
                     <div class="tg-normal-sub-name">강화 공격</div>
                 </div>
-                <div class="tg-skill-desc">${renderDesc(normalAtkData.enhance_atk_desc, currentDataContext)}</div>
+                <div class="tg-skill-desc" data-src="normal_Atk_DB.csv|${char.name}|enhance_atk_desc">${renderDesc(normalAtkData.enhance_atk_desc, currentDataContext)}</div>
                 <div class="tg-skill-stat-box">${parseSkillLevelText(normalAtkData.enhance_stat_template, normalAtkData.enhance_atk_value)}</div>
             </div>` : ''}`;
         normalAtkHTML = renderEffectCard('normal', { low_skill_name: "기본 공격" }, null, null, null, dataContext, normalContent, false);
