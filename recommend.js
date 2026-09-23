@@ -228,15 +228,28 @@ const VIEWS = ['slide', 'list'];
 let rcView = 'slide';
 try { const v = localStorage.getItem('rcView'); if (VIEWS.includes(v)) rcView = v; } catch { }
 
-function setView(mode) {
+/* ⚠ **좁은 화면에서는 무조건 1열이다.** 슬라이드는 폰에서 못 쓴다 —
+     분류 이름이 길어 버튼 줄이 다섯 줄로 접히는데 그게 따라다니느라 카드를 덮고,
+     양옆으로 비치는 폭도 30px 남짓이라 "옆에 더 있다"는 신호 구실도 못 한다.
+   고른 값(`rcView`)은 그대로 둔다 — 넓은 화면으로 돌아가면 쓰던 대로 복구된다.
+   화면에 실제로 적용하는 건 `effView()` 다. */
+const RC_NARROW = window.matchMedia('(max-width: 720px)');
+const effView = () => RC_NARROW.matches ? 'list' : rcView;
+RC_NARROW.addEventListener('change', () => setView(rcView, false));
+
+function setView(mode, remember = true) {
     if (!VIEWS.includes(mode)) return;
-    rcView = mode;
-    try { localStorage.setItem('rcView', mode); } catch { }
+    if (remember) {
+        rcView = mode;
+        try { localStorage.setItem('rcView', mode); } catch { }
+    }
+    const mode2 = effView();
+    /* 버튼은 **고른 값**을 보여 준다 (좁은 화면에서는 어차피 숨어 있다) */
     document.querySelectorAll('.rc-view-btn').forEach(b =>
-        b.classList.toggle('on', b.dataset.view === mode));
+        b.classList.toggle('on', b.dataset.view === rcView));
     /* 분류 줄은 패널이 아니라 상자 안에 있다 — 표시를 상자에도 달아야 CSS 가 걸린다 */
     document.querySelectorAll('.rc-subhost').forEach(b => {
-        b.classList.toggle('is-list', mode === 'list');
+        b.classList.toggle('is-list', mode2 === 'list');
         b.classList.add('is-switching');
         void b.offsetHeight;
         b.classList.remove('is-switching');
@@ -245,9 +258,9 @@ function setView(mode) {
         /* 전환 애니메이션을 끈 채로 값을 바꾼다 — 안 그러면 1열로 갈 때
            슬라이드가 주르륵 미끄러진다 */
         pn.classList.add('is-switching');
-        pn.classList.toggle('is-list', mode === 'list');
+        pn.classList.toggle('is-list', mode2 === 'list');
         /* 1열에서는 접기가 살아 있다. 슬라이드에서는 한 분류만 보이니 접을 이유가 없다 */
-        if (mode === 'slide') pn.querySelectorAll('.rc-sec.is-folded').forEach(el => {
+        if (mode2 === 'slide') pn.querySelectorAll('.rc-sec.is-folded').forEach(el => {
             el.classList.remove('is-folded');
             el.querySelector('.rc-sec-title').setAttribute('aria-expanded', 'true');
         });
@@ -352,7 +365,7 @@ const indWatch = new ResizeObserver(() => {
 function writeHash(panel) {
     const key = panel.dataset.key;
     const sec = panel._secKeys && panel._secKeys[panel._slide || 0];
-    const want = '#' + key + (rcView === 'slide' && sec ? '/' + sec : '');
+    const want = '#' + key + (effView() === 'slide' && sec ? '/' + sec : '');
     if (location.hash !== want) history.replaceState(null, '', want);
 }
 
@@ -378,7 +391,7 @@ function watchStuck() {
 window.addEventListener('scroll', watchStuck, { passive: true });
 
 document.addEventListener('keydown', e => {
-    if (rcView !== 'slide') return;
+    if (effView() !== 'slide') return;
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
@@ -416,6 +429,12 @@ function activateTab(key, secKey) {
         /* ⚠ 숨어 있는 동안에는 폭이 0 이라 자리를 못 잰다. 보이게 된 **뒤에** 다시 잰다. */
         showSlide(active, i >= 0 ? i : (active._slide || 0), false);
         requestAnimationFrame(() => layoutSlides(active));
+        /* 1열에서는 옮길 슬라이드가 없다 — `#탭/분류` 로 들어오면 그 분류로 내려 준다.
+           ⚠ 탭 버튼을 눌렀을 때는 `secKey` 가 없어 `i` 가 -1 이므로 여기 안 걸린다. */
+        if (i >= 0 && effView() === 'list') {
+            const el = active.querySelectorAll('.rc-track > .rc-sec')[i];
+            if (el) setTimeout(() => el.scrollIntoView({ block: 'start' }), 60);
+        }
         writeHash(active);
     }
     window.currentDisplayedList = window._rcFlat ? (window._rcFlat[key] || []) : [];

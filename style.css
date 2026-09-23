@@ -2705,6 +2705,8 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 }
 /* 좁아지면 3칸 격자를 접는다 — 빈 칸 두 개가 가운데를 짓눌러 글자가 세로로 쌓인다 */
 @media (max-width: 720px) {
+    /* 좁은 화면은 1열로 고정한다 — 고를 게 없으니 전환 버튼도 숨긴다 (`effView`) */
+    .rc-viewsw { display: none; }
     .rc-subbar { gap: 8px; }
     .rc-subtab { padding: 6px 12px; font-size: .86rem; }
     .rc-subtab img { width: 19px; height: 19px; }
