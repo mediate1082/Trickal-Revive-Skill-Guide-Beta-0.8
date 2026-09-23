@@ -2922,7 +2922,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
      없어서 그대로 두면 글자와 어긋난다 — `align-self: center` 로 잡는다.
    ⚠ 경로는 이 CSS 파일 기준이다 (`recommend.html` 기준이 아니다). */
 .rc-pick-star {
-    flex: none; align-self: center; width: 25px; height: 25px;
+    flex: none; align-self: center; width: 25px; height: 25px; cursor: help;
     background: #E2453C;
     -webkit-mask: url('assets/icons/common_icons/CommonIcon_Star.webp') center / contain no-repeat;
             mask: url('assets/icons/common_icons/CommonIcon_Star.webp') center / contain no-repeat;

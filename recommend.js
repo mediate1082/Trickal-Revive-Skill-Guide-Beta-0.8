@@ -83,6 +83,8 @@ function buildCard(char, rec, secKey) {
        비워두면 평범한 카드. 값이 있으면 흑백 + 그 글자가 뱃지로 붙는다. */
     const dim = String(rec.dim || '').trim();
     /* `pick` 은 그 반대 — 붉은 별이 붙는다. 값은 왜 강추인지 적어두는 메모 겸 툴팁이다. */
+    /* ⚠ 설명은 `data-tooltip` 으로 단다. `title` 은 뜨기까지 1초 넘게 걸리고
+         꼴도 못 맞춘다 (칩·엘다인 별과 같은 말풍선을 써야 한다). */
     const pick = String(rec.pick || '').trim();
     const card = document.createElement('article');
     card.className = 'rc-card' + (dim ? ' is-dim' : '');
@@ -124,7 +126,7 @@ function buildCard(char, rec, secKey) {
         </div>
         <div class="rc-card-text">
             <div class="rc-card-head">
-                ${pick ? `<i class="rc-pick-star" title="${esc(pick)}"></i>` : ''}
+                ${pick ? `<i class="rc-pick-star" data-tooltip="${esc(pick)}"></i>` : ''}
                 <span class="rc-card-name">${esc(char.name)}</span>
                 ${dim ? `<span class="rc-dim-badge">${esc(dim)}</span>` : ''}
                 ${cardChips(char.name, secKey, rec.chips)}
