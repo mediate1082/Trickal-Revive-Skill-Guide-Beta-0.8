@@ -17,6 +17,7 @@
         document.write('<link rel="stylesheet" href="style.css?v=' + APP_VERSION + '">');
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script>document.write('<script src="tooltip.js?v=' + APP_VERSION + '"><\/script>');</script>
 
   
 </head>
@@ -33,6 +34,15 @@
                 </div>
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
+                <!-- 티어 메이커 버튼과 **같은 클래스**를 쓴다. 호버로 펼쳐지는 동작이 거기 붙어 있다.
+                     사도 추천 쪽에서 이리로 오는 버튼도 짝으로 있다 (recommend.html). -->
+                <a href="./recommend.html" class="tg-tier-btn" aria-label="사도 추천" title="사도 추천">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
+                        <path d="M8 16l2 -6l6 -2l-2 6l-6 2"/>
+                        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>
+                    </svg>
+                    <span class="tm-btn-text">사도 추천</span>
+                </a>
                 <a href="./tiermaker.html" class="tg-tier-btn" aria-label="티어 메이커" title="티어 메이커">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
                         <path d="M8 21l8 0"/><path d="M12 17l0 4"/>

@@ -909,7 +909,8 @@ async function displayCards(data, id, append = false) {
         const isEldyne = char.Eldyne && char.Eldyne.trim() !== "" && char.Eldyne !== "X";
         if (isEldyne) card.classList.add('eldyne-card');
         const eldyneIcon = isEldyne
-            ? `<img src="./assets/icons/common_icons/Ingame_Icon_HeroGrow_Hidden.webp" class="eldyne-corner-icon">`
+            ? `<img src="./assets/icons/common_icons/Ingame_Icon_HeroGrow_Hidden.webp" class="eldyne-corner-icon"
+                    alt="엘다인" data-tooltip="이 별은 이 사도가 엘다인임을 의미합니다. 엘다인은 일반 사도들에 비해 강력한 성능을 가지고 있으며, 픽업과 모집권에서 등장 확률이 낮습니다.">`
             : '';
         
         card.onclick = () => {

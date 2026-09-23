@@ -1338,8 +1338,11 @@ window.addEventListener('click', (e) => {
         if (typeof window.closeModal === 'function') window.closeModal('modal-info');
         else if (typeof closeModal === 'function') closeModal('modal-info');
     }
-    // 상세 정보 모달 배경 클릭
-    if (e.target === detailModal) {
+    /* 상세 정보 모달 배경 클릭
+       편집기에서 이 모달은 닫는 물건이 아니라 편집 대상 시뮬레이터다.
+       배경이 넓어 스치기만 해도 작성 중이던 내용이 통째로 날아간다 —
+       `tools/editor.js` 가 세우는 플래그가 있으면 건너뛴다. 운영에서는 그대로 닫힌다. */
+    if (e.target === detailModal && !window.__editorMode) {
         window.closeDetailModal();
     }
 });

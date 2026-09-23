@@ -714,9 +714,13 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     width: 18px; height: 18px;
     object-fit: contain;
     z-index: 7;
-    pointer-events: none;
+    /* ⚠ `pointer-events: none` 이면 마우스를 올려도 설명(`title`)이 안 뜬다.
+         카드 클릭은 부모로 올라가니 켜 둬도 상세 모달은 그대로 열린다. */
+    pointer-events: auto; cursor: help;
     filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+    transition: transform .15s ease;
 }
+.eldyne-corner-icon:hover { transform: scale(1.18); }
 .eldyne-card .card-top::before {
     content: '';
     position: absolute;
@@ -1015,6 +1019,25 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     .tg-modal-header { padding: 16px 18px 14px; }
     .tg-modal-footer { padding: 12px 18px 16px; }
 }
+
+/* ── 떠 있는 툴팁 (`tooltip.js`, `data-tooltip` 속성) ──
+   `<body>` 바로 아래 하나만 두고 자리를 옮긴다 — `overflow: hidden` 안에 있는 것에도
+   띄울 수 있고(엘다인 별은 초상화 프레임 안이다), 나타나는 속도도 우리가 정한다.
+   ⚠ `.rc-tab[data-tip]::after` 는 **다른 것**이다 (탭 설명). 이름만 비슷하다. */
+.tg-tip {
+    position: fixed; left: 0; top: 0; z-index: 9999;
+    max-width: min(320px, 82vw); padding: 10px 13px; border-radius: 11px;
+    background: #33372F; color: #F4F6F1;
+    font-family: 'OneMobilePop', sans-serif;
+    font-size: .8rem; font-weight: 500; line-height: 1.6;
+    word-break: keep-all; text-align: left;
+    box-shadow: 0 8px 22px rgba(0,0,0,.22);
+    opacity: 0; visibility: hidden; transform: translateY(-3px);
+    transition: opacity .12s ease, transform .12s ease, visibility .12s;
+    pointer-events: none;
+}
+.tg-tip.is-on { opacity: 1; visibility: visible; transform: none; }
+[data-theme="dark"] .tg-tip { background: #E8EBE3; color: #24261F; }
 
 /* ── Misc ─────────────────────────────── */
 #top-btn {
@@ -2422,15 +2445,35 @@ body.tm-is-dragging .tm-add-slot { display: none; }
 /* ══════════════════════════════════════════════════════════════
    사도 추천 페이지 (recommend.html)
    ══════════════════════════════════════════════════════════════ */
+/* ── 사도 추천 페이지 ──────────────────────────────────────────
+   이 페이지가 답하는 질문은 "뭘 뽑고 키우나" 다. 그래서 카드가 말해야 하는 것은
+   **순위 · 누구 · 왜** 셋이다. 메인 그리드의 강화 게이지 카드를 쓰지 않는 이유다.
+   본문(이유·설명)은 Pretendard 로 둔다 — Pop 체는 제목·라벨용이다 (진단 U31). */
+
 .rc-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
 .rc-brand-icon { width: 52px; height: 52px; flex-shrink: 0; object-fit: contain; }
 .rc-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
 
-.rc-main { max-width: var(--page-width); margin: 0 auto; padding: 22px 16px 60px; }
+/* 분류 2열 × 카드 2열 = 한 줄에 4장. 그러려면 본문이 1800px 쯤 필요하다.
+   ⚠ --page-width(1160) 는 메인·티어 메이커도 쓰는 전역 토큰이라 건드리지 않는다.
+     이 페이지에서만 넓힌다. min() 이라 좁은 화면에서는 알아서 줄어든다. */
+/* 본문이 1800 인데 헤더만 1160 이면 로고·버튼이 가운데로 몰려 보인다.
+   `:has()` 로 이 페이지에서만 맞춘다 — .tg-header-inner 는 다른 페이지와 공용이다. */
+/* ⚠ 분류가 짧으면(사도 한 명짜리 등) 페이지가 화면보다 짧아져 **푸터가 위로 떠오른다.**
+     무대 높이가 고른 분류에 맞춰 줄어들기 때문이라 없앨 수 없는 상황이다 —
+     푸터를 바닥으로 밀어 두는 게 맞다. `:has` 로 이 페이지에만 건다. */
+body:has(.rc-main) { min-height: 100vh; display: flex; flex-direction: column; }
+body:has(.rc-main) .rc-main { flex: 1 0 auto; }
+body:has(.rc-main) .tg-footer { margin-top: auto; }
+
+body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
+
+.rc-main { max-width: min(1800px, 100% - 24px); margin: 0 auto; padding: 22px 12px 60px; }
 
 .rc-help {
     background: var(--accent-soft); border: 1px solid var(--border-soft);
     border-radius: 12px; padding: 12px 16px; margin-bottom: 20px;
+    font-family: 'Pretendard', sans-serif;
     font-size: .86rem; color: var(--text-dark); line-height: 1.65;
 }
 .rc-loading { text-align: center; padding: 60px 0; color: var(--text-muted); }
@@ -2438,20 +2481,55 @@ body.tm-is-dragging .tm-add-slot { display: none; }
     background: #FFF4E5; border: 1px solid #F5C98A; color: #8A5A12;
     border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: .84rem;
 }
+[data-theme="dark"] .rc-warn { background: #3A2A12; border-color: #6B4E1E; color: #F2C57C; }
 
-/* 대분류 탭 */
+/* ── 대분류 탭 ── */
 .rc-tabbar {
-    display: flex; flex-wrap: wrap; gap: 7px;
-    position: sticky; top: 0; z-index: 30;
-    padding: 12px 16px; margin: -22px -16px 4px;
-    background: var(--bg-main);
-    border-bottom: 2px solid var(--border-soft);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 9px;
+    padding: 10px 14px;
+}
+
+/* 탭 상자. **따라다니지 않는다** — 이 페이지는 스크롤이 길지 않고, 핵심 정보는
+   모달이 아니라 사도 카드라서 카드에 화면을 많이 줘야 한다. 내비게이션이 화면
+   4분의 1을 먹고 있으면 안 된다.
+   ⚠ 예전 탭 줄은 `margin: -22px -16px` 로 화면 끝까지 늘리고 아래에 2px 선을 그었다.
+     상자로 감싸면서 **둘 다 걷어냈다** — 안 그러면 상자 밑에 선이 또 그어진다.
+   감싸는 쪽이 더 둥글어야 안정적이라 모서리는 분류 카드(15px)보다 큰 16px 이다. */
+.rc-navbox {
+    /* ⚠ `overflow: hidden` 을 주면 **탭 설명 툴팁이 잘린다.** 두 줄짜리 상자였을 때
+         아랫줄 모서리를 다듬으려고 넣었던 건데, 지금은 탭 줄만 들었고 그 줄은 제 배경이
+         없어서 필요가 없다. 잘린 툴팁이 상자 밑에 검은 막대로 삐져나와 보였다.
+       ⚠ `z-index` 는 `.rc-subhost`(25)보다 높아야 한다 — 툴팁이 아래로 펼쳐지는데
+         그 자리에 따라다니는 분류 묶음이 있다. */
+    position: relative; z-index: 31;
+    border-radius: 16px;
+    background: var(--modal-card-bg); border: 1.5px solid var(--border-soft);
+}
+
+/* 따라다니는 건 **분류 묶음뿐**이다 (`‹ 트레이 ›`). 스크롤로 탭 상자가 올라가 버리면
+   이쪽이 화면에 붙고, 그때만 프리즘 글라스가 된다 — 붙기 전에는 평평하게 둔다. */
+.rc-subhost { position: sticky; top: 8px; z-index: 25; }
+.rc-subhost.is-stuck .rc-navgroup {
+    padding: 6px 10px;
+    background: rgba(255,255,255,.62);
+    -webkit-backdrop-filter: blur(12px) saturate(1.8);
+            backdrop-filter: blur(12px) saturate(1.8);
+    border: 1px solid rgba(255,255,255,.7);
+    box-shadow: 0 6px 20px rgba(63,79,31,.13);
+}
+/* 글라스 위에서는 트레이가 제 색을 버린다 — 안 그러면 유리가 안 보인다.
+   흰 알약은 그림자를 가지고 있어 배경 없이도 또렷하다. */
+.rc-subhost.is-stuck .rc-subtabs { background: transparent; border-color: transparent; }
+[data-theme="dark"] .rc-subhost.is-stuck .rc-navgroup {
+    background: rgba(32,32,36,.62); border-color: rgba(255,255,255,.10);
+    box-shadow: 0 6px 20px rgba(0,0,0,.45);
 }
 .rc-tab {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 8px 16px; border-radius: 999px; cursor: pointer;
+    position: relative;   /* 탭 설명 툴팁의 기준점 */
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 11px 21px; border-radius: 999px; cursor: pointer;
     border: 1px solid var(--border-soft); background: var(--modal-card-bg);
-    font: inherit; font-size: .92rem; font-weight: 700; color: var(--text-muted);
+    font: inherit; font-size: 1.02rem; font-weight: 700; color: var(--text-muted);
     transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
 .rc-tab:hover { border-color: var(--accent-green); color: var(--text-dark); }
@@ -2459,54 +2537,454 @@ body.tm-is-dragging .tm-add-slot { display: none; }
     background: var(--accent-green-strong); border-color: var(--accent-green-strong);
     color: #fff; font-weight: 800;
 }
-.rc-tab-icon { font-size: 1.05rem; line-height: 1; }
+/* 대분류 아이콘 — 인게임 리소스라 비율이 제각각이다. 높이로 맞추고 폭은 따라가게 둔다 */
+.rc-tab-icon { height: 26px; width: auto; max-width: 36px; object-fit: contain; flex: none; }
+/* 보기 방식은 탭 줄 오른쪽 끝. 탭 줄이 sticky 라 스크롤해도 따라다닌다 */
+.rc-tabbar .rc-viewsw { margin-left: auto; align-self: center; }
+/* 분류 패널을 2열로. `auto-fill + minmax` 라 좁아지면 스스로 1열로 떨어진다.
+   ⚠ `align-items: start` 가 핵심 — 기본값(stretch)이면 짧은 패널이 옆 패널 높이까지
+     늘어나 테두리 안이 텅 빈다. 분류마다 카드 수가 다르므로 각자 내용만큼만 차지하게 둔다. */
+/* ⚠ `align-items: start` 를 쓰지 않는다. 아래 subgrid 가 늘어나야 줄이 맞는다. */
 .rc-panel { padding-top: 20px; }
 
-.rc-sec { margin-bottom: 26px; }
+/* ── 분류 고르기 줄 ── 상자의 아랫칸.
+   `‹ 분류들 ›` 하나뿐이라 그냥 가운데로 밀면 된다.
+   (보기 방식이 여기 있을 때는 그 폭만큼 가운데가 밀려서 3칸 격자를 써야 했다.)
+   ⚠ 층은 **분류 버튼 트레이**가 맡는다 (아래 `.rc-subtabs`). 줄 자체는 칠하지 않는다 —
+     칠하면 트레이와 색이 겹쳐 트레이가 안 보이고, 따라다닐 때 유리도 안 보인다. */
+.rc-subbar {
+    display: flex; justify-content: center; align-items: center;
+    gap: 12px; padding: 12px 14px;
+}
+.rc-navgroup {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
+    padding: 0; border: 1px solid transparent; border-radius: 999px;
+    transition: background .2s ease, box-shadow .2s ease,
+                border-color .2s ease, padding .2s ease;
+}
+/* 1열에서는 화살표도 분류 버튼도 없다 — 빈 줄만 남으므로 통째로 숨긴다.
+   ⚠ 분류 줄은 **패널 밖**에 있다. `.rc-panel.is-list …` 로는 안 걸린다 —
+     `setView` 가 `.rc-subhost` 에도 같은 표시를 달아 준다. */
+.rc-subhost.is-list { display: none; }
+/* 분류 버튼은 **세그먼트 트레이**에 담는다 (상세 모달의 `.tg-segmented` 와 같은 꼴).
+   아이콘 + 글자만 있으면 지금 뭐가 골라졌는지 약하고 화면도 심심하다.
+   움푹한 트레이 위로 흰 알약이 **미끄러져** 오면 둘 다 풀린다.
+   ⚠ 알약 자리는 JS 가 잰다 (`placeInd`). 글자 길이가 제각각이라 CSS 로는 못 맞춘다. */
+.rc-subtabs {
+    position: relative;
+    display: flex; align-items: center; gap: 2px; flex-wrap: wrap; justify-content: center;
+    padding: 4px; border-radius: 999px;
+    background: var(--segmented-bg); border: 1px solid var(--border-soft);
+}
+.rc-subtab-ind {
+    position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none;
+    border-radius: 999px; background: var(--segmented-indicator);
+    box-shadow: 0 1px 3px rgba(63,79,31,.10), 0 0 0 1px var(--border-soft);
+    transition: transform .28s cubic-bezier(.4,0,.2,1),
+                width .28s cubic-bezier(.4,0,.2,1),
+                height .28s cubic-bezier(.4,0,.2,1), opacity .15s ease;
+}
+/* 보기 방식을 바꿀 때는 알약이 미끄러지면 안 된다 — 이동이 아니라 다시 그리는 것이다 */
+.rc-subhost.is-switching .rc-subtab-ind { transition: none !important; }
+
+/* ⚠ 인게임 화살표 그림을 써 봤는데 이 페이지 버튼들과 양식이 안 맞았다.
+     사이트 공통 꼴(동그란 테두리 + SVG)을 따른다. */
+.rc-arrow {
+    flex: none; width: 38px; height: 38px; padding: 0; border-radius: 50%; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--border-soft); background: var(--modal-card-bg);
+    color: var(--text-muted);
+    transition: border-color .15s ease, color .15s ease, background .15s ease;
+}
+.rc-arrow:hover:not(:disabled) {
+    border-color: var(--accent-green); background: var(--accent-soft); color: var(--text-heading);
+}
+.rc-arrow:disabled { opacity: .3; cursor: default; }
+.rc-subhost.is-list .rc-arrow { display: none; }
+.rc-subtab {
+    position: relative; z-index: 1;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px; border-radius: 999px; cursor: pointer;
+    font: inherit; font-size: .96rem; font-weight: 700; color: var(--text-muted);
+    border: none; background: transparent;
+    transition: color .2s ease;
+}
+.rc-subtab img { width: 22px; height: 22px; object-fit: contain; }
+.rc-subtab:hover { color: var(--text-heading); }
+.rc-subtab.on { color: var(--text-heading); font-weight: 800; }
+
+/* 보기 방식 — 슬라이드 / 1열 */
+.rc-viewsw {
+    display: flex; gap: 2px; padding: 3px; border-radius: 999px;
+    background: var(--grid-bg); border: 1.5px solid var(--border-soft);
+}
+.rc-view-btn {
+    padding: 7px 15px; border-radius: 999px; border: none; cursor: pointer;
+    font: inherit; font-size: .86rem; font-weight: 800;
+    background: transparent; color: var(--text-muted);
+    transition: background .15s ease, color .15s ease;
+}
+.rc-view-btn.on { background: var(--modal-card-bg); color: var(--text-heading); }
+
+/* ── 무대 ──
+   한 분류씩 가운데 세우고 **양옆 분류를 흐릿하게 비춘다** — 더 있다는 걸 알리려는 것이다.
+   ⚠ 무대 높이는 JS 가 가운데 분류에 맞춘다 (`layoutSlides`). 안 맞추면 제일 긴
+     분류에 맞춰져 아래가 휑하다. */
+/* ⚠ `overflow: hidden` 만 두면 비껴 있는 분류가 **칼로 자른 듯** 끊긴다.
+     같은 폭만큼 마스크를 씌워 가장자리로 갈수록 사라지게 한다.
+     `--rc-edge` 는 가운데 분류 **바깥**으로 남는 폭이라, 가운데 것은 건드리지 않는다.
+     슬라이드가 하나뿐이면 `--rc-slide-w` 가 100% 라 `--rc-edge` 가 0 이 되고 마스크도 없어진다. */
+.rc-stage {
+    overflow: hidden;
+    --rc-edge: calc((100% - var(--rc-slide-w, 100%)) / 2);
+    -webkit-mask-image: linear-gradient(to right,
+        transparent 0, #000 var(--rc-edge), #000 calc(100% - var(--rc-edge)), transparent 100%);
+            mask-image: linear-gradient(to right,
+        transparent 0, #000 var(--rc-edge), #000 calc(100% - var(--rc-edge)), transparent 100%);
+    transition: height .35s cubic-bezier(.22,.8,.3,1);
+}
+.rc-track {
+    display: flex; align-items: flex-start; gap: 16px;
+    transition: transform .35s cubic-bezier(.22,.8,.3,1);
+}
+/* ⚠ 보기 방식을 바꿀 때는 **애니메이션을 끈다.**
+     `transform` 과 `height` 에 전환이 걸려 있어서, 1열로 가며 이 값들이 풀리면
+     슬라이드가 주르륵 미끄러지는 게 보인다. 모드 전환은 이동이 아니라 다시 그리는 것이다.
+     JS 가 이 클래스를 붙였다 떼는 사이에 강제 리플로우를 넣어 새 값을 확정한다. */
+.rc-panel.is-switching .rc-stage,
+.rc-panel.is-switching .rc-track,
+.rc-panel.is-switching .rc-sec { transition: none !important; }
+/* 사도 카드 색은 **스킬 가이드 상세 모달**에 맞춘다. 한곳에 모아 두고 쓴다 —
+   다크 값도 여기서만 갈아끼우면 된다. */
+.rc-card {
+    --rc-card-bg: #FFFFFF;   /* 배경 */
+    --rc-name:    #333333;   /* 이름 · 제목 */
+    --rc-sub:     #94998A;   /* 이명 (서브) */
+    --rc-meta:    #999F8E;   /* 성격 · 배치 · 역할 */
+    --rc-reason:  #555555;   /* 추천 이유 */
+}
+[data-theme="dark"] .rc-card {
+    --rc-card-bg: #202024;
+    --rc-name:    #FAFAFA;
+    --rc-sub:     #9C9C95;
+    --rc-meta:    #8D9280;
+    --rc-reason:  #A1A1AA;
+}
+
+/* ⚠ `min-width: 0` 이 없으면 안쪽 내용의 최소 폭이 `flex-basis` 를 밀어 올린다.
+     그러면 실제 폭과 JS 가 계산한 폭이 어긋나 가운데 정렬이 빗나간다. */
+.rc-stage .rc-sec { flex: 0 0 var(--rc-slide-w, 100%); min-width: 0; }
+.rc-sec.is-away {
+    filter: blur(3px) saturate(.65);
+    opacity: .5;
+    cursor: pointer;
+    transition: filter .3s ease, opacity .3s ease;
+}
+/* 비껴 있는 분류는 통째로 하나의 '다음으로 가기' 버튼이다 — 속을 눌러선 안 된다 */
+.rc-sec.is-away > * { pointer-events: none; }
+.rc-sec.is-away:hover { opacity: .72; filter: blur(2px) saturate(.8); }
+
+/* ── 1열 보기 ── */
+.rc-panel.is-list .rc-stage {
+    overflow: visible; height: auto !important;
+    -webkit-mask-image: none; mask-image: none;
+}
+/* ⚠ `.rc-track` 의 `align-items: flex-start` 가 세로로 세우면 **가로**에 걸린다.
+     그대로 두면 분류마다 내용만큼만 줄어들어 폭이 제각각이고 왼쪽에 붙는다.
+     가운데로 모으고 폭을 슬라이드와 **같은 80%** 로 맞춘다 — 두 보기가 같아 보여야 한다. */
+.rc-panel.is-list .rc-track {
+    flex-direction: column; align-items: center; transform: none !important;
+}
+.rc-panel.is-list .rc-sec { flex: 0 0 auto; width: 80%; }
+.rc-subhost.is-list .rc-subtabs { display: none; }
+/* 좁은 화면에서까지 80% 로 줄이면 읽을 폭이 없다 */
+@media (max-width: 720px) { .rc-panel.is-list .rc-sec { width: 100%; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .rc-stage, .rc-track, .rc-sec.is-away { transition: none; }
+}
+/* 좁아지면 3칸 격자를 접는다 — 빈 칸 두 개가 가운데를 짓눌러 글자가 세로로 쌓인다 */
+@media (max-width: 720px) {
+    .rc-subbar { gap: 8px; }
+    .rc-subtab { padding: 6px 12px; font-size: .86rem; }
+    .rc-subtab img { width: 19px; height: 19px; }
+    .rc-arrow { width: 32px; height: 32px; }
+    .rc-tab { padding: 9px 16px; font-size: .94rem; }
+    /* ⚠ 좁아지면 `›` 가 혼자 다음 줄로 떨어진다. 묶음은 줄바꿈을 막아 화살표를 양끝에
+         붙여 두고, **분류 버튼만** 그 사이에서 줄바꿈하게 한다. */
+    .rc-navgroup { flex-wrap: nowrap; width: 100%; }
+    .rc-subtabs { min-width: 0; flex: 1 1 auto; }
+    .rc-tabbar .rc-viewsw { margin-left: 0; }
+}
+
+/* 탭을 넘길 때. `hidden` 이 풀리면서(display 가 none→grid) 애니메이션이 다시 돈다 */
+@keyframes rc-panel-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+}
+.rc-panel:not([hidden]) { animation: rc-panel-in .3s cubic-bezier(.22,.8,.3,1) both; }
+@media (prefers-reduced-motion: reduce) { .rc-panel:not([hidden]) { animation: none; } }
+
+/* 탭 설명 — 패널이 2열 그리드라 한 줄을 통째로 차지하게 한다 */
+/* 탭 설명 — 마우스가 있으면 툴팁, 없으면 패널 맨 위 문단. **둘 중 하나만 뜬다.**
+   ⚠ 문단으로만 두면 설명이 몇 줄이냐에 따라 카드가 시작되는 높이가 달라진다.
+     그래서 마우스가 있는 기기에서는 툴팁으로 빼고 문단을 감춘다.
+   ⚠ 반대로 툴팁만 두면 터치 기기에서는 설명을 볼 길이 없다.
+   ⚠ 두 규칙은 **같은 미디어 쿼리 하나**에 넣는다. 조건을 따로 쓰면 여집합이 어긋나
+     (hover:hover + pointer:coarse 같은 기기에서) 둘 다 뜨거나 둘 다 안 뜬다. */
+.rc-group-tip {
+    margin: -4px 0 14px;
+    font-family: 'OneMobilePop', sans-serif;
+    font-size: .92rem; font-weight: 500; line-height: 1.7;
+    color: var(--text-muted); max-width: 88ch;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .rc-group-tip { display: none; }
+
+    .rc-tab[data-tip]::after {
+        content: attr(data-tip);
+        position: absolute; top: calc(100% + 9px); left: 0;
+        width: max-content; max-width: min(380px, 80vw);
+        padding: 11px 14px; border-radius: 11px;
+        background: #33372F; color: #F4F6F1;
+        box-shadow: 0 8px 22px rgba(0,0,0,.22);
+        font-family: 'OneMobilePop', sans-serif;
+        font-size: .8rem; font-weight: 500; line-height: 1.65;
+        text-align: left; white-space: normal; word-break: keep-all;
+        opacity: 0; visibility: hidden; transform: translateY(-4px);
+        transition: opacity .15s ease, transform .15s ease, visibility .15s;
+        pointer-events: none; z-index: 30;
+    }
+    .rc-tab[data-tip]:hover::after,
+    .rc-tab[data-tip]:focus-visible::after { opacity: 1; visibility: visible; transform: none; }
+    [data-theme="dark"] .rc-tab[data-tip]::after { background: #E8EBE3; color: #24261F; }
+}
+/* ⚠ 클래스의 display:flex 가 [hidden] 의 display:none 을 이긴다 (클래스 > UA 스타일).
+   이게 없으면 탭을 바꿔도 두 패널이 겹쳐서 같이 뜬다. */
+.rc-panel[hidden] { display: none !important; }
+
+/* ── 소분류 = 패널 ──
+   예전에는 제목만 있고 경계가 없어 긴 페이지에서 소속을 놓쳤다 (진단 U25). */
+/* 한 줄에 나란히 선 분류들의 **머리와 몸통이 각각 같은 줄을 쓴다** (subgrid).
+   설명이 두 줄인 분류 옆에 설명 없는 분류가 와도 카드가 같은 높이에서 시작한다.
+   ⚠ 예전에는 `.rc-sec-head { min-height: 94px }` 로 눌러 맞췄는데, 그러면 설명 없는
+     분류는 제목 아래가 통째로 비어 보인다. 옆칸에 맞춰 늘어나는 게 아니라 늘 94px 라서다.
+   ⚠ subgrid 는 부모의 `gap` 을 물려받는다. 머리·몸통 사이에 16px 이 끼므로 0 으로 덮는다. */
+/* ⚠ 분류 박스와 사도 카드가 **둘 다 흰색이면 카드가 안 보인다.**
+     상세 모달과 같은 짜임으로 간다 — 바탕(`--modal-body-bg`)을 한 톤 낮추고
+     그 위에 흰 카드를 올린다. */
+.rc-sec {
+    background: var(--modal-body-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 15px; padding: 16px 18px 6px;
+}
+/* ⚠ 설명이 1줄이냐 2줄이냐에 따라 카드 시작 y 가 22px 어긋났다. 두 패널이 나란히
+   서므로 눈에 띈다. 머리 높이를 2줄 기준으로 잡아 카드가 같은 높이에서 시작하게 한다.
+   설명이 3줄을 넘으면 다시 밀린다 — 그때는 문장을 줄이는 쪽이 맞다. */
+.rc-sec-head { margin-bottom: 16px; }
+
+/* ── 접기 ──
+   제목을 누르면 머리(제목 + 설명)만 남기고 접힌다. 아래 분류들이 따라 올라온다.
+   ⚠ **1열 보기에서만 쓴다.** 슬라이드에서는 한 분류만 보이니 접을 이유가 없다 —
+     꺾쇠도 숨기고 제목의 누름 표시도 뗀다. */
+.rc-sec.is-folded { padding-bottom: 14px; }
+.rc-panel:not(.is-list) .rc-fold { display: none; }
+.rc-panel:not(.is-list) .rc-sec-title { cursor: default; }
+.rc-sec.is-folded .rc-sec-head { margin-bottom: 0; }
+.rc-sec.is-folded .rc-sec-body { display: none; }
+.rc-sec.is-folded .rc-fold { transform: rotate(-90deg); }
+
+.rc-fold {
+    margin-left: auto; flex: none; color: var(--text-muted);
+    transition: transform .2s ease, color .15s ease;
+}
+.rc-sec-title { cursor: pointer; user-select: none; }
+.rc-sec-title:hover .rc-fold { color: var(--accent-green-strong); }
+.rc-sec-title:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 3px; border-radius: 6px; }
 .rc-sec-title {
-    display: flex; align-items: center; gap: 7px;
-    margin: 0 0 12px; font-size: 1.12rem; font-weight: 800; color: var(--text-dark);
+    position: relative; margin: 0; padding-left: 15px;
+    font-size: 1.3rem; font-weight: 800; color: var(--text-heading);
+    display: flex; align-items: center; gap: 10px;
 }
-.rc-sec-mark {
-    width: 18px; height: 18px; border-radius: 50%; flex: none;
-    background: var(--accent-green-strong); color: #fff;
-    font-size: .72rem; font-weight: 800; line-height: 18px; text-align: center;
-    cursor: help;
+/* 선택권 아이콘은 인게임 아이템 그림이라 세로가 길다 — 높이로 맞춘다 */
+.rc-sec-icon { height: 40px; width: auto; max-width: 60px; object-fit: contain; flex: none; }
+.rc-sec-title::before {
+    content: ''; position: absolute; left: 0; top: .18em; bottom: .18em;
+    width: 5px; border-radius: 999px; background: var(--accent-green-strong);
+}
+/* ⚠ 소분류 설명은 툴팁에 숨기지 않는다. 이 페이지에서 가장 자주 읽히는 문장이다. */
+.rc-sec-tip {
+    /* ⚠ `max-width: 74ch` 였다. 라틴 문자 기준의 읽기 폭인데 한글은 글자가 두 배쯤
+         넓어서 741px(한 줄 60자)에서 끊겼고, 분류 상자는 1421px 라 오른쪽이 1000px
+         넘게 비었다. 지금 설명은 제일 긴 게 94자라 **상자 폭을 다 쓰면 전부 한 줄**이다.
+         줄바꿈이 없으니 긴 줄을 눈으로 되짚을 일도 없다. */
+    margin: 9px 0 0 15px;
+    font-family: 'OneMobilePop', sans-serif;
+    font-size: .86rem; font-weight: 500; line-height: 1.62; color: var(--text-muted);
 }
 
-.rc-role { margin: 0 0 16px 4px; }
+/* ── 역할 묶음 ── */
+.rc-role { margin-bottom: 14px; }
 .rc-role-title {
-    display: flex; align-items: center; gap: 7px;
-    margin: 0 0 9px; font-size: .95rem; font-weight: 800; color: var(--text-muted);
+    display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+    font-size: .8rem; font-weight: 800; color: var(--text-muted);
+    letter-spacing: .02em;
 }
-.rc-role-title img { width: 24px; height: 24px; }
+.rc-role-title img { width: 19px; height: 19px; }
+.rc-role-title em {
+    font-style: normal; font-size: .74rem; font-weight: 800;
+    color: var(--text-muted); opacity: .75;
+    background: var(--accent-soft); border-radius: 999px; padding: 1px 7px;
+}
 
-.rc-cards { display: flex; flex-wrap: wrap; gap: 12px; }
-.rc-card { width: 178px; flex: none; cursor: pointer; }
+/* ── 추천 카드 ──
+   초상화 타일은 **메인 그리드 카드 그대로** 다 (`char-card` 의 `card-top`).
+   오른쪽 글 영역만 이 페이지 전용 — 강화 게이지 자리에 추천 이유가 들어간다. */
+/* ⚠ `minmax(410px, …)` 를 그냥 쓰면 칸이 좁을 때 **칸의 최소 폭 자체가 410px 로 올라간다.**
+     슬라이드에서는 그게 슬라이드 폭을 밀어내 가운데 정렬이 어긋났다. `min()` 으로 막는다. */
+.rc-cards {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(min(410px, 100%), 1fr));
+}
+/* 카드는 **세로 두 덩어리**다 — 위는 [초상화 | 이름·분류], 아래는 설명 상자.
+   ⚠ 설명을 초상화 **옆에** 두면 안 된다. 높이가 변하는 것(설명)이 안 변하는 것(정사각
+     초상화) 옆에 서면 긴 설명에서 반드시 어딘가가 어긋난다. 초상화 아래만 비거나,
+     초상화를 늘리면 세로로 길쭉해진다. 둘 다 겪고 이 구조로 왔다.
+   덤으로 설명이 카드 폭을 통째로 써서 줄 수가 준다. */
+.rc-card {
+    display: flex; flex-direction: column;
+    padding: 12px; cursor: pointer;
+    background: var(--rc-card-bg);
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    border: 1px solid var(--border-soft);
+    border-radius: 15px;
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.rc-card:hover {
+    border-color: var(--accent-green);
+    box-shadow: 0 6px 18px var(--shadow-soft);
+    transform: translateY(-2px);
+}
+.rc-card:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
 
-/* 말풍선 툴팁 — 소분류 설명 / 사도 추천 이유 공용 */
-.rc-tip { position: relative; }
-.rc-tip::after {
-    content: attr(data-tip);
-    position: absolute; left: 50%; bottom: calc(100% + 9px); transform: translateX(-50%);
-    width: max-content; max-width: 270px;
-    background: var(--text-dark); color: #fff;
-    padding: 8px 11px; border-radius: 9px;
-    font-size: .78rem; font-weight: 500; line-height: 1.5; text-align: left;
-    white-space: normal; opacity: 0; pointer-events: none;
-    transition: opacity .14s ease; z-index: 60;
+/* 타일 — 메인 그리드와 같은 그림자·곡률. 카드 안에 들어가므로 hover 로 또 뜨지는 않는다 */
+/* 초상화 칸. 폭은 120px 로 고정하되 **높이는 카드를 따라간다.**
+   ⚠ 카드 높이는 글 쪽이 정한다 (이름 + 분류 + 이유 상자). 추천 이유가 두 줄로
+     넘어가면 글이 120px 를 넘어서는데, 초상화가 `aspect-ratio: 1/1` 이라 정사각에
+     묶이면 그 차이만큼 **초상화 아래가 빈다.** 한 줄일 때는 안 보이다가 두 줄부터 생긴다.
+     그래서 여기서는 정사각을 풀고 늘어나게 둔다 — 안쪽 이미지는 `object-fit: cover` 라
+     잘려 나갈 뿐 찌그러지지 않는다. */
+/* 위 덩어리. 초상화가 높이를 정하고 이름·분류는 가운데 선다 */
+.rc-card-row { display: flex; gap: 14px; align-items: center; }
+.rc-tile { position: relative; flex: 0 0 120px; width: 120px; }
+.rc-card:hover .rc-tile { transform: none; }
+.rc-tile .card-top { border-radius: 13px; }
+
+/* ── 글 영역 ── */
+.rc-card-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+/* 초상화(120px) 옆은 이름 · 이명 · 분류 세 줄이다. 셋을 합쳐도 120px 에 못 미쳐
+   가운데 서므로, 이름을 키워 남는 폭을 쓴다. */
+.rc-card-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.rc-card-name {
+    font-size: 1.45rem; font-weight: 800; color: var(--rc-name); line-height: 1.25;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
 }
-.rc-tip::before {
-    content: ''; position: absolute; left: 50%; bottom: calc(100% + 3px);
-    transform: translateX(-50%);
-    border: 6px solid transparent; border-top-color: var(--text-dark);
-    opacity: 0; pointer-events: none; transition: opacity .14s ease; z-index: 60;
+/* 이명 — 이름에 딸린 말이라 한 단계 낮춘다 */
+.rc-card-title {
+    margin-top: 1px;
+    font-size: .88rem; font-weight: 700; color: var(--rc-sub);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.rc-tip:hover::after, .rc-tip:hover::before,
-.rc-tip:focus-visible::after, .rc-tip:focus-visible::before { opacity: 1; }
+.rc-card-meta {
+    margin-top: 5px;
+    font-size: .76rem; font-weight: 700; color: var(--rc-meta);
+    letter-spacing: .02em;
+}
+
+/* 콘텐츠 칩 — 이 사도가 **다른 어느 칸에도** 추천되는지 */
+.rc-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 999px;
+    font-size: .74rem; font-weight: 800; line-height: 1.35;
+    color: #fff; white-space: nowrap;
+    background: var(--rc-chip, #8FB93E);
+}
+.rc-chip img { width: 14px; height: 14px; object-fit: contain; }
+/* 칩 목록에 없는 키. 조용히 빠지면 오타를 못 잡는다 */
+.rc-chip.is-unknown { background: var(--grade-7m-text, #C0392B); }
+
+/* 강추 별. 아이콘이 **흰색 단색**이라 `mask` 로 물들인다 —
+   `filter` 로 임의의 색을 내려면 hue-rotate 를 짜맞춰야 하고 값이 안 맞는다.
+   ⚠ `.rc-card-head` 가 `align-items: baseline` 이다. 마스크 상자는 베이스라인이
+     없어서 그대로 두면 글자와 어긋난다 — `align-self: center` 로 잡는다.
+   ⚠ 경로는 이 CSS 파일 기준이다 (`recommend.html` 기준이 아니다). */
+.rc-pick-star {
+    flex: none; align-self: center; width: 25px; height: 25px;
+    background: #E2453C;
+    -webkit-mask: url('assets/icons/common_icons/CommonIcon_Star.webp') center / contain no-repeat;
+            mask: url('assets/icons/common_icons/CommonIcon_Star.webp') center / contain no-repeat;
+}
+[data-theme="dark"] .rc-pick-star { background: #FF7063; }
+
+/* 지금은 추천하지 않는 사도. 카드 **전체**를 흑백으로 눕히고 왜인지를 뱃지로 남긴다.
+   ⚠ 분류(배치 행)마다 따로다. 같은 사도가 다른 탭에서는 멀쩡히 추천될 수 있다. */
+/* ⚠ `filter` 를 카드 전체에 걸면 **이유 뱃지까지 회색이 된다.** 자식에서는 되돌릴 수 없다
+     (부모가 자식을 다 그린 뒤에 걸리므로, 자식이 채도를 올려도 결국 회색이 된다).
+     왜 비추천인지는 호버 없이 바로 읽혀야 하므로 **조각별로** 걸어 뱃지만 비켜 간다. */
+.rc-card.is-dim .rc-tile,
+.rc-card.is-dim .rc-card-title,
+.rc-card.is-dim .rc-card-meta,
+.rc-card.is-dim .rc-why,
+.rc-card.is-dim .rc-card-head > *:not(.rc-dim-badge) {
+    filter: grayscale(1); opacity: .58;
+    transition: filter .15s ease, opacity .15s ease;
+}
+.rc-card.is-dim:hover .rc-tile,
+.rc-card.is-dim:hover .rc-card-title,
+.rc-card.is-dim:hover .rc-card-meta,
+.rc-card.is-dim:hover .rc-why,
+.rc-card.is-dim:hover .rc-card-head > *:not(.rc-dim-badge) {
+    filter: grayscale(.35); opacity: .92;
+}
+/* 회색이 아니라 호박색. "못 쓴다"가 아니라 **"아직/곧"** 이라는 뜻이라 경고색은 과하고,
+   회색은 흑백 처리와 섞여 안 보인다. 칩과 같은 꼴이라 이름 옆에 나란히 선다. */
+.rc-dim-badge {
+    padding: 3px 9px; border-radius: 999px;
+    font-size: .74rem; font-weight: 800; line-height: 1.35; white-space: nowrap;
+    background: #E0912B; color: #FFFFFF;
+}
+[data-theme="dark"] .rc-dim-badge { background: #F0A94A; color: #2A1D06; }
+.rc-chip[data-hue="0"] { --rc-chip: #5BAE4A; }
+.rc-chip[data-hue="1"] { --rc-chip: #E2533F; }
+.rc-chip[data-hue="2"] { --rc-chip: #3E8ED0; }
+.rc-chip[data-hue="3"] { --rc-chip: #B96FD6; }
+.rc-chip[data-hue="4"] { --rc-chip: #E09A2B; }
+.rc-chip[data-hue="5"] { --rc-chip: #4FA9A0; }
+
+/* 추천 이유 — `강화 시 변경점` 과 같은 음각 박스 */
+/* ⚠ `flex: 1 1 auto` 를 빼면 안 된다. 한 줄에 선 카드들은 높이가 같은데, 설명이
+   짧은 카드만 상자 아래가 뜬다. 늘어나야 바닥이 맞는다. */
+.rc-why {
+    margin-top: 10px; flex: 1 1 auto;
+    background: var(--stat-box-bg); border: 1px solid var(--border-soft);
+    border-radius: 12px; box-shadow: var(--inset-shadow);
+    padding: 11px 13px;
+}
+.rc-why p {
+    margin: 0;
+    font-size: .87rem; font-weight: 500; line-height: 1.7;
+    /* 이 페이지에서 제일 많이 읽는 문장이다. 연하면 안 된다 (#9D9D9E 였다) */
+    color: var(--rc-reason); word-break: keep-all;
+}
+
 
 @media (max-width: 600px) {
     .rc-brand-icon { width: 40px; height: 40px; }
-    .rc-cards { gap: 9px; }
-    .rc-card { width: calc(50% - 5px); }
+    .rc-sec { padding: 14px 14px 4px; border-radius: 12px; }
+    .rc-cards { grid-template-columns: 1fr; gap: 10px; }
+    .rc-card { gap: 10px; padding: 10px; }
+    .rc-tile { flex: 0 0 116px; width: 116px; }
+    .rc-card-name { font-size: 1rem; }
+    .rc-sec-tip { max-width: none; }
 }

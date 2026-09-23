@@ -13,6 +13,7 @@
         document.write('<link rel="stylesheet" href="style.css?v=' + APP_VERSION + '">');
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script>document.write('<script src="tooltip.js?v=' + APP_VERSION + '"><\/script>');</script>
 </head>
 <body>
 
@@ -27,6 +28,15 @@
         </a>
 
         <div style="display:flex;align-items:center;gap:8px;">
+            <!-- 티어 메이커 버튼과 **같은 클래스**를 쓴다. 호버로 펼쳐지는 동작이 거기 붙어 있다 -->
+            <a href="./" class="tg-tier-btn" aria-label="스킬 가이드" title="스킬 가이드">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    <path d="M9 7h7"/><path d="M9 11h5"/>
+                </svg>
+                <span class="tm-btn-text">스킬 가이드</span>
+            </a>
             <a href="./tiermaker.html" class="tg-tier-btn" aria-label="티어 메이커" title="티어 메이커">
                 <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
                     <path d="M8 21l8 0"/><path d="M12 17l0 4"/><path d="M7 4l10 0"/>
@@ -50,14 +60,20 @@
 <main class="rc-main">
     <div id="rc-help" class="rc-help" hidden>
         <b>이 페이지는 콘텐츠별로 어떤 사도를 키우면 좋은지 정리한 문서입니다.</b>
-        소분류 제목에 마우스를 올리면 해당 콘텐츠 설명이 나옵니다.
-        추천 순서는 왼쪽이 우선순위가 높습니다. 사도 카드에 마우스를 올리면 추천 이유를 볼 수 있습니다.
+        위쪽 탭에서 큰 갈래를, 그 아래 줄에서 분류를 고릅니다.
+        양옆에 흐릿하게 비치는 분류를 눌러도 그쪽으로 넘어가고, ← → 키로도 넘길 수 있습니다.
+        <b>1열</b>로 바꾸면 모든 분류가 한 줄로 쭉 늘어서고, 제목을 눌러 접을 수 있습니다.
+        추천 순서는 위가 우선순위가 높습니다. 붉은 별은 특히 권하는 사도, 흑백 카드는 지금은 권하지 않는 사도입니다.
     </div>
 
     <div id="rc-body">
         <div class="rc-loading">데이터 로딩 중…</div>
     </div>
 </main>
+
+<!-- 스킬 가이드와 같은 버튼·스타일(`#top-btn`). 탭 줄이 스크롤로 사라지므로
+     돌아갈 길이 필요하다. 켜고 끄는 건 `recommend.js` 의 `watchStuck`. -->
+<button id="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">▲<div style="font-size:0.7rem;">TOP</div></button>
 
 <div id="modal-detail" class="modal-overlay hidden">
     <!-- ui.js의 openDetailModal이 이 안을 innerHTML로 완전히 채움 -->
