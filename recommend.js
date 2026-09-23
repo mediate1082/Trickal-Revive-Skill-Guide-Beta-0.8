@@ -288,7 +288,7 @@ function replayPanelIn(panel) {
 
 /* 슬라이드 자리를 다시 잰다. 가운데 분류의 높이에 무대를 맞춘다 —
    안 맞추면 제일 긴 분류에 맞춰져 아래가 휑하다. */
-function layoutSlides(panel) {
+function layoutSlides(panel, instant) {
     const stage = panel.querySelector('.rc-stage');
     const track = panel.querySelector('.rc-track');
     if (!stage || !track) return;
@@ -302,7 +302,11 @@ function layoutSlides(panel) {
         secs.forEach(el => el.classList.remove('is-away'));
         return;
     }
-    const i = Math.min(panel._slide || 0, secs.length - 1);
+    /* ⚠ 트랙에는 양끝 복제본이 있어 **칸 번호가 분류 번호와 다르다.**
+         복제본이 있으면 분류 k 는 칸 k+1 이다. `_via` 는 복제본을 거쳐 가는 중이라는 표시. */
+    const off = track.firstElementChild?.dataset.clone !== undefined ? 1 : 0;
+    const i = panel._via != null ? panel._via
+            : Math.min((panel._slide || 0) + off, secs.length - 1);
     const W = stage.clientWidth;
     /* ⚠ 폭이 0 이면(아직 안 보이는 패널) 계산하지 않는다. 0 으로 재면 슬라이드 폭이 0 이 되고
          마스크가 화면 전체를 지워버린다. */
@@ -311,14 +315,30 @@ function layoutSlides(panel) {
     const sw = secs.length > 1 ? Math.round(W * (W < 720 ? 0.86 : 0.8)) : W;
     const gap = 16;
     stage.style.setProperty('--rc-slide-w', sw + 'px');
+    if (instant) { track.style.transition = 'none'; void track.offsetWidth; }
     track.style.transform = 'translateX(' + Math.round((W - sw) / 2 - i * (sw + gap)) + 'px)';
+    if (instant) { void track.offsetWidth; track.style.transition = ''; }
     secs.forEach((el, k) => el.classList.toggle('is-away', k !== i));
     stage.style.height = secs[i].offsetHeight + 'px';
 }
 
 function showSlide(panel, i, push) {
-    const secs = [...panel.querySelectorAll('.rc-track > .rc-sec')];
-    panel._slide = Math.max(0, Math.min(i, secs.length - 1));
+    const n = (panel._secKeys || []).length;
+    if (!n) return;
+    /* 범위를 벗어나면 **복제본까지 미끄러진 뒤** 반대쪽 진짜 자리로 갈아탄다.
+       `_via` 는 그 '거쳐 가는 칸' 번호다 (0 = 복제된 마지막, n+1 = 복제된 처음). */
+    const looped = n > 1;
+    let via = null;
+    if (looped && i < 0) { via = 0; i = n - 1; }
+    else if (looped && i >= n) { via = n + 1; i = 0; }
+    panel._slide = Math.max(0, Math.min(i, n - 1));
+    panel._via = via;
+
+    clearTimeout(panel._snap);
+    if (via != null) {
+        /* 전환이 끝날 즈음 소리 없이 진짜 자리로. 전환 시간(.35s)보다 아주 조금 뒤 */
+        panel._snap = setTimeout(() => { panel._via = null; layoutSlides(panel, true); }, 380);
+    }
     /* ⚠ 분류 줄은 **패널 밖**(상자 안)에 있다. `panel.querySelectorAll` 로는 못 찾는다 —
          그래서 한동안 `.on` 표시와 화살표 비활성이 조용히 안 걸렸다. */
     const sub = panel._sub || panel;
@@ -328,11 +348,8 @@ function showSlide(panel, i, push) {
         b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
     placeInd(panel);
-    sub.querySelectorAll('.rc-arrow').forEach(b => {
-        b.disabled = Number(b.dataset.dir) < 0
-            ? panel._slide === 0
-            : panel._slide === secs.length - 1;
-    });
+    /* 이어져 있으니 화살표는 끝에서도 죽지 않는다 (분류가 하나일 때만 끈다) */
+    sub.querySelectorAll('.rc-arrow').forEach(b => { b.disabled = n < 2; });
     layoutSlides(panel);
     if (push) writeHash(panel);
 }
@@ -616,6 +633,28 @@ function render(secDefs, recs, dbMap, chipDefs) {
             b.onclick = () => showSlide(panel, i, true);
             tabs.appendChild(b);
         });
+
+        /* 처음과 끝을 이어 붙인다. **양끝에 복제본을 하나씩** 둬서,
+           첫 분류 왼쪽에는 마지막이, 마지막 오른쪽에는 첫 분류가 비친다.
+           끝을 넘어가면 복제본까지 미끄러진 뒤 **전환을 끄고** 진짜 자리로 옮긴다 —
+           생김새가 같아서 갈아타는 순간이 안 보인다.
+           ⚠ `cloneNode` 는 **JS 로 붙인 이벤트를 복사하지 않는다.** 복제본을 눌렀을 때
+             그쪽으로 넘어가려면 손으로 다시 달아야 한다 (안 달면 먹통인 칸이 된다).
+           ⚠ 하나뿐이면 이을 것이 없다. */
+        if (secList.length > 1) {
+            const reals = [...track.children];
+            const last = reals[reals.length - 1].cloneNode(true);
+            const first = reals[0].cloneNode(true);
+            [[last, reals.length - 1, 'afterbegin'], [first, 0, 'beforeend']]
+                .forEach(([clone, to, where]) => {
+                    clone.dataset.clone = to;
+                    clone.addEventListener('click', ev => {
+                        ev.preventDefault(); ev.stopPropagation();
+                        showSlide(panel, to, true);
+                    }, true);
+                    track.insertAdjacentElement(where, clone);
+                });
+        }
 
         window._rcFlat[key] = flat;
         body.appendChild(panel);
