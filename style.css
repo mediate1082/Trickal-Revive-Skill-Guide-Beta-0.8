@@ -1675,6 +1675,48 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     color: var(--text-muted); opacity: 0.9;
 }
 
+/* ── 어사이드 스킬 ──────────────────────
+   ★3 달성으로 얻는 전투 효과. 편성하지 않아도 발동하므로 편성 시 효과와
+   **박스를 갈라** 둔다. 옆의 `사도 전체 능력치` 와 형제 관계라 뼈대는 같고,
+   레일 색만 인게임 배너의 분홍→민트를 따른다 — 게임이 이 기능에 쓰는 색이다.
+   ⚠ 배너 자체는 재현하지 않는다. 어사이드 카드 세 장이 `아이콘 + 라벨 + 이름`
+     문법으로 서 있어서 배너 하나만 인게임 톤이면 튄다. */
+.tg-aside-skill-box {
+    --as-a: #F2A2D0; --as-b: #A9C7E8; --as-c: #74DDBA;
+    position: relative; background: var(--stat-box-bg); border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 12px;
+    border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow); overflow: hidden;
+}
+[data-theme="dark"] .tg-aside-skill-box { --as-a: #D97FB4; --as-b: #7FA3CC; --as-c: #4FB795; }
+.tg-aside-skill-box::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: linear-gradient(180deg, var(--as-a), var(--as-b), var(--as-c));
+}
+.tg-aside-skill-head { display: flex; align-items: center; gap: 11px; margin-bottom: 11px; }
+.tg-aside-skill-icon { width: 34px; height: 34px; flex-shrink: 0; object-fit: contain; }
+.tg-aside-skill-titles { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+/* 밝은 그라디언트 위라 글자는 **어두워야** 한다 — 흰 글자는 거의 안 보인다 */
+.tg-aside-skill-label {
+    align-self: flex-start; padding: 2px 9px; border-radius: 999px;
+    background: linear-gradient(90deg, var(--as-a), var(--as-c));
+    color: #2C3A33; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.02em;
+}
+.tg-aside-skill-name { font-size: 0.92rem; font-weight: 800; color: var(--text-heading); }
+.tg-aside-skill-footer {
+    margin-top: 10px; text-align: center; font-size: 0.72rem; font-weight: 800;
+    color: var(--text-muted); opacity: 0.9;
+}
+
+/* ★3 아이콘에 겹치는 테두리 — 어사이드 스킬이 **있다는 신호**다.
+   카드를 펼쳐 읽지 않아도 어사이드 탭을 훑는 것만으로 보인다 (인게임도 같은 방식).
+   ⚠ `.tg-skill-card-icon-rel` 이 `position: relative` 라 그 위에 얹힌다.
+     아이콘이 58px(border-box) 이므로 사방 4px 씩 넉넉히 빼서 모서리 장식을 살린다. */
+.tg-aside-skill-frame {
+    position: absolute; left: -4px; top: -4px;
+    width: calc(100% + 8px); aspect-ratio: 1;
+    pointer-events: none; z-index: 2;
+}
+
 /* ── Empty State ───────────────────────── */
 .tg-empty-state {
     display: flex; flex-direction: column; align-items: center;

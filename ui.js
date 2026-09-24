@@ -524,6 +524,10 @@ const renderAsideTabContent = (char, asideData) => {
                         <div class="tg-skill-card-icon-rel">
                             <img class="tg-skill-card-icon" src="./assets/icons/aside/aside_${i}/${icon}"
                                  onerror="this.onerror=null;this.removeAttribute('src')">
+                            ${(i === 3 && asideData.aside_3_skill_name) ? `
+                            <img class="tg-aside-skill-frame" alt=""
+                                 src="./assets/icons/common_icons/Aside_Skill_Border_1.webp"
+                                 onerror="this.remove()">` : ''}
                         </div>
                         <div class="tg-skill-card-titles">
                             <span class="tg-skill-card-type-label">어사이드 ★${i}</span>
@@ -534,12 +538,49 @@ const renderAsideTabContent = (char, asideData) => {
                 <div class="tg-skill-card-body"${(i === 3 && !asideData.aside_3_global) ? ` data-aside3="${char.name}"` : ''}${(i === 3 && !(template && value)) ? ` data-aside3tags="${char.name}"` : ''}>
                     <div class="tg-aside-desc" data-src="aside_DB.csv|${char.name}|aside${i}_desc">${renderDesc(desc, currentDataContext)}</div>
                     ${(template && value) ? `<div class="tg-skill-stat-box" data-src="aside_DB.csv|${char.name}|aside${i}_stat_template"${i === 3 ? ` data-aside3tags="${char.name}"` : ''}>${parseSkillLevelText(template, value)}</div>` : ''}
+                    ${(i === 3 && asideData.aside_3_skill_name) ? renderAsideSkillBox(char, asideData) : ''}
                     ${(i === 3 && asideData.aside_3_global) ? renderAsideGlobalBox(char, asideData) : ''}
                 </div>
             </div>`;
     }
     return html;
 };
+
+/* 어사이드 스킬 — ★3 달성으로 얻는 **전투 효과**다.
+   기존 `aside_3_global` 이 능력치 숫자만 주는 것과 달리 실제로 발동하고,
+   결정적으로 **그 사도를 편성하지 않아도** 적용된다. 그래서 편성 시 효과
+   (`aside3_desc`) 바로 아래 붙이되 **박스를 갈라** 조건이 다름을 드러낸다.
+   섞어 놓으면 "이 사도를 넣어야 발동하는구나" 로 읽힌다 — ★3 투자 판단을 뒤집는 오독이다.
+
+   ⚠ `tg-aside-global-box` 와 합치지 않는다. 그쪽은 108명이 쓰고 있어서
+     구조를 건드리면 여파가 전원에게 간다. 형제 박스로 끼우면 열이 빈 사도는 무변화다.
+   ⚠ 이름이 `보유 효과` 가 아니라 `어사이드 스킬` 인 것은 게임의 용어다
+     (에셋 파일명이 `Aside_Skill_Icon_1` · `Aside_Skill_Border_1`). */
+function renderAsideSkillBox(char, asideData) {
+    const icon     = (asideData.aside_3_skill_icon || '').trim();
+    const desc     = asideData.aside_3_skill_desc;
+    const template = asideData.aside_3_skill_template;
+    const value    = asideData.aside_3_skill_value;
+
+    return `
+    <div class="tg-aside-skill-box">
+        <div class="tg-aside-skill-head">
+            ${icon ? `<img class="tg-aside-skill-icon" alt=""
+                          src="./assets/icons/common_icons/${icon}"
+                          onerror="this.remove()">` : ''}
+            <div class="tg-aside-skill-titles">
+                <span class="tg-aside-skill-label">어사이드 스킬</span>
+                <span class="tg-aside-skill-name">${asideData.aside_3_skill_name}</span>
+            </div>
+        </div>
+        ${desc ? `<div class="tg-aside-desc" data-src="aside_DB.csv|${char.name}|aside_3_skill_desc">${
+            renderDesc(desc, currentDataContext)}</div>` : ''}
+        ${(template && value) ? `<div class="tg-skill-stat-box"
+            data-src="aside_DB.csv|${char.name}|aside_3_skill_template">${
+            parseSkillLevelText(template, value)}</div>` : ''}
+        <div class="tg-aside-skill-footer">어사이드 ★3 달성 시 획득하며, 편성하지 않아도 발동합니다.</div>
+    </div>`;
+}
 
 function renderAsideGlobalBox(char, asideData) {
     const isEldyne = char.Eldyne && char.Eldyne.toString().trim() !== "";

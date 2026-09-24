@@ -1,4 +1,4 @@
-﻿chara_name,aside1_name,aside1_desc,aside1_stat_template,aside1_stat_value,aside1_icon,aside2_name,aside2_desc,aside2_stat_template,aside2_stat_value,aside2_icon,aside3_name,aside3_desc,aside3_stat_template,aside3_stat_value,aside_3_global,aside_3_global_value,aside3_icon,aside3_target_tags,aside3_effect_tags
+﻿chara_name,aside1_name,aside1_desc,aside1_stat_template,aside1_stat_value,aside1_icon,aside2_name,aside2_desc,aside2_stat_template,aside2_stat_value,aside2_icon,aside3_name,aside3_desc,aside3_stat_template,aside3_stat_value,aside_3_global,aside_3_global_value,aside3_icon,aside3_target_tags,aside3_effect_tags,aside_3_skill_name,aside_3_skill_icon,aside_3_skill_desc,aside_3_skill_template,aside_3_skill_value
 가비아,,,,,,,,,,,,,,,,,,
 그윈,전설의 레전드 나침반,"착용자의 최대 HP, 물리 방어력, 마법 방어력, 치명타 저항, 치명 피해 저항이 증가한다.",최대 HP 증가 : {0}%\n물리 방어력 증가 : {1}%\n마법 방어력 증가 : {2}%\n치명타 저항 증가 : {3}%\n치명 피해 저항 증가 : {4}%,"6
 6
@@ -862,3 +862,14 @@
 5
 50
 5",어사이드_로니_2.webp,황무지의 방랑자,모든 아군이 적에게 주는 피해량을 증가시킨다.,피해량 증가 : {0}%,22.5,"물리 공격력,치명 피해 저항",,어사이드_로니_3.webp,전체,주는 피해량 증가
+비비(신성),마음 속에 심은 새싹,"착용자의 최대 HP, 마법 공격력, 치명타, 치명 피해가 증가한다.",최대 HP 증가 : {0}%\n마법 공격력 증가 : {1}%\n치명타 증가 : {2}%\n치명 피해 증가 : {3}%,"6
+6
+6
+6",어사이드_비비(신성)_1.webp,신성한 품 속,"신성 보유 시, 모든 아군 사도에게 비비의 은총을 부여한다. 해당 효과는 해제할 수 없다.<br>비비의 은총을 보유한 아군이 저학년 스킬, 고학년 스킬로 직접 피해를 입힐 시, 해당 피해가 치명타일 경우 신성한 치명타로 강화되고, 치명타가 아닐 경우 치명타로 강화된다.<br>신성한 치명타는 치명타로 추가되는 피해량이 40% 증가한다.<br>직접 피해 : 상태이상 피해, 반사 피해, 저주 피해, 분산 피해를 제외한 직접 공격에 의한 피해를 의미한다.",,,어사이드_비비(신성)_2.webp,영원한 포옹,"모든 아군이 적에게 주는 피해량이 증가하고, 모든 아군이 적에게 받는 피해량이 감소한다.",피해량 증가 : {0}%\n받는 피해량 감소 : {1}%,"22.5
+6","치명타,치명 피해 저항",,어사이드_비비(신성)_3.webp,전체,"주는 피해량 증가,받는 피해량 감소",이른 봄의 기운,Aside_Skill_Icon_1.webp,"웨이브당 한 번 아군 사도 1명이 전투불능에 이를 시, 해당 피해를 무효화한다. 대상의 디버프를 모두 해제하며 HP를 전부 회복시키고 일정 시간 동안 무적을 건다.<br>무적 : 모든 피해 및 디버프에 면역이 된다.",무적 지속시간 : {0}초,8
+우이(기억),에루는 개골개골,"착용자의 최대 HP, 물리 방어력, 마법 방어력, 치명타 저항, 치명 피해 저항이 증가한다.",최대 HP 증가 : {0}%\n물리 방어력 증가 : {1}%\n마법 방어력 증가 : {2}%\n치명타 저항 증가 : {3}%\n치명 피해 저항 증가 : {4}%,"6
+6
+6
+6
+6",어사이드_우이(기억)_1.webp,행복왕 우이,도발에 면역이 된다.<br>세잎클로버 효과를 받은 아군에게 무적을 부여한다.<br>고학년 스킬 단계가 상승할 때마다 재사용 대기시간이 5초씩 감소하고 3단계 달성 시 피해가 2배 증가한다.<br>도발 : 도발한 대상을 기본 공격으로 공격한다.<br>무적 : 모든 피해 및 디버프에 면역이 된다.,무적 지속시간 : {0}초\n총 재사용 대기시간 감소 : {1}초,"3.3
+10",어사이드_우이(기억)_2.webp,에루 리턴즈,모든 아군의 최대 HP를 증가시킨다.,최대 HP 증가 : {0}%,22,"마법 공격력,마법 방어력",,어사이드_우이(기억)_3.webp,전체,최대 HP 증가
