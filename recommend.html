@@ -6,9 +6,16 @@
     <title>사도 추천 — 트릭컬 스킬 가이드</title>
     <meta property="og:title" content="콘텐츠별 사도 추천 — 트릭컬 스킬 가이드">
     <meta property="og:description" content="리세마라, 뉴비, 레이드 등 콘텐츠별로 유용한 사도를 정리했습니다">
-    <script src="theme.js"></script>
     <link rel="icon" href="assets/icons/common_icons/NerIcon.webp" type="image/webp">
-    <script src="version.js"></script>
+    <!-- ⚠ `version.js` 에는 `?v=APP_VERSION` 을 못 쓴다 — APP_VERSION 을 **정의하는** 파일이다.
+         버스터 없이 두면 이 파일이 캐시돼 옛 APP_VERSION 이 살아남고, 그러면
+         **나머지 전부가 옛 `?v=` 로 요청돼** 캐시 버스팅이 통째로 무력화된다.
+         GitHub Pages 가 `max-age=600` 을 주므로 최대 10분간 배포가 반영되지 않는다.
+         그래서 여기만 시각으로 턴다 — 495바이트라 매번 받아도 부담이 없다.
+         `theme.js` 는 APP_VERSION 이 생긴 **뒤**라야 버스팅할 수 있어 아래로 옮겼다
+         (사이에 스타일시트가 없으므로 초기 테마 플래시는 그대로 막힌다). -->
+    <script>document.write('<script src="version.js?t=' + Date.now() + '"><\/script>');</script>
+    <script>document.write('<script src="theme.js?v=' + APP_VERSION + '"><\/script>');</script>
     <script>
         document.write('<link rel="stylesheet" href="style.css?v=' + APP_VERSION + '">');
     </script>

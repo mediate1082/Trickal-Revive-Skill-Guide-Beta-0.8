@@ -1686,13 +1686,17 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     position: relative; background: var(--stat-box-bg); border-radius: 12px;
     padding: 16px 18px; margin-bottom: 12px;
     border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow); overflow: hidden;
+    /* ⚠ `.tg-skill-card-body > * + *` 의 12px 은 **직계 자식**에만 걸린다.
+         설명과 음각 박스가 이 박스 안으로 들어가면서 그 간격을 못 받아 붙어 보였다.
+         같은 리듬을 여기서 다시 준다. */
+    display: flex; flex-direction: column; gap: 12px;
 }
 [data-theme="dark"] .tg-aside-skill-box { --as-a: #D97FB4; --as-b: #7FA3CC; --as-c: #4FB795; }
 .tg-aside-skill-box::before {
     content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
     background: linear-gradient(180deg, var(--as-a), var(--as-b), var(--as-c));
 }
-.tg-aside-skill-head { display: flex; align-items: center; gap: 11px; margin-bottom: 11px; }
+.tg-aside-skill-head { display: flex; align-items: center; gap: 11px; }
 .tg-aside-skill-icon { width: 34px; height: 34px; flex-shrink: 0; object-fit: contain; }
 .tg-aside-skill-titles { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 /* 밝은 그라디언트 위라 글자는 **어두워야** 한다 — 흰 글자는 거의 안 보인다 */
@@ -1703,7 +1707,7 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 }
 .tg-aside-skill-name { font-size: 0.92rem; font-weight: 800; color: var(--text-heading); }
 .tg-aside-skill-footer {
-    margin-top: 10px; text-align: center; font-size: 0.72rem; font-weight: 800;
+    text-align: center; font-size: 0.72rem; font-weight: 800;
     color: var(--text-muted); opacity: 0.9;
 }
 
