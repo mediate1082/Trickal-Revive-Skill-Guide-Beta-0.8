@@ -2556,7 +2556,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    이쪽이 화면에 붙고, 그때만 프리즘 글라스가 된다 — 붙기 전에는 평평하게 둔다. */
 .rc-subhost { position: sticky; top: 8px; z-index: 25; }
 .rc-subhost.is-stuck .rc-navgroup {
-    padding: 6px 10px;
+    padding: 6px 10px 8px;
     background: rgba(255,255,255,.62);
     -webkit-backdrop-filter: blur(12px) saturate(1.8);
             backdrop-filter: blur(12px) saturate(1.8);
@@ -2604,12 +2604,34 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     min-width: 0; max-width: 100%;
 }
 .rc-navgroup {
-    display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
     min-width: 0; max-width: 100%;
-    padding: 0; border: 1px solid transparent; border-radius: 999px;
+    padding: 0; border: 1px solid transparent; border-radius: 26px;
     transition: background .2s ease, box-shadow .2s ease,
                 border-color .2s ease, padding .2s ease;
 }
+/* ⚠ 폭이 줄어드는 사슬은 여기로 이어진다. `.rc-navgroup` 이 세로가 되면서
+     가로 제한을 이 줄이 맡는다 — `min-width: 0` 이 빠지면 트레이가 밖으로 삐져나간다. */
+.rc-navrow {
+    display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; justify-content: center;
+    min-width: 0; max-width: 100%;
+}
+
+/* ── 페이지 인디케이터 ──
+   한 줄 트레이로 바꾸면서 "전체 몇 개 중 몇 번째"가 안 보이게 됐다. fade 는
+   "더 있다"만 말하지 "얼마나 더"는 말해주지 않는다.
+   ⚠ **넘칠 때만** 나온다 (`fadeEdges`). 전부 보이는데 점까지 있으면 같은 말이 두 번이다. */
+.rc-dots { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.rc-dots[hidden] { display: none; }
+.rc-dot {
+    width: 6px; height: 6px; flex: none; border-radius: 999px; cursor: pointer;
+    background: var(--border-soft); border: none; padding: 0;
+    transition: width .24s cubic-bezier(.4,0,.2,1), background .18s ease;
+}
+.rc-dot:hover { background: var(--text-muted); }
+/* 지금 것은 **채우지 않고 늘린다.** 색만 바꾸면 점이 작아 어두운 화면·색각 이상에서
+   안 읽힌다. 모양이 달라야 한다 (트레이의 흰 알약과 같은 원리). */
+.rc-dot.on { width: 18px; background: var(--accent-green-strong); }
 /* 1열에서는 화살표도 분류 버튼도 없다 — 빈 줄만 남으므로 통째로 숨긴다.
    ⚠ 분류 줄은 **패널 밖**에 있다. `.rc-panel.is-list …` 로는 안 걸린다 —
      `setView` 가 `.rc-subhost` 에도 같은 표시를 달아 준다. */

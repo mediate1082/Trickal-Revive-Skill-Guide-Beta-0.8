@@ -367,6 +367,10 @@ function showSlide(panel, i, push) {
      — 트레이는 `is-stuck` 에서 제 배경을 버린다. */
 function fadeEdges(tabs) {
     const over = tabs.scrollWidth - tabs.clientWidth;
+    /* 점도 **넘칠 때만** 띄운다. 트레이에 전부 보이면 같은 말을 두 번 하는 셈이고,
+       이 페이지는 내비게이션이 화면을 먹으면 안 된다 (카드가 핵심이다). */
+    const dots = tabs.closest('.rc-navgroup');
+    if (dots) dots.querySelector('.rc-dots').hidden = over <= 1;
     if (over <= 1) { tabs.dataset.fade = 'none'; return; }
     const l = tabs.scrollLeft > 1, r = tabs.scrollLeft < over - 1;
     tabs.dataset.fade = l && r ? 'both' : l ? 'left' : r ? 'right' : 'none';
@@ -394,6 +398,12 @@ function placeInd(panel, instant) {
          아무 일도 안 했다 (즉시 대입은 멀쩡했다). 둘 중 하나라도 걸려 있으면
          **트레이가 통째로 안 움직인다.** 자리를 맞추는 게 먼저다. */
     tabs.scrollLeft = Math.max(0, btn.offsetLeft - (tabs.clientWidth - btn.offsetWidth) / 2);
+
+    /* 지금 점은 **채우지 않고 늘린다.** 점이 작아서 색만으로 구분하면 어두운 화면이나
+       색각 이상에서 안 읽힌다 — 모양이 달라야 한다 (분류 트레이의 흰 알약과 같은 원리). */
+    const dots = panel._sub.querySelectorAll('.rc-dot');
+    dots.forEach((d, k) => d.classList.toggle('on', k === (panel._slide || 0)));
+
     fadeEdges(tabs);
 }
 
@@ -614,10 +624,15 @@ function render(secDefs, recs, dbMap, chipDefs) {
         /* `‹ 분류들 ›` 을 한 덩어리로 묶어 가운데 두고, 보기 방식만 오른쪽에 붙인다.
            ⚠ 인게임 화살표 그림(`CommonButton_*_5.webp`)을 써 봤는데 이 페이지 버튼들과
              양식이 안 맞았다. 사이트 공통 꼴을 따르는 SVG 로 되돌렸다. */
+        /* ⚠ 점(`.rc-dots`)은 글라스(`.rc-navgroup`) **안**에 둔다. 밖에 두면 따라다닐 때
+             유리 아래에 덩그러니 떨어져 붙는다. 그래서 글라스를 세로로 쪼갠다. */
         sub.innerHTML = `<div class="rc-navgroup">
+              <div class="rc-navrow">
                 <button class="rc-arrow" data-dir="-1" aria-label="이전 분류"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
                 <div class="rc-subtabs"><div class="rc-subtrack" role="tablist"><span class="rc-subtab-ind"></span></div></div>
                 <button class="rc-arrow" data-dir="1" aria-label="다음 분류"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+              </div>
+              <div class="rc-dots" aria-hidden="true" hidden></div>
             </div>`;
         panel._sub = sub;   /* 상자 아래칸으로 옮겨 붙인다 (`activateTab`) */
 
@@ -647,6 +662,13 @@ function render(secDefs, recs, dbMap, chipDefs) {
             }, true);
             track.appendChild(el);
             stageWatch.observe(el);
+
+            /* 점은 분류 버튼과 **기능이 겹친다.** 스크린리더에는 버튼만 읽히게 두고
+               (`aria-hidden`), 점은 눈과 마우스를 위한 것으로 남긴다. */
+            const dot = document.createElement('span');
+            dot.className = 'rc-dot';
+            dot.onclick = () => showSlide(panel, i, true);
+            sub.querySelector('.rc-dots').appendChild(dot);
 
             const b = document.createElement('button');
             b.className = 'rc-subtab';
