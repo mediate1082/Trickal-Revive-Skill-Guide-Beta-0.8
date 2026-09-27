@@ -360,8 +360,20 @@ function showSlide(panel, i, push) {
    ⚠ `offsetLeft` 는 트레이의 **안쪽(padding box) 기준**이고 알약도 `top/left: 0` 으로
      같은 자리에서 출발한다. 테두리 두께를 빼면 오히려 1px 어긋난다 (한 번 그랬다).
    ⚠ 안 보이는 동안에는 폭이 0 이다 — 그때 재면 알약이 왼쪽 위로 쭈그러든다. 건너뛴다. */
+/* 트레이가 한 줄을 넘치면 **끝쪽을 흐리게** 해서 더 있다는 걸 알린다.
+   ⚠ 넘치지 않을 때 흐리게 하면 멀쩡한 첫·마지막 버튼이 잘려 보인다. 그래서 넘칠 때만,
+     그리고 **아직 남은 쪽만** 흐리게 한다 (끝에 닿으면 그쪽은 도로 선명해진다).
+   ⚠ 흐리게 하는 건 `mask` 다. 배경에 기대지 않으므로 따라다닐 때 유리로 바뀌어도 맞는다
+     — 트레이는 `is-stuck` 에서 제 배경을 버린다. */
+function fadeEdges(tabs) {
+    const over = tabs.scrollWidth - tabs.clientWidth;
+    if (over <= 1) { tabs.dataset.fade = 'none'; return; }
+    const l = tabs.scrollLeft > 1, r = tabs.scrollLeft < over - 1;
+    tabs.dataset.fade = l && r ? 'both' : l ? 'left' : r ? 'right' : 'none';
+}
+
 function placeInd(panel, instant) {
-    const tabs = panel._sub && panel._sub.querySelector('.rc-subtabs');
+    const tabs = panel._sub && panel._sub.querySelector('.rc-subtrack');
     if (!tabs) return;
     const ind = tabs.querySelector('.rc-subtab-ind');
     const btn = tabs.querySelectorAll('.rc-subtab')[panel._slide || 0];
@@ -373,12 +385,22 @@ function placeInd(panel, instant) {
     ind.style.height = btn.offsetHeight + 'px';
     ind.style.transform = `translate(${btn.offsetLeft}px, ${btn.offsetTop}px)`;
     if (instant) { void ind.offsetWidth; ind.style.transition = ''; }
+
+    /* 고른 분류를 트레이 가운데로 끌어온다 — 아래 무대가 가운데 분류를 보여주므로
+       위아래가 같이 움직여야 읽는 눈이 안 어긋난다.
+       ⚠ `scrollIntoView` 는 조상까지 같이 굴려 페이지가 튄다. 직접 `scrollLeft` 를 준다.
+       ⚠ **부드러운 스크롤에 기대지 말 것.** `scrollTo({behavior:'smooth'})` 도,
+         CSS `scroll-behavior: smooth` 도 이 페이지를 띄워 보는 환경에서 조용히
+         아무 일도 안 했다 (즉시 대입은 멀쩡했다). 둘 중 하나라도 걸려 있으면
+         **트레이가 통째로 안 움직인다.** 자리를 맞추는 게 먼저다. */
+    tabs.scrollLeft = Math.max(0, btn.offsetLeft - (tabs.clientWidth - btn.offsetWidth) / 2);
+    fadeEdges(tabs);
 }
 
 /* 글꼴이 늦게 붙거나 창이 좁아져 버튼이 접히면 알약 자리가 어긋난다 */
 const indWatch = new ResizeObserver(() => {
     const panel = document.querySelector('.rc-panel:not([hidden])');
-    if (panel) placeInd(panel, true);
+    if (panel) placeInd(panel, true);   /* 넘침 판정(`fadeEdges`)도 여기서 다시 돈다 */
 });
 
 function writeHash(panel) {
@@ -594,7 +616,7 @@ function render(secDefs, recs, dbMap, chipDefs) {
              양식이 안 맞았다. 사이트 공통 꼴을 따르는 SVG 로 되돌렸다. */
         sub.innerHTML = `<div class="rc-navgroup">
                 <button class="rc-arrow" data-dir="-1" aria-label="이전 분류"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
-                <div class="rc-subtabs" role="tablist"><span class="rc-subtab-ind"></span></div>
+                <div class="rc-subtabs"><div class="rc-subtrack" role="tablist"><span class="rc-subtab-ind"></span></div></div>
                 <button class="rc-arrow" data-dir="1" aria-label="다음 분류"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
             </div>`;
         panel._sub = sub;   /* 상자 아래칸으로 옮겨 붙인다 (`activateTab`) */
@@ -610,8 +632,10 @@ function render(secDefs, recs, dbMap, chipDefs) {
             b.onclick = () => showSlide(panel, (panel._slide || 0) + Number(b.dataset.dir), true);
         });
 
-        const tabs = sub.querySelector('.rc-subtabs');
+        const tabs = sub.querySelector('.rc-subtrack');
         indWatch.observe(tabs);
+        /* 끝에 닿았는지에 따라 어느 쪽을 흐리게 할지 정한다 (`fadeEdges`) */
+        tabs.addEventListener('scroll', () => fadeEdges(tabs), { passive: true });
         secList.forEach((sec, i) => {
             const el = buildSection(sec, dbMap, missing, flat);
             /* 비껴 있는 분류를 눌러도 그쪽으로 간다 — 흐릿한 것도 눌린다는 걸 알려준다.

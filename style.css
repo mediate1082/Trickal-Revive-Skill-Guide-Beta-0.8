@@ -2601,9 +2601,11 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-subbar {
     display: flex; justify-content: center; align-items: center;
     gap: 12px; padding: 12px 14px;
+    min-width: 0; max-width: 100%;
 }
 .rc-navgroup {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
+    display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; justify-content: center;
+    min-width: 0; max-width: 100%;
     padding: 0; border: 1px solid transparent; border-radius: 999px;
     transition: background .2s ease, box-shadow .2s ease,
                 border-color .2s ease, padding .2s ease;
@@ -2616,12 +2618,40 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    아이콘 + 글자만 있으면 지금 뭐가 골라졌는지 약하고 화면도 심심하다.
    움푹한 트레이 위로 흰 알약이 **미끄러져** 오면 둘 다 풀린다.
    ⚠ 알약 자리는 JS 가 잰다 (`placeInd`). 글자 길이가 제각각이라 CSS 로는 못 맞춘다. */
+/* 껍데기 — 배경·테두리·알약 모양만 맡는다. 자르는 것도 여기서 한다.
+   ⚠ 분류가 늘면 **줄바꿈이 아니라 가로 스크롤**이다. 일곱 개쯤 되면 이름이 길어
+     두 줄로 접히는데, 따라다니는 줄이 두 줄이 되면 카드를 그만큼 덮는다. */
 .rc-subtabs {
-    position: relative;
-    display: flex; align-items: center; gap: 2px; flex-wrap: wrap; justify-content: center;
-    padding: 4px; border-radius: 999px;
+    position: relative; display: flex; flex: 0 1 auto; min-width: 0; max-width: 100%;
+    padding: 4px; border-radius: 999px; overflow: hidden;
     background: var(--segmented-bg); border: 1px solid var(--border-soft);
 }
+/* 스크롤과 흐리게 하기는 **안쪽 트랙**이 맡는다.
+   ⚠ 껍데기에 `mask` 를 씌우면 테두리와 둥근 끝까지 같이 녹아 트레이가 깨져 보인다.
+   ⚠ `justify-content: center` + 가로 스크롤은 **왼쪽 끝에 손이 안 닿는** 고전적인 버그가
+     있다. `safe center` 는 넘칠 때만 왼쪽 정렬로 물러난다. */
+.rc-subtrack {
+    position: relative; min-width: 0; max-width: 100%;
+    display: flex; align-items: center; gap: 2px;
+    flex-wrap: nowrap; justify-content: safe center;
+    overflow-x: auto; overflow-y: hidden;
+    scrollbar-width: none; -ms-overflow-style: none;
+    overscroll-behavior-x: contain;
+    /* ⚠ `scroll-behavior: smooth` 를 넣지 말 것. 넣으면 **`scrollLeft` 직접 대입까지**
+         애니메이션을 타는데, 이 페이지를 띄워 보는 환경에서 그 애니메이션이 조용히
+         안 돌아 트레이가 아예 안 움직였다. 알약과 무대는 이미 미끄러지므로
+         트레이는 즉시 붙어도 어색하지 않다 — 움직임보다 자리가 맞는 게 먼저다. */
+}
+.rc-subtrack::-webkit-scrollbar { display: none; }
+/* 넘칠 때만, 그리고 **아직 남은 쪽만** 흐리게 한다 (`fadeEdges` 가 값을 넣는다) */
+.rc-subtrack[data-fade="left"]  { mask-image: linear-gradient(90deg, transparent 0, #000 34px); }
+.rc-subtrack[data-fade="right"] { mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%); }
+.rc-subtrack[data-fade="both"]  { mask-image: linear-gradient(90deg, transparent 0, #000 34px,
+                                                #000 calc(100% - 34px), transparent 100%); }
+.rc-subtrack[data-fade="left"]  { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px); }
+.rc-subtrack[data-fade="right"] { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 34px), transparent 100%); }
+.rc-subtrack[data-fade="both"]  { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px,
+                                                #000 calc(100% - 34px), transparent 100%); }
 .rc-subtab-ind {
     position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none;
     border-radius: 999px; background: var(--segmented-indicator);
@@ -2648,7 +2678,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-arrow:disabled { opacity: .3; cursor: default; }
 .rc-subhost.is-list .rc-arrow { display: none; }
 .rc-subtab {
-    position: relative; z-index: 1;
+    position: relative; z-index: 1; flex: none; white-space: nowrap;
     display: inline-flex; align-items: center; gap: 8px;
     padding: 9px 18px; border-radius: 999px; cursor: pointer;
     font: inherit; font-size: .96rem; font-weight: 700; color: var(--text-muted);
