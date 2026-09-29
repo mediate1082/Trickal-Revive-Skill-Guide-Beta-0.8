@@ -1272,17 +1272,58 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-// 모바일 스와이프로 사도 이동
-let _touchStartX = 0;
+/* 모바일 스와이프로 사도 이동
+   ⚠ 예전에는 `clientX` 만 봤다. 세로로 스크롤하다 손가락이 옆으로 60px 밀리기만 해도
+     사도가 넘어갔다 — 특히 태블릿에서. 화면이 크면 스크롤 거리가 길고 그만큼 옆으로
+     휘는 양도 쌓이는데, 문턱값은 화면 크기와 무관한 60px 고정이었다.
+
+   그래서 세 가지를 본다.
+   1. **축 잠금** — 움직이는 도중 세로가 먼저 기준을 넘으면 그 제스처는 스크롤로 확정하고
+      끝까지 무시한다. 끝점만 비교하면 "세로로 긁다가 옆으로 샌 것" 과 구별할 수 없다
+   2. **가로가 세로보다 확실히 커야 한다** (1.5배). 비스듬한 건 넘기지 않는다
+   3. **문턱값이 화면을 따라간다** — 태블릿에서 60px 은 너무 얕다
+
+   ⚠ `touchmove` 는 `passive: true` 로 둔다. 세로 스크롤을 막으면 안 된다 —
+     우리는 판정만 하고 스크롤 자체는 브라우저에 맡긴다. */
+const SWIPE_LOCK_Y   = 12;    // 이만큼 세로로 움직이면 스크롤로 확정
+const SWIPE_RATIO    = 1.5;   // 가로가 세로의 몇 배여야 하는가
+const SWIPE_MAX_MS   = 700;   // 느릿한 끌기는 스와이프가 아니다
+const swipeMin = () => Math.max(60, Math.min(window.innerWidth, window.innerHeight) * 0.10);
+
+let _swX = 0, _swY = 0, _swT = 0, _swLive = false;
+const detailOpen = () =>
+    !document.getElementById('modal-detail')?.classList.contains('hidden');
+
 document.addEventListener('touchstart', (e) => {
-    if (document.getElementById('modal-detail')?.classList.contains('hidden')) return;
-    _touchStartX = e.touches[0].clientX;
+    _swLive = false;
+    if (!detailOpen() || e.touches.length !== 1) return;   // 두 손가락(확대 등)은 제외
+    _swX = e.touches[0].clientX;
+    _swY = e.touches[0].clientY;
+    _swT = Date.now();
+    _swLive = true;
 }, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+    if (!_swLive) return;
+    if (e.touches.length !== 1) { _swLive = false; return; }
+    const dx = Math.abs(e.touches[0].clientX - _swX);
+    const dy = Math.abs(e.touches[0].clientY - _swY);
+    /* 세로가 먼저 기준을 넘으면 스크롤이다 — 이후 가로로 아무리 가도 안 넘긴다 */
+    if (dy > SWIPE_LOCK_Y && dy > dx) _swLive = false;
+}, { passive: true });
+
 document.addEventListener('touchend', (e) => {
-    if (document.getElementById('modal-detail')?.classList.contains('hidden')) return;
-    const delta = e.changedTouches[0].clientX - _touchStartX;
-    if (Math.abs(delta) > 60) window.navigateApostle(delta > 0 ? -1 : 1);
+    if (!_swLive || !detailOpen()) { _swLive = false; return; }
+    _swLive = false;
+    if (Date.now() - _swT > SWIPE_MAX_MS) return;
+    const dx = e.changedTouches[0].clientX - _swX;
+    const dy = e.changedTouches[0].clientY - _swY;
+    if (Math.abs(dx) < swipeMin()) return;
+    if (Math.abs(dx) < Math.abs(dy) * SWIPE_RATIO) return;
+    window.navigateApostle(dx > 0 ? -1 : 1);
 }, { passive: true });
+
+document.addEventListener('touchcancel', () => { _swLive = false; }, { passive: true });
 
 window.addEventListener('mouseup', (e) => {
     if (e.button !== 3) return;
