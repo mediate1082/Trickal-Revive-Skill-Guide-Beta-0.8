@@ -556,6 +556,21 @@ const renderAsideTabContent = (char, asideData) => {
      구조를 건드리면 여파가 전원에게 간다. 형제 박스로 끼우면 열이 빈 사도는 무변화다.
    ⚠ 이름이 `보유 효과` 가 아니라 `어사이드 스킬` 인 것은 게임의 용어다
      (에셋 파일명이 `Aside_Skill_Icon_1` · `Aside_Skill_Border_1`). */
+/* 종합 메모를 **문단으로 쪼갠다.** CSV 의 `note` 는 줄을 `<br>` 로 나누는데,
+   `<br>` 만으로는 줄이 다닥다닥 붙어 긴 메모가 한 덩어리로 읽힌다.
+   ⚠ `br { display:block; margin-top }` 으로 띄우는 꼼수는 쓰지 않는다 — 환경을 탄다.
+     `<p>` 로 감싸면 간격을 CSS 가 확실히 잡는다.
+   ⚠ 빈 조각은 버린다. 줄 끝에 `<br>` 이 붙어 있으면 빈 문단이 하나 더 생긴다. */
+function noteParagraphs(raw) {
+    return String(raw || '')
+        .replace(/\\n/g, '<br>').replace(/\n/g, '<br>')
+        .split(/<br\s*\/?>/i)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(s => `<p>${s}</p>`)
+        .join('');
+}
+
 function renderAsideSkillBox(char, asideData) {
     const icon     = (asideData.aside_3_skill_icon || '').trim();
     const desc     = asideData.aside_3_skill_desc;
@@ -736,7 +751,7 @@ export function openDetailModal(char, dataContext) {
                     <div>${c.recommend_reason}</div>
                 </div>` : ''}
                 ${c.note ? `<div class="tg-recommend-note">
-                    ${c.note.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}
+                    ${noteParagraphs(c.note)}
                 </div>` : ''}`;
         }
 
@@ -823,7 +838,7 @@ export function openDetailModal(char, dataContext) {
         const noteHTML = c.note ? `<div class="tg-overall-section">
             <div class="tg-overall-section-title">종합 메모</div>
             <div class="tg-recommend-note">
-                ${c.note.replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}
+                ${noteParagraphs(c.note)}
             </div>
         </div>` : '';
 

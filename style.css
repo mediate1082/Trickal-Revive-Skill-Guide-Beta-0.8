@@ -1639,6 +1639,10 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     padding: 12px 16px 12px 18px; border: 1px solid var(--recommend-note-border);
     font-size: 0.86rem; color: var(--recommend-note-text); line-height: 1.7; word-break: keep-all; overflow: hidden;
 }
+/* 문단 사이만 띄운다. 줄 안쪽 간격(`line-height`)은 그대로 둬야
+   한 문단이 흩어져 보이지 않는다. */
+.tg-recommend-note p { margin: 0; }
+.tg-recommend-note p + p { margin-top: 0.75em; }
 .tg-recommend-note::before {
     content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #fadb14;
 }
