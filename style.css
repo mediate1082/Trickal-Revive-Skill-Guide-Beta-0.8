@@ -2772,6 +2772,23 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     --rc-meta:    #8D9280;
     --rc-reason:  #A1A1AA;
 }
+/* ⚠ 위 다섯은 **`.rc-card` 의 지역 변수다.** 덱 상자(`.rc-deck`)는 카드 밖이라
+     그냥 쓰면 전부 미정의로 떨어져 상속색이 나온다 (실제로 한동안 그랬다).
+     같은 값을 여기에도 선언한다 — 값을 고칠 때 **두 곳을 같이** 고쳐야 한다. */
+.rc-deck {
+    --rc-card-bg: #FFFFFF;
+    --rc-name:    #333333;
+    --rc-sub:     #94998A;
+    --rc-meta:    #999F8E;
+    --rc-reason:  #555555;
+}
+[data-theme="dark"] .rc-deck {
+    --rc-card-bg: #202024;
+    --rc-name:    #FAFAFA;
+    --rc-sub:     #9C9C95;
+    --rc-meta:    #8D9280;
+    --rc-reason:  #A1A1AA;
+}
 
 /* ⚠ `min-width: 0` 이 없으면 안쪽 내용의 최소 폭이 `flex-basis` 를 밀어 올린다.
      그러면 실제 폭과 JS 가 계산한 폭이 어긋나 가운데 정렬이 빗나간다. */
@@ -2848,6 +2865,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 
 @media (hover: hover) and (pointer: fine) {
     .rc-group-tip { display: none; }
+
 
     .rc-tab[data-tip]::after {
         content: attr(data-tip);
@@ -2934,66 +2952,133 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 /* ── 역할 묶음 ── */
 /* ── 덱 편성 (`Recommend_Decks.csv`) ───────────────────────────
    줘팸터처럼 덱 단위로 돌아가는 분류에서, 역할 묶음보다 **위에** 온다.
-   ⚠ 인게임 PvP UI 를 그대로 가져오지 않았다. 이 페이지는 제 양식이 따로 있고,
-     전에 화살표를 인게임 그림으로 바꿨다가 안 맞아 되돌린 전례가 있다.
-     구조(가로 긴 상자 + 초상화 한 줄)만 빌려 오고 꼴은 `.rc-card` 를 따른다. */
+   ⚠ 인게임 PvP UI 를 그대로 가져오지 않았다. 구조(가로 긴 상자 + 초상화 한 줄)만
+     빌려 오고 꼴은 `.rc-card` 를 따른다. 전에 화살표를 인게임 그림으로 바꿨다가
+     양식이 안 맞아 되돌린 전례가 있다. */
 .rc-decks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
 
 .rc-deck {
     background: var(--rc-card-bg);
     border: 1px solid var(--border-soft);
     border-radius: 15px;
-    padding: 12px 14px;
+    padding: 14px 16px;
     box-shadow: 0 1px 3px rgba(0,0,0,.05);
 }
-.rc-deck-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-.rc-deck-name { margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--rc-name); }
-/* 부제는 인게임 칭호 자리다. 이름과 경쟁하지 않게 한 단 낮춘다 */
+.rc-deck-head { margin-bottom: 14px; }
+/* ⚠ 분류 제목(`.rc-sec-title`)이 쓰는 **초록 막대를 여기 또 쓰지 않는다.**
+   같은 장식이 두 번 나오면 분류와 덱의 급이 비슷해 보인다. 크기·굵기로만 가른다. */
+.rc-deck-name {
+    margin: 0; font-size: 1.18rem; font-weight: 800; color: var(--rc-name); line-height: 1.3;
+}
+
+/* 설명은 **제목 바로 아래 전체 폭**이다. 오른쪽에 세웠던 적이 있는데, 그건 타일이
+   남는 폭을 못 먹던 시절의 처방이고 지금은 눈만 오른쪽 끝으로 튀게 한다.
+   ⚠ 읽기 폭을 **`ch` 로 재지 않는다.** `ch` 는 `0` 글자 너비 기준이라 한글에서는
+     의도의 절반쯤에서 끊긴다 (74ch = 741px = 한글 60자). px 로 적는다. */
 .rc-deck-sub {
-    font-size: .8rem; font-weight: 700; color: var(--rc-sub);
-    background: var(--modal-body-bg); border: 1px solid var(--border-soft);
-    border-radius: 999px; padding: 2px 9px;
+    margin: 6px 0 0; max-width: 900px;
+    font-size: .85rem; line-height: 1.65; color: var(--rc-reason);
 }
 
-/* 한 줄 = [라벨 | 초상화들]. 라벨 폭을 고정해 `추천 조합`·`대체픽` 의 초상화가 세로로 맞는다 */
-.rc-deck-row { display: flex; align-items: flex-start; gap: 10px; }
-.rc-deck-row + .rc-deck-row { margin-top: 10px; }
-.rc-deck-label {
-    flex: 0 0 58px; padding-top: 18px;
-    font-size: .76rem; font-weight: 800; color: var(--text-muted); letter-spacing: .02em;
+/* 라벨은 타일 **위**에 머리글로 올린다. 옆에 두면 묶음이 안 보이고 라벨만 떠다닌다 */
+/* `추천 조합` 머리글은 두지 않는다 — 덱 이름이 이미 그 역할을 한다.
+   ⚠ 가로 점선과 세로 선을 같이 쓰면 분할이 과하다. 가로선은 빼고 여백으로 가른다. */
+/* 후보 묶음은 **상자 하나로 싼다.** 머리글만 띄워두면 어디까지가 그 묶음인지 안 보인다.
+   ⚠ 대신 안쪽 행의 배경은 뺀다 — 둘 다 배경이 있으면 상자 속 상자가 된다. */
+/* ⚠ 가로 패딩을 주면 안쪽 내용이 타일 줄보다 그만큼 들여써진다 (16px 어긋났었다).
+     상자는 음수 여백으로 바깥으로 넓히고, 안쪽 글은 타일과 같은 선에서 시작하게 한다. */
+.rc-deck-block {
+    margin: 20px -16px 0; padding: 14px 16px 15px;
+    background: var(--modal-body-bg); border-radius: 14px;
 }
-.rc-deck-tiles, .rc-deck-swapwrap { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.rc-deck-swapwrap { gap: 6px 18px; }
-.rc-swap { display: flex; align-items: center; gap: 6px; }
-.rc-swap-arrow { font-size: 1rem; color: var(--text-muted); padding: 0 1px; }
+/* ⚠ `.72rem` + `--text-muted` 로는 블록 하나를 이끄는 제목 구실을 못 한다.
+   덱 이름 바로 아래 급으로 올린다. */
+.rc-deck-eyebrow {
+    display: block; margin: 0 0 12px;
+    font-size: .82rem; font-weight: 700; letter-spacing: .02em; color: var(--rc-sub);
+    padding-bottom: 9px; border-bottom: 1px solid var(--border-soft);
+}
+.rc-deck-tiles { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
 
-/* 초상화 타일 — 큰 카드의 120px 을 68px 로 줄인 것. 마크업은 `.rc-tile` 그대로다 */
-.rc-dtile { width: 68px; cursor: pointer; }
-.rc-dtile .rc-tile { flex: none; width: 68px; }
-.rc-dtile .card-top { aspect-ratio: 1 / 1; border-radius: 12px; }
+/* 후보 한 줄 = [타일][이름 + 언제 쓰는지]. 두 칸씩 접히게 둔다 —
+   한 줄에 하나씩이면 후보가 여섯이면 상자가 세로로 길어진다 */
+.rc-deck-swapwrap {
+    display: grid; gap: 14px 26px;
+    grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
+}
+.rc-alt { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.rc-alt-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rc-alt-name { font-size: .88rem; font-weight: 800; color: var(--rc-name); }
+.rc-alt-note { font-size: .78rem; line-height: 1.45; color: var(--rc-meta); word-break: keep-all; }
+[data-theme="dark"] .rc-alt-note { color: var(--rc-sub); }
+
+/* 초상화 타일 — 큰 카드의 120px 을 88px 로 줄인 것. 마크업은 `.rc-tile` 그대로다.
+   ⚠ 이름 줄을 두지 않는다. 여섯 칸이 한 줄에 서는 자리라 이름까지 넣으면 타일을
+     못 키우고, 변종 이름(`에르핀(왕도)`)은 두 줄로 접혀 칸마다 높이가 달라진다.
+     누구인지는 **말풍선과 상세 모달**이 말한다 — 그래서 타일을 키울 수 있었다. */
+/* 남는 폭을 **타일이 전부 먹는다.** 상한을 두면 그만큼이 가운데에 남고, 상한을 올리면
+   설명 칸이 좁아지며 따라와 끝이 안 난다. 대신 **설명 칸에 상한**을 둬서 타일이
+   무한정 커지지 않게 막는다 — 2000px 화면에서 타일은 150px 안쪽이다.
+   ⚠ 하한(76px)은 좁은 화면에서 줄바꿈을 예측 가능하게 만든다. */
+/* ⚠ 상한이 필요하다. 덱이 여러 개 쌓이는데 타일이 200px 까지 커지면 덱 하나가
+     화면을 거의 다 먹는다. 쌓인 상태에서 훑어보려면 한 덱이 한눈에 들어와야 한다. */
+/* ⚠ 안쪽 장식을 **px 로 박지 않는다.** 타일 폭이 76~152px 사이에서 늘었다 줄었다 하므로
+     고정값이면 큰 타일에선 좁쌀, 작은 타일에선 모서리를 덮는다.
+   ⚠ 비율은 **눈대중으로 정하지 않는다.** 전부 메인 카드(`.rc-tile` = 120px)에서 역산한
+     값이다 — 완장 43/38 · 엘다인 아이콘 18(top·right 4) · 별 19(bottom 6) · 성격 28(6) ·
+     배치 28(8) · 곡률 13. 완장과 아이콘을 따로 어림하면 아이콘이 완장 밖으로 비어져 나온다
+     (실제로 세 번 그랬다). 값을 고칠 일이 있으면 **120px 기준으로 다시 나눠서** 적는다. */
+.rc-dtile { flex: 1 1 0; min-width: 76px; max-width: 152px; cursor: pointer; container-type: inline-size; }
+.rc-dtile .rc-tile { flex: none; width: 100%; }
+.rc-dtile .card-top { aspect-ratio: 1 / 1; border-radius: 10.8cqw 10.8cqw 0 0; }
 .rc-dtile:hover .char-card { transform: translateY(-3px); }
-.rc-dtile:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; border-radius: 12px; }
-.rc-dtile-pers { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; z-index: 2;
+.rc-dtile:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; border-radius: 10.8cqw; }
+
+.rc-dtile-pers { position: absolute; top: 5cqw; left: 5cqw; width: 23.3cqw; height: 23.3cqw; z-index: 2;
                  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
-.rc-dtile-line { position: absolute; bottom: 3px; right: 3px; width: 18px; height: 18px; z-index: 2;
+/* 배치 아이콘은 **왼쪽 아래**다. 오른쪽 위는 완장이 쓰고, 오른쪽 아래는 별과 겹친다 */
+.rc-dtile-line { position: absolute; bottom: 6.7cqw; left: 6.7cqw; width: 23.3cqw; height: 23.3cqw; z-index: 4;
                  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
-/* 이름은 타일 아래 한 줄. 긴 이름(`에르핀(왕도)`)은 줄이지 않고 줄바꿈한다 —
-   `…` 로 자르면 변종 괄호가 날아가 누가 누군지 모르게 된다 */
-.rc-dtile-name {
-    display: block; margin-top: 3px; text-align: center;
-    font-size: .68rem; font-weight: 700; line-height: 1.25; color: var(--rc-meta);
-    word-break: keep-all;
+.rc-dtile-stars { position: absolute; bottom: 5cqw; left: 0; width: 100%; z-index: 3; }
+.rc-dtile-stars img { width: 15.8cqw !important; height: 15.8cqw !important; margin: 0 -2.5cqw !important; }
+.rc-dtile .eldyne-corner-icon { width: 15cqw; height: 15cqw; top: 3.3cqw; right: 3.3cqw; }
+.rc-dtile .eldyne-card .card-top::before { border-width: 0 35.8cqw 35.8cqw 0; }
+.rc-dtile .eldyne-card .card-top::after  { border-width: 0 31.7cqw 31.7cqw 0; }
+
+/* 이름표 — 메인 그리드 카드와 **같은 `.card-bottom`** 이다. 초상화에 붙은 흰 띠.
+   ⚠ 스킬 강화 게이지(저/고)는 넣지 않는다. 여긴 조합을 보는 자리라 강화 수준은 할 말이 아니다 */
+.rc-dtile-plate {
+    padding: 6cqw 4cqw; border-radius: 0 0 10.8cqw 10.8cqw;
+    display: flex; align-items: center; justify-content: center;
 }
-.rc-deck-tip {
-    margin: 10px 0 0; padding-top: 9px; border-top: 1px dashed var(--border-soft);
-    font-size: .84rem; line-height: 1.55; color: var(--rc-reason);
+.rc-dtile-plate .char-name {
+    margin: 0; font-size: clamp(.68rem, 9.5cqw, .9rem); line-height: 1.25;
+    text-align: center; width: 100%;
 }
 
-/* 좁은 화면 — 라벨을 위로 올려 초상화에 폭을 전부 준다 */
-@media (max-width: 560px) {
-    .rc-deck-row { flex-direction: column; gap: 4px; }
-    .rc-deck-label { flex: none; padding-top: 0; }
+/* 후보 타일은 **확실히 작게** — 크기 차이가 작으면 위계가 흐려진다 (본진의 40% 안팎).
+   안쪽 장식은 `cqw` 라 폭만 정해주면 알아서 따라온다 */
+/* 후보 타일엔 이름표를 달지 않는다 — 바로 옆에 이름이 글자로 있다 */
+.is-swaps .rc-dtile { flex: none; width: 58px; min-width: 0; max-width: none; }
+.is-swaps .rc-dtile-plate { display: none; }
+.is-swaps .rc-dtile .card-top { border-radius: 10.8cqw; }
+
+/* 빈 자리 — 인게임 '조합 숨김' 칸과 같은 꼴. 평평한 회색에 물음표 하나다.
+   ⚠ 색을 고정값으로 박지 않는다. 다크에서 밝은 회색 덩어리가 되면 빈 자리가
+     채워진 사도보다 눈에 띈다 — 조용해야 한다. */
+.rc-dtile.is-free { cursor: default; }
+.rc-free-box {
+    width: 100%; aspect-ratio: 1 / 1; border-radius: 14px;
+    background: var(--modal-body-bg);
+    border: 2px dashed var(--border-soft);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    box-sizing: border-box; padding: 6px;
 }
+.rc-free-box img { width: 30%; height: auto; opacity: .5; margin-bottom: 2px; }
+[data-theme="dark"] .rc-free-box img { opacity: .4; }
+.rc-free-label { font-size: .84rem; font-weight: 800; color: var(--rc-sub); }
+.rc-free-count { font-size: .7rem; font-weight: 600; color: var(--text-muted); }
+
 
 .rc-role { margin-bottom: 14px; }
 .rc-role-title {

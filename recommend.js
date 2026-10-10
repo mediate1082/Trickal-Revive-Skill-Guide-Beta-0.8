@@ -148,7 +148,30 @@ function buildCard(char, rec, secKey) {
 /* 초상화만 있는 작은 타일. 큰 카드(`buildCard`)의 `.rc-tile` 과 **같은 마크업**이라
    성격 배경·테두리, 성격/역할/배치 아이콘, 별이 그대로 따라온다. 폭만 작다.
    ⚠ 레벨 뱃지는 넣지 않는다 — 인게임엔 있지만 여긴 추천이라 레벨이 없다. */
-function buildDeckTile(char, label) {
+/* 빈 자리 — `members` 에 `?` (또는 `???`) 를 쓰면 "여긴 상대 보고 고르세요" 가 된다.
+   ⚠ 쉼표만 남기는 빈칸은 쓰지 않는다. CSV 에서 눈에 안 보이고, 끝 쉼표가 항목을
+     한 칸씩 미는 함정이 이 프로젝트에 이미 있다. */
+const isFreeSlot = n => /^\?+$/.test(String(n || '').trim());
+
+/* 인게임 줘팸터 랭킹의 '조합 숨김' 칸과 같은 꼴 — 성격색도 별도 없는 평평한 회색 타일에
+   물음표 하나. 에셋도 게임의 그것(`PVP_HidingIcon`)을 그대로 쓴다.
+   ⚠ 누를 게 없으므로 클릭·포커스·툴팁을 붙이지 않는다. */
+function buildFreeTile(altCount) {
+    const el = document.createElement('div');
+    el.className = 'rc-dtile is-free';
+    el.dataset.tooltip = '상대 방어덱을 보고 고르는 자리입니다';
+    /* 인게임 '조합 숨김' 기호(`PVP_HidingIcon`)를 그대로 쓰되, **글자를 같이 둔다.**
+       기호만으로는 "미정" 인지 "비워두라" 인지 갈리지 않는다. 점선 테두리도 같은 신호다. */
+    el.innerHTML = `
+        <div class="rc-free-box">
+            <img src="./assets/icons/common_icons/PVP_HidingIcon.webp" alt="" onerror="this.remove()">
+            <span class="rc-free-label">자유</span>
+            ${altCount ? `<span class="rc-free-count">후보 ${altCount}명</span>` : ''}
+        </div>`;
+    return el;
+}
+
+function buildDeckTile(char) {
     const p = PERSONALITY_COLORS[char.personality] || PERSONALITY_COLORS['공명'];
     const reso = char.personality === '공명';
     const eldyne = char.Eldyne && char.Eldyne.trim() !== '' && char.Eldyne !== 'X';
@@ -173,9 +196,14 @@ function buildDeckTile(char, label) {
                      class="rc-dtile-pers" onerror="this.remove()">
                 <img src="./assets/icons/line/${encodeURIComponent(char.line || '')}.webp"
                      class="rc-dtile-line" onerror="this.remove()">
+                ${eldyne ? `<img src="./assets/icons/common_icons/Ingame_Icon_HeroGrow_Hidden.webp"
+                     class="eldyne-corner-icon" alt="엘다인" data-tooltip="이 별은 이 사도가 엘다인임을 의미합니다. 엘다인은 일반 사도들에 비해 강력한 성능을 가지고 있으며, 픽업과 모집권에서 등장 확률이 낮습니다.">` : ''}
+                <div class="rc-dtile-stars">${makeStarHTML(char.star)}</div>
             </div>
-        </div>
-        <span class="rc-dtile-name">${esc(label || char.name)}</span>`;
+            <div class="card-bottom rc-dtile-plate">
+                <span class="char-name">${esc(char.name)}</span>
+            </div>
+        </div>`;
     return el;
 }
 
@@ -184,11 +212,24 @@ function buildDeckTile(char, label) {
      중첩을 넣는 순간 손으로 못 읽는 데이터가 된다. */
 function parseSwaps(raw) {
     const out = new Map();
+    /* 한 칸은 `이름` · `이름:메모` · `원픽>대체` · `원픽>대체:메모` 네 꼴이다.
+       ⚠ 메모에 **쉼표를 쓸 수 없다** — 쉼표가 후보를 가르는 구분자다. 가운뎃점(·)을 쓴다. */
     String(raw || '').split(',').forEach(part => {
-        const [from, to] = part.split('>').map(x => (x || '').trim());
-        if (!from || !to) return;
+        part = (part || '').trim();
+        if (!part) return;
+        let from = '?', rest = part;
+        if (part.includes('>')) {
+            const i = part.indexOf('>');
+            from = part.slice(0, i).trim();
+            rest = part.slice(i + 1).trim();
+            if (isFreeSlot(from)) from = '?';
+        }
+        const j = rest.indexOf(':');
+        const name = (j < 0 ? rest : rest.slice(0, j)).trim();
+        const note = (j < 0 ? '' : rest.slice(j + 1)).trim();
+        if (!name) return;
         if (!out.has(from)) out.set(from, []);
-        if (!out.get(from).includes(to)) out.get(from).push(to);
+        if (!out.get(from).some(x => x.name === name)) out.get(from).push({ name, note });
     });
     return out;
 }
@@ -197,21 +238,22 @@ function buildDeck(deck, dbMap, missing, flat) {
     const box = document.createElement('article');
     box.className = 'rc-deck';
     const sub = (deck.deck_sub || '').trim();
-    const tip = (deck.deck_tip || '').trim();
+    const swaps = parseSwaps(deck.swaps);
+
+    /* 읽는 순서 = **이 조합이 뭔지 → 구성 → 빈자리 후보.** 설명을 오른쪽 칸에 세웠던 적이
+       있는데, 그건 타일이 남는 폭을 못 먹어 오른쪽이 비던 시절의 처방이었다. 타일이
+       늘어나게 고친 뒤로는 그 칸이 할 일이 없어졌고, 눈만 오른쪽 끝으로 튀게 했다.
+       ⚠ 세로 구분선도 같이 걷어냈다 — 덱이 여러 개 쌓이면 짧은 글 옆에 빈 기둥이 반복된다. */
     box.innerHTML = `
         <header class="rc-deck-head">
             <h4 class="rc-deck-name">${esc((deck.deck_name || '').trim() || '이름 없는 덱')}</h4>
-            ${sub ? `<span class="rc-deck-sub">${esc(sub)}</span>` : ''}
+            ${sub ? `<p class="rc-deck-sub">${esc(sub)}</p>` : ''}
         </header>
-        <div class="rc-deck-row">
-            <span class="rc-deck-label">추천 조합</span>
-            <div class="rc-deck-tiles"></div>
-        </div>
-        <div class="rc-deck-row rc-deck-swaps" hidden>
-            <span class="rc-deck-label">대체픽</span>
+        <div class="rc-deck-tiles"></div>
+        <section class="rc-deck-block is-swaps" hidden>
+            <h5 class="rc-deck-eyebrow"></h5>
             <div class="rc-deck-swapwrap"></div>
-        </div>
-        ${tip ? `<p class="rc-deck-tip">${esc(tip)}</p>` : ''}`;
+        </section>`;
 
     const tiles = box.querySelector('.rc-deck-tiles');
     const pick = n => {
@@ -220,28 +262,55 @@ function buildDeck(deck, dbMap, missing, flat) {
         flat.push(ch);
         return ch;
     };
+
+    /* 후보를 **먼저 풀어둔다.** 빈자리 타일의 `후보 N명` 은 실제로 그려질 줄 수여야 한다 —
+       ⚠ CSV 에 적힌 개수를 그대로 세면 이름에 오타가 있을 때 숫자와 줄 수가 어긋난다
+         (그 줄은 못 그리는데 숫자만 남는다). */
+    const resolved = new Map();
+    swaps.forEach((list, from) => {
+        resolved.set(from, list.map(({ name, note }) => {
+            const ch = pick(name);
+            return ch ? { ch, note } : null;
+        }).filter(Boolean));
+    });
+    const freeCount = (resolved.get('?') || []).length;
+
     String(deck.members || '').split(',').forEach(n => {
+        if (isFreeSlot(n)) { tiles.appendChild(buildFreeTile(freeCount)); return; }
         const ch = pick(n);
         if (ch) tiles.appendChild(buildDeckTile(ch));
     });
 
-    const swaps = parseSwaps(deck.swaps);
-    if (swaps.size) {
-        const wrap = box.querySelector('.rc-deck-swapwrap');
-        swaps.forEach((tos, from) => {
-            const chFrom = pick(from);
-            const outs = tos.map(pick).filter(Boolean);
-            if (!chFrom || !outs.length) return;
-            const g = document.createElement('div');
-            g.className = 'rc-swap';
-            g.appendChild(buildDeckTile(chFrom));
-            const ar = document.createElement('span');
-            ar.className = 'rc-swap-arrow'; ar.textContent = '↔'; ar.setAttribute('aria-hidden', 'true');
-            g.appendChild(ar);
-            outs.forEach(c => g.appendChild(buildDeckTile(c)));
-            wrap.appendChild(g);
-        });
-        if (wrap.children.length) box.querySelector('.rc-deck-swaps').hidden = false;
+    /* 후보 한 줄 = [타일][이름][언제 쓰는지].
+       ⚠ 얼굴만 늘어놓으면 "뭘 보고 고르라는 건지" 가 빠진다 — 고르는 기준이 핵심이다. */
+    const wrap = box.querySelector('.rc-deck-swapwrap');
+    const row = (ch, note) => {
+        const r = document.createElement('div');
+        r.className = 'rc-alt';
+        r.appendChild(buildDeckTile(ch));
+        const t = document.createElement('div');
+        t.className = 'rc-alt-text';
+        t.innerHTML = `<span class="rc-alt-name">${esc(ch.name)}</span>` +
+                      (note ? `<span class="rc-alt-note">${esc(note)}</span>` : '');
+        r.appendChild(t);
+        return r;
+    };
+    let label = '';
+    resolved.forEach((list, from) => {
+        if (!list.length) return;
+        if (from === '?') {
+            label = label || '빈자리 후보';
+            list.forEach(({ ch, note }) => wrap.appendChild(row(ch, note)));
+        } else {
+            const chFrom = dbMap.get(from);
+            if (!chFrom) return;
+            label = label || '대체픽';
+            list.forEach(({ ch, note }) => wrap.appendChild(row(ch, note || `${chFrom.name} 대신`)));
+        }
+    });
+    if (wrap.children.length) {
+        box.querySelector('.is-swaps').hidden = false;
+        box.querySelector('.is-swaps .rc-deck-eyebrow').textContent = label;
     }
     return box;
 }
