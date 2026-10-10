@@ -2932,6 +2932,69 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 }
 
 /* ── 역할 묶음 ── */
+/* ── 덱 편성 (`Recommend_Decks.csv`) ───────────────────────────
+   줘팸터처럼 덱 단위로 돌아가는 분류에서, 역할 묶음보다 **위에** 온다.
+   ⚠ 인게임 PvP UI 를 그대로 가져오지 않았다. 이 페이지는 제 양식이 따로 있고,
+     전에 화살표를 인게임 그림으로 바꿨다가 안 맞아 되돌린 전례가 있다.
+     구조(가로 긴 상자 + 초상화 한 줄)만 빌려 오고 꼴은 `.rc-card` 를 따른다. */
+.rc-decks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+
+.rc-deck {
+    background: var(--rc-card-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 15px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.rc-deck-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.rc-deck-name { margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--rc-name); }
+/* 부제는 인게임 칭호 자리다. 이름과 경쟁하지 않게 한 단 낮춘다 */
+.rc-deck-sub {
+    font-size: .8rem; font-weight: 700; color: var(--rc-sub);
+    background: var(--modal-body-bg); border: 1px solid var(--border-soft);
+    border-radius: 999px; padding: 2px 9px;
+}
+
+/* 한 줄 = [라벨 | 초상화들]. 라벨 폭을 고정해 `추천 조합`·`대체픽` 의 초상화가 세로로 맞는다 */
+.rc-deck-row { display: flex; align-items: flex-start; gap: 10px; }
+.rc-deck-row + .rc-deck-row { margin-top: 10px; }
+.rc-deck-label {
+    flex: 0 0 58px; padding-top: 18px;
+    font-size: .76rem; font-weight: 800; color: var(--text-muted); letter-spacing: .02em;
+}
+.rc-deck-tiles, .rc-deck-swapwrap { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.rc-deck-swapwrap { gap: 6px 18px; }
+.rc-swap { display: flex; align-items: center; gap: 6px; }
+.rc-swap-arrow { font-size: 1rem; color: var(--text-muted); padding: 0 1px; }
+
+/* 초상화 타일 — 큰 카드의 120px 을 68px 로 줄인 것. 마크업은 `.rc-tile` 그대로다 */
+.rc-dtile { width: 68px; cursor: pointer; }
+.rc-dtile .rc-tile { flex: none; width: 68px; }
+.rc-dtile .card-top { aspect-ratio: 1 / 1; border-radius: 12px; }
+.rc-dtile:hover .char-card { transform: translateY(-3px); }
+.rc-dtile:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; border-radius: 12px; }
+.rc-dtile-pers { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; z-index: 2;
+                 filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+.rc-dtile-line { position: absolute; bottom: 3px; right: 3px; width: 18px; height: 18px; z-index: 2;
+                 filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+/* 이름은 타일 아래 한 줄. 긴 이름(`에르핀(왕도)`)은 줄이지 않고 줄바꿈한다 —
+   `…` 로 자르면 변종 괄호가 날아가 누가 누군지 모르게 된다 */
+.rc-dtile-name {
+    display: block; margin-top: 3px; text-align: center;
+    font-size: .68rem; font-weight: 700; line-height: 1.25; color: var(--rc-meta);
+    word-break: keep-all;
+}
+.rc-deck-tip {
+    margin: 10px 0 0; padding-top: 9px; border-top: 1px dashed var(--border-soft);
+    font-size: .84rem; line-height: 1.55; color: var(--rc-reason);
+}
+
+/* 좁은 화면 — 라벨을 위로 올려 초상화에 폭을 전부 준다 */
+@media (max-width: 560px) {
+    .rc-deck-row { flex-direction: column; gap: 4px; }
+    .rc-deck-label { flex: none; padding-top: 0; }
+}
+
 .rc-role { margin-bottom: 14px; }
 .rc-role-title {
     display: flex; align-items: center; gap: 6px; margin-bottom: 8px;

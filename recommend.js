@@ -139,6 +139,113 @@ function buildCard(char, rec, secKey) {
     return card;
 }
 
+/* ── 덱 편성 (`Recommend_Decks.csv`) ───────────────────────────
+   줘팸터처럼 **덱 단위로 돌아가는** 콘텐츠용. 행 하나가 덱 하나다
+   (`Recommend_Chara.csv` 는 행 하나가 사도 하나라 모양이 다르다 — 그래서 파일을 갈랐다).
+
+   ⚠ 분류의 **맨 위**에 온다. 조합을 먼저 보고 개별 추천을 나중에 보는 순서다. */
+
+/* 초상화만 있는 작은 타일. 큰 카드(`buildCard`)의 `.rc-tile` 과 **같은 마크업**이라
+   성격 배경·테두리, 성격/역할/배치 아이콘, 별이 그대로 따라온다. 폭만 작다.
+   ⚠ 레벨 뱃지는 넣지 않는다 — 인게임엔 있지만 여긴 추천이라 레벨이 없다. */
+function buildDeckTile(char, label) {
+    const p = PERSONALITY_COLORS[char.personality] || PERSONALITY_COLORS['공명'];
+    const reso = char.personality === '공명';
+    const eldyne = char.Eldyne && char.Eldyne.trim() !== '' && char.Eldyne !== 'X';
+    const el = document.createElement('div');
+    el.className = 'rc-dtile';
+    el.tabIndex = 0;
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', `${char.name} 상세 정보`);
+    el.dataset.tooltip = `${char.name}${char.title ? ' · ' + char.title : ''}`;
+    const open = () => window.openDetailModal(char);
+    el.onclick = open;
+    el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
+    el.innerHTML = `
+        <div class="rc-tile char-card${eldyne ? ' eldyne-card' : ''}">
+            <div class="${reso ? 'card-top bg-resonance' : 'card-top'}"
+                 style="background:${reso ? 'none' : p.bg};border:3px solid ${p.border};">
+                <img class="char-img" src="./assets/icons/chara_image/초상화_${encodeURIComponent(char.name)}.webp"
+                     loading="lazy" decoding="async" alt=""
+                     style="width:100%;height:100%;object-fit:cover;"
+                     onerror="this.onerror=null;this.src='./assets/icons/chara_image/default.webp'">
+                <img src="./assets/icons/personality/${encodeURIComponent(char.personality || '')}.webp"
+                     class="rc-dtile-pers" onerror="this.remove()">
+                <img src="./assets/icons/line/${encodeURIComponent(char.line || '')}.webp"
+                     class="rc-dtile-line" onerror="this.remove()">
+            </div>
+        </div>
+        <span class="rc-dtile-name">${esc(label || char.name)}</span>`;
+    return el;
+}
+
+/* `swaps` 는 `원픽>대체` 쌍을 쉼표로 늘어놓는다. 같은 원픽이 여러 번 나오면 한 줄로 묶는다.
+   ⚠ 중첩 구분자(`A>B;C|D>E`)를 쓰지 않는다 — 쉼표 리스트는 이 프로젝트의 관례이고,
+     중첩을 넣는 순간 손으로 못 읽는 데이터가 된다. */
+function parseSwaps(raw) {
+    const out = new Map();
+    String(raw || '').split(',').forEach(part => {
+        const [from, to] = part.split('>').map(x => (x || '').trim());
+        if (!from || !to) return;
+        if (!out.has(from)) out.set(from, []);
+        if (!out.get(from).includes(to)) out.get(from).push(to);
+    });
+    return out;
+}
+
+function buildDeck(deck, dbMap, missing, flat) {
+    const box = document.createElement('article');
+    box.className = 'rc-deck';
+    const sub = (deck.deck_sub || '').trim();
+    const tip = (deck.deck_tip || '').trim();
+    box.innerHTML = `
+        <header class="rc-deck-head">
+            <h4 class="rc-deck-name">${esc((deck.deck_name || '').trim() || '이름 없는 덱')}</h4>
+            ${sub ? `<span class="rc-deck-sub">${esc(sub)}</span>` : ''}
+        </header>
+        <div class="rc-deck-row">
+            <span class="rc-deck-label">추천 조합</span>
+            <div class="rc-deck-tiles"></div>
+        </div>
+        <div class="rc-deck-row rc-deck-swaps" hidden>
+            <span class="rc-deck-label">대체픽</span>
+            <div class="rc-deck-swapwrap"></div>
+        </div>
+        ${tip ? `<p class="rc-deck-tip">${esc(tip)}</p>` : ''}`;
+
+    const tiles = box.querySelector('.rc-deck-tiles');
+    const pick = n => {
+        const ch = dbMap.get(String(n || '').trim());
+        if (!ch) { if (String(n || '').trim()) missing.push(n); return null; }
+        flat.push(ch);
+        return ch;
+    };
+    String(deck.members || '').split(',').forEach(n => {
+        const ch = pick(n);
+        if (ch) tiles.appendChild(buildDeckTile(ch));
+    });
+
+    const swaps = parseSwaps(deck.swaps);
+    if (swaps.size) {
+        const wrap = box.querySelector('.rc-deck-swapwrap');
+        swaps.forEach((tos, from) => {
+            const chFrom = pick(from);
+            const outs = tos.map(pick).filter(Boolean);
+            if (!chFrom || !outs.length) return;
+            const g = document.createElement('div');
+            g.className = 'rc-swap';
+            g.appendChild(buildDeckTile(chFrom));
+            const ar = document.createElement('span');
+            ar.className = 'rc-swap-arrow'; ar.textContent = '↔'; ar.setAttribute('aria-hidden', 'true');
+            g.appendChild(ar);
+            outs.forEach(c => g.appendChild(buildDeckTile(c)));
+            wrap.appendChild(g);
+        });
+        if (wrap.children.length) box.querySelector('.rc-deck-swaps').hidden = false;
+    }
+    return box;
+}
+
 function buildSection(sec, dbMap, missing, flat) {
     const sEl = document.createElement('section');
     sEl.className = 'rc-sec';
@@ -168,6 +275,14 @@ function buildSection(sec, dbMap, missing, flat) {
     /* 묶음들은 몸통 하나에 담는다 — subgrid 가 머리/몸통 두 줄만 보게 하려면
        `.rc-sec` 의 자식이 정확히 둘이어야 한다. */
     const body = sEl.querySelector('.rc-sec-body');
+
+    /* 덱이 있으면 역할 묶음보다 **먼저** 그린다. */
+    if (sec.decks && sec.decks.length) {
+        const dWrap = document.createElement('div');
+        dWrap.className = 'rc-decks';
+        sec.decks.forEach(d => dWrap.appendChild(buildDeck(d, dbMap, missing, flat)));
+        body.appendChild(dWrap);
+    }
 
     /* 묶음 이름은 `group` 이 있으면 그것, 비었으면 사도의 역할이다.
        분류마다 기준이 달라도 된다 — 어떤 데는 역할로, 어떤 데는 '무토 필수' 로 갈라도 된다. */
@@ -496,7 +611,7 @@ function activateTab(key, secKey) {
    고쳐야 하고 하나만 빠뜨려도 조용히 갈라진다.
 
    ⚠ 탭·분류가 나오는 순서는 **`Recommend_Sections.csv` 의 행 순서** 그대로다. */
-function render(secDefs, recs, dbMap, chipDefs) {
+function render(secDefs, recs, dbMap, chipDefs, deckDefs) {
     const body = document.getElementById('rc-body');
     const missing = [];
 
@@ -520,7 +635,7 @@ function render(secDefs, recs, dbMap, chipDefs) {
         if (!groups.has(gk)) groups.set(gk,
             { label: d.group_label, icon: d.group_icon, tip: (d.group_tip || '').trim(), secs: new Map() });
         const sec = { key: sk, label: d.sec_label, tip: d.sec_tip, icon: (d.sec_icon || '').trim(),
-                      chip: (d.sec_chip || '').trim(), rows: [] };
+                      chip: (d.sec_chip || '').trim(), rows: [], decks: [] };
         groups.get(gk).secs.set(sk, sec);
         secByKey.set(sk, sec);
     });
@@ -533,6 +648,15 @@ function render(secDefs, recs, dbMap, chipDefs) {
         const sec = secByKey.get(k);
         if (!sec) { orphan.push(k); return; }
         sec.rows.push(r);
+    });
+
+    /* 덱도 같은 `sec_key` 로 붙는다. 행 순서가 곧 화면 순서다. */
+    (deckDefs || []).forEach(d => {
+        const k = (d.sec_key || '').trim();
+        if (!k || !(d.deck_name || '').trim()) return;
+        const sec = secByKey.get(k);
+        if (!sec) { orphan.push(k); return; }
+        sec.decks.push(d);
     });
 
     /* 사도 → 배치된 소분류들. 그 분류의 `sec_chip` 이 카드의 자동 칩이 된다. */
@@ -552,7 +676,9 @@ function render(secDefs, recs, dbMap, chipDefs) {
        읽을 게 없고, 옆칸 높이까지 끌어올린다. 분류 정의는 CSV 에 남아 있으니
        **사도를 한 명 넣으면 그대로 다시 나온다.**
        ⚠ 그래서 분류가 안 보인다고 지워진 게 아니다. 편집기 목록에는 그대로 있다. */
-    groups.forEach(g => g.secs.forEach((sec, k) => { if (!sec.rows.length) g.secs.delete(k); }));
+    groups.forEach(g => g.secs.forEach((sec, k) => {
+        if (!sec.rows.length && !sec.decks.length) g.secs.delete(k);
+    }));
     groups.forEach((g, k) => { if (!g.secs.size) groups.delete(k); });
 
     body.innerHTML = '';
@@ -780,8 +906,9 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
-        const [secT, rec, chipT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT] =
+        const [secT, rec, chipT, deckT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
+                'Recommend_Decks.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
                 'high_skill_DB.csv', 'buff_DB.csv', 'buff_desc_DB.csv', 'normal_Atk_DB.csv',
                 'low_skill_DB.csv', 'aside_DB.csv', 'sp_DB.csv', 'battle_item_DB.csv'].map(get));
@@ -802,7 +929,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
         });
 
         const dbMap = new Map(db.filter(r => r.name).map(r => [r.name.trim(), r]));
-        render(P(secT), P(rec), dbMap, P(chipT));
+        render(P(secT), P(rec), dbMap, P(chipT), P(deckT));
     } catch (e) {
         document.getElementById('rc-body').innerHTML =
             `<div class="rc-warn">데이터를 불러오지 못했습니다: ${esc(e.message)}</div>`;
