@@ -2987,9 +2987,17 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    ⚠ 대신 안쪽 행의 배경은 뺀다 — 둘 다 배경이 있으면 상자 속 상자가 된다. */
 /* ⚠ 가로 패딩을 주면 안쪽 내용이 타일 줄보다 그만큼 들여써진다 (16px 어긋났었다).
      상자는 음수 여백으로 바깥으로 넓히고, 안쪽 글은 타일과 같은 선에서 시작하게 한다. */
+/* 후보 칸은 덱 상자 **안에서 바닥이 한 톤 내려앉은 자리**다.
+   ⚠ 위쪽은 **그라디언트로 풀어준다.** 평평히 칠하면 카드 한가운데에 가로줄이
+     그어져 상자가 둘로 쪼개진 것처럼 보인다 — 덱과 후보는 한 덩어리다.
+   ⚠ 그래서 **위 모서리는 둥글게 하지 않는다** — 녹아드는 중에 모서리만 남아
+     올라가는 꼴이 된다. 밑은 카드 안쪽 못에 닿으므로 그대로 둥글린다.
+   ⚠ 위 여백은 번지는 길이(26px)보다 넉넉히 준다. 그렇지 않으면 제목이 반투명한
+     데서 시작해 바탕이 글 뒤에서 진해지는 것처럼 보인다 */
 .rc-deck-block {
-    margin: 20px -16px 0; padding: 14px 16px 15px;
-    background: var(--modal-body-bg); border-radius: 14px;
+    margin: 20px -16px 0; padding: 32px 16px 15px;
+    background: linear-gradient(to bottom, transparent 0, var(--modal-body-bg) 26px);
+    border-radius: 0 0 14px 14px;
 }
 /* ⚠ `.72rem` + `--text-muted` 로는 블록 하나를 이끄는 제목 구실을 못 한다.
    덱 이름 바로 아래 급으로 올린다. */
@@ -3070,7 +3078,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    안쪽 장식은 `cqw` 라 폭만 정해주면 알아서 따라온다.
    ⚠ 이름표는 본진과 **같은 `.card-bottom`** 이다. 폭을 더 줄이면 `에르핀(왕도)` 같은
      변종 이름이 두 줄로 접혀 칸마다 높이가 달라진다 — 78px 이 하한이다 */
-.is-swaps .rc-dtile { flex: none; width: 78px; min-width: 0; max-width: none; }
+.is-swaps .rc-dtile { flex: none; width: 96px; min-width: 0; max-width: none; }
 
 /* 빈 자리 — 인게임 '조합 숨김' 칸과 같은 꼴. 평평한 회색에 물음표 하나다.
    ⚠ 색을 고정값으로 박지 않는다. 다크에서 밝은 회색 덩어리가 되면 빈 자리가
