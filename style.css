@@ -3006,9 +3006,19 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     display: grid; gap: 14px 26px;
     grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
 }
-.rc-alt { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.rc-alt-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.rc-alt-name { font-size: .88rem; font-weight: 800; color: var(--rc-name); }
+/* ⚠ `stretch` 다. 이름표가 붙어 타일이 박스보다 높으므로, 가운데 정렬로 두면
+     박스가 허공에 뜨고 아래가 휘윻해진다 — 홈이 칸을 다 채워야 음각으로 읽힌다 */
+.rc-alt { display: flex; align-items: stretch; gap: 10px; min-width: 0; }
+/* 설명 칸은 **음각 박스**다 — 상세 모달의 `.tg-skill-stat-box` 와 같은 처리
+   (`--stat-box-bg` + `--inset-shadow`). 얼굴은 떠 있고 글은 파여 있어 둘이 갈린다.
+   ⚠ 색·그림자를 손으로 적지 않는다. 모달과 어긋나면 같은 페이지에서 두 양식이 된다 */
+.rc-alt-text {
+    flex: 1 1 auto; min-width: 0;
+    display: flex; flex-direction: column; justify-content: center; gap: 3px;
+    padding: 9px 12px; border-radius: 12px;
+    background: var(--stat-box-bg); border: 1px solid var(--border-soft);
+    box-shadow: var(--inset-shadow);
+}
 .rc-alt-note { font-size: .78rem; line-height: 1.45; color: var(--rc-meta); word-break: keep-all; }
 [data-theme="dark"] .rc-alt-note { color: var(--rc-sub); }
 
@@ -3056,12 +3066,11 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     text-align: center; width: 100%;
 }
 
-/* 후보 타일은 **확실히 작게** — 크기 차이가 작으면 위계가 흐려진다 (본진의 40% 안팎).
-   안쪽 장식은 `cqw` 라 폭만 정해주면 알아서 따라온다 */
-/* 후보 타일엔 이름표를 달지 않는다 — 바로 옆에 이름이 글자로 있다 */
-.is-swaps .rc-dtile { flex: none; width: 58px; min-width: 0; max-width: none; }
-.is-swaps .rc-dtile-plate { display: none; }
-.is-swaps .rc-dtile .card-top { border-radius: 10.8cqw; }
+/* 후보 타일은 **확실히 작게** — 크기 차이가 작으면 위계가 흐려진다 (본진의 절반 남짓).
+   안쪽 장식은 `cqw` 라 폭만 정해주면 알아서 따라온다.
+   ⚠ 이름표는 본진과 **같은 `.card-bottom`** 이다. 폭을 더 줄이면 `에르핀(왕도)` 같은
+     변종 이름이 두 줄로 접혀 칸마다 높이가 달라진다 — 78px 이 하한이다 */
+.is-swaps .rc-dtile { flex: none; width: 78px; min-width: 0; max-width: none; }
 
 /* 빈 자리 — 인게임 '조합 숨김' 칸과 같은 꼴. 평평한 회색에 물음표 하나다.
    ⚠ 색을 고정값으로 박지 않는다. 다크에서 밝은 회색 덩어리가 되면 빈 자리가
@@ -3134,7 +3143,11 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-card-row { display: flex; gap: 14px; align-items: center; }
 .rc-tile { position: relative; flex: 0 0 120px; width: 120px; }
 .rc-card:hover .rc-tile { transform: none; }
-.rc-tile .card-top { border-radius: 13px; }
+/* ⚠ **`.rc-card` 안으로 좁혀 둔다.** 이 카드는 이름이 타일 **옆**에 있어 이름표가 없으므로
+     네 모서리가 다 둥근 게 맞다. 범위를 안 좁히면 뒤에 오는 이 규칙이 특정도가 같은
+     `.rc-dtile .card-top` 의 `0 0` 을 덮어, 이름표 달린 덱 타일이 **둥근 사각형 위에
+     흰 띠를 덧댄 꼴**이 된다 (스킬 가이드는 `15px 15px 0 0` 이라 칼선이다) */
+.rc-card .rc-tile .card-top { border-radius: 13px; }
 
 /* ── 글 영역 ── */
 .rc-card-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }

@@ -288,11 +288,14 @@ function buildDeck(deck, dbMap, missing, flat) {
         const r = document.createElement('div');
         r.className = 'rc-alt';
         r.appendChild(buildDeckTile(ch));
-        const t = document.createElement('div');
-        t.className = 'rc-alt-text';
-        t.innerHTML = `<span class="rc-alt-name">${esc(ch.name)}</span>` +
-                      (note ? `<span class="rc-alt-note">${esc(note)}</span>` : '');
-        r.appendChild(t);
+        /* 이름은 **타일 이름표**가 말한다 — 여기선 '언제 쓰는지' 만 남긴다.
+           ⚠ 메모가 없으면 박스를 아예 안 그린다. 빈 음각 홈만 남으면 뭔가 빠진 것처럼 보인다 */
+        if (note) {
+            const t = document.createElement('div');
+            t.className = 'rc-alt-text';
+            t.innerHTML = `<span class="rc-alt-note">${esc(note)}</span>`;
+            r.appendChild(t);
+        }
         return r;
     };
     let label = '';
