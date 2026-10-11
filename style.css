@@ -2964,7 +2964,11 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     padding: 14px 16px;
     box-shadow: 0 1px 3px rgba(0,0,0,.05);
 }
-.rc-deck-head { margin-bottom: 14px; }
+/* ⚠ 머리글과 타일 줄 사이는 **넉넉히** 둔다. 설명이 타일에 붙으면 글이 타일의
+     설명문처럼 읽힌다 — 덱 전체를 말하는 문장이다.
+     반대로 타일과 후보 칸 사이는 좁다 (`.rc-deck-block` 의 위 여백). 둘은 한
+     덩어리라 떨어뜨릴 이유가 없고, 띄우면 머리글 쪽 간격과 경쟁한다 */
+.rc-deck-head { margin-bottom: 22px; }
 /* ⚠ 분류 제목(`.rc-sec-title`)이 쓰는 **초록 막대를 여기 또 쓰지 않는다.**
    같은 장식이 두 번 나오면 분류와 덱의 급이 비슷해 보인다. 크기·굵기로만 가른다. */
 .rc-deck-name {
@@ -2990,7 +2994,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 /* 후보 칸은 덱 상자와 **같은 흰 바탕**이다. 한 톤 내려 깔아도 봤지만, 어떻게 맞춰도
    바탕끼리 색이 갈려 상자가 둘로 쪼개진 것처럼 보였다 — 덱과 후보는 한 덩어리다.
    ⚠ 그래서 **배경을 두지 않는다.** 둘을 가르는 건 머리글의 구분선 하나뿐이다 */
-.rc-deck-block { margin: 20px 0 0; padding: 4px 0 0; }
+.rc-deck-block { margin: 12px 0 0; padding: 4px 0 0; }
 
 /* ⚠ `.72rem` + `--text-muted` 로는 블록 하나를 이끄는 제목 구실을 못 한다.
    덱 이름 바로 아래 급으로 올린다. */
