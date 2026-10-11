@@ -3001,12 +3001,22 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 }
 /* ⚠ `.72rem` + `--text-muted` 로는 블록 하나를 이끄는 제목 구실을 못 한다.
    덱 이름 바로 아래 급으로 올린다. */
+/* 머리글은 **구분선 안에 얹는다** — `── 빈자리 후보 ──────────`.
+   ⚠ 밑줄로 두면 글과 선이 위아래로 떨어져, 선이 글의 것인지 아래 목록의 것인지
+     모호해진다. 선 가운데를 비워 글을 끼우면 둘이 한 몸으로 읽힌다.
+   ⚠ 왼쪽 토막은 짧게 고정(18px), 오른쪽만 남는 폭을 먹는다. 양쪽을 똑같이 늘리면
+     글이 한가운데로 가 왼쪽 정렬인 아래 목록과 축이 어긋난다 */
 .rc-deck-eyebrow {
-    display: block; margin: 0 0 12px;
-    font-size: .82rem; font-weight: 700; letter-spacing: .02em; color: var(--rc-sub);
-    padding-bottom: 9px; border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: center; gap: 10px; margin: 0 0 14px;
+    font-size: .92rem; font-weight: 800; letter-spacing: .01em; color: var(--rc-name);
 }
-.rc-deck-tiles { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.rc-deck-eyebrow::before,
+.rc-deck-eyebrow::after { content: ''; height: 1px; background: var(--border-soft); }
+.rc-deck-eyebrow::before { flex: 0 0 18px; }
+.rc-deck-eyebrow::after  { flex: 1 1 auto; }
+/* ⚠ 가운데 정렬이다. 타일에 상한(152px)이 있어 넓은 화면에서는 남는 폭이 생기는데,
+     왼쪽에 붙여 두면 오른쪽이 통째로 빈다 — 여섯 칸이 한 덩어리로 보여야 한다 */
+.rc-deck-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-width: 0; }
 
 /* 후보 한 줄 = [타일][이름 + 언제 쓰는지]. 두 칸씩 접히게 둔다 —
    한 줄에 하나씩이면 후보가 여섯이면 상자가 세로로 길어진다 */
@@ -3027,8 +3037,10 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     background: var(--stat-box-bg); border: 1px solid var(--border-soft);
     box-shadow: var(--inset-shadow);
 }
-.rc-alt-note { font-size: .78rem; line-height: 1.45; color: var(--rc-meta); word-break: keep-all; }
-[data-theme="dark"] .rc-alt-note { color: var(--rc-sub); }
+/* ⚠ `--rc-meta`(성격·배치 라벨용)로 두면 음각 바탕 위에서 **안 읽힌다.** 읽으라고
+     넣은 글이므로 본문급인 `--rc-reason`(#555) 이다 — 상세 모달의 설명 상자와 같은 급 */
+.rc-alt-note { font-size: .78rem; line-height: 1.45; color: var(--rc-reason);
+               font-weight: 600; word-break: keep-all; }
 
 /* 초상화 타일 — 큰 카드의 120px 을 88px 로 줄인 것. 마크업은 `.rc-tile` 그대로다.
    ⚠ 이름 줄을 두지 않는다. 여섯 칸이 한 줄에 서는 자리라 이름까지 넣으면 타일을
