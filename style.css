@@ -2987,18 +2987,11 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    ⚠ 대신 안쪽 행의 배경은 뺀다 — 둘 다 배경이 있으면 상자 속 상자가 된다. */
 /* ⚠ 가로 패딩을 주면 안쪽 내용이 타일 줄보다 그만큼 들여써진다 (16px 어긋났었다).
      상자는 음수 여백으로 바깥으로 넓히고, 안쪽 글은 타일과 같은 선에서 시작하게 한다. */
-/* 후보 칸은 덱 상자 **안에서 바닥이 한 톤 내려앉은 자리**다.
-   ⚠ 위쪽은 **그라디언트로 풀어준다.** 평평히 칠하면 카드 한가운데에 가로줄이
-     그어져 상자가 둘로 쪼개진 것처럼 보인다 — 덱과 후보는 한 덩어리다.
-   ⚠ 그래서 **위 모서리는 둥글게 하지 않는다** — 녹아드는 중에 모서리만 남아
-     올라가는 꼴이 된다. 밑은 카드 안쪽 못에 닿으므로 그대로 둥글린다.
-   ⚠ 위 여백은 번지는 길이(26px)보다 넉넉히 준다. 그렇지 않으면 제목이 반투명한
-     데서 시작해 바탕이 글 뒤에서 진해지는 것처럼 보인다 */
-.rc-deck-block {
-    margin: 20px -16px 0; padding: 32px 16px 15px;
-    background: linear-gradient(to bottom, transparent 0, var(--modal-body-bg) 26px);
-    border-radius: 0 0 14px 14px;
-}
+/* 후보 칸은 덱 상자와 **같은 흰 바탕**이다. 한 톤 내려 깔아도 봤지만, 어떻게 맞춰도
+   바탕끼리 색이 갈려 상자가 둘로 쪼개진 것처럼 보였다 — 덱과 후보는 한 덩어리다.
+   ⚠ 그래서 **배경을 두지 않는다.** 둘을 가르는 건 머리글의 구분선 하나뿐이다 */
+.rc-deck-block { margin: 20px 0 0; padding: 4px 0 0; }
+
 /* ⚠ `.72rem` + `--text-muted` 로는 블록 하나를 이끄는 제목 구실을 못 한다.
    덱 이름 바로 아래 급으로 올린다. */
 /* 머리글은 **구분선 안에 얹는다** — `── 빈자리 후보 ──────────`.
@@ -3029,12 +3022,14 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-alt { display: flex; align-items: stretch; gap: 10px; min-width: 0; }
 /* 설명 칸은 **음각 박스**다 — 상세 모달의 `.tg-skill-stat-box` 와 같은 처리
    (`--stat-box-bg` + `--inset-shadow`). 얼굴은 떠 있고 글은 파여 있어 둘이 갈린다.
-   ⚠ 색·그림자를 손으로 적지 않는다. 모달과 어긋나면 같은 페이지에서 두 양식이 된다 */
+   ⚠ 바탕은 모달의 `--stat-box-bg` 가 아니라 **카드와 같은 `--rc-card-bg`** 다.
+     이 자리는 흰 카드 위라 한 톤 내리면 칸마다 색이 갈려 어수선해진다 —
+     파인 느낌은 **테두리와 안쪽 그림자**가 내고 있으므로 바탕색은 거들 필요가 없다 */
 .rc-alt-text {
     flex: 1 1 auto; min-width: 0;
     display: flex; flex-direction: column; justify-content: center; gap: 3px;
     padding: 9px 12px; border-radius: 12px;
-    background: var(--stat-box-bg); border: 1px solid var(--border-soft);
+    background: var(--rc-card-bg); border: 1px solid var(--border-soft);
     box-shadow: var(--inset-shadow);
 }
 /* ⚠ `--rc-meta`(성격·배치 라벨용)로 두면 음각 바탕 위에서 **안 읽힌다.** 읽으라고
