@@ -156,16 +156,18 @@ const isFreeSlot = n => /^\?+$/.test(String(n || '').trim());
 /* 인게임 줘팸터 랭킹의 '조합 숨김' 칸과 같은 꼴 — 성격색도 별도 없는 평평한 회색 타일에
    물음표 하나. 에셋도 게임의 그것(`PVP_HidingIcon`)을 그대로 쓴다.
    ⚠ 누를 게 없으므로 클릭·포커스·툴팁을 붙이지 않는다. */
-function buildFreeTile(altCount) {
+function buildFreeTile(altCount, label, tip) {
     const el = document.createElement('div');
     el.className = 'rc-dtile is-free';
-    el.dataset.tooltip = '상대 방어덱을 보고 고르는 자리입니다';
+    /* ⚠ 문구를 코드에 박지 않는다. 줘팸터는 '상대를 보고 고르는 자리' 지만
+         심해 대격돌은 '그 해역 성격 사도로 채우는 자리' 라 뜻이 다르다. */
+    el.dataset.tooltip = tip || '상황에 맞춰 고르는 자리입니다';
     /* 인게임 '조합 숨김' 기호(`PVP_HidingIcon`)를 그대로 쓰되, **글자를 같이 둔다.**
        기호만으로는 "미정" 인지 "비워두라" 인지 갈리지 않는다. 점선 테두리도 같은 신호다. */
     el.innerHTML = `
         <div class="rc-free-box">
             <img src="./assets/icons/common_icons/PVP_HidingIcon.webp" alt="" onerror="this.remove()">
-            <span class="rc-free-label">자유</span>
+            <span class="rc-free-label">${esc(label || '자유')}</span>
             ${altCount ? `<span class="rc-free-count">후보 ${altCount}명</span>` : ''}
         </div>`;
     return el;
@@ -210,35 +212,35 @@ function buildDeckTile(char) {
 /* `swaps` 는 `원픽>대체` 쌍을 쉼표로 늘어놓는다. 같은 원픽이 여러 번 나오면 한 줄로 묶는다.
    ⚠ 중첩 구분자(`A>B;C|D>E`)를 쓰지 않는다 — 쉼표 리스트는 이 프로젝트의 관례이고,
      중첩을 넣는 순간 손으로 못 읽는 데이터가 된다. */
-function parseSwaps(raw) {
+/* 후보는 이제 `Recommend_Deck_Swaps.csv` 의 **행 하나가 후보 하나**다.
+   예전엔 `swaps` 한 셀에 이름·대상·메모를 쑤셔 넣어 쉼표로 갈랐는데, 그 탓에
+   **메모에 쉼표를 못 쓰는** 규칙이 생겼고 셀이 770자까지 자랐다.
+   ⚠ `from` 이 비었거나 `?` 면 빈자리 후보, 이름이면 그 사도 대신이다. */
+function groupSwaps(rows, deckKey) {
     const out = new Map();
-    /* 한 칸은 `이름` · `이름:메모` · `원픽>대체` · `원픽>대체:메모` 네 꼴이다.
-       ⚠ 메모에 **쉼표를 쓸 수 없다** — 쉼표가 후보를 가르는 구분자다. 가운뎃점(·)을 쓴다. */
-    String(raw || '').split(',').forEach(part => {
-        part = (part || '').trim();
-        if (!part) return;
-        let from = '?', rest = part;
-        if (part.includes('>')) {
-            const i = part.indexOf('>');
-            from = part.slice(0, i).trim();
-            rest = part.slice(i + 1).trim();
-            if (isFreeSlot(from)) from = '?';
-        }
-        const j = rest.indexOf(':');
-        const name = (j < 0 ? rest : rest.slice(0, j)).trim();
-        const note = (j < 0 ? '' : rest.slice(j + 1)).trim();
+    (rows || []).forEach(r => {
+        if ((r.deck_key || '').trim() !== deckKey) return;
+        const name = (r.chara_name || '').trim();
         if (!name) return;
+        let from = (r.from || '').trim();
+        if (!from || isFreeSlot(from)) from = '?';
         if (!out.has(from)) out.set(from, []);
-        if (!out.get(from).some(x => x.name === name)) out.get(from).push({ name, note });
+        out.get(from).push({ name, note: (r.note || '').trim() });
     });
     return out;
 }
 
-function buildDeck(deck, dbMap, missing, flat) {
+function buildDeck(deck, dbMap, missing, flat, swapRows) {
     const box = document.createElement('article');
     box.className = 'rc-deck';
+    /* 상자 바탕을 성격색으로 물들인다 (심해 대격돌의 성격별 해역).
+       ⚠ 색은 `.group-title[data-personality]` 과 **같은 파스텔**을 쓴다 — 새로 정하지 않는다.
+       ⚠ 안쪽 타일·음각 칸은 흰색 그대로 둔다. 바탕끼리 색이 갈리면 상자가 쪼개져 보인다. */
+    const pers = (deck.personality || '').trim();
+    if (pers) box.dataset.personality = pers;
+    const freeLabel = (deck.free_label || '').trim();
     const sub = (deck.deck_sub || '').trim();
-    const swaps = parseSwaps(deck.swaps);
+    const swaps = groupSwaps(swapRows, (deck.deck_key || '').trim());
 
     /* 읽는 순서 = **이 조합이 뭔지 → 구성 → 빈자리 후보.** 설명을 오른쪽 칸에 세웠던 적이
        있는데, 그건 타일이 남는 폭을 못 먹어 오른쪽이 비던 시절의 처방이었다. 타일이
@@ -274,9 +276,14 @@ function buildDeck(deck, dbMap, missing, flat) {
         }).filter(Boolean));
     });
     const freeCount = (resolved.get('?') || []).length;
+    const hasFree = String(deck.members || '').split(',').some(isFreeSlot);
 
     String(deck.members || '').split(',').forEach(n => {
-        if (isFreeSlot(n)) { tiles.appendChild(buildFreeTile(freeCount)); return; }
+        if (isFreeSlot(n)) {
+            tiles.appendChild(buildFreeTile(freeCount, freeLabel,
+                freeLabel ? `${freeLabel} 사도로 채우는 자리입니다` : null));
+            return;
+        }
         const ch = pick(n);
         if (ch) tiles.appendChild(buildDeckTile(ch));
     });
@@ -302,7 +309,10 @@ function buildDeck(deck, dbMap, missing, flat) {
     resolved.forEach((list, from) => {
         if (!list.length) return;
         if (from === '?') {
-            label = label || '빈자리 후보';
+            /* 같은 `?` 라도 뜻이 둘이다 — 편성에 빈자리가 있으면 "그 자리의 후보",
+               6칸을 다 채웠으면 "미보유/미육성이면 이걸로 바꿔라" 는 대체픽이다.
+               ⚠ 빈자리가 없는데 `빈자리 후보` 라고 쓰면 읽는 사람이 빈칸을 찾는다. */
+            label = label || (hasFree ? '빈자리 후보' : '대체 후보');
             list.forEach(({ ch, note }) => wrap.appendChild(row(ch, note)));
         } else {
             const chFrom = dbMap.get(from);
@@ -318,7 +328,7 @@ function buildDeck(deck, dbMap, missing, flat) {
     return box;
 }
 
-function buildSection(sec, dbMap, missing, flat) {
+function buildSection(sec, dbMap, missing, flat, swapRows) {
     const sEl = document.createElement('section');
     sEl.className = 'rc-sec';
 
@@ -352,7 +362,7 @@ function buildSection(sec, dbMap, missing, flat) {
     if (sec.decks && sec.decks.length) {
         const dWrap = document.createElement('div');
         dWrap.className = 'rc-decks';
-        sec.decks.forEach(d => dWrap.appendChild(buildDeck(d, dbMap, missing, flat)));
+        sec.decks.forEach(d => dWrap.appendChild(buildDeck(d, dbMap, missing, flat, swapRows)));
         body.appendChild(dWrap);
     }
 
@@ -683,7 +693,7 @@ function activateTab(key, secKey) {
    고쳐야 하고 하나만 빠뜨려도 조용히 갈라진다.
 
    ⚠ 탭·분류가 나오는 순서는 **`Recommend_Sections.csv` 의 행 순서** 그대로다. */
-function render(secDefs, recs, dbMap, chipDefs, deckDefs) {
+function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows) {
     const body = document.getElementById('rc-body');
     const missing = [];
 
@@ -850,7 +860,7 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs) {
         /* 끝에 닿았는지에 따라 어느 쪽을 흐리게 할지 정한다 (`fadeEdges`) */
         tabs.addEventListener('scroll', () => fadeEdges(tabs), { passive: true });
         secList.forEach((sec, i) => {
-            const el = buildSection(sec, dbMap, missing, flat);
+            const el = buildSection(sec, dbMap, missing, flat, swapRows);
             /* 비껴 있는 분류를 눌러도 그쪽으로 간다 — 흐릿한 것도 눌린다는 걸 알려준다.
                ⚠ 캡처 단계에서 가로채야 카드의 상세 모달이 먼저 열리지 않는다. */
             el.addEventListener('click', ev => {
@@ -978,9 +988,9 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
-        const [secT, rec, chipT, deckT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT] =
+        const [secT, rec, chipT, deckT, swapT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
-                'Recommend_Decks.csv',
+                'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
                 'high_skill_DB.csv', 'buff_DB.csv', 'buff_desc_DB.csv', 'normal_Atk_DB.csv',
                 'low_skill_DB.csv', 'aside_DB.csv', 'sp_DB.csv', 'battle_item_DB.csv'].map(get));
@@ -1001,7 +1011,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
         });
 
         const dbMap = new Map(db.filter(r => r.name).map(r => [r.name.trim(), r]));
-        render(P(secT), P(rec), dbMap, P(chipT), P(deckT));
+        render(P(secT), P(rec), dbMap, P(chipT), P(deckT), P(swapT));
     } catch (e) {
         document.getElementById('rc-body').innerHTML =
             `<div class="rc-warn">데이터를 불러오지 못했습니다: ${esc(e.message)}</div>`;

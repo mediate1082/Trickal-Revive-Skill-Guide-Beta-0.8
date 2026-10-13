@@ -2955,7 +2955,11 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    ⚠ 인게임 PvP UI 를 그대로 가져오지 않았다. 구조(가로 긴 상자 + 초상화 한 줄)만
      빌려 오고 꼴은 `.rc-card` 를 따른다. 전에 화살표를 인게임 그림으로 바꿨다가
      양식이 안 맞아 되돌린 전례가 있다. */
-.rc-decks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+/* 덱이 여러 개 쌓이는 자리다. 상자마다 바탕색이 다를 수 있어(성격별 해역)
+   간격이 좁으면 색띠가 맞붙어 어디까지가 한 덱인지 흐려진다.
+   ⚠ 아래 사도 배치와의 간격(margin-bottom)은 덱 사이보다 넓게 둔다 — 덱끼리는
+     형제고 사도 배치는 다른 단락이라, 같으면 덱 하나가 더 있는 것처럼 읽힌다 */
+.rc-decks { display: flex; flex-direction: column; gap: 22px; margin-bottom: 30px; }
 
 .rc-deck {
     background: var(--rc-card-bg);
@@ -2991,6 +2995,41 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    ⚠ 대신 안쪽 행의 배경은 뺀다 — 둘 다 배경이 있으면 상자 속 상자가 된다. */
 /* ⚠ 가로 패딩을 주면 안쪽 내용이 타일 줄보다 그만큼 들여써진다 (16px 어긋났었다).
      상자는 음수 여백으로 바깥으로 넓히고, 안쪽 글은 타일과 같은 선에서 시작하게 한다. */
+/* ── 성격별 해역 (심해 대격돌) ──────────────────────────
+   덱 상자 **바탕만** 성격색으로 물들인다.
+   ⚠ 색은 `.group-title[data-personality]` 과 같은 파스텔이다 — 새로 정하지 않는다.
+   ⚠ 안쪽은 건드리지 않는다. `--rc-card-bg` 는 흰색 그대로 둬서 타일·음각 칸이
+     떠 보이게 한다. 바탕끼리 색이 갈리면 상자가 둘로 쪼개져 보인다 (후보 칸에서 겪었다).
+   ⚠ 테두리도 같이 준다. 파스텔이 연해서 바탕만으로는 흰 페이지에서 경계가 흐리다. */
+.rc-deck[data-personality="순수"] { background: #E8F9EE; border-color: #93F4A7; }
+.rc-deck[data-personality="냉정"] { background: #E3EFF9; border-color: #A4D0F7; }
+.rc-deck[data-personality="광기"] { background: #FCE4EB; border-color: #F4ACBA; }
+.rc-deck[data-personality="우울"] { background: #F2E0FD; border-color: #D8A0FB; }
+.rc-deck[data-personality="활발"] { background: #FBF6E0; border-color: #F9ECA8; }
+/* 공명은 모든 성격으로 전환되는 특수 성격이라 한 색으로 못 고른다 — 무지개 띠다.
+   ⚠ 아주 옅게 깐다. 원색을 쓰면 안쪽 흰 타일이 묻힌다 */
+.rc-deck[data-personality="공명"] {
+    background: linear-gradient(100deg,
+        #FFF0F4 0%, #FFF7EE 18%, #FEFFEE 36%,
+        #EEFDF4 54%, #EEF6FF 72%, #F5EEFF 88%, #FFF0F8 100%);
+    border-color: rgba(214, 196, 224, .8);
+}
+/* 다크 — 라이트 파스텔을 그대로 쓰면 형광으로 뜬다. 카드색에 성격색을 섞는다
+   (`.group-title` 다크 보정과 같은 수법). */
+[data-theme="dark"] .rc-deck[data-personality] {
+    border-color: color-mix(in srgb, var(--rc-deck-tint, #888) 45%, transparent);
+    background: color-mix(in srgb, var(--rc-deck-tint, #888) 14%, var(--modal-card-bg));
+}
+[data-theme="dark"] .rc-deck[data-personality="순수"] { --rc-deck-tint: #66C17C; }
+[data-theme="dark"] .rc-deck[data-personality="냉정"] { --rc-deck-tint: #85BAEC; }
+[data-theme="dark"] .rc-deck[data-personality="광기"] { --rc-deck-tint: #EE839D; }
+[data-theme="dark"] .rc-deck[data-personality="우울"] { --rc-deck-tint: #C784ED; }
+[data-theme="dark"] .rc-deck[data-personality="활발"] { --rc-deck-tint: #ECDC85; }
+[data-theme="dark"] .rc-deck[data-personality="공명"] {
+    background: linear-gradient(100deg, #2A2028, #28262A, #262A26, #26282C, #2A2630);
+    border-color: #4A4152;
+}
+
 /* 후보 칸은 덱 상자와 **같은 흰 바탕**이다. 한 톤 내려 깔아도 봤지만, 어떻게 맞춰도
    바탕끼리 색이 갈려 상자가 둘로 쪼개진 것처럼 보였다 — 덱과 후보는 한 덩어리다.
    ⚠ 그래서 **배경을 두지 않는다.** 둘을 가르는 건 머리글의 구분선 하나뿐이다 */
@@ -3007,12 +3046,20 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     display: flex; align-items: center; gap: 10px; margin: 0 0 14px;
     font-size: .92rem; font-weight: 800; letter-spacing: .01em; color: var(--rc-name);
 }
+/* ⚠ 선 색을 `--border-soft` 로 고정하지 않는다. 그건 연한 올리브라 흰 상자에서는
+     보이지만 **성격별 해역의 파스텔 바탕 위에서는 묻힌다** (분홍 상자에서 안 보였다).
+     글자색에서 뽑으면 어느 바탕에서도 같은 농도로 서고 다크도 자동으로 따라온다. */
 .rc-deck-eyebrow::before,
-.rc-deck-eyebrow::after { content: ''; height: 1px; background: var(--border-soft); }
+.rc-deck-eyebrow::after { content: ''; height: 1px;
+    background: color-mix(in srgb, currentColor 22%, transparent); }
 .rc-deck-eyebrow::before { flex: 0 0 18px; }
 .rc-deck-eyebrow::after  { flex: 1 1 auto; }
 /* ⚠ 가운데 정렬이다. 타일에 상한(152px)이 있어 넓은 화면에서는 남는 폭이 생기는데,
      왼쪽에 붙여 두면 오른쪽이 통째로 빈다 — 여섯 칸이 한 덩어리로 보여야 한다 */
+/* 후보가 없으면 `.is-swaps` 가 통째로 `hidden` 이라 **타일 바로 아래가 상자 끝**이 된다.
+   그대로 두면 위(제목 22px)보다 아래가 좁아 이름표가 모서리에 닿아 보인다.
+   ⚠ 모든 덱의 `padding-bottom` 을 올리지 않는다 — 후보가 있는 덱은 그만큼 더 벌어진다 */
+.rc-deck:has(.is-swaps[hidden]) { padding-bottom: 22px; }
 .rc-deck-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-width: 0; }
 
 /* 후보 한 줄 = [타일][이름 + 언제 쓰는지]. 두 칸씩 접히게 둔다 —
@@ -3038,7 +3085,9 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 }
 /* ⚠ `--rc-meta`(성격·배치 라벨용)로 두면 음각 바탕 위에서 **안 읽힌다.** 읽으라고
      넣은 글이므로 본문급인 `--rc-reason`(#555) 이다 — 상세 모달의 설명 상자와 같은 급 */
-.rc-alt-note { font-size: .78rem; line-height: 1.45; color: var(--rc-reason);
+/* ⚠ 덱 설명(`.rc-deck-sub`)과 **같은 .85rem** 이다. 둘 다 읽으라고 넣은 본문인데
+     한쪽만 작으면 후보 메모가 주석처럼 보여 안 읽힌다 */
+.rc-alt-note { font-size: .85rem; line-height: 1.55; color: var(--rc-reason);
                font-weight: 600; word-break: keep-all; }
 
 /* 초상화 타일 — 큰 카드의 120px 을 88px 로 줄인 것. 마크업은 `.rc-tile` 그대로다.
