@@ -230,7 +230,24 @@ function groupSwaps(rows, deckKey) {
     return out;
 }
 
-function buildDeck(deck, dbMap, missing, flat, swapRows) {
+/* 편성도 `Recommend_Deck_Members.csv` 의 **행 하나가 사도 하나**다.
+   ⚠ 예전엔 `members` 한 셀의 쉼표 리스트였다. 거기에 좌표와 고학년 플래그를
+     **나란한 리스트로** 더하면 `buff_DB` 의 슬롯 정렬 함정이 그대로 재현된다 —
+     하나만 어긋나면 화면에서 조용히 사라지고 경고도 안 난다. */
+function groupMembers(rows, deckKey) {
+    return (rows || [])
+        .filter(r => (r.deck_key || '').trim() === deckKey)
+        .map(r => ({
+            name:  (r.chara_name || '').trim(),
+            col:   (r.col || '').trim(),
+            row:   (r.row || '').trim(),
+            seal:  (r.high_skill || '').trim(),   // 값이 있으면 고학년 봉인 + 그 사유
+            note:  (r.note || '').trim(),
+        }))
+        .filter(m => m.name);
+}
+
+function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
     const box = document.createElement('article');
     box.className = 'rc-deck';
     /* 상자 바탕을 성격색으로 물들인다 (심해 대격돌의 성격별 해역).
@@ -240,7 +257,9 @@ function buildDeck(deck, dbMap, missing, flat, swapRows) {
     if (pers) box.dataset.personality = pers;
     const freeLabel = (deck.free_label || '').trim();
     const sub = (deck.deck_sub || '').trim();
-    const swaps = groupSwaps(swapRows, (deck.deck_key || '').trim());
+    const deckKey = (deck.deck_key || '').trim();
+    const swaps = groupSwaps(swapRows, deckKey);
+    const members = groupMembers(memberRows, deckKey);
 
     /* 읽는 순서 = **이 조합이 뭔지 → 구성 → 빈자리 후보.** 설명을 오른쪽 칸에 세웠던 적이
        있는데, 그건 타일이 남는 폭을 못 먹어 오른쪽이 비던 시절의 처방이었다. 타일이
@@ -276,16 +295,24 @@ function buildDeck(deck, dbMap, missing, flat, swapRows) {
         }).filter(Boolean));
     });
     const freeCount = (resolved.get('?') || []).length;
-    const hasFree = String(deck.members || '').split(',').some(isFreeSlot);
+    const hasFree = members.some(m => isFreeSlot(m.name));
 
-    String(deck.members || '').split(',').forEach(n => {
-        if (isFreeSlot(n)) {
+    members.forEach(m => {
+        if (isFreeSlot(m.name)) {
             tiles.appendChild(buildFreeTile(freeCount, freeLabel,
                 freeLabel ? `${freeLabel} 사도로 채우는 자리입니다` : null));
             return;
         }
-        const ch = pick(n);
-        if (ch) tiles.appendChild(buildDeckTile(ch));
+        const ch = pick(m.name);
+        if (!ch) return;
+        const tile = buildDeckTile(ch);
+        /* 고학년 봉인 — 값이 있으면 그게 곧 사유다. 말풍선으로 돌린다.
+           ⚠ 고학년은 유저가 쓸지 고르는 버튼이라, 봉인 여부가 **덱 구성의 일부**다. */
+        if (m.seal) {
+            tile.classList.add('is-sealed');
+            tile.dataset.tooltip = `고학년 봉인 — ${m.seal}`;
+        }
+        tiles.appendChild(tile);
     });
 
     /* 후보 한 줄 = [타일][이름][언제 쓰는지].
@@ -328,7 +355,7 @@ function buildDeck(deck, dbMap, missing, flat, swapRows) {
     return box;
 }
 
-function buildSection(sec, dbMap, missing, flat, swapRows) {
+function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
     const sEl = document.createElement('section');
     sEl.className = 'rc-sec';
 
@@ -362,7 +389,7 @@ function buildSection(sec, dbMap, missing, flat, swapRows) {
     if (sec.decks && sec.decks.length) {
         const dWrap = document.createElement('div');
         dWrap.className = 'rc-decks';
-        sec.decks.forEach(d => dWrap.appendChild(buildDeck(d, dbMap, missing, flat, swapRows)));
+        sec.decks.forEach(d => dWrap.appendChild(buildDeck(d, dbMap, missing, flat, swapRows, memberRows)));
         body.appendChild(dWrap);
     }
 
@@ -693,7 +720,7 @@ function activateTab(key, secKey) {
    고쳐야 하고 하나만 빠뜨려도 조용히 갈라진다.
 
    ⚠ 탭·분류가 나오는 순서는 **`Recommend_Sections.csv` 의 행 순서** 그대로다. */
-function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows) {
+function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows) {
     const body = document.getElementById('rc-body');
     const missing = [];
 
@@ -860,7 +887,7 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows) {
         /* 끝에 닿았는지에 따라 어느 쪽을 흐리게 할지 정한다 (`fadeEdges`) */
         tabs.addEventListener('scroll', () => fadeEdges(tabs), { passive: true });
         secList.forEach((sec, i) => {
-            const el = buildSection(sec, dbMap, missing, flat, swapRows);
+            const el = buildSection(sec, dbMap, missing, flat, swapRows, memberRows);
             /* 비껴 있는 분류를 눌러도 그쪽으로 간다 — 흐릿한 것도 눌린다는 걸 알려준다.
                ⚠ 캡처 단계에서 가로채야 카드의 상세 모달이 먼저 열리지 않는다. */
             el.addEventListener('click', ev => {
@@ -988,9 +1015,9 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
-        const [secT, rec, chipT, deckT, swapT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT] =
+        const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
-                'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv',
+                'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv', 'Recommend_Deck_Members.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
                 'high_skill_DB.csv', 'buff_DB.csv', 'buff_desc_DB.csv', 'normal_Atk_DB.csv',
                 'low_skill_DB.csv', 'aside_DB.csv', 'sp_DB.csv', 'battle_item_DB.csv'].map(get));
@@ -1011,7 +1038,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
         });
 
         const dbMap = new Map(db.filter(r => r.name).map(r => [r.name.trim(), r]));
-        render(P(secT), P(rec), dbMap, P(chipT), P(deckT), P(swapT));
+        render(P(secT), P(rec), dbMap, P(chipT), P(deckT), P(swapT), P(memT));
     } catch (e) {
         document.getElementById('rc-body').innerHTML =
             `<div class="rc-warn">데이터를 불러오지 못했습니다: ${esc(e.message)}</div>`;
