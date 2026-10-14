@@ -173,7 +173,30 @@ function buildFreeTile(altCount, label, tip) {
     return el;
 }
 
-function buildDeckTile(char) {
+/* 이름표 아래 작은 뱃지 둘. 메인 그리드 카드에서 **강화 게이지가 있던 자리**다 —
+   덱에서는 강화 수준보다 "고학년을 쓰나 / 어사이드가 필요한가" 가 할 말이다.
+   ⚠ `aside` 가 비면 **아무것도 안 그린다.** 42행이 다 빈 지금 상태에서 `무관` 으로
+     간주하면 전부 "무관" 이라는 **틀린 정보**가 깔린다. 비었다 = 아직 안 적었다. */
+function badgeHTML(info) {
+    if (!info) return '';
+    const seal = (info.seal || '').trim();
+    const aside = (info.aside || '').trim();
+    if (!seal && !aside && info.seal === undefined) return '';
+    const bits = [];
+    /* 고학년은 쿨다운이 돌면 유저가 쓸지 고르는 버튼이다. 안 쓰는 게 나은 경우가 있어
+       봉인 여부가 덱 구성의 일부다 — 값이 있으면 그게 곧 사유라 말풍선으로 돌린다. */
+    bits.push(seal
+        ? `<span class="rc-badge is-no" data-tooltip="고학년 봉인 — ${esc(seal)}">고 N</span>`
+        : `<span class="rc-badge is-yes" data-tooltip="고학년 스킬을 사용합니다">고 Y</span>`);
+    if (aside) {
+        const cls = aside === '필수' ? 'is-req' : aside === '권장' ? 'is-rec' : 'is-none';
+        bits.push(`<span class="rc-badge rc-badge-a2 ${cls}"
+                         data-tooltip="어사이드 ★2 ${esc(aside)}">A2 ${esc(aside)}</span>`);
+    }
+    return `<span class="rc-dtile-badges">${bits.join('')}</span>`;
+}
+
+function buildDeckTile(char, info) {
     const p = PERSONALITY_COLORS[char.personality] || PERSONALITY_COLORS['공명'];
     const reso = char.personality === '공명';
     const eldyne = char.Eldyne && char.Eldyne.trim() !== '' && char.Eldyne !== 'X';
@@ -204,6 +227,7 @@ function buildDeckTile(char) {
             </div>
             <div class="card-bottom rc-dtile-plate">
                 <span class="char-name">${esc(char.name)}</span>
+                ${badgeHTML(info)}
             </div>
         </div>`;
     return el;
@@ -242,6 +266,7 @@ function groupMembers(rows, deckKey) {
             col:   (r.col || '').trim(),
             row:   (r.row || '').trim(),
             seal:  (r.high_skill || '').trim(),   // 값이 있으면 고학년 봉인 + 그 사유
+            aside: (r.aside || '').trim(),        // 필수 · 권장 · 무관 (비면 안 그림)
             note:  (r.note || '').trim(),
         }))
         .filter(m => m.name);
@@ -297,23 +322,56 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
     const freeCount = (resolved.get('?') || []).length;
     const hasFree = members.some(m => isFreeSlot(m.name));
 
-    members.forEach(m => {
+    /* 좌표(`col`·`row`)가 **하나라도** 있으면 인게임과 같은 3×3 쐐기 격자로 그린다.
+       전부 비어 있으면 지금까지처럼 한 줄이다 — 공명 덱처럼 "실제 편성이 아니라
+       안내" 인 상자는 좌표가 없는 게 맞다. */
+    const COLS = ['후열', '중열', '전열'];   // ⚠ 왼쪽부터. 적이 오른쪽에 있다
+    const ROWS = ['상', '중', '하'];
+    const placed = members.some(m => m.col && m.row);
+    if (placed) tiles.classList.add('is-grid');
+
+    const put = m => {
         if (isFreeSlot(m.name)) {
-            tiles.appendChild(buildFreeTile(freeCount, freeLabel,
-                freeLabel ? `${freeLabel} 사도로 채우는 자리입니다` : null));
-            return;
+            return buildFreeTile(freeCount, freeLabel,
+                freeLabel ? `${freeLabel} 사도로 채우는 자리입니다` : null);
         }
         const ch = pick(m.name);
-        if (!ch) return;
-        const tile = buildDeckTile(ch);
-        /* 고학년 봉인 — 값이 있으면 그게 곧 사유다. 말풍선으로 돌린다.
-           ⚠ 고학년은 유저가 쓸지 고르는 버튼이라, 봉인 여부가 **덱 구성의 일부**다. */
-        if (m.seal) {
-            tile.classList.add('is-sealed');
-            tile.dataset.tooltip = `고학년 봉인 — ${m.seal}`;
-        }
-        tiles.appendChild(tile);
-    });
+        if (!ch) return null;
+        const tile = buildDeckTile(ch, m);
+        if (m.seal) tile.classList.add('is-sealed');
+        if (m.note) tile.dataset.tooltip = `${ch.name} — ${m.note}`;
+        return tile;
+    };
+
+    if (placed) {
+        /* ⚠ 빈 칸은 **아예 안 그린다.** 3×3 좌표계의 핵심은 "후보를 어디 둘까" 가
+             아니라 "무슨 사도를 어디 둘까" 라, 빈 발판은 읽을 게 없다. */
+        const at = new Map(members.filter(m => m.col && m.row)
+            .map(m => [`${m.col}/${m.row}`, m]));
+        ROWS.forEach((r, ri) => COLS.forEach((c, ci) => {
+            const m = at.get(`${c}/${r}`);
+            const cell = document.createElement('div');
+            cell.className = 'rc-cell';
+            cell.style.gridArea = `${ri + 1} / ${ci + 1}`;
+            if (m) {
+                const t = put(m);
+                if (t) cell.appendChild(t);
+            } else {
+                cell.classList.add('is-empty');
+            }
+            tiles.appendChild(cell);
+        }));
+        /* 좌표가 없는 멤버는 격자에 못 놓는다 — 아래에 따로 붙여 잃어버리지 않게 한다 */
+        members.filter(m => !(m.col && m.row)).forEach(m => {
+            const t = put(m);
+            if (t) { t.classList.add('is-unplaced'); tiles.appendChild(t); }
+        });
+    } else {
+        members.forEach(m => {
+            const t = put(m);
+            if (t) tiles.appendChild(t);
+        });
+    }
 
     /* 후보 한 줄 = [타일][이름][언제 쓰는지].
        ⚠ 얼굴만 늘어놓으면 "뭘 보고 고르라는 건지" 가 빠진다 — 고르는 기준이 핵심이다. */

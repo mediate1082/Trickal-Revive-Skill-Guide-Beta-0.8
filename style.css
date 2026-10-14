@@ -3030,6 +3030,82 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     border-color: #4A4152;
 }
 
+/* ── 3×3 쐐기 격자 ──────────────────────────────────────
+   인게임 편성판과 **같은 꼴**이다. 좌표를 적은 덱만 이렇게 그리고,
+   좌표가 없으면 위의 한 줄 배치가 그대로 쓰인다.
+
+   ⚠ **열 순서는 왼쪽부터 후열 · 중열 · 전열**이다. 오른쪽으로 전진하는 게임이라
+     적이 오른쪽에 있다. 읽기 순서와 반대지만 게임과 어긋나면 더 헷갈린다.
+
+   ⚠ **쐐기의 정체는 "가운데 행만 오른쪽으로 밀린 것"** 이다. 실측하니 상·하 행은
+     x 가 같고 중간 행만 103px 밀려 있었는데, 열 간격이 263px 이니 **0.39열**이다.
+     (CLAUDE.md 의 실측표 참조 — 다시 재지 말 것) */
+.rc-deck-tiles.is-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 8px;
+    /* 가운데 행이 0.39열 삐져나가므로 그만큼 오른쪽 여백을 비워 둔다.
+       안 그러면 전열·중 칸이 상자 밖으로 나간다 */
+    padding-right: 13%;
+    justify-content: start;
+    /* ⚠ 폭을 안 묶으면 타일이 200px 를 넘는다. 한 줄 배치 상한(152px)보다 커지면
+         같은 페이지에서 덱마다 타일 크기가 달라 보인다 — 세 칸이 140px 안팎에 서게 묶는다 */
+    max-width: 560px;
+    margin-inline: auto;
+}
+.rc-deck-tiles.is-grid .rc-cell { min-width: 0; }
+/* 가운데 행만 민다 — 이 한 줄이 쐐기 전부다 */
+.rc-deck-tiles.is-grid .rc-cell[style*="2 /"] { transform: translateX(39%); }
+.rc-deck-tiles.is-grid .rc-dtile {
+    flex: none; width: 100%; min-width: 0; max-width: none;
+}
+/* 빈 칸은 자리만 차지하고 아무것도 안 그린다 (⚠ 점선 발판도 두지 않는다 —
+   "어디가 비었나" 가 아니라 "누가 어디 있나" 를 보는 자리다) */
+.rc-deck-tiles.is-grid .rc-cell.is-empty { visibility: hidden; }
+/* 좌표를 안 적은 멤버는 격자 아래에 붙는다. 잃어버리지 않게 한 것이라 티가 나야 한다 */
+.rc-deck-tiles.is-grid .rc-dtile.is-unplaced {
+    grid-column: 1 / -1; width: 140px; opacity: .85;
+    outline: 2px dashed var(--border-soft); outline-offset: 3px;
+}
+
+/* ── 이름표 아래 뱃지 ───────────────────────────────────
+   메인 그리드 카드에서 **강화 게이지가 있던 자리**다. 덱에서는 강화 수준보다
+   "고학년을 쓰나 / 어사이드가 필요한가" 가 할 말이라 그걸로 바꿔 끼웠다. */
+/* 스킬 가이드 카드의 **저/고 게이지 두 칸과 같은 짜임** — 이름 아래 한 줄에
+   둘이 폭을 반씩 나눠 가진다. ⚠ wrap 을 쓰지 않는다. 좁은 타일에서 하나가
+   아래로 떨어지면 두 칸의 대칭이 깨져 읽는 리듬이 어긋난다 */
+.rc-dtile-badges {
+    display: flex; gap: 4px; margin-top: 3px; width: 100%;
+}
+.rc-dtile-badges .rc-badge { flex: 1 1 0; min-width: 0; text-align: center; }
+/* ⚠ 한 칸만 있으면 늘리지 않는다. `aside` 가 빈 사도는 `고 Y` 하나뿐인데
+     그게 폭을 다 먹으면 초록 띠가 돼 초상화보다 눈에 띈다 */
+.rc-dtile-badges:has(.rc-badge:only-child) { justify-content: center; }
+.rc-dtile-badges .rc-badge:only-child { flex: 0 0 auto; padding: 0 8px; }
+.rc-badge {
+    font-size: clamp(.56rem, 7cqw, .68rem); font-weight: 800;
+    line-height: 1.5; padding: 0 3px; border-radius: 4px;
+    border: 1px solid transparent; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+}
+/* 고학년 — 초록 Y / 빨강 N */
+.rc-badge.is-yes { color: #15803D; background: #DCFCE7; }
+.rc-badge.is-no  { color: #B91C1C; background: #FEE2E2; }
+/* 어사이드 — 채움(필수) · 테두리만(권장) · 흐리게(무관).
+   ⚠ 셋 다 표시한다. 없으면 "무관" 으로 읽히기보다 "왜 없지?" 로 읽힌다 */
+.rc-badge-a2.is-req  { color: #FFFFFF; background: var(--aside-accent-strong); }
+.rc-badge-a2.is-rec  { color: var(--aside-accent-strong); background: transparent;
+                       border-color: var(--aside-accent-border); }
+.rc-badge-a2.is-none { color: var(--rc-meta); background: transparent; }
+
+[data-theme="dark"] .rc-badge.is-yes { color: #4ADE80; background: rgba(74,222,128,.14); }
+[data-theme="dark"] .rc-badge.is-no  { color: #F87171; background: rgba(248,113,113,.16); }
+[data-theme="dark"] .rc-badge-a2.is-rec  { color: #C49EFF; border-color: #3F2A55; }
+[data-theme="dark"] .rc-badge-a2.is-none { color: var(--rc-sub); }
+
+/* 고학년 봉인은 초상화도 살짝 가라앉힌다 — 뱃지만으로는 훑어볼 때 안 걸린다 */
+.rc-dtile.is-sealed .card-top { filter: saturate(.75) brightness(.96); }
+
 /* 후보 칸은 덱 상자와 **같은 흰 바탕**이다. 한 톤 내려 깔아도 봤지만, 어떻게 맞춰도
    바탕끼리 색이 갈려 상자가 둘로 쪼개진 것처럼 보였다 — 덱과 후보는 한 덩어리다.
    ⚠ 그래서 **배경을 두지 않는다.** 둘을 가르는 건 머리글의 구분선 하나뿐이다 */
@@ -3129,6 +3205,9 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     padding: 6cqw 4cqw; border-radius: 0 0 10.8cqw 10.8cqw;
     display: flex; align-items: center; justify-content: center;
 }
+/* 뱃지가 있으면 **이름 아래 줄**로 내린다. 가로로 붙이면 이름과 뱃지가 한 줄에 서서
+   좁은 타일에서 이름이 밀린다 — 이름이 먼저 읽혀야 한다 */
+.rc-dtile-plate:has(.rc-dtile-badges) { flex-direction: column; gap: 1px; }
 .rc-dtile-plate .char-name {
     margin: 0; font-size: clamp(.68rem, 9.5cqw, .9rem); line-height: 1.25;
     text-align: center; width: 100%;
