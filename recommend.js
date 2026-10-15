@@ -416,11 +416,17 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
 function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
     const sEl = document.createElement('section');
     sEl.className = 'rc-sec';
+    /* 폰에서는 **접힌 채로 시작한다.** 1열이라 분류가 세로로 줄줄이 이어지는데
+       전부 펼쳐져 있으면 무슨 분류들이 있는지가 한 화면에 안 들어온다 —
+       머리(제목 + `sec_tip`)만 남겨 목차처럼 읽히게 한다.
+       ⚠ **처음 그릴 때만** 본다. 창을 줄였다고 사용자가 펼쳐 둔 걸 도로 접지 않는다. */
+    if (RC_NARROW.matches) sEl.classList.add('is-folded');
 
     /* ⚠ 소분류 설명을 툴팁에 숨기지 않는다. 이 페이지에서 가장 자주 읽힐 문장이다. */
     sEl.innerHTML = `
         <header class="rc-sec-head">
-            <h3 class="rc-sec-title" role="button" tabindex="0" aria-expanded="true">${sec.icon
+            <h3 class="rc-sec-title" role="button" tabindex="0"
+                aria-expanded="${sEl.classList.contains('is-folded') ? 'false' : 'true'}">${sec.icon
                 ? `<img class="rc-sec-icon" src="${iconUrl(sec.icon, 'content')}"
                        alt="" onerror="this.remove()">` : ''}${esc(sec.label)}
                 <svg class="rc-fold" viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -765,8 +771,16 @@ function activateTab(key, secKey) {
         /* 1열에서는 옮길 슬라이드가 없다 — `#탭/분류` 로 들어오면 그 분류로 내려 준다.
            ⚠ 탭 버튼을 눌렀을 때는 `secKey` 가 없어 `i` 가 -1 이므로 여기 안 걸린다. */
         if (i >= 0 && effView() === 'list') {
-            const el = active.querySelectorAll('.rc-track > .rc-sec')[i];
-            if (el) setTimeout(() => el.scrollIntoView({ block: 'start' }), 60);
+            /* ⚠ 트랙 칸 번호 ≠ 분류 번호다. 슬라이드용 복제본이 트랙 양끝에 있어
+                   그냥 세면 한 칸씩 밀린다 (1열에서는 숨어 있을 뿐 DOM 에는 있다). */
+                const el = active.querySelectorAll('.rc-track > .rc-sec:not([data-clone])')[i];
+            if (el) {
+                /* ⚠ 폰은 접힌 채로 시작하므로, 분류를 콕 집어 들어온 사람에게는
+                   그 분류만 펼쳐 준다 — 안 그러면 링크를 타고 와서 머리글만 본다. */
+                el.classList.remove('is-folded');
+                el.querySelector('.rc-sec-title')?.setAttribute('aria-expanded', 'true');
+                setTimeout(() => el.scrollIntoView({ block: 'start' }), 60);
+            }
         }
         writeHash(active);
     }

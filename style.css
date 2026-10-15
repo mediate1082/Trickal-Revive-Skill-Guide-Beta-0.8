@@ -3037,25 +3037,21 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    ⚠ **열 순서는 왼쪽부터 후열 · 중열 · 전열**이다. 오른쪽으로 전진하는 게임이라
      적이 오른쪽에 있다. 읽기 순서와 반대지만 게임과 어긋나면 더 헷갈린다.
 
-   ⚠ **쐐기의 정체는 "가운데 행만 오른쪽으로 밀린 것"** 이다. 실측하니 상·하 행은
-     x 가 같고 중간 행만 103px 밀려 있었는데, 열 간격이 263px 이니 **0.39열**이다.
-     (CLAUDE.md 의 실측표 참조 — 다시 재지 말 것) */
+   ⚠⚠ **인게임의 쐐기(가운데 행만 오른쪽으로 밀린 꼴)를 따라하지 않는다.** 그건 바닥에
+     선 **스파인 모델**을 원근감 있게 늘어놓은 것이고, 여기는 정면을 보는 **평면 카드**다.
+     카드로 쐐기를 만들면 원근이 아니라 "왜 한 줄만 밀렸지" 로만 읽힌다.
+     (실측값은 CLAUDE.md 에 남겨 뒀다 — 참고용이지 레이아웃 근거가 아니다) */
 .rc-deck-tiles.is-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px 8px;
-    /* 가운데 행이 0.39열 삐져나가므로 그만큼 오른쪽 여백을 비워 둔다.
-       안 그러면 전열·중 칸이 상자 밖으로 나간다 */
-    padding-right: 13%;
-    justify-content: start;
+    justify-content: center;
     /* ⚠ 폭을 안 묶으면 타일이 200px 를 넘는다. 한 줄 배치 상한(152px)보다 커지면
          같은 페이지에서 덱마다 타일 크기가 달라 보인다 — 세 칸이 140px 안팎에 서게 묶는다 */
     max-width: 560px;
     margin-inline: auto;
 }
 .rc-deck-tiles.is-grid .rc-cell { min-width: 0; }
-/* 가운데 행만 민다 — 이 한 줄이 쐐기 전부다 */
-.rc-deck-tiles.is-grid .rc-cell[style*="2 /"] { transform: translateX(39%); }
 .rc-deck-tiles.is-grid .rc-dtile {
     flex: none; width: 100%; min-width: 0; max-width: none;
 }
