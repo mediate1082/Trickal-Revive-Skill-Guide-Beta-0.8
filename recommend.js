@@ -105,7 +105,7 @@ function buildCard(char, rec, secKey) {
         <div class="rc-card-row">
         <div class="rc-tile char-card${eldyne ? ' eldyne-card' : ''}">
             <div class="${reso ? 'card-top bg-resonance' : 'card-top'}"
-                 style="background:${reso ? 'none' : p.bg};border:3px solid ${p.border};">
+                 style="background:${reso ? 'none' : p.bg};border:3px solid ${p.border};border-bottom:none;">
                 <img class="char-img" src="./assets/icons/chara_image/초상화_${encodeURIComponent(char.name)}.webp"
                      loading="lazy" decoding="async" alt=""
                      style="width:100%;height:100%;object-fit:cover;"
@@ -177,26 +177,41 @@ function buildFreeTile(altCount, label, tip) {
    덱에서는 강화 수준보다 "고학년을 쓰나 / 어사이드가 필요한가" 가 할 말이다.
    ⚠ `aside` 가 비면 **아무것도 안 그린다.** 42행이 다 빈 지금 상태에서 `무관` 으로
      간주하면 전부 "무관" 이라는 **틀린 정보**가 깔린다. 비었다 = 아직 안 적었다. */
+/* 이름표 아래 뱃지. **지금은 어사이드뿐이다** — 고학년은 글자 뱃지였다가
+   초상화 위 `gradeMarkHTML()` 로 옮겼다 (인게임 아이콘이 있으니 글자보다 낫다).
+   ⚠ `aside` 가 비면 아무것도 안 그린다. 비었다 = *아직 안 적었다* 다 —
+     `무관` 으로 간주하면 안 채운 행 전부에 틀린 정보가 깔린다. */
 function badgeHTML(info) {
     if (!info) return '';
-    const seal = (info.seal || '').trim();
     const aside = (info.aside || '').trim();
-    if (!seal && !aside && info.seal === undefined) return '';
-    const bits = [];
-    /* 고학년은 쿨다운이 돌면 유저가 쓸지 고르는 버튼이다. 안 쓰는 게 나은 경우가 있어
-       봉인 여부가 덱 구성의 일부다 — 값이 있으면 그게 곧 사유라 말풍선으로 돌린다. */
-    bits.push(seal
-        ? `<span class="rc-badge is-no" data-tooltip="고학년 봉인 — ${esc(seal)}">고 N</span>`
-        : `<span class="rc-badge is-yes" data-tooltip="고학년 스킬을 사용합니다">고 Y</span>`);
-    if (aside) {
-        const cls = aside === '필수' ? 'is-req' : aside === '권장' ? 'is-rec' : 'is-none';
-        bits.push(`<span class="rc-badge rc-badge-a2 ${cls}"
-                         data-tooltip="어사이드 ★2 ${esc(aside)}">A2 ${esc(aside)}</span>`);
-    }
-    return `<span class="rc-dtile-badges">${bits.join('')}</span>`;
+    if (!aside) return '';
+    const cls = aside === '필수' ? 'is-req' : aside === '권장' ? 'is-rec' : 'is-none';
+    return `<span class="rc-dtile-badges">
+        <span class="rc-badge rc-badge-a2 ${cls}"
+              data-tooltip="어사이드 ★2 ${esc(aside)}">A2 ${esc(aside)}</span></span>`;
 }
 
-function buildDeckTile(char, info) {
+/* 초상화 **머리 위**에 얹는 고학년 표지. 인게임 자리 그대로다.
+   사용 = 학사모만, 봉인 = 학사모 + 금지 표지 → **두 상태가 같은 꼴**이라 짝으로 읽힌다.
+
+   ⚠ 두 에셋 모두 **색이 구워진 완성 아이콘**이다 (흰 마스크가 아니다).
+     `mask` 로 물들이려 하지 말 것 — 원본 색이 곧 인게임의 그 색이다.
+   ⚠ 금지 표지를 **가운데 같은 크기로 겹치지 말 것.** 학사모가 통째로 가려져
+     "무엇을 금지하는지" 가 사라진다. 72% 로 오른쪽 아래에 물린다.
+   ⚠ `info` 가 없으면(후보 줄의 타일) 빈 문자열을 돌려준다 — 거긴 편성이 아니라
+     고학년을 쓰네 마네 할 맥락이 없다. 그때는 **왼쪽 위에 성격 아이콘**이 돌아온다
+     (학사모가 그 자리를 비켜 주던 것이므로 빈 채로 둘 이유가 없다). */
+function gradeMarkHTML(info) {
+    if (!info || info.seal === undefined) return '';
+    const seal = (info.seal || '').trim();
+    const tip = seal ? `고학년 봉인 — ${esc(seal)}` : '고학년 스킬을 사용합니다';
+    return `<span class="rc-dtile-grade${seal ? ' is-off' : ''}" data-tooltip="${tip}">
+        <img src="./assets/icons/common_icons/Graduate_Skill_Icon.webp" class="g-cap" alt="고학년">
+        ${seal ? '<img src="./assets/icons/common_icons/Deck_AutoForbiddenIcon.webp" class="g-no" alt="봉인">' : ''}
+    </span>`;
+}
+
+function buildDeckTile(char, info, noGrade) {
     const p = PERSONALITY_COLORS[char.personality] || PERSONALITY_COLORS['공명'];
     const reso = char.personality === '공명';
     const eldyne = char.Eldyne && char.Eldyne.trim() !== '' && char.Eldyne !== 'X';
@@ -212,18 +227,21 @@ function buildDeckTile(char, info) {
     el.innerHTML = `
         <div class="rc-tile char-card${eldyne ? ' eldyne-card' : ''}">
             <div class="${reso ? 'card-top bg-resonance' : 'card-top'}"
-                 style="background:${reso ? 'none' : p.bg};border:3px solid ${p.border};">
+                 style="background:${reso ? 'none' : p.bg};border:3px solid ${p.border};border-bottom:none;">
                 <img class="char-img" src="./assets/icons/chara_image/초상화_${encodeURIComponent(char.name)}.webp"
                      loading="lazy" decoding="async" alt=""
                      style="width:100%;height:100%;object-fit:cover;"
                      onerror="this.onerror=null;this.src='./assets/icons/chara_image/default.webp'">
-                <img src="./assets/icons/personality/${encodeURIComponent(char.personality || '')}.webp"
-                     class="rc-dtile-pers" onerror="this.remove()">
-                <img src="./assets/icons/line/${encodeURIComponent(char.line || '')}.webp"
-                     class="rc-dtile-line" onerror="this.remove()">
+                ${(noGrade ? '' : gradeMarkHTML(info)) || `<img src="./assets/icons/personality/${encodeURIComponent(char.personality || '')}.webp"
+                     class="rc-dtile-pers" onerror="this.remove()">`}
+                <div class="rc-dtile-row">
+                    <img src="./assets/icons/role/${encodeURIComponent(char.role || '')}.webp"
+                         onerror="this.remove()">
+                    <img src="./assets/icons/line/${encodeURIComponent(char.line || '')}.webp"
+                         onerror="this.remove()">
+                </div>
                 ${eldyne ? `<img src="./assets/icons/common_icons/Ingame_Icon_HeroGrow_Hidden.webp"
                      class="eldyne-corner-icon" alt="엘다인" data-tooltip="이 별은 이 사도가 엘다인임을 의미합니다. 엘다인은 일반 사도들에 비해 강력한 성능을 가지고 있으며, 픽업과 모집권에서 등장 확률이 낮습니다.">` : ''}
-                <div class="rc-dtile-stars">${makeStarHTML(char.star)}</div>
             </div>
             <div class="card-bottom rc-dtile-plate">
                 <span class="char-name">${esc(char.name)}</span>
@@ -231,6 +249,201 @@ function buildDeckTile(char, info) {
             </div>
         </div>`;
     return el;
+}
+
+/* `artifact_DB.csv` 를 이름으로 찾는 표. `art_*` 쪽도 한글 이름이 키라 같은 입구를 쓴다. */
+const ARTIFACTS = new Map();
+/* 아무 아티팩트나 괜찮다는 표시. 덱 빈자리의 `자유` 와 **같은 말**을 쓴다 —
+   사용자가 한 번만 배우면 되도록. */
+const FREE_ART = '자유';
+const GRADE_FRAME = {
+    '':     './assets/icons/common_icons/Ingame_ArtifactBase_Empty.webp',
+    '일반': './assets/icons/common_icons/Ingame_ArtifactBase_Rarity_1.webp',
+    '고급': './assets/icons/common_icons/Ingame_ArtifactBase_Rarity_2.webp',
+    '희귀': './assets/icons/common_icons/Ingame_ArtifactBase_Rarity_3.webp',
+    '전설': './assets/icons/common_icons/Ingame_ArtifactBase_Rarity_4.webp',
+};
+
+/* ── 아티팩트 슬롯 카드 ────────────────────────────────────
+   **덱 타일(`buildDeckTile`)을 그대로 재사용**하고 아래에 슬롯만 붙인다.
+   초상화·이름표·고학년 표지를 새로 짜지 않는다 — 같은 사도가 배치 격자와
+   아티팩트 줄에 동시에 나오므로, 두 곳이 다르게 생기면 같은 사도로 안 읽힌다.
+
+   ⚠ **아직 어디서도 호출하지 않는다.** 아티팩트 데이터가 통째로 비어 있다 —
+     `Recommend.csv` 의 `art_*` 는 47행 전부 공백이고 `assets/icons/artifacts/`
+     폴더 자체가 없다. 슬롯은 **빈 칸으로만** 그려진다 (잠든 기능 절 참조).
+
+   `slots` 는 몇 칸을 그릴지다. 인게임은 사도마다 2~3개라 나중에 데이터에서 온다. */
+/* ── 편성판 (쐐기 보드) ────────────────────────────────
+   인게임 편성 화면을 그대로 옮긴다. 좌표는 CLAUDE.md 의 **실측표**를 비율로 환산한 값이고,
+   이 상수들을 손으로 고치지 말 것 — 실측표에서 다시 환산한다.
+
+   ⚠ 예전에 **평면 카드**로 쐐기를 만들었다가 되돌린 적이 있다. 그때는 "왜 한 줄만 밀렸지"
+     로만 읽혔는데, 지금은 카드가 아니라 **핀**이라 바닥에 꽂힌 것으로 읽힌다.
+     카드로 돌아갈 거면 쐐기도 같이 버려야 한다. */
+const BOARD = {
+    x: { 후열: [23.85, 33.65, 23.56], 중열: [49.04, 58.85, 48.75], 전열: [74.52, 84.42, 74.33] },
+    y: [23.33, 49.44, 76.39],          // 상 · 중 · 하
+    tile: [15.87, 17.22],              // 발판 폭·높이 (%)
+    /* 열 띠의 경계선 — 위에서부터 (바깥, 상, 중, 하, 바깥) */
+    edge: [[2.44, 11.18, 20.96, 10.87, 2.02],
+           [27.68, 36.44, 46.25, 36.15, 27.31],
+           [52.97, 61.78, 71.63, 61.54, 52.69],
+           [78.32, 87.19, 97.12, 87.02, 78.17]],
+};
+const BY = [0, BOARD.y[0], BOARD.y[1], BOARD.y[2], 100];
+const COL_ORDER = ['후열', '중열', '전열'];   // ⚠ 왼쪽부터. 적이 오른쪽에 있다
+
+function bandClip(i) {
+    const L = BOARD.edge[i], R = BOARD.edge[i + 1];
+    const pts = L.map((x, k) => `${x}% ${BY[k]}%`)
+        .concat(R.map((x, k) => `${x}% ${BY[k]}%`).reverse());
+    return `polygon(${pts.join(',')})`;
+}
+
+/* 핀 하나. 얼굴은 **고학년 아이콘**(불투명 정사각이라 원에 꽉 찬다),
+   테두리는 역할색, 고정이면 압정이 얹힌다. */
+function buildPin(char, info) {
+    const role = (char.role || '').trim();
+    const fixed = (info.fixed || '').trim();
+    const pin = document.createElement('div');
+    pin.className = 'rc-pin' + (fixed ? ' is-fixed' : '');
+    pin.dataset.role = role;
+    pin.tabIndex = 0;
+    pin.setAttribute('role', 'button');
+    pin.setAttribute('aria-label', `${char.name} 상세 정보`);
+    /* ⚠ 이명(`title`)은 **넣지 않는다.** 핀은 얼굴만 보이는 자리라 말풍선이
+       이름을 확인하는 용도인데, 이명까지 붙으면 정작 이름이 눈에 안 들어온다. */
+    pin.dataset.tooltip = char.name + (fixed ? `\n고정 — ${fixed}` : '');
+    const open = () => window.openDetailModal(char);
+    pin.onclick = open;
+    pin.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
+    pin.innerHTML = `
+        <span class="p-head">
+            <img class="p-face" src="./assets/images/${encodeURIComponent(char.name)}.webp"
+                 alt="" onerror="this.remove()">
+        </span>
+        <img class="p-role" src="${iconUrl(role, 'role')}" alt="" onerror="this.remove()">
+        ${fixed ? '<img class="p-fix" src="./assets/icons/common_icons/PIN_Fixed.png" alt="고정">' : ''}`;
+    return pin;
+}
+
+function buildBoard(members, pick, freeCount, freeLabel, noGrade, bg) {
+    /* 보드는 **제 상자 안에** 가둔다. 핀이 발판 위로 한참 솟기 때문에(머리 + 고학년 표지)
+       상자 없이 두면 위쪽 덱 제목·설명을 침범하고 분류 테두리까지 닿는다. */
+    /* 좁은 화면에서는 상자를 **가로로 밀어** 본다. 보드가 2.9:1 이라 폭을 따라 줄면
+       세로까지 같이 줄어드는데, 375px 폰에서 핀이 32px·역할 뱃지가 12px 까지 내려가
+       누가 어디 있는지를 못 읽었다. 최소 폭을 지키고 미는 쪽이 낫다 (CSS 가 맡는다). */
+    const scroll = document.createElement('div');
+    scroll.className = 'rc-board-scroll';
+    const wrap = document.createElement('div');
+    wrap.className = 'rc-board-wrap';
+    scroll.appendChild(wrap);
+    /* 밀 수 있다는 신호. 좁은 화면에서만 CSS 가 보여준다 — 넓은 화면에서는 안 밀리므로
+       띄우면 거짓말이 된다. 스크롤러 안에 `sticky` 로 두어 밀어도 왼쪽에 남는다 */
+    scroll.insertAdjacentHTML('beforeend',
+        '<span class="rc-board-hint" aria-hidden="true">좌우로 밀어서 전체 보기</span>');
+    /* 배경은 **덱마다 고른다** (`board_bg`). 비우면 기본 편성창(`Deck_Bg`).
+       ⚠ 배경마다 초점이 다르다 — 자리 잡기는 CSS 의 `[data-bg]` 규칙이 맡는다. */
+    if (bg) { wrap.dataset.bg = bg; wrap.style.backgroundImage = `url('./assets/bg/${encodeURIComponent(bg)}.webp')`; }
+    const board = document.createElement('div');
+    board.className = 'rc-board';
+    wrap.appendChild(board);
+    COL_ORDER.forEach((_, i) => {
+        const b = document.createElement('div');
+        b.className = 'rc-band';
+        b.style.clipPath = bandClip(i);
+        board.appendChild(b);
+    });
+
+    const at = new Map(members.filter(m => m.col && m.row).map(m => [`${m.col}/${m.row}`, m]));
+    COL_ORDER.forEach(c => BOARD.y.forEach((_, ri) => {
+        const r = ['상', '중', '하'][ri];
+        const m = at.get(`${c}/${r}`);
+        const x = BOARD.x[c][ri], y = BOARD.y[ri];
+
+        const pad = document.createElement('div');
+        pad.className = 'rc-pad'
+            + (m ? ((m.fixed || '').trim() ? ' is-fixed' : ' is-on') : '');
+        pad.style.cssText = `left:${x}%;top:${y}%;width:${BOARD.tile[0]}%;height:${BOARD.tile[1]}%`;
+        board.appendChild(pad);
+
+        if (!m) return;
+        const ch = isFreeSlot(m.name) ? null : pick(m.name);
+        const el = ch ? buildPin(ch, m) : buildFreePin(freeCount, freeLabel);
+        el.style.cssText = `left:${x}%;top:${y}%`;
+        if (ch && !noGrade) el.classList.add('has-grade');
+        if (ch && !noGrade) el.insertAdjacentHTML('afterbegin', gradeMarkHTML(m));
+        board.appendChild(el);
+    }));
+    return scroll;
+}
+
+/* 빈자리 핀 — 누가 설지 정해지지 않은 칸 */
+function buildFreePin(count, label) {
+    const pin = document.createElement('div');
+    pin.className = 'rc-pin is-free';
+    pin.dataset.tooltip = (label ? `${label} 사도로 채우는 자리입니다` : '상황에 맞춰 고르는 자리입니다')
+        + (count ? `\n후보 ${count}명` : '');
+    pin.innerHTML = `<span class="p-head">
+            <img class="p-face" src="./assets/icons/common_icons/PVP_HidingIcon.webp" alt="빈자리">
+        </span>`;
+    return pin;
+}
+
+function buildEquipCard(char, info, slots = 3) {
+    const card = document.createElement('div');
+    card.className = 'rc-equip';
+
+    /* 위쪽은 덱 타일 그대로. 고학년 표지(학사모 + 금지)도 여기서 같이 온다 */
+    const tile = buildDeckTile(char, info);
+    tile.classList.add('rc-equip-head');
+    card.appendChild(tile);
+
+    /* 슬롯은 `^` 꼴 — 위 한 칸, 아래 두 칸.
+       ⚠ 한 줄로 늘어놓지 않는 이유: 카드 폭이 타일에 묶여 있어 세 칸을 가로로 넣으면
+         칸이 타일 폭의 1/3 로 쪼그라든다. `^` 는 같은 폭에서 칸을 크게 쓴다.
+       ⚠⚠ 슬롯은 **이름표(`.card-bottom`) 안**에 넣는다. 흰 띠가 아래로 늘어나
+         이름과 슬롯이 한 장으로 묶인다 — 밖에 두면 카드가 두 조각으로 보인다. */
+    const list = (info && info.artifacts) || [];
+    const n = Math.max(1, Math.min(3, Math.max(slots, list.length)));
+    const box = document.createElement('div');
+    box.className = 'rc-equip-slots' + (n === 3 ? ' is-caret' : '');
+    for (let i = 0; i < n; i++) {
+        const nm = list[i];
+        const art = nm && nm !== FREE_ART ? ARTIFACTS.get(nm) : null;
+        const sl = document.createElement('span');
+        sl.className = 'rc-equip-slot' + (art ? '' : ' is-empty');
+        if (art) {
+            /* 등급 프레임 위에 아이콘을 얹는다 — 인게임과 같은 짜임.
+               ⚠ 애착 정보는 **넣지 않는다.** 실제로 거의 안 쓰는 값이라 말풍선만 길어진다. */
+            sl.innerHTML =
+                `<img class="s-base" src="${GRADE_FRAME[art.grade] || GRADE_FRAME['']}" alt="">
+                 <img class="s-icon" src="./assets/icons/artifacts/ArtifactIcon_${esc(art.icon_no)}.webp"
+                      alt="" onerror="this.remove()">`;
+            sl.dataset.tooltip = `${nm} · ${art.grade}`;
+        } else if (nm === FREE_ART) {
+            /* `자유` — **아무거나 껴도 되는 칸**이다. 빈 칸과 눈으로 갈라야 한다.
+               비워 두면 "아직 안 적었나" 로 읽힌다 (어사이드 `무관` 과 같은 이유).
+               표시는 덱 빈자리가 쓰는 `PVP_HidingIcon` 을 그대로 쓴다 — 같은 뜻, 같은 그림. */
+            sl.innerHTML =
+                `<img class="s-base" src="${GRADE_FRAME['']}" alt="">
+                 <img class="s-free" src="./assets/icons/common_icons/PVP_HidingIcon.webp" alt="자유">`;
+            sl.dataset.tooltip = '아무 아티팩트나 괜찮습니다';
+        } else if (nm) {
+            /* ⚠ 표에 없는 이름을 **조용히 비우지 않는다.** 오타를 못 잡는다.
+               `?` 는 위의 `자유` 가 쓰므로 여기는 `!` 다 — 이쪽은 오류다. */
+            sl.classList.add('is-unknown');
+            sl.textContent = '!';
+            sl.dataset.tooltip = `artifact_DB 에 없는 이름 — ${nm}`;
+        } else {
+            sl.innerHTML = `<img class="s-base" src="${GRADE_FRAME['']}" alt="">`;
+            sl.dataset.tooltip = '아직 안 적었습니다';
+        }
+        box.appendChild(sl);
+    }
+    (tile.querySelector('.card-bottom') || card).appendChild(box);
+    return card;
 }
 
 /* `swaps` 는 `원픽>대체` 쌍을 쉼표로 늘어놓는다. 같은 원픽이 여러 번 나오면 한 줄로 묶는다.
@@ -267,6 +480,12 @@ function groupMembers(rows, deckKey) {
             row:   (r.row || '').trim(),
             seal:  (r.high_skill || '').trim(),   // 값이 있으면 고학년 봉인 + 그 사유
             aside: (r.aside || '').trim(),        // 필수 · 권장 · 무관 (비면 안 그림)
+            /* 비면 자유, 값이 있으면 **그 자리에 고정**이고 그 값이 곧 사유다
+               (`high_skill` 과 같은 관례 — 사유가 있어야 "왜 못 옮기지" 가 안 생긴다) */
+            fixed: (r.fixed || '').trim(),
+            /* 쉼표로 여러 개. ⚠ 다른 열과 **짝지어 세지 않는다** — 이름만 늘어놓을 뿐이라
+               `buff_DB` 의 슬롯 정렬 함정이 생기지 않는다. 사유를 적고 싶어지면 행으로 풀 것. */
+            artifacts: (r.artifact || '').split(',').map(v => v.trim()).filter(Boolean),
             note:  (r.note || '').trim(),
         }))
         .filter(m => m.name);
@@ -280,6 +499,11 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
        ⚠ 안쪽 타일·음각 칸은 흰색 그대로 둔다. 바탕끼리 색이 갈리면 상자가 쪼개져 보인다. */
     const pers = (deck.personality || '').trim();
     if (pers) box.dataset.personality = pers;
+    /* `high_auto` — 고학년이 **자동으로 터지는** 콘텐츠면 학사모를 아예 안 그린다.
+       줘팸터가 그렇다: 유저가 쓸지 고르는 버튼이 없으므로 "봉인" 이라는 선택지 자체가 없다.
+       ⚠ 분류(`sec_key`)가 아니라 **덱**에 둔 까닭 — 같은 분류 안에 성질이 다른 덱이
+         생길 수 있고, 무엇보다 이건 콘텐츠의 규칙이라 코드에 박으면 덱이 늘 때마다 고쳐야 한다. */
+    const autoHigh = !!(deck.high_auto || '').trim();
     const freeLabel = (deck.free_label || '').trim();
     const sub = (deck.deck_sub || '').trim();
     const deckKey = (deck.deck_key || '').trim();
@@ -296,6 +520,10 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
             ${sub ? `<p class="rc-deck-sub">${esc(sub)}</p>` : ''}
         </header>
         <div class="rc-deck-tiles"></div>
+        <section class="rc-deck-block is-equip" hidden>
+            <h5 class="rc-deck-eyebrow">아티팩트</h5>
+            <div class="rc-equip-row"></div>
+        </section>
         <section class="rc-deck-block is-swaps" hidden>
             <h5 class="rc-deck-eyebrow"></h5>
             <div class="rc-deck-swapwrap"></div>
@@ -337,30 +565,17 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
         }
         const ch = pick(m.name);
         if (!ch) return null;
-        const tile = buildDeckTile(ch, m);
-        if (m.seal) tile.classList.add('is-sealed');
+        const tile = buildDeckTile(ch, m, autoHigh);
         if (m.note) tile.dataset.tooltip = `${ch.name} — ${m.note}`;
         return tile;
     };
 
     if (placed) {
-        /* ⚠ 빈 칸은 **아예 안 그린다.** 3×3 좌표계의 핵심은 "후보를 어디 둘까" 가
-             아니라 "무슨 사도를 어디 둘까" 라, 빈 발판은 읽을 게 없다. */
-        const at = new Map(members.filter(m => m.col && m.row)
-            .map(m => [`${m.col}/${m.row}`, m]));
-        ROWS.forEach((r, ri) => COLS.forEach((c, ci) => {
-            const m = at.get(`${c}/${r}`);
-            const cell = document.createElement('div');
-            cell.className = 'rc-cell';
-            cell.style.gridArea = `${ri + 1} / ${ci + 1}`;
-            if (m) {
-                const t = put(m);
-                if (t) cell.appendChild(t);
-            } else {
-                cell.classList.add('is-empty');
-            }
-            tiles.appendChild(cell);
-        }));
+        /* 좌표가 있으면 **인게임 편성판**을 그린다 (쐐기 보드 + 핀).
+           ⚠ 사도 카드가 아니라 핀이다 — 바닥에 꽂히는 꼴이라야 쐐기가 원근으로 읽힌다. */
+        tiles.classList.remove('is-grid');
+        tiles.appendChild(buildBoard(members, pick, freeCount, freeLabel, autoHigh,
+                                     (deck.board_bg || '').trim()));
         /* 좌표가 없는 멤버는 격자에 못 놓는다 — 아래에 따로 붙여 잃어버리지 않게 한다 */
         members.filter(m => !(m.col && m.row)).forEach(m => {
             const t = put(m);
@@ -409,6 +624,46 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
     if (wrap.children.length) {
         box.querySelector('.is-swaps').hidden = false;
         box.querySelector('.is-swaps .rc-deck-eyebrow').textContent = label;
+    }
+
+    /* 아티팩트 줄 — **편성에 들어간 사도만**. 후보는 아티팩트를 달 자리가 아니다.
+       ⚠ 빈자리(`?`)도 뺀다. 누가 설지 모르는 칸에 아티팩트 슬롯은 뜻이 없다.
+
+       **역할로 묶는다** — 같은 역할이면 받는 아티팩트 유형이 비슷해서, 묶어 두면
+       "이 묶음엔 이런 걸 준다" 가 한 번에 읽힌다. 묶음 순서는 `ROLE_ORDER`. */
+    /* `equip` — 아티팩트 줄을 그릴지. **덱마다 따로**다.
+       ⚠ 아티팩트 데이터가 아직 통째로 비어 있어 지금은 **빈 슬롯만** 나온다.
+         값을 넣은 덱에서만 보이므로, 비워 두면 화면에 아무 영향이 없다. */
+    if ((deck.equip || '').trim()) {
+        const erow = box.querySelector('.rc-equip-row');
+        const byRole = new Map();
+        members.forEach(m => {
+            if (isFreeSlot(m.name)) return;
+            const ch = dbMap.get(m.name);
+            if (!ch) return;
+            const role = (ch.role || '기타').trim();
+            if (!byRole.has(role)) byRole.set(role, []);
+            byRole.get(role).push([ch, m]);
+        });
+        const order = [...byRole.keys()].sort((a, b) => {
+            const ia = ROLE_ORDER.indexOf(a), ib = ROLE_ORDER.indexOf(b);
+            return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+        });
+        order.forEach(role => {
+            const g = document.createElement('section');
+            g.className = 'rc-equip-group';
+            g.dataset.role = role;
+            /* 탭은 **박스 바깥 위**에 붙는다 — 안으로 파고들면 첫 아티팩트 카드와 싸운다.
+               아래 2px 만 박스를 물어 "붙어 있다" 를 만든다 (떼면 떠 보인다). */
+            g.innerHTML = `<span class="rc-equip-tab">
+                    <img src="${iconUrl(role, 'role')}" alt="" onerror="this.remove()">
+                    ${esc(role)}
+                </span><div class="rc-equip-cards"></div>`;
+            const wrap = g.querySelector('.rc-equip-cards');
+            byRole.get(role).forEach(([ch, m]) => wrap.appendChild(buildEquipCard(ch, m)));
+            erow.appendChild(g);
+        });
+        if (erow.children.length) box.querySelector('.is-equip').hidden = false;
     }
     return box;
 }
@@ -1087,12 +1342,13 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
-        const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT] =
+        const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
                 'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv', 'Recommend_Deck_Members.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
                 'high_skill_DB.csv', 'buff_DB.csv', 'buff_desc_DB.csv', 'normal_Atk_DB.csv',
-                'low_skill_DB.csv', 'aside_DB.csv', 'sp_DB.csv', 'battle_item_DB.csv'].map(get));
+                'low_skill_DB.csv', 'aside_DB.csv', 'sp_DB.csv', 'battle_item_DB.csv',
+                'artifact_DB.csv'].map(get));
         const P = t => Papa.parse(t, cfg).data;
 
         const db = P(dbT);
@@ -1107,6 +1363,14 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
             allStateDB, debuffDescDB,
             normalAtkDB: P(normalT), asideDB: P(asideT),
             spDB: P(spT), battleItemDB
+        });
+
+        /* 아티팩트 표 — 이름이 키다 (`art_*` 도 한글 이름으로 가리킨다) */
+        P(artT).forEach(r => {
+            const n = (r.name || '').trim();
+            if (n) ARTIFACTS.set(n, { icon_no: (r.icon_no || '').trim(),
+                                      grade: (r.grade || '').trim(),
+                                      attach: (r.attach || '').trim() });
         });
 
         const dbMap = new Map(db.filter(r => r.name).map(r => [r.name.trim(), r]));

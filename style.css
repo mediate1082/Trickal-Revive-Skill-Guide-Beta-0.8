@@ -3037,32 +3037,389 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    ⚠ **열 순서는 왼쪽부터 후열 · 중열 · 전열**이다. 오른쪽으로 전진하는 게임이라
      적이 오른쪽에 있다. 읽기 순서와 반대지만 게임과 어긋나면 더 헷갈린다.
 
+   ⚠ **빈 칸도 상자로 그린다** (2026-10-15). 한동안 `visibility: hidden` 이었다 —
+     틀이 없으니 "3×3 중 어디" 가 아니라 "카드 몇 장" 으로만 읽혔다.
+
    ⚠⚠ **인게임의 쐐기(가운데 행만 오른쪽으로 밀린 꼴)를 따라하지 않는다.** 그건 바닥에
      선 **스파인 모델**을 원근감 있게 늘어놓은 것이고, 여기는 정면을 보는 **평면 카드**다.
      카드로 쐐기를 만들면 원근이 아니라 "왜 한 줄만 밀렸지" 로만 읽힌다.
      (실측값은 CLAUDE.md 에 남겨 뒀다 — 참고용이지 레이아웃 근거가 아니다) */
+/* ── 편성판 (쐐기 보드) ────────────────────────────────
+   인게임 편성 화면을 CSS 로 재현한다. 좌표는 실측표를 비율로 환산한 값이라
+   **그림 파일을 쓰지 않는다** — 반응형이 되고 다크도 따라온다.
+
+   ⚠ 가로세로비가 고정이다 (1040 : 360). 안쪽 요소가 전부 % 라 비가 바뀌면 다 틀어진다. */
+/* 편성창 — 보드를 담는 상자. 인게임 편성 화면 한 판에 해당한다.
+   ⚠ **위쪽 여백이 핵심이다.** 핀은 발판 중심에서 제 폭의 19% 쯤 위까지 솟는다
+     (머리 + 꼬리 보정 + 고학년 표지). 비워 두지 않으면 덱 제목을 침범한다.
+     세로 여백을 **%로** 주는 이유 — % 패딩은 **가로 폭** 기준이라 보드와 같이 줄고 늘어난다. */
+/* 좁은 화면용 가로 스크롤 껍데기.
+   ⚠ 보드는 가로세로비가 **1040:360** 으로 고정이라, 폭이 줄면 세로가 같이 줄어
+     안쪽 핀·뱃지가 통째로 작아진다. 375px 폰에서 핀 32px · 역할 뱃지 12px 까지
+     내려가 누가 어디 서 있는지를 못 읽었다 — 그래서 **줄이지 않고 민다.**
+   ⚠ 스크롤을 `.rc-board-wrap` 자신에게 걸지 말 것. 배경이 상자에 붙어 있어
+     (`background-attachment: scroll`) 보드만 움직이고 **배경은 그대로 남는다** —
+     스포트라이트와 발판이 어긋난다. 껍데기를 따로 두는 이유다. */
+.rc-board-scroll {
+    /* ⚠ `.rc-deck-tiles` 가 flex 라 **한 줄을 통째로 차지하라고 적어 줘야 한다.**
+       안 적으면 내용 폭(= 최소 폭 460px)으로 쪼그라들어 넓은 화면에서도 보드가 460px 이다 */
+    flex: 1 1 100%; width: 100%; min-width: 0;
+    display: flex; flex-direction: column;
+    overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+.rc-board-scroll::-webkit-scrollbar { height: 5px; }
+.rc-board-scroll::-webkit-scrollbar-thumb {
+    background: rgba(60, 60, 67, .26); border-radius: 3px;
+}
+/* 신호는 **실제로 밀릴 때만** 낸다. 상자 최소 폭이 460px 이고 분류 안쪽 여백이
+   100px 안팎이라, 화면이 560px 밑으로 내려가야 넘친다 */
+.rc-board-hint { display: none; }
+@media (max-width: 560px) {
+    .rc-board-hint {
+        display: block; position: sticky; left: 0; width: fit-content;
+        margin: 1px 0 2px; padding-left: 2px;
+        font-size: .68rem; font-weight: 700; color: var(--text-muted, #8A8F98);
+    }
+}
+
+.rc-board-wrap {
+    position: relative; width: 100%; max-width: 780px;
+    /* 아래로는 못 줄인다 — 이 폭에서 핀 57px · 역할 뱃지 20px 이 나온다 */
+    min-width: 460px;
+    margin: 6px auto 4px; padding: 13% 2.5% 3.5%;
+    box-sizing: border-box; overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid rgba(60, 60, 67, .14);
+    /* 인게임 편성 화면 배경(`Deck_Bg`). **전체 그림 중 바닥 부분만** 쓰려고
+       `cover` + 세로 위치를 아래로 밀어 나무·하늘을 잘라낸다.
+       ⚠ 원본은 2048×1312 PNG(1.3MB) 다. 보드가 최대 780px 로 뜨므로 1536px webp(48KB)
+         로 줄여 넣었다 — 원본을 그대로 올리지 말 것. */
+    /* 배경 **스포트라이트 중심을 키패드 5번(중열·중) 발판에** 맞춘다.
+       밝기 무게중심을 재니 이미지의 (31.4%, 61.6%) 지점이었고, 5번 칸은 상자의
+       (58.4%, 29.3%) 다. `cover` 로는 가로가 딱 맞아 좌우로 못 미므로 **200% 로 키워**
+       가로에도 여유를 만든 뒤 자리를 잡았다.
+       ⚠ 이 네 숫자는 **상자 비율(패딩 13/2.5/3.5%)과 한 묶음**이다. 패딩을 바꾸면
+         5번 칸 위치가 달라지니 다시 계산할 것. */
+    background: url('./assets/bg/Deck_Bg.webp') 4.4% 63% / 200% auto no-repeat;
+}
+/* 배경마다 초점이 달라 자리를 따로 잡는다. `board_bg` 가 비면 위의 기본값을 쓴다.
+   ⚠ 원본은 전부 2048px PNG (1.2~3MB) 다. **1536px webp 로 줄여** `assets/bg/` 에 넣었다
+     (5.8MB → 239KB). 원본 PNG 를 커밋·배포하지 말 것. */
+.rc-board-wrap[data-bg] {
+    background-position: 50% 62%;
+    background-size: cover;
+}
+/* 심해 동굴 — 빛줄기가 위쪽 가운데라 그대로 두면 발판과 안 겹친다. 조금 끌어내린다 */
+.rc-board-wrap[data-bg="Deepsea_Cave"] { background-position: 50% 46%; }
+/* 돌 투기장 — 바닥이 아래쪽에 있다 */
+.rc-board-wrap[data-bg="Arena_Stone"]  { background-position: 50% 74%; }
+
+/* 배경이 어둡고 무늬가 많아 발판·핀이 묻힌다. 한 겹 덮어 가라앉힌다 */
+.rc-board-wrap::before {
+    content: ''; position: absolute; inset: 0;
+    background: var(--board-veil, rgba(250, 250, 245, .34));
+    pointer-events: none;
+}
+/* 어두운 배경은 흰 덮개를 덜 씌운다 — 많이 씌우면 그림이 뿌예지기만 한다 */
+.rc-board-wrap[data-bg="Deepsea_Cave"],
+.rc-board-wrap[data-bg="Deepsea_Isle"] { --board-veil: rgba(240, 248, 255, .20); }
+[data-theme="dark"] .rc-board-wrap {
+    border-color: rgba(235, 235, 245, .12);
+}
+[data-theme="dark"] .rc-board-wrap::before { background: rgba(14, 14, 18, .46); }
+/* 띠·발판·핀은 덮개 위로 */
+.rc-board { z-index: 1; }
+.rc-board {
+    position: relative; width: 100%;
+    aspect-ratio: 1040 / 360;
+    container-type: inline-size;
+}
+/* 열 띠 — 가운데 행만 밀려 경계가 `〉` 로 보인다.
+   색은 **인게임과 같은 순서**다: 후열 파랑 → 중열 연두 → 전열 빨강.
+   ⚠ 옅은 단색 한 톤으로 뒀다가 **배경 무늬에 묻혀 안 보였다.** 배경이 깔린 뒤로는
+     열끼리 색이 갈려야 경계가 읽힌다.
+   ⚠ 역할 핀(빨강·주황·파랑)과 계열이 겹친다. 핀은 흰 테두리와 그림자로 띄워 가른다. */
+.rc-band { position: absolute; inset: 0; }
+.rc-band:nth-child(1) { background: rgba(70, 150, 225, .30); }   /* 후열 */
+.rc-band:nth-child(2) { background: rgba(150, 205, 70, .30); }   /* 중열 */
+.rc-band:nth-child(3) { background: rgba(228, 85, 80, .28); }    /* 전열 */
+[data-theme="dark"] .rc-band:nth-child(1) { background: rgba(70, 150, 225, .26); }
+[data-theme="dark"] .rc-band:nth-child(2) { background: rgba(150, 205, 70, .24); }
+[data-theme="dark"] .rc-band:nth-child(3) { background: rgba(228, 85, 80, .24); }
+
+/* 발판 — 납작한 타원. 빈칸 흰색 / 점유 반투명 회색 / 고정 점선
+   ⚠ 점유를 **불투명 회색으로 칠하지 말 것.** 그림자가 아니라 구멍처럼 보인다. */
+/* ⚠ 빈 발판을 **불투명 흰색으로 칠하지 말 것.** 배경이 깔린 뒤로는 흰 알약 아홉 개가
+     배경을 가려 편성판이 아니라 접시처럼 보인다. 테두리로 자리만 알리고 속은 비운다. */
+.rc-pad {
+    position: absolute; transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .15);
+    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .42), 0 0 8px rgba(255, 255, 255, .18);
+}
+.rc-pad.is-on, .rc-pad.is-fixed {
+    background: rgba(72, 78, 96, .20);
+    box-shadow: 0 0 0 1.5px rgba(72, 78, 96, .26), 0 0 12px rgba(72, 78, 96, .14);
+}
+.rc-pad.is-fixed { box-shadow: none; border: 2px dashed rgba(72, 78, 96, .5); }
+
+/* ── 핀 ────────────────────────────────────────────────
+   머리(원) + 짧은 꼬리. 꼬리 끝이 발판 가운데에 꽂힌다.
+   ⚠ 물방울(긴 꼬리)은 높이의 35% 를 꼬리가 먹어 얼굴이 작아진다 — 짧은 꼬리를 쓴다. */
+.rc-pin {
+    position: absolute; width: 13cqw;
+    /* ⚠ 꼬리는 `.p-head::after` 로 **요소 박스 밖까지** 삐져나간다 (top:92% + 높이).
+         그래서 요소 bottom 을 발판 중심에 맞추면 꼬리 끝이 19px 쯤 더 내려간다.
+         그만큼 **위로** 올려야 꼬리 끝이 발판에 꽂힌다 — 부호를 반대로 썼다가 떠 보였다. */
+    transform: translate(-50%, calc(-100% - 3cqw));
+    cursor: pointer; z-index: 2;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .3));
+}
+.rc-pin:hover, .rc-pin:focus-visible { z-index: 5; outline: none; }
+.rc-pin:hover .p-head { transform: translateY(-4%); }
+.rc-pin .p-head {
+    position: relative; display: block; aspect-ratio: 1; border-radius: 50%;
+    background: var(--pin, #8A8F9A); padding: 8.5%;
+    /* 띠가 색을 갖게 되면서 핀이 묻힌다 — 흰 테두리 한 겹으로 띄운다 */
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .92);
+    transition: transform .14s ease;
+}
+/* 꼬리 — 머리 아래 작은 삼각 */
+.rc-pin .p-head::after {
+    content: ''; position: absolute; left: 50%; top: 92%;
+    width: 40%; aspect-ratio: 1 / .78; transform: translateX(-50%);
+    background: var(--pin, #8A8F9A);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+.rc-pin .p-face { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
+.rc-pin .p-role {
+    position: absolute; right: -6%; bottom: 8%; width: 36%; height: 36%;
+    object-fit: contain; z-index: 3;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
+}
+/* 고정 압정 — 머리 왼쪽 위에 걸친다 */
+.rc-pin .p-fix {
+    position: absolute; left: -12%; top: -14%; width: 46%; height: 46%;
+    object-fit: contain; z-index: 4;
+}
+.rc-pin[data-role="딜러"]   { --pin: #E85050; }
+.rc-pin[data-role="서포터"] { --pin: #F5A623; }
+.rc-pin[data-role="탱커"]   { --pin: #4A7BD5; }
+.rc-pin.is-free { --pin: #B9BEC8; cursor: default; }
+.rc-pin.is-free .p-face { object-fit: contain; padding: 14%; box-sizing: border-box; }
+
+/* 고학년 표지 — 핀 머리 위. 보드 안에서는 타일이 아니라 핀에 붙는다 */
+.rc-pin .rc-dtile-grade {
+    position: absolute; z-index: 5; top: -26%; left: 50%; transform: translateX(-50%);
+    width: 42%; height: 42%; line-height: 0;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .4));
+}
+
 .rc-deck-tiles.is-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px 8px;
+    gap: 6px;
     justify-content: center;
     /* ⚠ 폭을 안 묶으면 타일이 200px 를 넘는다. 한 줄 배치 상한(152px)보다 커지면
-         같은 페이지에서 덱마다 타일 크기가 달라 보인다 — 세 칸이 140px 안팎에 서게 묶는다 */
-    max-width: 560px;
+         같은 페이지에서 덱마다 타일 크기가 달라 보인다 */
+    /* 칸마다 테두리·여백이 붙으므로 한 줄 배치보다 좁게 잡아야 타일이 같은 크기로 선다.
+       ⚠ 580px 으로 뒀다가 타일이 **177px** 까지 벌어졌다 — 한 줄 상한(152px)을 넘으면
+         같은 페이지 안에서 덱마다 타일 크기가 달라 보인다. 지금은 141px 안팎이다 */
+    max-width: 480px;
     margin-inline: auto;
+    /* ⚠ 줄 높이를 묶는다. 안 묶으면 뱃지 유무로 줄마다 몇 px 씩 어긋나 틀이 비뚤어 보인다 */
+    grid-auto-rows: 1fr;
 }
-.rc-deck-tiles.is-grid .rc-cell { min-width: 0; }
 .rc-deck-tiles.is-grid .rc-dtile {
     flex: none; width: 100%; min-width: 0; max-width: none;
 }
-/* 빈 칸은 자리만 차지하고 아무것도 안 그린다 (⚠ 점선 발판도 두지 않는다 —
-   "어디가 비었나" 가 아니라 "누가 어디 있나" 를 보는 자리다) */
-.rc-deck-tiles.is-grid .rc-cell.is-empty { visibility: hidden; }
+
+/* ── 칸(바둑판 틀) ──────────────────────────────────────
+   **빈 칸도 그린다.** 틀이 없으면 "3×3 중 어디" 가 아니라 "카드 몇 장" 으로 읽혀
+   배치 좌표를 적은 의미가 사라진다.
+
+   ⚠ 격자선에 `--border-soft`(#E3E8D5) 를 쓰지 말 것 — **흰 덱 상자 위에서 안 읽힌다.**
+     시안 첫 판이 그래서 틀이 통째로 안 보였다.
+   ⚠⚠ `--rc-meta` 로 섞어 쓰지도 말 것. 그 값이 **`#999F8E` 올리브**라 선이 누렇게 뜬다 —
+     이 프로젝트가 무채색으로 옮기는 중인 바로 그 색이다 (COMPONENTS.md 참조).
+     무채색을 직접 적고 다크만 갈아끼운다. */
+.rc-deck-tiles.is-grid .rc-cell {
+    min-width: 0;
+    display: flex;
+    border: 1.5px solid rgba(60, 60, 67, .20);
+    border-radius: 9px;
+    padding: 5px;
+}
+.rc-deck-tiles.is-grid .rc-cell > .rc-dtile { align-self: start; }
+/* 빈 칸은 음각. 이 페이지의 후보 칸·추천 이유가 쓰는 **음각 상자와 같은 어휘**다 —
+   점선으로 두면 "드래그해서 채우세요" 로 읽힌다 (여긴 편집기가 아니라 읽는 화면이다).
+   ⚠ 테두리가 이미 있으므로 그림자는 얕게. 둘 다 세면 칸이 액자처럼 두꺼워져
+     **틀이 안의 카드보다 더 눈에 띈다** */
+.rc-deck-tiles.is-grid .rc-cell.is-empty {
+    background: var(--stat-box-bg, #F1F1F3);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, .08);
+}
+[data-theme="dark"] .rc-deck-tiles.is-grid .rc-cell { border-color: rgba(235, 235, 245, .17); }
+[data-theme="dark"] .rc-deck-tiles.is-grid .rc-cell.is-empty {
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, .3);
+}
 /* 좌표를 안 적은 멤버는 격자 아래에 붙는다. 잃어버리지 않게 한 것이라 티가 나야 한다 */
 .rc-deck-tiles.is-grid .rc-dtile.is-unplaced {
     grid-column: 1 / -1; width: 140px; opacity: .85;
     outline: 2px dashed var(--border-soft); outline-offset: 3px;
 }
+
+/* 아티팩트 줄 — 역할 묶음이 **내용 크기만큼만** 차지하고 옆으로 흐른다.
+   ⚠ 세로로만 쌓으면 넓은 화면에서 묶음마다 한 행을 통째로 먹어, 카드 두 장 옆에
+     빈 바닥이 길게 남는다 (밀도가 떨어지고 산만해진다). */
+.rc-equip-row {
+    display: flex; flex-wrap: wrap; align-items: flex-start;
+    justify-content: center;          /* 위 편성 타일이 가운데라 축을 맞춘다 */
+    gap: 10px 12px;
+}
+/* 늘어나지 않고 줄어들기만 한다 — 카드 수가 묶음 폭을 정한다 */
+.rc-equip-group { flex: 0 1 auto; }
+
+/* ── 역할 묶음 상자 ────────────────────────────────────
+   음각 상자 — 이 페이지의 후보 칸·추천 이유와 같은 어휘.
+   ⚠ `overflow: hidden` 을 주지 말 것. 탭이 박스 **밖 위쪽**에 있어 잘린다. */
+.rc-equip-group {
+    position: relative;
+    margin-top: 30px;                 /* 탭 높이만큼 — 안 주면 앞 묶음과 겹친다 */
+    padding: 14px 12px 12px;
+    background: var(--stat-box-bg, #F1F1F3);
+    border: 1px solid rgba(60, 60, 67, .14);
+    border-radius: 12px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, .07);
+}
+[data-theme="dark"] .rc-equip-group {
+    border-color: rgba(235, 235, 245, .13);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, .3);
+}
+.rc-equip-cards { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+/* 폰에서는 152px 카드가 한 줄에 하나밖에 안 들어가 여섯 장이 세로로 끝없이 쌓인다.
+   폭을 반으로 접어 **두 장씩** 놓는다 — 안쪽 장식이 전부 `cqw` 라 같이 줄어든다.
+   ⚠ `.rc-equip` 의 "편성 타일과 같은 폭" 규칙은 넓은 화면 이야기다. 여기서는
+     위 편성판도 가로로 미는 별도 영역이라 폭을 맞출 짝이 없다. */
+@media (max-width: 560px) {
+    .rc-equip-cards { gap: 8px; }
+    /* ⚠ `.rc-equip` 한 겹으로는 안 먹는다 — 아래에 같은 특정도의 `width: 152px` 이
+         **더 뒤에** 있다. 묶음을 앞에 붙여 한 단계 올린다 */
+    .rc-equip-cards .rc-equip { width: calc(50% - 4px); min-width: 104px; max-width: 152px; }
+}
+
+/* ── 포스트잇 플래그 탭 ────────────────────────────────
+   돌출부는 단색, 아래 2px 만 박스를 문다. 완전히 떼면 떠 보이고,
+   깊이 물리면 첫 아티팩트 카드와 싸운다.
+   ⚠ 색은 `.group-title[data-role]` 과 **같은 값**이다 — 새로 정하지 않는다. */
+.rc-equip-tab {
+    position: absolute; left: 14px; top: -26px; z-index: 1;
+    height: 28px; display: inline-flex; align-items: center; gap: 4px;
+    padding: 0 10px 2px;
+    border-radius: 8px 8px 2px 2px;
+    font-size: .72rem; font-weight: 800; color: #FFFFFF;
+    letter-spacing: -.01em; white-space: nowrap;
+    /* 접힌 자국 — 이 한 줄이 "붙인 물건" 이라는 신호다 */
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .16);
+}
+.rc-equip-tab img { width: 15px; height: 15px; object-fit: contain;
+                    filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+.rc-equip-group[data-role="딜러"]   > .rc-equip-tab { background: #E85050; }
+.rc-equip-group[data-role="서포터"] > .rc-equip-tab { background: #F5A623; }
+.rc-equip-group[data-role="탱커"]   > .rc-equip-tab { background: #4A7BD5; }
+.rc-equip-group[data-role="기타"]   > .rc-equip-tab { background: #8A8F9A; }
+
+/* ── 아티팩트 슬롯 카드 ────────────────────────────────────
+   위쪽은 `.rc-dtile` 그대로(초상화·이름표·고학년 표지), 아래에 슬롯만 붙인다.
+   ⚠ 색 변수는 `.rc-card`·`.rc-deck` 의 지역 변수다 — 아티팩트 줄이 그 밖에 놓이면
+     여기에도 같은 묶음을 다시 선언해야 한다. */
+.rc-equip {
+    --rc-card-bg: #FFFFFF; --rc-name: #333333; --rc-sub: #94998A;
+    --rc-meta: #999F8E; --rc-reason: #555555;
+    display: flex; flex-direction: column; align-items: center;
+    container-type: inline-size;
+    /* ⚠ 늘었다 줄었다 하지 않는다. 묶음이 내용 크기로 접히므로 카드가 `flex: 1 1 0` 이면
+         묶음 안 카드 수에 따라 폭이 들쭉날쭉해지고, 위 편성 타일(152px)보다 좁아진다.
+         **편성 타일과 같은 폭으로 못 박는다** — 같은 사도가 위아래에 나오므로 크기가 같아야 한다. */
+    flex: 0 0 auto; width: 152px;
+}
+[data-theme="dark"] .rc-equip {
+    --rc-card-bg: #202024; --rc-name: #FAFAFA; --rc-sub: #9C9C95;
+    --rc-meta: #8D9280; --rc-reason: #A1A1AA;
+}
+.rc-equip .rc-equip-head { width: 100%; max-width: none; flex: none; }
+
+/* 슬롯 묶음 — `^` 꼴. 위 한 칸, 아래 두 칸.
+   ⚠ 가로 한 줄로 놓지 말 것: 카드 폭이 타일에 묶여 있어 세 칸이 1/3 로 쪼그라든다. */
+/* ⚠ 이름표(.card-bottom) **안**에 들어간다. 흰 띠가 아래로 늘어나
+     이름과 슬롯이 한 장으로 읽힌다 — 밖에 두면 카드가 두 조각으로 보인다. */
+/* 이름표는 가로 flex 라 그냥 넣으면 **슬롯이 이름 옆에 붙어 이름이 잘린다.**
+   세로로 돌려 이름 아래에 오게 한다 (뱃지 줄이 쓰는 것과 같은 처리). */
+.rc-equip .rc-dtile-plate { flex-direction: column; gap: 1px; }
+.rc-equip .card-bottom { padding-bottom: 7cqw; }
+/* 슬롯은 **음각 박스 안**에 묶인다. 흰 이름표 위에 칸만 떠 있으면 셋이 흩어져 보이는데,
+   한 번 파 주면 "여기가 아티팩트 자리" 라는 한 덩어리가 된다.
+   ⚠ `--stat-box-bg`(#F8F9FA) 로는 **흰 이름표 위에서 안 보인다.** 이름표가 이미 흰색이라
+     한 톤 더 내려야 한다 — 바탕색과 무관하게 패이도록 반투명 먹색을 얹는다.
+   ⚠ 슬롯을 `transform` 으로 올려 쐐기를 만들지 말 것. 박스 밖으로 삐져나간다 */
+.rc-equip-slots {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 5cqw 6cqw; margin-top: 6cqw; width: 100%;
+    box-sizing: border-box;
+    background: rgba(60, 60, 67, .085);
+    border-radius: 9cqw;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, .10);
+}
+[data-theme="dark"] .rc-equip-slots {
+    background: rgba(0, 0, 0, .28);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, .4);
+}
+/* 세 칸이면 **위를 보는 쐐기** — 한 줄에 셋, 가운데만 올라간다.
+   편성판의 쐐기와 같은 꼴이라 눈에 익고, 삼각형보다 카드가 낮아진다.
+   ⚠ 첫 칸이 DOM 순서상 맨 앞이라 `order` 로 가운데로 보낸다 (마크업은 그대로 둔다). */
+/* 각도는 시안 앵커 실측값 그대로 — 가로 간격 60 에 높이차 40, 즉 **0.667 배**.
+   ⚠ 가운데를 **올리지 않는다.** `translateY` 로 올리면 박스 위로 삐져나가므로
+     위쪽 여백을 따로 계산해 줘야 하고, 여백을 조금만 덜 주면 바로 뚫고 나간다.
+     **바깥 둘을 내리면** 박스가 알아서 그만큼 높아져 넘칠 일이 없다. */
+.rc-equip-slots.is-caret {
+    flex-wrap: nowrap; align-items: flex-start;
+    gap: 0 4cqw; padding: 5cqw 6cqw;
+}
+.rc-equip-slots.is-caret > .rc-equip-slot:nth-child(1) { order: 2; }
+.rc-equip-slots.is-caret > .rc-equip-slot:nth-child(2) { order: 1; }
+.rc-equip-slots.is-caret > .rc-equip-slot:nth-child(3) { order: 3; }
+/* 칸 26 + 간격 4 = 간격 30 → 내리는 폭 20 (30 × 0.667) */
+.rc-equip-slots.is-caret > .rc-equip-slot:nth-child(2),
+.rc-equip-slots.is-caret > .rc-equip-slot:nth-child(3) { margin-top: 20cqw; }
+
+/* 칸 자체는 **음각**이다 — 이 페이지의 후보 칸·추천 이유와 같은 어휘.
+   ⚠ 인게임 슬롯 에셋(`Ingame_ArtifactBase_*`)을 쓰지 않는다. 등급별로 여섯 장이고
+     안에 넣을 아이콘이 아직 없어서, 지금은 빈 칸만 필요하다. */
+/* 인게임 슬롯 프레임을 그대로 쓴다 (`Ingame_ArtifactBase_*`).
+   빈 칸은 `_Empty`, 아티팩트가 들어가면 **등급별 프레임**으로 갈아끼우고 그 위에
+   아이콘을 얹는다 — `_Rarity_1~4` 와 애착(`_Rarity_SignatureCard`) 이 다 있다.
+   ⚠ `_Empty` 는 어두운 회색이다. 인게임은 어두운 바탕에 놓지만 여기는 **흰 이름표 위**라
+     그대로 쓰면 무겁다 — 투명도를 낮춰 눌러 둔다. */
+.rc-equip-slots:not(.is-caret) { padding: 6cqw; }
+.rc-equip-slot {
+    width: 26cqw; height: 26cqw; position: relative; flex: none;
+    display: block; cursor: help;
+}
+.rc-equip-slot > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+/* 아이콘은 프레임 안쪽에 들어간다 */
+.rc-equip-slot > .s-icon { inset: 16%; width: 68%; height: 68%; }
+/* 자유 칸 — 덱 빈자리와 같은 그림. 프레임보다 작게 넣어 '비어 있지만 뜻이 있다' 로 읽히게 */
+.rc-equip-slot > .s-free { inset: 24%; width: 52%; height: 52%; opacity: .5; }
+/* 표에 없는 이름 — 조용히 비우지 않는다. 오타를 못 잡는다 */
+.rc-equip-slot.is-unknown {
+    display: grid; place-items: center; border-radius: 50%;
+    background: rgba(200, 60, 60, .16); color: #B91C1C;
+    font-weight: 800; font-size: 14cqw;
+}
+/* ⚠ 한때 `opacity: .42` 로 눌러 뒀다. **흰 이름표 위**에 바로 얹던 시절의 보정이라
+     음각 박스가 생긴 지금은 필요 없다 — 원본 그대로 쓴다. */
 
 /* ── 이름표 아래 뱃지 ───────────────────────────────────
    메인 그리드 카드에서 **강화 게이지가 있던 자리**다. 덱에서는 강화 수준보다
@@ -3100,7 +3457,30 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 [data-theme="dark"] .rc-badge-a2.is-none { color: var(--rc-sub); }
 
 /* 고학년 봉인은 초상화도 살짝 가라앉힌다 — 뱃지만으로는 훑어볼 때 안 걸린다 */
-.rc-dtile.is-sealed .card-top { filter: saturate(.75) brightness(.96); }
+/* ── 고학년 표지 (머리 위) ───────────────────────────────
+   인게임에서 '자동 전투 때 고학년 스킬 금지' 를 켜면 사도 **머리 위**에 금지 표지가 뜬다.
+   그 자리를 그대로 쓴다 — 성격(왼위)·엘다인(오른위) 사이가 비어 있다.
+
+   사용 = 학사모만 / 봉인 = 학사모 + 금지 표지. **두 상태가 같은 꼴**이라 짝으로 읽힌다.
+
+   ⚠ 한때 봉인을 `filter: saturate(.75)` 로 **초상화를 가라앉혀** 알렸다. 걷어냈다 —
+     흑백은 `dim`(지금은 추천 안 함)이 이미 쓰는 신호라 한 카드에서 두 뜻이 됐다.
+   ⚠ 금지 표지를 **가운데 같은 크기로 겹치지 말 것.** 학사모가 통째로 가려져
+     "무엇을 금지하는지" 가 사라진다. 72% 로 오른쪽 아래에 물린다. */
+.rc-dtile-grade {
+    position: absolute; z-index: 6; top: 3cqw; left: 50%; transform: translateX(-50%);
+    /* ⚠ 30cqw 로 뒀다가 **얼굴 윗부분을 덮었다.** 24 면 금지 표지의 사선도 살아 있다 */
+    width: 24cqw; height: 24cqw; line-height: 0;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .4));
+    cursor: help;
+}
+.rc-dtile-grade > .g-cap { width: 100%; height: 100%; object-fit: contain; display: block; }
+.rc-dtile-grade > .g-no {
+    position: absolute; right: -12%; bottom: -12%;
+    width: 72%; height: 72%; object-fit: contain;
+}
+/* 봉인이면 학사모를 한 톤 죽인다 — 안 그러면 둘이 같은 세기로 싸운다 */
+.rc-dtile-grade.is-off > .g-cap { filter: grayscale(.55) brightness(.92); }
 
 /* 후보 칸은 덱 상자와 **같은 흰 바탕**이다. 한 톤 내려 깔아도 봤지만, 어떻게 맞춰도
    바탕끼리 색이 갈려 상자가 둘로 쪼개진 것처럼 보였다 — 덱과 후보는 한 덩어리다.
@@ -3184,13 +3564,26 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-dtile:hover .char-card { transform: translateY(-3px); }
 .rc-dtile:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; border-radius: 10.8cqw; }
 
+/* ── 초상화 아래 한 줄 — 배치 ↔ 역할 ──────────────────────
+   메인 그리드 카드와 **같은 짜임**이다 (양 끝에 하나씩, 가운데는 비움).
+
+   ⚠ 덱 타일은 **성격 아이콘을 안 단다.** 초상화 테두리·바탕이 이미 성격색이라
+     같은 말이 두 번이다. 그 자리를 역할에 내준다 — 편성에서 알아야 하는 건
+     성격보다 **역할 균형**이다.
+     (큰 카드 `.rc-tile` 은 이름 아래 글자로 `성격 · 배치 · 역할` 을 다 적으므로 그대로 둔다)
+   ⚠ **별(성급)도 안 그린다.** 타일이 작은데다 지금 메타가 사실상 3성뿐이라
+     모든 타일에 같은 별 셋이 깔릴 뿐이었다 — 읽을 게 없으면 자리를 비운다 */
+/* 학사모가 **없을 때만** 왼쪽 위에 성격 아이콘이 돌아온다 (후보 줄의 타일이 그렇다).
+   학사모가 그 자리를 비켜 주던 것이므로 빈 채로 둘 이유가 없다. */
 .rc-dtile-pers { position: absolute; top: 5cqw; left: 5cqw; width: 23.3cqw; height: 23.3cqw; z-index: 2;
                  filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
-/* 배치 아이콘은 **왼쪽 아래**다. 오른쪽 위는 완장이 쓰고, 오른쪽 아래는 별과 겹친다 */
-.rc-dtile-line { position: absolute; bottom: 6.7cqw; left: 6.7cqw; width: 23.3cqw; height: 23.3cqw; z-index: 4;
-                 filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
-.rc-dtile-stars { position: absolute; bottom: 5cqw; left: 0; width: 100%; z-index: 3; }
-.rc-dtile-stars img { width: 15.8cqw !important; height: 15.8cqw !important; margin: 0 -2.5cqw !important; }
+.rc-dtile-row {
+    position: absolute; bottom: 5cqw; left: 0; width: 100%;
+    padding: 0 6.7cqw; box-sizing: border-box; z-index: 4;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.rc-dtile-row img { width: 23.3cqw; height: 23.3cqw;
+                    filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
 .rc-dtile .eldyne-corner-icon { width: 15cqw; height: 15cqw; top: 3.3cqw; right: 3.3cqw; }
 .rc-dtile .eldyne-card .card-top::before { border-width: 0 35.8cqw 35.8cqw 0; }
 .rc-dtile .eldyne-card .card-top::after  { border-width: 0 31.7cqw 31.7cqw 0; }
