@@ -1031,6 +1031,10 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     font-family: 'OneMobilePop', sans-serif;
     font-size: .8rem; font-weight: 500; line-height: 1.6;
     word-break: keep-all; text-align: left;
+    /* ⚠ `data-tooltip` 에 `
+` 으로 줄을 나눈 곳이 여럿이다 (핀의 이름/자리규칙/고정,
+         빈자리의 후보 수…). 이 선언이 없으면 **전부 한 줄로 뭉쳐 붙는다.** */
+    white-space: pre-line;
     box-shadow: 0 8px 22px rgba(0,0,0,.22);
     opacity: 0; visibility: hidden; transform: translateY(-3px);
     transition: opacity .12s ease, transform .12s ease, visibility .12s;
@@ -1038,6 +1042,9 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 }
 .tg-tip.is-on { opacity: 1; visibility: visible; transform: none; }
 [data-theme="dark"] .tg-tip { background: #E8EBE3; color: #24261F; }
+/* 둘째 상자 — 첫째(이름) 아래에 붙는 **딸린 설명**이라 한 톤 낮춘다 */
+.tg-tip-2 { font-size: .74rem; padding: 8px 11px; background: #434838; }
+[data-theme="dark"] .tg-tip-2 { background: #D6DACE; }
 
 /* ── Misc ─────────────────────────────── */
 #top-btn {
@@ -2859,7 +2866,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-group-tip {
     margin: -4px 0 14px;
     font-family: 'OneMobilePop', sans-serif;
-    font-size: .92rem; font-weight: 500; line-height: 1.7;
+    font-size: .92rem; font-weight: 500; line-height: 1.7; word-break: keep-all;
     color: var(--text-muted); max-width: 88ch;
 }
 
@@ -2947,6 +2954,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     margin: 9px 0 0 15px;
     font-family: 'OneMobilePop', sans-serif;
     font-size: .86rem; font-weight: 500; line-height: 1.62; color: var(--text-muted);
+    word-break: keep-all;
 }
 
 /* ── 역할 묶음 ── */
@@ -2984,8 +2992,15 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    ⚠ 읽기 폭을 **`ch` 로 재지 않는다.** `ch` 는 `0` 글자 너비 기준이라 한글에서는
      의도의 절반쯤에서 끊긴다 (74ch = 741px = 한글 60자). px 로 적는다. */
 .rc-deck-sub {
-    margin: 6px 0 0; max-width: 900px;
+    margin: 6px 0 0;
+    /* ⚠ `max-width: 900px` 이었다. 덱 상자가 1360px 쯤이라 **오른쪽이 450px 넘게 비었다.**
+         `.rc-sec-tip` 도 같은 이유로 이미 풀어 뒀다 — 라틴 문자 기준의 읽기 폭(74ch 류)은
+         글자가 두 배쯤 넓은 한글에 그대로 쓰면 줄이 너무 일찍 끊긴다. */
+    max-width: none;
     font-size: .85rem; line-height: 1.65; color: var(--rc-reason);
+    /* ⚠ 한글은 기본값이 **음절 단위로 끊긴다** — 없으면 `로니를` 이 `로` / `니를` 로
+         갈라진다. 이 페이지의 다른 본문(`.rc-alt-note` 등)은 전부 이걸 쓰고 있다. */
+    word-break: keep-all;
 }
 
 /* 라벨은 타일 **위**에 머리글로 올린다. 옆에 두면 묶음이 안 보이고 라벨만 떠다닌다 */
@@ -3060,10 +3075,13 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    ⚠ 스크롤을 `.rc-board-wrap` 자신에게 걸지 말 것. 배경이 상자에 붙어 있어
      (`background-attachment: scroll`) 보드만 움직이고 **배경은 그대로 남는다** —
      스포트라이트와 발판이 어긋난다. 껍데기를 따로 두는 이유다. */
+/* 보드 + 그 아래 글을 함께 담는 칸.
+   ⚠ `.rc-deck-tiles` 가 flex 라 **한 줄을 통째로 차지하라고 적어 줘야 한다.**
+     안 적으면 내용 폭으로 쪼그라들어 넓은 화면에서도 보드가 460px 이 된다. */
+.rc-boardzone { flex: 1 1 100%; width: 100%; min-width: 0; }
+
 .rc-board-scroll {
-    /* ⚠ `.rc-deck-tiles` 가 flex 라 **한 줄을 통째로 차지하라고 적어 줘야 한다.**
-       안 적으면 내용 폭(= 최소 폭 460px)으로 쪼그라들어 넓은 화면에서도 보드가 460px 이다 */
-    flex: 1 1 100%; width: 100%; min-width: 0;
+    width: 100%; min-width: 0;
     display: flex; flex-direction: column;
     overflow-x: auto; overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
@@ -3088,7 +3106,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     position: relative; width: 100%; max-width: 780px;
     /* 아래로는 못 줄인다 — 이 폭에서 핀 57px · 역할 뱃지 20px 이 나온다 */
     min-width: 460px;
-    margin: 6px auto 4px; padding: 13% 2.5% 3.5%;
+    margin: 6px auto 4px;
     box-sizing: border-box; overflow: hidden;
     border-radius: 14px;
     border: 1px solid rgba(60, 60, 67, .14);
@@ -3130,6 +3148,10 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 }
 [data-theme="dark"] .rc-board-wrap::before { background: rgba(14, 14, 18, .46); }
 /* 띠·발판·핀은 덮개 위로 */
+/* ⚠ 여백은 **여기**가 쥔다. 상자에 직접 주면 % 가 바깥 컨테이너 폭 기준으로
+   풀려, 좁은 화면에서 상자가 `min-width` 로 버티는 동안 여백만 쪼그라든다
+   (39px 까지 내려가 학사모가 잘렸다). 한 겹 안이면 % 가 상자 폭 기준이다. */
+.rc-board-pad { padding: 13% 2.5% 3.5%; }
 .rc-board { z-index: 1; }
 .rc-board {
     position: relative; width: 100%;
@@ -3163,7 +3185,93 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     background: rgba(72, 78, 96, .20);
     box-shadow: 0 0 0 1.5px rgba(72, 78, 96, .26), 0 0 12px rgba(72, 78, 96, .14);
 }
-.rc-pad.is-fixed { box-shadow: none; border: 2px dashed rgba(72, 78, 96, .5); }
+/* 고정 — 흰 실선 원 + 옅은 글로우. 점선으로 뒀다가 **어두운 배경에서 거의 안 보였다.**
+   채우기는 점유 발판과 같게 두고 **테두리만** 다르다 — 고정도 점유의 한 종류라서다.
+   ⚠ 안쪽이 흰 선, 바깥이 글로우 순서다. 뒤집으면 선이 번짐에 먹힌다. */
+.rc-pad.is-fixed {
+    border: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .92),
+                0 0 10px 3px rgba(255, 255, 255, .45);
+}
+
+/* 자리 장판 — 상대에 따라 자리가 바뀌는 사도의 발 밑.
+   인게임 이속 버프 아이콘(부츠 + 잔상)을 원근까지 구워 둔 그림이다.
+   ⚠ **발판 위 · 핀 아래**다. 핀(2)보다 위로 올리면 얼굴을 덮는다.
+   ⚠ 배경이 덱마다 달라 묻히는 정도가 다르다 — 진하기는 `--decal-ink` 로 조절한다
+     (어두운 배경에서는 올리고, 밝은 돌바닥에서는 내린다). */
+.rc-decal {
+    position: absolute; z-index: 1;
+    /* ⚠ 크기는 **핀에 매단다** — 시안(1920×1080)에서 장판 41px · 핀 머리 94px 로
+         핀의 0.44 배였다. 핀이 13cqw 이므로 5.7cqw. 발판(15.87%)에 맞추면 2.6 배 커진다. */
+    width: 5.7%; height: auto;
+    transform: translate(-50%, -48%);
+    opacity: var(--decal-ink, .62);
+    pointer-events: none;
+    transition: transform .14s ease, opacity .14s ease, filter .14s ease;
+}
+/* 핀에 마우스를 올리면 장판도 같이 반응한다 — **이 핀 이야기구나**가 읽히게.
+   ⚠ 어두운 실루엣이라 밝기로는 티가 안 난다. 흰 글로우로 바닥에서 띄운다. */
+.rc-decal.is-hot {
+    transform: translate(-50%, -56%) scale(1.14);
+    opacity: 1;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, .9))
+            drop-shadow(0 2px 4px rgba(0, 0, 0, .5));
+}
+.rc-board-wrap[data-bg="Deepsea_Cave"] .rc-decal,
+.rc-board-wrap[data-bg="Deepsea_Isle"] .rc-decal { --decal-ink: .75; }
+
+/* 보드 아래 한 줄 — **호버가 없는 기기에서만** 낸다.
+   ⚠ 조건을 화면 폭이 아니라 `hover` 로 잡는 이유 — 이 줄이 있는 까닭이 "말풍선을
+     띄울 방법이 없어서" 다. 창을 좁힌 데스크톱은 말풍선이 멀쩡히 뜨므로 같은 말이 두 번이다. */
+@media (hover: hover) and (pointer: fine) {
+    .rc-board-moves { display: none; }
+}
+.rc-board-moves {
+    list-style: none; margin: 4px 0 0; padding: 0;
+    font-size: .78rem; line-height: 1.5; color: var(--rc-reason, #555);
+    word-break: keep-all;
+}
+.rc-board-moves li { position: relative; padding-left: 14px; }
+.rc-board-moves li::before {
+    content: ''; position: absolute; left: 2px; top: .52em;
+    width: 5px; height: 5px; border-radius: 50%; background: #8A8F9A;
+}
+.rc-board-moves b { font-weight: 800; color: var(--rc-name, #333); }
+
+/* 사도별 배치 메모 — 접었다 펴는 음각 상자 (이 페이지의 후보 칸·추천 이유와 같은 어휘) */
+.rc-board-notes { margin-top: 6px; }
+.rc-notes-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 999px; cursor: pointer;
+    border: 1px solid rgba(60, 60, 67, .16); background: transparent;
+    font-family: inherit; font-size: .76rem; font-weight: 700;
+    color: var(--rc-meta, #777); transition: background .15s, color .15s;
+}
+.rc-notes-btn:hover { background: rgba(60, 60, 67, .06); color: var(--rc-name, #333); }
+.rc-notes-caret { font-size: .62rem; transition: transform .16s ease; }
+.rc-notes-btn[aria-expanded="true"] .rc-notes-caret { transform: rotate(180deg); }
+[data-theme="dark"] .rc-notes-btn { border-color: rgba(235, 235, 245, .16); }
+
+/* ⚠ 바깥을 **하나의 음각 상자로 묶지 않는다.** 사도마다 카드 + 제 음각 박스가
+     붙는 꼴이라(후보 줄과 같다) 겉을 또 파면 상자 안의 상자가 된다. */
+/* 후보 칸(`.rc-deck-swapwrap`)과 **같은 격자**다 — 같은 꼴의 줄이 같은 수로 선다.
+   ⚠⚠ `[hidden]` 규칙을 빼먹지 말 것. `hidden` 속성은 브라우저 기본 `display: none`
+     인데, 여기서 `display: grid` 를 주는 순간 **특정도에서 이겨 접기가 안 먹는다.** */
+.rc-notes-body {
+    margin-top: 8px;
+    display: grid; gap: 10px 20px;
+    grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
+}
+.rc-notes-body[hidden] { display: none; }
+/* 자리가 바뀌는 사도에는 장판과 같은 그림을 작게 붙여 둘을 잇는다 */
+.rc-notes-mark {
+    display: inline-block; width: 1.05em; height: .72em; margin-left: 4px;
+    vertical-align: -.04em;
+    background: currentColor;
+    -webkit-mask: url('./assets/icons/common_icons/movable.webp') center / contain no-repeat;
+            mask: url('./assets/icons/common_icons/movable.webp') center / contain no-repeat;
+    opacity: .75;
+}
 
 /* ── 핀 ────────────────────────────────────────────────
    머리(원) + 짧은 꼬리. 꼬리 끝이 발판 가운데에 꽂힌다.
@@ -3174,17 +3282,23 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
          그래서 요소 bottom 을 발판 중심에 맞추면 꼬리 끝이 19px 쯤 더 내려간다.
          그만큼 **위로** 올려야 꼬리 끝이 발판에 꽂힌다 — 부호를 반대로 썼다가 떠 보였다. */
     transform: translate(-50%, calc(-100% - 3cqw));
+    /* ⚠⚠ 호버 들림은 **`margin-top` 으로 준다.** `transform` 에 얹으면 안 된다 —
+         자리잡기가 이미 `transform` 을 쓰고 있어 `:hover` 에서 다시 선언하면 통째로
+         덮이고, `var()` 로 합쳐 넣는 방법도 이 조합에서는 값이 갱신되지 않았다.
+         ⚠ 머리에만 걸지 말 것. 역할 뱃지·압정·리본은 핀의 자식이라 제자리에 남아
+           **한 몸으로 안 보인다** (실제로 그렇게 떠 있었다). */
+    transition: margin-top .14s ease;
     cursor: pointer; z-index: 2;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .3));
 }
 .rc-pin:hover, .rc-pin:focus-visible { z-index: 5; outline: none; }
-.rc-pin:hover .p-head { transform: translateY(-4%); }
+/* 빈자리 핀은 누를 게 없으니 들지 않는다 */
+.rc-pin:not(.is-free):hover, .rc-pin:not(.is-free):focus-visible { margin-top: -5px; }
 .rc-pin .p-head {
     position: relative; display: block; aspect-ratio: 1; border-radius: 50%;
     background: var(--pin, #8A8F9A); padding: 8.5%;
     /* 띠가 색을 갖게 되면서 핀이 묻힌다 — 흰 테두리 한 겹으로 띄운다 */
     box-shadow: 0 0 0 2px rgba(255, 255, 255, .92);
-    transition: transform .14s ease;
 }
 /* 꼬리 — 머리 아래 작은 삼각 */
 .rc-pin .p-head::after {
@@ -3200,10 +3314,39 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
 }
 /* 고정 압정 — 머리 왼쪽 위에 걸친다 */
+/* 고정 압정 — 머리 **오른쪽 위**.
+   ⚠ 왼쪽 위에 두지 않는다 — 위 가운데가 학사모 자리라 바로 옆이면 붙어 보인다.
+   ⚠ **색이 구워진 완성 아이콘이다** (`PIN.webp`). 흰 마스크가 아니므로 `mask` 로
+     물들이지 말 것 — 실루엣만 남고 그림이 날아간다.
+     한때 회색조 `PIN_Fixed.png` 을 쓰다 어두운 배경에서 묻혀 갈아끼웠다. */
 .rc-pin .p-fix {
-    position: absolute; left: -12%; top: -14%; width: 46%; height: 46%;
+    position: absolute; right: -12%; top: -14%; width: 46%; height: 46%;
     object-fit: contain; z-index: 4;
+    /* ⚠ 그림의 침이 **오른쪽 아래**를 향한다. 오른쪽 위에 그대로 두면 바깥을 찌르는
+         꼴이라 떨어져 보인다 — 좌우를 뒤집어 얼굴 쪽으로 꽂히게 한다 */
+    transform: scaleX(-1);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .55));
 }
+/* 어사이드 리본 — 머리 **왼쪽 아래에서 비스듬히 삐져나온 케어라벨**.
+   옷 안쪽 라벨처럼 머리 **뒤로** 깔아 끝만 보이게 한다 (`z-index: 0`, 머리는 1).
+   ⚠ **`필수` 일 때만 그린다.** 아홉 칸에 핀이 빽빽해서 세 상태를 다 달면 난잡해진다.
+   ⚠ 별을 쓰지 않는다 — 이 페이지에서 별은 이미 `pick`(강추) 뜻이라 섞인다. */
+.rc-pin .p-aside {
+    position: absolute; left: -16%; bottom: 2%; z-index: 0;
+    width: 50%; height: 21%;
+    display: flex; align-items: center; justify-content: flex-start;
+    padding-left: 8%; box-sizing: border-box;
+    transform: rotate(-45deg); transform-origin: 100% 50%;
+    background: #9B7BE2; color: #FFFFFF;
+    border-radius: 2px 0 0 2px;
+    font-size: 1.75cqw; font-weight: 800; letter-spacing: -.02em; line-height: 1;
+    /* 라벨에 인쇄된 글씨처럼 — 밑줄이 있어야 작은 글자가 라벨 바탕에서 떨어져 읽힌다 */
+    text-decoration: underline; text-decoration-thickness: .5px; text-underline-offset: 2px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
+}
+/* ⚠ 머리를 리본 위로 올린다. 안 그러면 라벨이 얼굴을 덮는다 */
+.rc-pin .p-head { z-index: 1; }
+
 .rc-pin[data-role="딜러"]   { --pin: #E85050; }
 .rc-pin[data-role="서포터"] { --pin: #F5A623; }
 .rc-pin[data-role="탱커"]   { --pin: #4A7BD5; }
@@ -3299,15 +3442,19 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, .3);
 }
 .rc-equip-cards { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-/* 폰에서는 152px 카드가 한 줄에 하나밖에 안 들어가 여섯 장이 세로로 끝없이 쌓인다.
+/* 폰에서는 184px 카드가 한 줄에 하나밖에 안 들어가 여섯 장이 세로로 끝없이 쌓인다.
    폭을 반으로 접어 **두 장씩** 놓는다 — 안쪽 장식이 전부 `cqw` 라 같이 줄어든다.
    ⚠ `.rc-equip` 의 "편성 타일과 같은 폭" 규칙은 넓은 화면 이야기다. 여기서는
      위 편성판도 가로로 미는 별도 영역이라 폭을 맞출 짝이 없다. */
 @media (max-width: 560px) {
     .rc-equip-cards { gap: 8px; }
-    /* ⚠ `.rc-equip` 한 겹으로는 안 먹는다 — 아래에 같은 특정도의 `width: 152px` 이
+    /* ⚠ 묶음이 **내용 크기로 접히면** 안 된다. 카드가 `50%` 라 묶음 폭을 따라가는데,
+         묶음마다 사도 수가 달라 같은 페이지에서 카드가 104px·152px 로 갈렸다.
+         한 줄을 통째로 쓰게 해서 어느 묶음이든 기준 폭을 같게 만든다. */
+    .rc-equip-group { flex: 1 1 100%; }
+    /* ⚠ `.rc-equip` 한 겹으로는 안 먹는다 — 아래에 같은 특정도의 `width: 184px` 이
          **더 뒤에** 있다. 묶음을 앞에 붙여 한 단계 올린다 */
-    .rc-equip-cards .rc-equip { width: calc(50% - 4px); min-width: 104px; max-width: 152px; }
+    .rc-equip-cards .rc-equip { width: calc(50% - 4px); min-width: 104px; max-width: 168px; }
 }
 
 /* ── 포스트잇 플래그 탭 ────────────────────────────────
@@ -3343,7 +3490,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     /* ⚠ 늘었다 줄었다 하지 않는다. 묶음이 내용 크기로 접히므로 카드가 `flex: 1 1 0` 이면
          묶음 안 카드 수에 따라 폭이 들쭉날쭉해지고, 위 편성 타일(152px)보다 좁아진다.
          **편성 타일과 같은 폭으로 못 박는다** — 같은 사도가 위아래에 나오므로 크기가 같아야 한다. */
-    flex: 0 0 auto; width: 152px;
+    flex: 0 0 auto; width: 168px;
 }
 [data-theme="dark"] .rc-equip {
     --rc-card-bg: #202024; --rc-name: #FAFAFA; --rc-sub: #9C9C95;
@@ -3383,14 +3530,18 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    ⚠ 가운데를 **올리지 않는다.** `translateY` 로 올리면 박스 위로 삐져나가므로
      위쪽 여백을 따로 계산해 줘야 하고, 여백을 조금만 덜 주면 바로 뚫고 나간다.
      **바깥 둘을 내리면** 박스가 알아서 그만큼 높아져 넘칠 일이 없다. */
+/* ⚠⚠ **가로 폭 예산을 먼저 맞춘다.** 칸이 `flex: none` 이고 줄바꿈도 안 하므로
+     `칸×3 + 간격×2 + 양쪽 안여백×2 ≤ 100cqw` 가 깨지면 **칸이 음각 박스 밖으로
+     양염으로 샐어진다.** 칸만 키우고 예산을 안 본 탓에 두 번 다 나갔다.
+     지금: 27.5×3 + 3×2 + 5×2 = 98.5 ≤ 100 */
 .rc-equip-slots.is-caret {
     flex-wrap: nowrap; align-items: flex-start;
-    gap: 0 4cqw; padding: 5cqw 6cqw;
+    gap: 0 3cqw; padding: 4.5cqw 5cqw;
 }
 .rc-equip-slots.is-caret > .rc-equip-slot:nth-child(1) { order: 2; }
 .rc-equip-slots.is-caret > .rc-equip-slot:nth-child(2) { order: 1; }
 .rc-equip-slots.is-caret > .rc-equip-slot:nth-child(3) { order: 3; }
-/* 칸 26 + 간격 4 = 간격 30 → 내리는 폭 20 (30 × 0.667) */
+/* 칸 27.5 + 간격 3 = 간격 30.5 → 내리는 폭 20 (30.5 × 0.667) */
 .rc-equip-slots.is-caret > .rc-equip-slot:nth-child(2),
 .rc-equip-slots.is-caret > .rc-equip-slot:nth-child(3) { margin-top: 20cqw; }
 
@@ -3404,7 +3555,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
      그대로 쓰면 무겁다 — 투명도를 낮춰 눌러 둔다. */
 .rc-equip-slots:not(.is-caret) { padding: 6cqw; }
 .rc-equip-slot {
-    width: 26cqw; height: 26cqw; position: relative; flex: none;
+    width: 27.5cqw; height: 27.5cqw; position: relative; flex: none;
     display: block; cursor: help;
 }
 .rc-equip-slot > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }

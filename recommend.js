@@ -306,6 +306,10 @@ function bandClip(i) {
 function buildPin(char, info) {
     const role = (char.role || '').trim();
     const fixed = (info.fixed || '').trim();
+    /* 어사이드 의존도. 보드에서는 **`필수` 만 그린다** — 아홉 칸에 핀이 빽빽해서
+       세 상태를 다 달면 난잡하다. `권장`·`무관` 은 아래 아티팩트 카드와 상세 모달에서 본다.
+       ⚠ 빈 값은 당연히 안 그린다 (비었다 = 아직 안 적었다). */
+    const aside = (info.aside || '').trim();
     const pin = document.createElement('div');
     pin.className = 'rc-pin' + (fixed ? ' is-fixed' : '');
     pin.dataset.role = role;
@@ -314,7 +318,11 @@ function buildPin(char, info) {
     pin.setAttribute('aria-label', `${char.name} 상세 정보`);
     /* ⚠ 이명(`title`)은 **넣지 않는다.** 핀은 얼굴만 보이는 자리라 말풍선이
        이름을 확인하는 용도인데, 이명까지 붙으면 정작 이름이 눈에 안 들어온다. */
+    const move = (info.move || '').trim();
     pin.dataset.tooltip = char.name + (fixed ? `\n고정 — ${fixed}` : '');
+    /* 배치 규칙은 **상자를 따로** 세운다 — 이름과 성격이 다른 정보라 한 상자에 섞으면
+       둘 다 흘려 읽게 된다 (`tooltip.js` 의 `data-tooltip-2`) */
+    if (move) pin.setAttribute('data-tooltip-2', move);
     const open = () => window.openDetailModal(char);
     pin.onclick = open;
     pin.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
@@ -324,7 +332,8 @@ function buildPin(char, info) {
                  alt="" onerror="this.remove()">
         </span>
         <img class="p-role" src="${iconUrl(role, 'role')}" alt="" onerror="this.remove()">
-        ${fixed ? '<img class="p-fix" src="./assets/icons/common_icons/PIN_Fixed.png" alt="고정">' : ''}`;
+        ${fixed ? '<img class="p-fix" src="./assets/icons/common_icons/PIN.webp" alt="고정">' : ''}
+        ${aside === '필수' ? '<span class="p-aside" data-tooltip="어사이드 필수">A2</span>' : ''}`;
     return pin;
 }
 
@@ -334,6 +343,10 @@ function buildBoard(members, pick, freeCount, freeLabel, noGrade, bg) {
     /* 좁은 화면에서는 상자를 **가로로 밀어** 본다. 보드가 2.9:1 이라 폭을 따라 줄면
        세로까지 같이 줄어드는데, 375px 폰에서 핀이 32px·역할 뱃지가 12px 까지 내려가
        누가 어디 있는지를 못 읽었다. 최소 폭을 지키고 미는 쪽이 낫다 (CSS 가 맡는다). */
+    /* ⚠ 보드 아래 글(규칙 줄·상세 설명)은 **스크롤 껍데기 밖**이다. 안에 두면
+         최소 폭 460px 을 같이 물려받아 폰에서 글까지 옆으로 밀린다. */
+    const zone = document.createElement('div');
+    zone.className = 'rc-boardzone';
     const scroll = document.createElement('div');
     scroll.className = 'rc-board-scroll';
     const wrap = document.createElement('div');
@@ -346,9 +359,17 @@ function buildBoard(members, pick, freeCount, freeLabel, noGrade, bg) {
     /* 배경은 **덱마다 고른다** (`board_bg`). 비우면 기본 편성창(`Deck_Bg`).
        ⚠ 배경마다 초점이 다르다 — 자리 잡기는 CSS 의 `[data-bg]` 규칙이 맡는다. */
     if (bg) { wrap.dataset.bg = bg; wrap.style.backgroundImage = `url('./assets/bg/${encodeURIComponent(bg)}.webp')`; }
+    /* ⚠ 여백은 **안쪽 칸**이 쥔다. 상자에 직접 `padding: 13%` 를 주면 그 %가
+       상자의 제 폭이 아니라 **바깥 컨테이너 폭** 기준으로 풀린다 — 좁은 화면에서
+       상자가 `min-width: 460px` 으로 버티는 동안 컨테이너는 300px 이라
+       위 여백이 39px 밖에 안 나와 **학사모가 잘렸다.**
+       한 겹 안으로 넣으면 %가 상자 폭(460) 기준이 돼 어느 폭에서나 맞는다. */
+    const pad = document.createElement('div');
+    pad.className = 'rc-board-pad';
+    wrap.appendChild(pad);
     const board = document.createElement('div');
     board.className = 'rc-board';
-    wrap.appendChild(board);
+    pad.appendChild(board);
     COL_ORDER.forEach((_, i) => {
         const b = document.createElement('div');
         b.className = 'rc-band';
@@ -369,14 +390,91 @@ function buildBoard(members, pick, freeCount, freeLabel, noGrade, bg) {
         board.appendChild(pad);
 
         if (!m) return;
+        /* 자리가 상대에 따라 바뀌는 사도는 **발 밑에 장판**을 깐다.
+           ⚠ 발판 위·핀 아래다 (`z-index: 1`). 핀 위로 올리면 얼굴을 덮는다. */
+        let decal = null;
+        if ((m.move || '').trim()) {
+            const dc = document.createElement('img');
+            dc.className = 'rc-decal';
+            dc.src = './assets/icons/common_icons/movable.webp';
+            dc.alt = '';
+            dc.onerror = () => dc.remove();
+            dc.style.cssText = `left:${x}%;top:${y}%`;
+            board.appendChild(dc);
+            decal = dc;
+        }
         const ch = isFreeSlot(m.name) ? null : pick(m.name);
         const el = ch ? buildPin(ch, m) : buildFreePin(freeCount, freeLabel);
+        /* ⚠ 장판은 핀의 **형제**라 CSS `:hover` 로는 짝을 못 집는다 (`:has` 를 쓰면
+             보드 안의 장판이 전부 걸린다). 만든 자리에서 짝지어 손으로 켜고 끈다. */
+        if (decal) {
+            const on = () => decal.classList.add('is-hot');
+            const off = () => decal.classList.remove('is-hot');
+            el.addEventListener('mouseenter', on);
+            el.addEventListener('mouseleave', off);
+            el.addEventListener('focus', on);
+            el.addEventListener('blur', off);
+        }
         el.style.cssText = `left:${x}%;top:${y}%`;
         if (ch && !noGrade) el.classList.add('has-grade');
         if (ch && !noGrade) el.insertAdjacentHTML('afterbegin', gradeMarkHTML(m));
         board.appendChild(el);
     }));
-    return scroll;
+
+    /* 자리가 바뀌는 사도는 **글자로도** 낸다.
+       ⚠ `tooltip.js` 는 `mouseover`·`focusin` 만 듣는다 — **폰에서는 말풍선이 안 뜬다.**
+         핀을 탭하면 상세 모달이 열려 버려서 말풍선이 설 자리도 없다. 이 규칙이 덱의
+         핵심인 경우가 있어(줘팸터 카운터 덱) 호버에만 맡기면 모바일에서 통째로 사라진다. */
+    zone.appendChild(scroll);
+
+    const movers = members.filter(m => (m.move || '').trim() && !isFreeSlot(m.name));
+    if (movers.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'rc-board-moves';
+        ul.innerHTML = movers.map(m =>
+            `<li><b>${esc(m.name)}</b> ${esc(m.move.trim())}</li>`).join('');
+        zone.appendChild(ul);
+    }
+
+    /* 사도별 메모는 **접어 둔다.** 보드에서 핀에 띄울 자리가 없어 여태 어디에도
+       안 나왔는데(레졸의 배치 4분기가 그랬다), 그렇다고 펼쳐 두면 보드보다 글이 길어진다. */
+    const noted = members.filter(m => (m.note || '').trim() && !isFreeSlot(m.name));
+    if (noted.length) {
+        const wrapN = document.createElement('div');
+        wrapN.className = 'rc-board-notes';
+        const id = 'bn' + Math.random().toString(36).slice(2, 8);
+        wrapN.innerHTML =
+            `<button type="button" class="rc-notes-btn" aria-expanded="false" aria-controls="${id}">
+                 사도별 배치 메모 <span class="rc-notes-caret" aria-hidden="true">▾</span>
+             </button>
+             <div class="rc-notes-body" id="${id}" hidden></div>`;
+        /* ⚠ **후보 줄(`.rc-alt`)을 그대로 쓴다.** 같은 페이지에서 "사도 + 딸린 설명" 이
+             두 가지 꼴로 보이면 안 된다 — 카드도 음각 박스도 저쪽 양식을 빌린다. */
+        const bodyN = wrapN.querySelector('.rc-notes-body');
+        noted.forEach(m => {
+            const ch = pick(m.name);
+            if (!ch) return;
+            const r = document.createElement('div');
+            r.className = 'rc-alt';
+            r.appendChild(buildDeckTile(ch));
+            const t = document.createElement('div');
+            t.className = 'rc-alt-text';
+            t.innerHTML = `<span class="rc-alt-note">${
+                (m.move || '').trim() ? '<i class="rc-notes-mark" aria-label="자리가 바뀜"></i>' : ''
+            }${esc(m.note.trim())}</span>`;
+            r.appendChild(t);
+            bodyN.appendChild(r);
+        });
+        const btn = wrapN.querySelector('.rc-notes-btn');
+        const body = wrapN.querySelector('.rc-notes-body');
+        btn.onclick = () => {
+            const on = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', String(!on));
+            body.hidden = on;
+        };
+        zone.appendChild(wrapN);
+    }
+    return zone;
 }
 
 /* 빈자리 핀 — 누가 설지 정해지지 않은 칸 */
@@ -483,6 +581,8 @@ function groupMembers(rows, deckKey) {
             /* 비면 자유, 값이 있으면 **그 자리에 고정**이고 그 값이 곧 사유다
                (`high_skill` 과 같은 관례 — 사유가 있어야 "왜 못 옮기지" 가 안 생긴다) */
             fixed: (r.fixed || '').trim(),
+            /* 자리가 상대에 따라 바뀌는 사도. 값이 곧 그 규칙이다 */
+            move: (r.move || '').trim(),
             /* 쉼표로 여러 개. ⚠ 다른 열과 **짝지어 세지 않는다** — 이름만 늘어놓을 뿐이라
                `buff_DB` 의 슬롯 정렬 함정이 생기지 않는다. 사유를 적고 싶어지면 행으로 풀 것. */
             artifacts: (r.artifact || '').split(',').map(v => v.trim()).filter(Boolean),
