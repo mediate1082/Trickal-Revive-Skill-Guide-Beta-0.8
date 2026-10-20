@@ -1041,6 +1041,19 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     pointer-events: none;
 }
 .tg-tip.is-on { opacity: 1; visibility: visible; transform: none; }
+/* 말풍선 머리줄 — 아이콘(`data-tooltip-icon`)이 **이름 왼쪽**에 선다.
+   ⚠ `.tg-tip` 이 `white-space: pre-line` 이라 그냥 두면 줄바꿈이 어긋난다.
+     머리줄만 `flex` 로 떼어 한 줄을 쓰게 하고, 설명은 그 아래로 떨어진다. */
+.tg-tip-head {
+    display: flex; align-items: center; gap: 7px;
+    margin-bottom: 5px; font-weight: 800;
+}
+/* ⚠ `/` 구분자는 **글자 그대로** 넣는다 — 겹친 하나가 아니라 나란히 선 둘이라는 뜻이다. */
+.tg-tip-icons {
+    display: inline-flex; align-items: center; gap: 5px;
+    flex: none; font-size: .9em; opacity: .9;
+}
+.tg-tip-icons img { width: 20px; height: 20px; object-fit: contain; display: block; }
 [data-theme="dark"] .tg-tip { background: #E8EBE3; color: #24261F; }
 /* 둘째 상자 — 첫째(이름) 아래에 붙는 **딸린 설명**이라 한 톤 낮춘다 */
 .tg-tip-2 { font-size: .74rem; padding: 8px 11px; background: #434838; }
@@ -3942,4 +3955,405 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     .rc-tile { flex: 0 0 116px; width: 116px; }
     .rc-card-name { font-size: 1rem; }
     .rc-sec-tip { max-width: none; }
+}
+
+/* ══ 대충돌 2.0 · 보스 기믹 패널 (`buildBossPanel`) ════════════════
+   분류의 **맨 위**, 덱보다 먼저 온다. "누구와 싸우는가" 가 "무엇을 데려가는가" 보다 앞이다.
+
+   ⚠ 인게임 팝업은 연녹색 바탕에 카드를 **세로로** 쌓지만 그 꼴을 베끼지 않는다.
+     이 자리 바로 아래에 덱 상자가 붙으므로, 두 블록이 다른 색 세계를 쓰면
+     한 화면에 두 양식이 된다 (덱 편성에서 이미 겪었다).
+   ⚠ 인게임 패널 에셋(`Dimension_BuffSlot_Box_01`)도 쓰지 않는다. 491:252 통짜 그림이라
+     세로로 늘리면 모서리 삼각형이 같이 커지고, 9슬라이스로도 못 늘린다.
+     음각 상자(`COMPONENTS.md` §2)로 짠다. */
+
+/* ── 스킬 카드 줄 ────────────────────────────────────────────
+   ⚠ 개수를 코드에 박지 않는다. 지금 보스는 셋이지만 넷인 보스가 나올 수 있고,
+     `auto-fit` 이면 폰에서 1열로 알아서 접힌다. */
+.rc-boss-skills {
+    display: grid; gap: 11px;
+    grid-template-columns: repeat(auto-fit, minmax(min(224px, 100%), 1fr));
+}
+.rc-boss-skill {
+    padding: 13px 13px 14px;
+    background: var(--modal-card-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 13px;
+    box-shadow: 0 1px 3px var(--shadow-soft);
+    display: flex; flex-direction: column; align-items: center;
+}
+/* 아이콘 틀 — 인게임 스킬 아이콘 틀의 색.
+   ⚠ 아이콘 그림에 어두운 바탕이 **이미 구워져 있어** 거기 직접 테두리를 주면
+     모서리가 제 곡률대로 안 꺾인다. 바깥에 칸을 두르고 안을 잘라낸다.
+   ⚠ 흰 카드 위에 흰 틀을 두니 테두리만 남아 안 보였다 — 연두를 깐다. */
+.rc-boss-ico {
+    width: 54px; aspect-ratio: 1; flex: none; margin-bottom: 7px;
+    padding: 3px; border-radius: 12px; overflow: hidden;
+    background: var(--rc-boss-ico-bg); border: 1px solid var(--rc-boss-ico-edge);
+    box-shadow: 0 2px 0 var(--rc-boss-ico-edge);
+}
+.rc-boss-ico img { width: 100%; height: 100%; display: block; border-radius: 9px; }
+:root { --rc-boss-ico-bg: #D7E9B0; --rc-boss-ico-edge: #D0D7C2; }
+/* ⚠ 다크에서 연두 원색은 카드보다 밝아 아이콘보다 틀이 먼저 읽힌다. 카드색에 섞는다. */
+[data-theme="dark"] {
+    --rc-boss-ico-bg: color-mix(in srgb, #D7E9B0 22%, #27272A);
+    --rc-boss-ico-edge: color-mix(in srgb, #D0D7C2 28%, #27272A);
+}
+/* 제목 — 인게임의 연녹색 알약을 사이트 초록으로 옮긴 것.
+   ⚠ 시즌 규칙의 **형광펜 밑줄**과 일부러 다른 꼴로 둔다. 둘이 세로로 붙어 나오므로
+     서식만으로 "이건 보스 스킬" 이 갈려야 한다. */
+.rc-boss-skill b {
+    display: inline-block; padding: 3px 12px 4px; border-radius: 999px;
+    background: var(--accent-soft); border: 1px solid var(--accent-green);
+    color: var(--text-dark); font-size: .83rem; font-weight: 800;
+    word-break: keep-all; text-align: center;
+}
+/* 본문 — **음각**. 흰 카드 위라 바탕은 `--stat-box-bg`.
+   ⚠ `flex: 1` 로 남는 높이를 먹인다. 카드는 격자라 키가 같은데, 음각 상자가 제 글만큼만
+     차지하면 짧은 카드 아래에 흰 바닥이 길게 남는다.
+   ⚠⚠ 세로 가운데 맞추기로 `display: grid`(또는 flex)를 쓰면 **안 된다.** 본문의
+     `<em>` 용어 조각들이 저마다 격자 칸이 되어 **용어마다 줄이 갈라진다.** */
+.rc-boss-skill p {
+    flex: 1;
+    margin: 9px 0 0; width: 100%; padding: 9px 11px 10px;
+    background: var(--stat-box-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    box-shadow: var(--inset-shadow);
+    font-size: .755rem; line-height: 1.65;
+    color: var(--rc-reason, var(--text-dark)); text-align: center; word-break: keep-all;
+}
+
+/* 본문 속 용어 — 보스 고유 용어와 **우리가 거는 CC** 를 갈라 칠한다.
+   읽는 사람이 찾는 건 "무엇을 넣어야 하나" 뿐이라서다. 요약 줄도 같은 표기를
+   쓰므로 `.rc-boss` 전체에 건다. */
+.rc-crash2 em { font-style: normal; font-weight: 800; color: var(--term-accent); }
+/* 말풍선이 달린 용어 — **무언가 더 있다**는 신호를 준다.
+   ⚠ 신호가 없으면 아무도 마우스를 올리지 않는다. */
+.rc-crash2 em[data-tooltip] { border-bottom: 1px dotted currentColor; cursor: help; }
+.rc-crash2 em.cc {
+    color: var(--buff-text); background: var(--buff-pale);
+    border-bottom: 2px solid var(--buff-soft);
+    border-radius: 3px; padding: 0 3px;
+}
+/* 본문 글줄의 아이콘 — 설명이 없는 상태(세는 물건)만 쓴다. 용어 **뒤**에 붙는다.
+   ⚠ 블록으로 띄우면 글이 두 줄일 때 아이콘만 혼자 다음 줄에 남는다. */
+.rc-crash2-sico {
+    display: inline-block; vertical-align: -3px;
+    width: 15px; height: 15px; margin-left: 3px;
+}
+.rc-crash2-sico img { width: 100%; height: 100%; display: block; }
+
+/* 꼬리 용어줄 — 인게임도 본문 아래에 `용어 : 설명` 으로 붙인다.
+   ⚠⚠ **호버가 없는 기기에서만** 낸다. 마우스가 있으면 같은 말이 말풍선과 두 번이고,
+     없으면 말풍선을 띄울 방법이 아예 없다 (`tooltip.js` 는 `mouseover`·`focusin` 만 듣는다).
+     편성판의 `자리 규칙` 줄과 같은 수법이다. */
+@media (hover: hover) and (pointer: fine) { .rc-boss-gloss { display: none; } }
+.rc-boss-gloss {
+    margin-top: 7px; width: 100%; padding: 0 4px;
+    font-size: .705rem; line-height: 1.5; color: var(--text-muted);
+    text-align: center; word-break: keep-all;
+}
+.rc-boss-gloss i { display: block; font-style: normal; }
+.rc-boss-gloss i b { font-weight: 800; color: var(--term-accent); }
+
+/* ══ 대충돌 2.0 · 시즌 규칙 + 이면의 파편 (`buildShardPanel`) ══════
+   보스 패널 **아래**, 덱 위. "누구와" → "어떤 규칙으로" → "무엇을 데려가는가" 순서다.
+
+   ⚠⚠ 여기만 **어두운 상자**다. 사이트는 밝은데 파편 카드가 쓰는 에셋(글로우·테두리·
+     별무늬 패널)이 전부 **어두운 화면을 전제로 구워진 그림**이라, 밝은 바탕에 놓으면
+     글로우가 안 보이고 테두리만 둥둥 뜬다. 보스 패널은 우리가 도형을 직접 그려서
+     사이트 톤으로 갈 수 있었지만 이쪽은 그림이 정해 준다.
+   ⚠ 그래서 다크 모드에서도 **색이 거의 안 바뀐다**. 원래 어두운 블록이다. */
+/* ── 시즌 규칙 상자 ──────────────────────────────────────────
+   인게임은 메인 로비의 **블롭 버튼**을 누르면 팝업으로 규칙을 보여준다. 여기서는
+   누를 데가 없으니 그 버튼 그림을 **상자 머리**로 쓰고 내용을 바로 편다.
+   ⚠ 블롭은 342×182 짜리 울퉁불퉁한 모양이다 — **가로 띠로 늘리면 찌그러진다.**
+     제 비율대로 작게 놓고 글자만 얹는다. */
+.rc-rulebox { margin: 0; padding: 0; }
+/* 블롭은 **상자 안에 온전히** 들어간다 (모서리에 걸치지 않는다) */
+.rc-rule-head {
+    position: relative; width: 148px; margin: 0 auto 2px;
+    display: grid; place-items: center;
+}
+.rc-rule-head img { width: 100%; display: block; }
+.rc-rule-head b {
+    position: absolute; font-size: .88rem; font-weight: 800; color: #FFF;
+    text-shadow: 0 1px 2px rgba(0,0,0,.55); letter-spacing: .01em;
+}
+.rc-rule-list { display: flex; flex-direction: column; gap: 9px; margin-top: -6px; }
+/* 규칙 한 줄 — 인게임 서식 그대로 **아이콘 + 통통한 띠 + 그 위에 얹힌 글자**.
+   ⚠ 아이콘과 띠 **사이를 띄우지 않는다.** 둘이 한 몸처럼 붙어야 인게임 꼴이 난다 —
+     띠가 아이콘 아래로 파고들어 시작한다.
+   ⚠ 글자는 띠 **위에 살짝 겹쳐** 올라간다. `border-bottom` 같은 얇은 밑줄이 아니라
+     형광펜으로 그은 듯한 두께다. */
+.rc-rule {
+    display: flex; align-items: center; justify-content: center; gap: 0;
+    font-size: .86rem; font-weight: 700; color: var(--text-dark);
+    word-break: keep-all; text-align: center;
+}
+.rc-rule img { width: 24px; flex: none; position: relative; z-index: 2; }
+.rc-rule span { position: relative; z-index: 1; padding: 0 9px 2px 10px; }
+.rc-rule span::before {
+    content: ''; position: absolute; z-index: -1;
+    left: -13px; right: 0; bottom: 0; height: .95em;
+    background: rgba(96, 156, 226, .34); border-radius: 4px;
+}
+
+/* ── 파편들이 놓이는 줄 ──────────────────────────────────── */
+.rc-shards { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; }
+
+/* 파편 하나 — **제 상자를 하나씩 쓴다.**
+   ⚠ 셋을 한 상자로 묶지 않는다. 인게임도 카드마다 따로 서 있고, 묶어 두면 글 길이가
+     다른 카드끼리 아래가 들쭉날쭉한 게 한 덩어리로 보인다. */
+.rc-shard {
+    --col: #868C94;          /* 레벨 색 — JS 가 갈아끼운다 */
+    --w: 205px;              /* 석 장이 한 줄에 서는 치수 — `--rc-crash2-col` 이 이보다
+                                좁아지면 접힌다 (3 × (205+36) + 2 × 18 = 759) */
+    width: calc(var(--w) + 36px);
+    padding: 18px 18px 16px;
+    background: #2A1C24; border-radius: 18px;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.45), 0 4px 14px rgba(0,0,0,.18);
+    display: flex; flex-direction: column; align-items: center;
+}
+/* 카드 — Base(325×375) 를 100% 로 잡고 나머지를 비율로 겹친다.
+   ⚠ Base / Border / Glow 는 캔버스 크기가 다르지만 **셋 다 제 캔버스 중심에 맞춰져
+     있다** (어긋남 최대 3.5px). 가운데 정렬 + 크기 비율만 주면 좌표를 손으로 안 맞춰도 된다.
+   ⚠ 에셋이 **흰 실루엣**이라 `mask` + 배경색으로 색을 입힌다 (`.rc-pick-star` 와 같은 수법).
+     `filter` 로는 임의의 색을 못 낸다. */
+.rc-shard-card {
+    position: relative; width: var(--w); aspect-ratio: 325 / 375;
+    display: grid; place-items: center;
+}
+.rc-shard-card > * { grid-area: 1 / 1; }
+.rc-shard-glow {
+    width: 128.3%; height: 123.7%;          /* 417/325 · 464/375 */
+    background: var(--col);
+    -webkit-mask: url('./assets/icons/dimension/Dimension_Icon_01_Glow.webp') center / contain no-repeat;
+            mask: url('./assets/icons/dimension/Dimension_Icon_01_Glow.webp') center / contain no-repeat;
+    opacity: var(--glow, .5); filter: blur(1px);
+}
+/* 그림은 Base 를 마스크로 써서 파편 모양으로 잘린다.
+   ⚠ 인게임 파편 그림은 256×256 정사각인데 카드는 325:375 로 세로가 길다 —
+     `cover` 로 채우고 좌우를 버린다. 얼굴이 치우친 그림은 `art_pos` 로 민다. */
+.rc-shard-art {
+    width: 100%; height: 100%;
+    background-image: var(--art);
+    background-size: cover;
+    background-position: var(--art-pos, 50% 35%);
+    -webkit-mask: url('./assets/icons/dimension/Dimension_Icon_01_Base.webp') center / contain no-repeat;
+            mask: url('./assets/icons/dimension/Dimension_Icon_01_Base.webp') center / contain no-repeat;
+}
+.rc-shard-border {
+    width: 107.7%; height: 106.7%;          /* 350/325 · 400/375 */
+    background: var(--col);
+    -webkit-mask: url('./assets/icons/dimension/Dimension_Icon_01_Border.webp') center / contain no-repeat;
+            mask: url('./assets/icons/dimension/Dimension_Icon_01_Border.webp') center / contain no-repeat;
+}
+/* 둘레 삼각형 — 자리는 카드 기준 % */
+.rc-shard-deco {
+    position: absolute; width: 11%; aspect-ratio: 77/84;
+    background: var(--col);
+    -webkit-mask: url('./assets/icons/dimension/Dimension_Icon_Deco1.webp') center / contain no-repeat;
+            mask: url('./assets/icons/dimension/Dimension_Icon_Deco1.webp') center / contain no-repeat;
+}
+.rc-shard-deco.d1 { left: -7%;  top: 30%; transform: rotate(180deg); }
+.rc-shard-deco.d2 { left: -4%;  top: 44%; transform: rotate(180deg) scale(.8); }
+.rc-shard-deco.d3 { right: -6%; top: 52%; }
+.rc-shard-deco.d4 { right: -3%; top: 16%; transform: scale(.7); }
+/* ⚠ 그리드 칸 안에 두면 카드 **안쪽**으로 들어가 그림에 가린다.
+     인게임은 아래 모서리에 걸쳐 있으므로 절대 배치로 빼서 걸친다. */
+.rc-shard-lv {
+    position: absolute; left: 50%; bottom: 0;
+    transform: translate(-50%, 38%);
+    font-size: calc(var(--w) * .145); font-weight: 800; font-style: italic;
+    color: #FFF; letter-spacing: .02em; white-space: nowrap;
+    text-shadow: 0 0 3px #000, 0 2px 0 rgba(0,0,0,.7), 0 0 12px rgba(0,0,0,.7);
+}
+/* ── 이름 줄 ─────────────────────────────────────────────── */
+.rc-shard-title {
+    position: relative; margin-top: 22px; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.rc-shard-title img { width: calc(var(--w) * .21); flex: none; }
+.rc-shard-title .t2 { width: calc(var(--w) * .13); align-self: flex-start; margin-top: -6%; }
+.rc-shard-title b {
+    font-size: .92rem; font-weight: 800; color: #FFF;
+    text-shadow: 0 0 6px rgba(180,104,232,.9), 0 1px 0 #000;
+    word-break: keep-all; text-align: center;
+}
+/* ── 효과 상자 — 인게임 패널 에셋을 그대로 쓴다 ──────────────
+   `Dimension_BuffSlot_Box_01` 은 별무늬 바탕·테두리 글로우·모서리 삼각형까지
+   **전부 구워진 완성 패널**이다 (불투명 픽셀 0, 전부 반투명).
+   ⚠ 9슬라이스로 못 늘린다 — 삼각형이 가장자리에 박혀 있어 `border-image` 로 늘리면
+     변마다 복제된다. 통짜로 늘리되 **최소 높이**를 둬서 글이 짧아도 납작해지지 않게 한다. */
+.rc-shard-fx {
+    margin-top: 10px; width: calc(var(--w) + 18px);
+    min-height: calc((var(--w) + 18px) * 252 / 491);
+    padding: 13px 16px; display: grid; place-items: center;
+    background: url('./assets/icons/dimension/Dimension_BuffSlot_Box_01.webp') center / 100% 100% no-repeat;
+    font-size: .76rem; line-height: 1.55; color: #EDE7F6;
+    text-align: center; word-break: keep-all;
+}
+/* ⚠ 부가 줄은 **항목마다 제 줄**을 쓴다. 한 줄에 `·` 로 이어 붙이면 수치가 두 자리 →
+     세 자리로 늘 때 **항목 가운데서 줄이 넘어간다** (`… 증가 · 일반` / `공격 피해량 …`).
+     인게임도 항목별로 줄을 나눠 놨다. */
+.rc-shard-sub { display: block; margin-top: 5px; color: #F2A6A6; }
+.rc-shard-sub i { display: block; font-style: normal; }
+
+/* ══ 대충돌 2.0 · 정보 섹션 바깥틀 (`buildCrash2Panel`) ════════════
+   제목 탭 + 머리(초상화·서술) + 2단(기믹 / 규칙·파편). 덱보다 먼저 온다.
+   ⚠ 폭은 **오른쪽 단**이 정한다 — 파편 그림이 325:375 로 비율이 박혀 늘일 수 없어서,
+     석 장이 한 줄에 서는 치수가 바닥이 된다. 왼쪽 기믹 카드는 글상자라 늘어나도 된다. */
+/* ⚠ 성격색 변수는 **껍데기**가 든다. 이름표와 상자가 형제라, 상자에만 선언하면
+     이름표가 그 값을 못 읽는다. */
+.rc-crash2-wrap { max-width: var(--rc-crash2-col); margin: 0 auto 16px; }
+.rc-crash2-wrap:has([data-personality="순수"]) { --p-bg: #FFF2E8; --p-edge: #FAC9A4; }
+.rc-crash2-wrap:has([data-personality="냉정"]) { --p-bg: #E3EFF9; --p-edge: #A4D0F7; }
+.rc-crash2-wrap:has([data-personality="광기"]) { --p-bg: #FCE4EB; --p-edge: #F4ACBA; }
+.rc-crash2-wrap:has([data-personality="우울"]) { --p-bg: #F2E0FD; --p-edge: #D8A0FB; }
+.rc-crash2-wrap:has([data-personality="활발"]) { --p-bg: #FBF6E0; --p-edge: #F9ECA8; }
+:root { --rc-crash2-col: 880px; }
+
+/* 제목 탭 — **분류명(`.group-title`)과 같은 질감**이다. 두께 2px 테두리 · 자간 .06em ·
+   성격색 세 벌(바탕·테두리·글자). 색을 새로 정하지 않고 그 표에서 가져온다.
+   ⚠ 상자 **바깥 위**에 두고 아래만 문다 (아티팩트 묶음의 포스트잇 탭과 같은 꼴).
+     안에 넣으면 머리의 초상화·서술과 한 덩어리로 보여 "무엇의 제목인가" 가 흐려진다.
+   ⚠ `margin-bottom` 이 음수라 상자를 파고든다 — 상자의 위 패딩이 그만큼 넉넉해야 한다.
+   ⚠⚠ 이름표와 상자가 **같은 성격색이면 이름표가 안 보인다.** 상자 쪽을 한 톤 묽게 타서
+     (`--p-pale`) 이름표만 제 색으로 남긴다. */
+.rc-crash2-title {
+    position: relative; z-index: 1;
+    display: inline-flex; align-items: center; gap: 7px;
+    margin: 0 0 -12px 16px; padding: 8px 16px 14px;
+    background: var(--p-bg, var(--accent-soft));
+    border: 2px solid var(--p-edge, var(--border-soft)); border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    font-size: .92rem; font-weight: 800; letter-spacing: .06em;
+    color: var(--p-ink, var(--text-dark));
+}
+.rc-crash2-title img { width: 21px; flex: none; }
+
+.rc-crash2 {
+    padding: 22px 18px 18px;
+    background: color-mix(in srgb, var(--p-bg, var(--modal-body-bg)) 45%, var(--modal-body-bg));
+    border: 1px solid var(--p-edge, var(--border-soft));
+    border-radius: 16px;
+    box-shadow: 0 2px 8px var(--shadow-soft);
+}
+/* 성격색은 덱 상자(`.rc-deck[data-personality]`)와 **같은 파스텔**이다 — 새로 정하지 않는다.
+   ⚠ 바탕만 물들인다. 안쪽 카드는 흰색이어야 떠 보인다. */
+.rc-crash2-wrap:has([data-personality="순수"]) { --p-ink: #1a7a3d; }
+.rc-crash2[data-personality="순수"] { --p-bg: #FFF2E8; --p-edge: #FAC9A4; }
+.rc-crash2-wrap:has([data-personality="냉정"]) { --p-ink: #1a4a7e; }
+.rc-crash2[data-personality="냉정"] { --p-bg: #E3EFF9; --p-edge: #A4D0F7; }
+.rc-crash2-wrap:has([data-personality="광기"]) { --p-ink: #8b2240; }
+.rc-crash2[data-personality="광기"] { --p-bg: #FCE4EB; --p-edge: #F4ACBA; }
+.rc-crash2-wrap:has([data-personality="우울"]) { --p-ink: #5e1a8c; }
+.rc-crash2[data-personality="우울"] { --p-bg: #EFE7F7; --p-edge: #C9B2E6; }
+.rc-crash2-wrap:has([data-personality="활발"]) { --p-ink: #7a6200; }
+.rc-crash2[data-personality="활발"] { --p-bg: #FBF6E0; --p-edge: #F9ECA8; }
+/* ⚠ 다크에서 파스텔 원색은 형광으로 뜬다. 카드색에 성격색을 섞는다. */
+[data-theme="dark"] .rc-crash2[data-personality="순수"] { --p-bg: color-mix(in srgb, #F2B183 16%, #1E1E21); --p-edge: #4A3528; }
+[data-theme="dark"] .rc-crash2[data-personality="냉정"] { --p-bg: color-mix(in srgb, #85BAEC 16%, #1E1E21); --p-edge: #27384A; }
+[data-theme="dark"] .rc-crash2[data-personality="광기"] { --p-bg: color-mix(in srgb, #EE839D 16%, #1E1E21); --p-edge: #4A2833; }
+[data-theme="dark"] .rc-crash2[data-personality="우울"] { --p-bg: color-mix(in srgb, #B596DE 16%, #1E1E21); --p-edge: #352B47; }
+[data-theme="dark"] .rc-crash2[data-personality="활발"] { --p-bg: color-mix(in srgb, #ECDC85 16%, #1E1E21); --p-edge: #43412A; }
+
+/* ── 머리 — 초상화 + 서술 줄들 ─────────────────────────────── */
+.rc-crash2-head { display: flex; gap: 14px; align-items: stretch; margin-bottom: 14px; }
+/* ⚠⚠ 초상화는 **폭 고정 + 높이 stretch** 다. `width: auto` + `aspect-ratio` 로 높이에서
+     폭을 끌어내려 하면 **폭이 0 이 된다** — 늘어난 높이는 폭을 정하는 시점에 아직 안
+     정해져 있다. 그래서 정사각이 아니라 세로로 조금 긴 틀이 된다. */
+/* 배경은 인게임 로비 그림(`DimensionalClash_MainLobby_ImgBlack`)의 **일부를 확대**해
+   깐다. 2048×1311 짜리 넓은 밤하늘이라 통째로 넣으면 아무것도 안 보인다 —
+   별과 보랏빛 성운이 있는 왼쪽 위를 420% 로 당겨 쓴다.
+   ⚠ 초상화가 밝은 치비라 바탕은 **어두워야** 한다. 흰 카드 위에 놓았을 때 그림이
+     배경에 묻혔다. */
+.rc-boss-portrait {
+    position: relative; flex: none; align-self: stretch;
+    width: 136px; min-height: 136px;
+    border-radius: 14px; overflow: hidden;
+    background: #0B0712 url('./assets/icons/dimension/DimensionalClash_MainLobby_ImgBlack.webp')
+                35% 26% / 420% no-repeat;
+    border: 2px solid var(--p-edge, var(--border-soft));
+}
+/* ⚠⚠ 그림을 **레이아웃에서 뺀다**. 흐름에 두면 202px 짜리 원본이 줄 높이를 거꾸로
+     밀어올려, 맞추려던 높이가 오히려 초상화 쪽에 끌려간다. */
+.rc-boss-portrait img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; object-fit: contain; display: block;
+}
+/* 서술 — **음각**. 성격색 바탕 위라 바탕은 `--modal-card-bg` 다 (`--stat-box-bg` 는 이미
+   낮은 바탕 위에서 쓰는 값이라 여기서는 안 보인다 — `.rc-alt-text` 와 같은 사정). */
+.rc-crash2-notes {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; justify-content: center; gap: 9px;
+    padding: 13px 16px 14px;
+    background: var(--modal-card-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    box-shadow: var(--inset-shadow);
+}
+.rc-crash2-notes p {
+    margin: 0; font-size: .845rem; line-height: 1.65;
+    color: var(--rc-reason, var(--text-dark)); word-break: keep-all;
+}
+/* 라벨 — 줄 앞에 붙는 꼬리표. ⚠ 비면 아예 안 그린다 (시즌 소개처럼 이름 붙일 게 없는 줄) */
+.rc-crash2-notes p > b:first-child {
+    display: inline-block; margin-right: 8px; padding: 1px 9px 2px;
+    border-radius: 999px; background: var(--accent-soft);
+    border: 1px solid var(--accent-green);
+    font-size: .76rem; font-weight: 800; color: var(--text-dark);
+    vertical-align: 1px; white-space: nowrap;
+}
+
+/* ── 세 행 ────────────────────────────────────────────────
+   ⚠⚠ **2단으로 나란히 놓지 않는다.** 파편 카드는 그림 비율(325:375)이 높이의 바닥을 깔고
+     기믹 카드는 글 길이만큼만 자라, 두 단의 자연 높이가 두 배쯤 벌어진다 — 한쪽 아래가
+     길게 빈다. 조정으로 못 메운다 (인게임 문구라 글 길이가 정해져 있다).
+     폭을 반씩 나누는 탓에 기믹 글이 서너 단어마다 끊기는 손해도 있었다.
+   ⚠ 세로로 쌓으면 뒤엣것이 하위 항목처럼 읽히므로 **행마다 같은 무게의 머리**를 단다.
+     가르는 건 자리가 아니라 라벨이다. */
+.rc-crash2-row + .rc-crash2-row { margin-top: 14px; }
+
+/* 머리글 — 구분선 안에 얹는다. 후보 칸 머리글(`── 빈자리 후보 ─────`)과 같은 꼴이다.
+   ⚠ 왼쪽 토막만 짧게 고정하고 오른쪽이 남는 폭을 먹는다. 양쪽을 늘리면 글이 한가운데로 가
+     왼쪽 정렬인 아래 내용과 축이 어긋난다. */
+.rc-crash2-rowhead {
+    display: flex; align-items: center; gap: 9px; margin-bottom: 9px;
+    font-size: .82rem; font-weight: 800; letter-spacing: .04em;
+    color: var(--text-muted);
+}
+.rc-crash2-rowhead::before,
+.rc-crash2-rowhead::after {
+    content: ''; height: 1px; background: var(--border-soft);
+}
+.rc-crash2-rowhead::before { width: 16px; flex: none; }
+.rc-crash2-rowhead::after { flex: 1; }
+.rc-crash2-row.is-dim .rc-crash2-rowhead { color: #BFAEC4; }
+.rc-crash2-row.is-dim .rc-crash2-rowhead::before,
+.rc-crash2-row.is-dim .rc-crash2-rowhead::after { background: rgba(237,231,246,.22); }
+
+/* 시즌 규칙 행 — **제 상자를 쓴다.** 블롭 그림 하나와 규칙 한 줄뿐이라 상자가 없으면
+   앞뒤 행 사이에 덩그러니 떠 보인다 (다른 둘은 카드가 바탕을 만들어 준다). */
+.rc-crash2-row.is-card {
+    padding: 12px 16px 16px;
+    background: var(--modal-card-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: 13px;
+    box-shadow: 0 1px 3px var(--shadow-soft);
+}
+
+/* 파편 행만 **어두운 상자**다. 파편 에셋(글로우·테두리·별무늬 패널)이 전부 어두운 화면을
+   전제로 구워진 그림이라 밝은 바탕에 놓으면 글로우가 안 보이고 테두리만 둥둥 뜬다.
+   ⚠ 그래서 다크 모드에서도 색이 거의 안 바뀐다 — 원래 어두운 블록이다.
+   ⚠ 시즌 규칙 행은 **어둡게 하지 않는다.** 둘 다 어두우면 행이 갈린 게 안 보여 2단 때와
+     같은 한 덩어리로 돌아간다. 규칙 줄은 밝은 바탕용 색을 따로 쓴다. */
+.rc-crash2-row.is-dim {
+    padding: 13px 14px 16px; border-radius: 16px;
+    background: rgba(42, 28, 36, .88);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.45), 0 4px 14px rgba(0,0,0,.18);
+}
+
 }

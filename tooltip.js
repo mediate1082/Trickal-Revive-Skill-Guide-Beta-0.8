@@ -63,11 +63,45 @@
         }
     }
 
+    /* 말풍선 머리의 아이콘 줄 — `data-tooltip-icon="경로, 경로"` (쉼표로 여럿).
+       ⚠ 아이콘을 **본문 글줄에** 박지 않고 말풍선 안으로 보내는 까닭 — 본문은 읽는 글이라
+         그림이 섞이면 글이 끊긴다. 말풍선은 "이게 무엇인가" 를 보여주는 자리라 그림이 맞다.
+       ⚠ 여럿이면 `/` 로 가르고 **가로로 나란히** 둔다. 겹쳐 놓으면 어느 쪽이 본체이고
+         어느 쪽이 표지인지가 안 읽힌다. */
+    function iconRow(list) {
+        const row = document.createElement('span');
+        row.className = 'tg-tip-icons';
+        list.split(',').map(v => v.trim()).filter(Boolean).forEach((src, i) => {
+            if (i) row.appendChild(document.createTextNode('/'));
+            const im = document.createElement('img');
+            im.src = src; im.alt = '';
+            row.appendChild(im);
+        });
+        return row;
+    }
+
     function show(target) {
         const text = target.getAttribute('data-tooltip');
         if (!text) return;
         const t = box();
-        t.textContent = text;
+        /* ⚠ `textContent = text` 로 끝내면 아이콘이 매번 지워진다. 비우고 다시 쌓는다. */
+        t.textContent = '';
+        const ic = target.getAttribute('data-tooltip-icon');
+        if (ic) {
+            /* 아이콘은 **머리줄 왼쪽**에 선다. 첫 줄(이름)과 한 줄을 쓰고, 나머지 설명은
+               그 아래로 떨어진다.
+               ⚠ 아이콘만 따로 한 줄을 쓰게 두면 말풍선이 쓸데없이 길어지고,
+                 이름과 그림이 멀어져 "이 그림이 무엇의 그림인가" 가 끊긴다. */
+            const nl = text.indexOf('\n');
+            const head = document.createElement('span');
+            head.className = 'tg-tip-head';
+            head.appendChild(iconRow(ic));
+            head.appendChild(document.createTextNode(nl < 0 ? text : text.slice(0, nl)));
+            t.appendChild(head);
+            if (nl >= 0) t.appendChild(document.createTextNode(text.slice(nl + 1)));
+        } else {
+            t.appendChild(document.createTextNode(text));
+        }
         t.classList.add('is-on');
         const more = target.getAttribute('data-tooltip-2');
         if (more) { const t2 = box2(); t2.textContent = more; t2.classList.add('is-on'); }

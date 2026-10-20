@@ -768,6 +768,228 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
     return box;
 }
 
+/* ══ 대충돌 2.0 · 보스 전용 상태 (`Crash2_Boss_States.csv`) ════════
+     state_name, icon, with_icon, description
+
+   ⚠⚠ **`buff_desc_DB`/`debuff_desc_DB` 에 섞지 않는다.** 모양은 같지만 그 둘은
+     *사도가 거는* 상태의 마스터이고, 부가 효과 필터가 그 목록을 그대로 선택지로 낸다 —
+     `앵그리` 를 넣으면 "앵그리를 거는 사도" 를 고르는 칸이 생긴다. 거는 건 보스다.
+   ⚠ `with_icon` 은 상태 아이콘 **옆에 나란히** 세울 둘째 그림이다 (보스가 걸었다는 표지).
+     인게임은 겹쳐 놓지만 작게 겹치면 어느 쪽이 본체인지 안 읽혀 `/` 로 가른다.
+   ⚠ `description` 이 **비면 말풍선을 안 단다.** 대신 본문 글줄에 아이콘이 붙는다 —
+     `기절 카운트` 처럼 세는 물건은 "무엇인가" 를 설명할 게 없고 모양만 보이면 된다. */
+const BOSS_STATES = new Map();
+
+/* 설명문 표기 → 태그.
+     [[용어]]  보스 고유 용어 — 상태 표에 있으면 아이콘·말풍선이 따라온다
+     ((용어))  **사도가 거는 CC** — 편성에 반영할 것
+
+   ⚠ 둘을 한 표시로 묶지 않는다. 읽는 사람이 찾는 건 "내가 무엇을 넣어야 하나" 이고
+     그건 CC 쪽뿐이다. 밑줄 친 것만 세면 "기절 둘" 이 바로 잡힌다.
+   ⚠ 본문 글줄에는 **글자만** 둔다. 읽는 글 사이에 그림이 섞이면 글이 끊긴다 —
+     그림은 "이게 무엇인가" 를 보여주는 말풍선 쪽 일이다 (`data-tooltip-icon`).
+   ⚠ 표에 없는 용어(스킬 이름 상호참조)는 색만 입히고 넘어간다 — 설명을 지어내지 않는다. */
+function bossMark(text) {
+    return esc(text)
+        .replace(/\[\[(.+?)\]\]/g, (_, n) => {
+            const st = BOSS_STATES.get(n);
+            if (!st) return `<em>${n}</em>`;
+            if (!st.desc) {
+                return `<em>${n}<span class="rc-crash2-sico"><img
+                            src="${iconUrl(st.icon, 'dimension')}" alt=""
+                            onerror="this.parentNode.remove()"></span></em>`;
+            }
+            const ics = [iconUrl(st.icon, 'dimension')]
+                .concat(st.with ? [iconUrl(st.with, 'dimension')] : []).join(', ');
+            return `<em data-tooltip="${esc(n)}&#10;${esc(st.desc)}"
+                        data-tooltip-icon="${ics}" tabindex="0">${n}</em>`;
+        })
+        .replace(/\(\((.+?)\)\)/g, '<em class="cc">$1</em>');
+}
+
+/* ══ 대충돌 2.0 · 정보 섹션 (`buildCrash2Panel`) ═══════════════════
+   보스 기믹 · 시즌 규칙 · 이면의 파편 · 메타를 **한 상자**로 묶는다. 분류의 맨 위,
+   덱보다 먼저 온다 — "누구와 어떤 규칙으로 싸우는가" 가 "무엇을 데려가는가" 보다 앞이다.
+
+       ┌ 흑화 영춘 — 광기 ┐              ← 제목 알약 (상자 위에 걸친 탭)
+       ┌────────┬──────────────────┐
+       │ 초상화  │ 시즌 소개 / 기믹 수행 / 메타 │   ← 머리
+       └────────┴──────────────────┘
+       ┌─ 기믹 ─────────┐ ┌─ 규칙 + 파편 ─┐   ← 2단
+       │ [카드][카드][카드] │ │ ══ 시즌 규칙 ══ │
+       └────────────────┘ │ [파][파][파]   │
+                          └───────────────┘
+
+   ⚠ 기믹과 파편을 **세로로 잇지 않는다.** 둘 다 "이번 시즌이 어떤 판인가" 를 말하는
+     같은 층의 정보라, 세로로 쌓으면 뒤엣것이 앞엣것의 하위 항목처럼 읽힌다.
+   ⚠ 2단에서는 파편 카드를 **줄인다** (`--w` 205 → 145). 그림이 325:375 로 비율이
+     박혀 있어 단 폭에 맞춰 늘일 수 없는데, 석 장이 한 줄에 서야 "셋 중 어디에
+     투자하나" 가 한눈에 비교된다. 줄이는 쪽이 줄바꿈보다 낫다.
+   ⚠ 어느 한 덩이가 없어도 그려진다 — 보스만, 파편만 있는 분류가 있을 수 있다. */
+function buildCrash2Panel(sec) {
+    const wrap = document.createElement('section');
+    wrap.className = 'rc-crash2-wrap';
+    const boss = sec.boss;
+
+    /* ── 제목 탭 ─────────────────────────────────────────────
+       ⚠ 상자 **바깥 위**에 두고 아래만 살짝 문다 (아티팩트 묶음의 포스트잇 탭과 같은 꼴).
+         안에 넣으면 머리의 초상화·서술과 한 덩어리로 보여 "무엇의 제목인가" 가 흐려진다. */
+    if (boss) {
+        const t = document.createElement('div');
+        t.className = 'rc-crash2-title';
+        /* `대충돌 2.0 베타 시즌 9 — 흑화 영춘 (광기)`.
+           ⚠ `season` 은 숫자가 아니라 **자유 문구**다 (`베타 시즌 9`). 시즌 표기가
+             콘텐츠마다 다르고 베타 꼬리표도 언젠가 떨어지므로 코드에 틀을 박지 않는다. */
+        const season = (boss.season || '').trim();
+        t.innerHTML = `<img src="./assets/icons/boss/CommonIcon_MonsterWorldBoss_YC00_Mad.webp"
+                            alt="" onerror="this.remove()"
+                       ><b>대충돌 2.0${season ? ' ' + esc(season) : ''} — ${esc(boss.boss_name)}${
+                            boss.personality ? ` (${esc(boss.personality)})` : ''}</b>`;
+        wrap.appendChild(t);
+    }
+
+    const box = document.createElement('div');
+    box.className = 'rc-crash2';
+    if (boss && boss.personality) box.dataset.personality = boss.personality;
+    wrap.appendChild(box);
+
+    /* ── 머리 — 초상화 + 서술 줄들 ───────────────────────────
+       ⚠ 서술은 `Crash2_Boss_Notes.csv` 의 **행 하나가 줄 하나**다. `label` 이 있으면
+         앞에 굵게 붙고 없으면 글만 나온다 — 시즌 소개처럼 이름 붙일 게 없는 줄이 있다. */
+    if (boss || sec.notes.length) {
+        const head = document.createElement('div');
+        head.className = 'rc-crash2-head';
+        head.innerHTML = `
+            ${boss && boss.portrait ? `<div class="rc-boss-portrait">
+                <img src="${iconUrl(boss.portrait, 'dimension')}" alt=""
+                     onerror="this.remove()"></div>` : ''}
+            <div class="rc-crash2-notes">${sec.notes.map(n => `
+                <p>${(n.label || '').trim()
+                    ? `<b>${esc(n.label.trim())}</b>` : ''}${bossMark(n.text || '')}</p>`).join('')}
+            </div>`;
+        box.appendChild(head);
+    }
+
+    /* ── 세 행 — 기믹 · 시즌 규칙 · 이면의 파편 ─────────────
+       ⚠⚠ **2단으로 나란히 놓지 않는다.** 파편 카드는 그림 비율(325:375)이 높이의 바닥을
+         깔지만 기믹 카드는 글 길이만큼만 자란다 — 두 단의 자연 높이가 두 배쯤 벌어져
+         한쪽 아래가 길게 빈다. 조정으로 못 메운다 (인게임 문구라 글 길이가 정해져 있다).
+         폭을 반씩 나누는 탓에 기믹 글이 서너 단어마다 끊기는 손해도 있었다.
+       ⚠ 대신 **세 행에 같은 무게의 머리**를 단다. 세로로 쌓으면 뒤엣것이 앞엣것의 하위
+         항목처럼 읽히는데, 가르는 건 자리가 아니라 라벨이다 (후보 칸 머리글과 같은 꼴). */
+    const row = (label, kind) => {
+        const r = document.createElement('div');
+        r.className = 'rc-crash2-row' + (kind ? ' ' + kind : '');
+        if (label) r.innerHTML = `<div class="rc-crash2-rowhead"><b>${label}</b></div>`;
+        box.appendChild(r);
+        return r;
+    };
+
+    if (sec.bossSkills.length) {
+        row('보스 기믹').insertAdjacentHTML('beforeend',
+            `<div class="rc-boss-skills">${sec.bossSkills.map(bossSkillCard).join('')}</div>`);
+    }
+    /* ⚠ 시즌 규칙 행은 **머리 라벨을 안 단다.** 인게임 블롭 그림에 이미 `시즌 규칙` 이
+         적혀 있어, 라벨까지 붙이면 같은 말이 두 번이다. 그림이 곧 이 행의 머리다. */
+    if (sec.rules.length) row('', 'is-card').appendChild(buildRuleBox(sec.rules));
+    if (sec.shards.length) {
+        const r = row('이면의 파편', 'is-dim');
+        const line = document.createElement('div');
+        line.className = 'rc-shards';
+        sec.shards.forEach(sh => line.appendChild(buildShard(sh)));
+        r.appendChild(line);
+    }
+
+    return wrap;
+}
+
+/* 기믹 카드 한 장. 꼬리 줄은 그 본문이 실제로 가리킨 상태 중 **설명이 있는 것**만 낸다. */
+function bossSkillCard(s) {
+    const seen = [];
+    ((s.skill_desc || '').match(/\[\[(.+?)\]\]/g) || []).forEach(m => {
+        const n = m.slice(2, -2), st = BOSS_STATES.get(n);
+        if (st && st.desc && !seen.includes(n)) seen.push(n);
+    });
+    const gl = seen.map(n => `<i><b>${esc(n)}</b> — ${esc(BOSS_STATES.get(n).desc)}</i>`).join('');
+    return `<div class="rc-boss-skill">
+        <span class="rc-boss-ico"><img src="${iconUrl(s.skill_icon, 'dimension')}"
+              alt="" onerror="this.parentNode.remove()"></span>
+        <b>${esc(s.skill_name)}</b>
+        <p>${bossMark(s.skill_desc || '')}</p>
+        ${gl ? `<div class="rc-boss-gloss">${gl}</div>` : ''}
+    </div>`;
+}
+
+/* 시즌 규칙 상자. 인게임은 메인 로비의 **블롭 버튼**을 누르면 팝업으로 보여준다 —
+   여기서는 누를 데가 없으니 그 버튼 그림을 상자 머리로 쓰고 내용을 바로 편다. */
+function buildRuleBox(rules) {
+    const box = document.createElement('div');
+    box.className = 'rc-rulebox';
+    box.innerHTML = `
+        <div class="rc-rule-head">
+            <img src="${iconUrl('DimensionalClash_MainLobby_SeasonRule_BG', 'dimension')}"
+                 alt="" onerror="this.remove()">
+            <b>시즌 규칙</b>
+        </div>
+        <div class="rc-rule-list">${rules.map(r => `
+            <div class="rc-rule">
+                <img src="${iconUrl('SeasonRuleIcon_' + ((r.kind || '').trim() || 'Positive'),
+                                    'dimension')}" alt="" onerror="this.remove()">
+                <span>${esc(r.text)}</span>
+            </div>`).join('')}</div>`;
+    return box;
+}
+
+
+/* 레벨 → 테두리 색. 인게임에서 뽑은 값이다. */
+const SHARD_TIERS = [
+    { max: 0, col: '#868C94' }, { max: 2, col: '#FFF5EE' },
+    { max: 4, col: '#D1B48C' }, { max: 6, col: '#FF8E61' }, { max: 8, col: '#FF6245' },
+];
+const shardColor = lv => (SHARD_TIERS.find(t => lv <= t.max) || SHARD_TIERS[4]).col;
+/* 레벨이 오를수록 글로우를 세게 — 인게임도 7–8 에서 확 밝아진다 */
+const shardGlow = lv => (0.25 + lv * 0.09).toFixed(2);
+
+const shardFill = (tpl, vals) => String(tpl).replace(/\{(\d+)\}/g, (_, i) => vals[+i] ?? '?');
+
+function buildShard(s) {
+    const el = document.createElement('div');
+    el.className = 'rc-shard';
+    const lv = Math.max(0, Math.min(8, parseInt(s.rec_level) || 0));
+    /* ⚠ Lv.0 은 아직 안 얻은 상태지만 인게임이 **Lv.1 수치를 미리 보여준다** —
+         그래서 0 과 1 이 같은 줄을 쓴다. */
+    const vals = String(s['Lv.' + Math.max(lv, 1)] || '').split(',').map(v => v.trim());
+
+    el.style.setProperty('--col', shardColor(lv));
+    el.style.setProperty('--glow', shardGlow(lv));
+    el.innerHTML = `
+        <div class="rc-shard-card">
+            <div class="rc-shard-glow"></div>
+            <div class="rc-shard-art"></div>
+            <div class="rc-shard-border"></div>
+            <i class="rc-shard-deco d1"></i><i class="rc-shard-deco d2"></i>
+            <i class="rc-shard-deco d3"></i><i class="rc-shard-deco d4"></i>
+            <span class="rc-shard-lv">Lv.${lv}</span>
+        </div>
+        <div class="rc-shard-title">
+            <img src="${iconUrl('Dimension_BuffSlot_TitleDeco_01', 'dimension')}"
+                 alt="" onerror="this.remove()">
+            <b>${esc(s.shard_name)}</b>
+            <img class="t2" src="${iconUrl('Dimension_BuffSlot_TitleDeco_02', 'dimension')}"
+                 alt="" onerror="this.remove()">
+        </div>
+        <div class="rc-shard-fx">${esc(shardFill(s.effect || '', vals))}${
+            (s.sub || '').trim()
+                ? `<span class="rc-shard-sub">${shardFill(s.sub, vals).split(' · ')
+                      .map(t => `<i>${esc(t)}</i>`).join('')}</span>`
+                : ''}</div>`;
+
+    const art = el.querySelector('.rc-shard-art');
+    art.style.setProperty('--art', `url('${iconUrl(s.art, 'dimension')}')`);
+    if ((s.art_pos || '').trim()) art.style.setProperty('--art-pos', s.art_pos.trim());
+    return el;
+}
+
 function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
     const sEl = document.createElement('section');
     sEl.className = 'rc-sec';
@@ -803,6 +1025,11 @@ function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
     /* 묶음들은 몸통 하나에 담는다 — subgrid 가 머리/몸통 두 줄만 보게 하려면
        `.rc-sec` 의 자식이 정확히 둘이어야 한다. */
     const body = sEl.querySelector('.rc-sec-body');
+
+    /* 대충돌 2.0 정보 섹션은 덱보다 **먼저** 온다 —
+       "누구와 어떤 규칙으로 싸우는가" 가 "무엇을 데려가는가" 보다 앞이다. */
+    if (sec.boss || sec.rules.length || sec.shards.length || sec.notes.length)
+        body.appendChild(buildCrash2Panel(sec));
 
     /* 덱이 있으면 역할 묶음보다 **먼저** 그린다. */
     if (sec.decks && sec.decks.length) {
@@ -1147,7 +1374,8 @@ function activateTab(key, secKey) {
    고쳐야 하고 하나만 빠뜨려도 조용히 갈라진다.
 
    ⚠ 탭·분류가 나오는 순서는 **`Recommend_Sections.csv` 의 행 순서** 그대로다. */
-function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows) {
+function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
+                bossRows, bossSkillRows, ruleRows, shardRows, noteRows) {
     const body = document.getElementById('rc-body');
     const missing = [];
 
@@ -1171,9 +1399,41 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows) 
         if (!groups.has(gk)) groups.set(gk,
             { label: d.group_label, icon: d.group_icon, tip: (d.group_tip || '').trim(), secs: new Map() });
         const sec = { key: sk, label: d.sec_label, tip: d.sec_tip, icon: (d.sec_icon || '').trim(),
-                      chip: (d.sec_chip || '').trim(), rows: [], decks: [] };
+                      chip: (d.sec_chip || '').trim(), rows: [], decks: [],
+                      boss: null, bossSkills: [], rules: [], shards: [], notes: [] };
         groups.get(gk).secs.set(sk, sec);
         secByKey.set(sk, sec);
+    });
+
+    /* 보스 기믹 — 분류에 매단다.
+       ⚠ 분류당 보스는 **하나**다. 시즌이 바뀌면 그 행을 갈아끼운다 (행을 늘리지 않는다) —
+         지난 시즌 보스를 같이 띄우면 지금 무엇과 싸우는지가 흐려진다. */
+    (bossRows || []).forEach(r => {
+        const sec = secByKey.get((r.sec_key || '').trim());
+        if (sec && !sec.boss && (r.boss_name || '').trim()) sec.boss = r;
+    });
+    (bossSkillRows || []).forEach(r => {
+        const sec = secByKey.get((r.sec_key || '').trim());
+        if (sec && (r.skill_name || '').trim()) sec.bossSkills.push(r);
+    });
+    /* 시즌 규칙과 이면의 파편도 분류에 매단다 */
+    (ruleRows || []).forEach(r => {
+        const sec = secByKey.get((r.sec_key || '').trim());
+        if (sec && (r.text || '').trim()) sec.rules.push(r);
+    });
+    (shardRows || []).forEach(r => {
+        const sec = secByKey.get((r.sec_key || '').trim());
+        if (sec && (r.shard_name || '').trim()) sec.shards.push(r);
+    });
+    (noteRows || []).forEach(r => {
+        const sec = secByKey.get((r.sec_key || '').trim());
+        if (sec && (r.text || '').trim()) sec.notes.push(r);
+    });
+    /* `order` 로 세운다. 비면 **적힌 순서**가 그대로 화면 순서다 (다른 표들과 같은 관례) */
+    const byOrder = (a, b) => (parseInt(a.order) || 0) - (parseInt(b.order) || 0);
+    secByKey.forEach(sec => {
+        sec.bossSkills.sort(byOrder); sec.rules.sort(byOrder);
+        sec.shards.sort(byOrder); sec.notes.sort(byOrder);
     });
 
     /* 어느 분류에도 안 걸리는 배치는 조용히 사라지면 안 된다 — 오타가 여기서 난다 */
@@ -1442,13 +1702,17 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
-        const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT] =
+        const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT,
+               bossT, bossSkillT, bossStateT, ruleT, shardT, noteT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
                 'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv', 'Recommend_Deck_Members.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
                 'high_skill_DB.csv', 'buff_DB.csv', 'buff_desc_DB.csv', 'normal_Atk_DB.csv',
                 'low_skill_DB.csv', 'aside_DB.csv', 'sp_DB.csv', 'battle_item_DB.csv',
-                'artifact_DB.csv'].map(get));
+                'artifact_DB.csv',
+                'Crash2_Boss.csv', 'Crash2_Boss_Skills.csv', 'Crash2_Boss_States.csv',
+                'Crash2_Season_Rules.csv', 'Crash2_Shards.csv',
+                'Crash2_Boss_Notes.csv'].map(get));
         const P = t => Papa.parse(t, cfg).data;
 
         const db = P(dbT);
@@ -1473,8 +1737,17 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
                                       attach: (r.attach || '').trim() });
         });
 
+        /* 보스 전용 상태. ⚠ `description` 이 비면 말풍선을 안 단다 (`bossMark` 참조) */
+        P(bossStateT).forEach(r => {
+            const n = (r.state_name || '').trim();
+            if (n) BOSS_STATES.set(n, { icon: (r.icon || '').trim(),
+                                        with: (r.with_icon || '').trim(),
+                                        desc: (r.description || '').trim() });
+        });
+
         const dbMap = new Map(db.filter(r => r.name).map(r => [r.name.trim(), r]));
-        render(P(secT), P(rec), dbMap, P(chipT), P(deckT), P(swapT), P(memT));
+        render(P(secT), P(rec), dbMap, P(chipT), P(deckT), P(swapT), P(memT),
+               P(bossT), P(bossSkillT), P(ruleT), P(shardT), P(noteT));
     } catch (e) {
         document.getElementById('rc-body').innerHTML =
             `<div class="rc-warn">데이터를 불러오지 못했습니다: ${esc(e.message)}</div>`;
