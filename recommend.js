@@ -337,7 +337,30 @@ function buildPin(char, info) {
     return pin;
 }
 
-function buildBoard(members, pick, freeCount, freeLabel, noGrade, bg) {
+/* 덱 편성판 **오른쪽**에 서는 파편 레벨 스트립.
+   ⚠ 정보 섹션의 큰 파편 카드를 가져다 쓰지 않는다 — 325:375 라 세로로 길어 편성판
+     옆에 세 장을 세우면 보드보다 높아진다. 인게임 아이콘이 **256 정사각**이라
+     그걸 그대로 틀에 넣는다.
+   ⚠ 틀 색은 보스 기믹 아이콘과 **같은 값**(`--rc-boss-ico-*`)이다. 둘 다 "인게임
+     아이콘을 우리 틀에 끼운 것" 이라 같은 꼴이어야 한다.
+   ⚠⚠ **스크롤 껍데기(`.rc-board-scroll`) 안에 넣지 말 것.** 최소 폭 460px 을 같이
+     물려받아 폰에서 스트립까지 옆으로 밀린다. 형제로 두고 줄(`.rc-board-row`)로 묶는다. */
+function buildDeckShards(rows) {
+    const el = document.createElement('div');
+    el.className = 'rc-deck-shards';
+    el.innerHTML = rows.map(r => {
+        const art = SHARD_ART.get((r.shard_name || '').trim());
+        const lv = Math.max(0, Math.min(8, parseInt(r.level) || 0));
+        return `<div class="rc-deck-shard" data-tooltip="${esc(r.shard_name)}&#10;Lv.${lv}">
+            ${art ? `<img src="${iconUrl(art, 'dimension')}" alt=""
+                          onerror="this.remove()">` : ''}
+            <b>Lv.${lv}</b>
+        </div>`;
+    }).join('');
+    return el;
+}
+
+function buildBoard(members, pick, freeCount, freeLabel, noGrade, bg, shardRows) {
     /* 보드는 **제 상자 안에** 가둔다. 핀이 발판 위로 한참 솟기 때문에(머리 + 고학년 표지)
        상자 없이 두면 위쪽 덱 제목·설명을 침범하고 분류 테두리까지 닿는다. */
     /* 좁은 화면에서는 상자를 **가로로 밀어** 본다. 보드가 2.9:1 이라 폭을 따라 줄면
@@ -425,7 +448,16 @@ function buildBoard(members, pick, freeCount, freeLabel, noGrade, bg) {
        ⚠ `tooltip.js` 는 `mouseover`·`focusin` 만 듣는다 — **폰에서는 말풍선이 안 뜬다.**
          핀을 탭하면 상세 모달이 열려 버려서 말풍선이 설 자리도 없다. 이 규칙이 덱의
          핵심인 경우가 있어(줘팸터 카운터 덱) 호버에만 맡기면 모바일에서 통째로 사라진다. */
-    zone.appendChild(scroll);
+    /* 보드와 스트립이 한 줄. 스트립이 없으면 줄을 만들지 않는다 (빈 칸이 안 남게) */
+    if (shardRows && shardRows.length) {
+        const line = document.createElement('div');
+        line.className = 'rc-board-row';
+        line.appendChild(scroll);
+        line.appendChild(buildDeckShards(shardRows));
+        zone.appendChild(line);
+    } else {
+        zone.appendChild(scroll);
+    }
 
     const movers = members.filter(m => (m.move || '').trim() && !isFreeSlot(m.name));
     if (movers.length) {
@@ -675,7 +707,8 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
            ⚠ 사도 카드가 아니라 핀이다 — 바닥에 꽂히는 꼴이라야 쐐기가 원근으로 읽힌다. */
         tiles.classList.remove('is-grid');
         tiles.appendChild(buildBoard(members, pick, freeCount, freeLabel, autoHigh,
-                                     (deck.board_bg || '').trim()));
+                                     (deck.board_bg || '').trim(),
+                                     DECK_SHARDS.get(deckKey) || []));
         /* 좌표가 없는 멤버는 격자에 못 놓는다 — 아래에 따로 붙여 잃어버리지 않게 한다 */
         members.filter(m => !(m.col && m.row)).forEach(m => {
             const t = put(m);
@@ -779,6 +812,16 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
    ⚠ `description` 이 **비면 말풍선을 안 단다.** 대신 본문 글줄에 아이콘이 붙는다 —
      `기절 카운트` 처럼 세는 물건은 "무엇인가" 를 설명할 게 없고 모양만 보이면 된다. */
 const BOSS_STATES = new Map();
+
+/* 파편 이름 → 그림 (`Crash2_Shards` 에서 뽑는다). 덱 옆 스트립이 이것만 쓴다 */
+const SHARD_ART = new Map();
+/* `Crash2_Deck_Shards.csv` — deck_key, shard_name, level.
+   ⚠⚠ **`Recommend_Decks` 에 `3,0,6` 식 쉼표 열로 넣지 않는다.** 그러면 `Crash2_Shards`
+     의 **행 순서와 위치로 짝지어지는데**, 파편을 하나 더하거나 순서를 바꾸면 레벨이
+     통째로 한 칸씩 밀린다. 경고도 안 난다 — `buff_DB` 의 슬롯 정렬 함정 그대로다.
+   ⚠ 이름으로 잇는다 (`artifact` 열과 같은 관례). 파편 이름이 `되XX 수 X어` 처럼
+     깨져 보여도 **인게임 이름이 그렇다** — 고치지 말 것. */
+const DECK_SHARDS = new Map();
 
 /* 설명문 표기 → 태그.
      [[용어]]  보스 고유 용어 — 상태 표에 있으면 아이콘·말풍선이 따라온다
@@ -1703,7 +1746,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
         const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT,
-               bossT, bossSkillT, bossStateT, ruleT, shardT, noteT] =
+               bossT, bossSkillT, bossStateT, ruleT, shardT, noteT, deckShardT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
                 'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv', 'Recommend_Deck_Members.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
@@ -1712,7 +1755,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
                 'artifact_DB.csv',
                 'Crash2_Boss.csv', 'Crash2_Boss_Skills.csv', 'Crash2_Boss_States.csv',
                 'Crash2_Season_Rules.csv', 'Crash2_Shards.csv',
-                'Crash2_Boss_Notes.csv'].map(get));
+                'Crash2_Boss_Notes.csv', 'Crash2_Deck_Shards.csv'].map(get));
         const P = t => Papa.parse(t, cfg).data;
 
         const db = P(dbT);
@@ -1745,9 +1788,22 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
                                         desc: (r.description || '').trim() });
         });
 
+        /* 파편 그림표 + 덱별 레벨. 둘 다 **이름으로 잇는다** */
+        const shardRows = P(shardT);
+        shardRows.forEach(r => {
+            const n = (r.shard_name || '').trim();
+            if (n) SHARD_ART.set(n, (r.art || '').trim());
+        });
+        P(deckShardT).forEach(r => {
+            const k = (r.deck_key || '').trim();
+            if (!k || !(r.shard_name || '').trim()) return;
+            if (!DECK_SHARDS.has(k)) DECK_SHARDS.set(k, []);
+            DECK_SHARDS.get(k).push(r);
+        });
+
         const dbMap = new Map(db.filter(r => r.name).map(r => [r.name.trim(), r]));
         render(P(secT), P(rec), dbMap, P(chipT), P(deckT), P(swapT), P(memT),
-               P(bossT), P(bossSkillT), P(ruleT), P(shardT), P(noteT));
+               P(bossT), P(bossSkillT), P(ruleT), shardRows, P(noteT));
     } catch (e) {
         document.getElementById('rc-body').innerHTML =
             `<div class="rc-warn">데이터를 불러오지 못했습니다: ${esc(e.message)}</div>`;
