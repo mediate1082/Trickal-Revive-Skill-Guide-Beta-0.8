@@ -801,15 +801,15 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
     return box;
 }
 
-/* ══ 대충돌 2.0 · 보스 전용 상태 (`Crash2_Boss_States.csv`) ════════
-     state_name, icon, with_icon, description
+/* ══ 대충돌 2.0 · 보스 전용 상태 (`Crash2_Boss_Skills.csv` 의 `kind=state` 행) ══
+     sec_key, kind, order, name, icon, icon2, desc
 
    ⚠⚠ **`buff_desc_DB`/`debuff_desc_DB` 에 섞지 않는다.** 모양은 같지만 그 둘은
      *사도가 거는* 상태의 마스터이고, 부가 효과 필터가 그 목록을 그대로 선택지로 낸다 —
      `앵그리` 를 넣으면 "앵그리를 거는 사도" 를 고르는 칸이 생긴다. 거는 건 보스다.
-   ⚠ `with_icon` 은 상태 아이콘 **옆에 나란히** 세울 둘째 그림이다 (보스가 걸었다는 표지).
+   ⚠ `icon2` 는 상태 아이콘 **옆에 나란히** 세울 둘째 그림이다 (보스가 걸었다는 표지).
      인게임은 겹쳐 놓지만 작게 겹치면 어느 쪽이 본체인지 안 읽혀 `/` 로 가른다.
-   ⚠ `description` 이 **비면 말풍선을 안 단다.** 대신 본문 글줄에 아이콘이 붙는다 —
+   ⚠ `desc` 가 **비면 말풍선을 안 단다.** 대신 본문 글줄에 아이콘이 붙는다 —
      `기절 카운트` 처럼 세는 물건은 "무엇인가" 를 설명할 게 없고 모양만 보이면 된다. */
 const BOSS_STATES = new Map();
 
@@ -858,16 +858,17 @@ function bossMark(text) {
        ┌────────┬──────────────────┐
        │ 초상화  │ 시즌 소개 / 기믹 수행 / 메타 │   ← 머리
        └────────┴──────────────────┘
-       ┌─ 기믹 ─────────┐ ┌─ 규칙 + 파편 ─┐   ← 2단
-       │ [카드][카드][카드] │ │ ══ 시즌 규칙 ══ │
-       └────────────────┘ │ [파][파][파]   │
-                          └───────────────┘
+       ── 보스 기믹 ───────────   ← 행마다 같은 무게의 머리글
+         [카드] [카드] [카드]
+       ┌ 시즌 규칙 (흰 카드) ──┐
+       └──────────────────┘
+       ── 이면의 파편 ─────────   (어두운 상자)
+         [파편] [파편] [파편]
 
-   ⚠ 기믹과 파편을 **세로로 잇지 않는다.** 둘 다 "이번 시즌이 어떤 판인가" 를 말하는
-     같은 층의 정보라, 세로로 쌓으면 뒤엣것이 앞엣것의 하위 항목처럼 읽힌다.
-   ⚠ 2단에서는 파편 카드를 **줄인다** (`--w` 205 → 145). 그림이 325:375 로 비율이
-     박혀 있어 단 폭에 맞춰 늘일 수 없는데, 석 장이 한 줄에 서야 "셋 중 어디에
-     투자하나" 가 한눈에 비교된다. 줄이는 쪽이 줄바꿈보다 낫다.
+   ⚠⚠ **2단으로 나란히 놓지 않는다.** 한 번 기믹 ↔ 규칙·파편을 좌우로 놨다가 되돌렸다 —
+     파편 카드는 그림 비율(325:375)이 높이의 바닥을 깔고 기믹 카드는 글 길이만큼만
+     자라, 두 단의 자연 높이가 두 배쯤 벌어져 한쪽 아래가 길게 빈다.
+     세로로 쌓으면 뒤엣것이 하위 항목처럼 읽히는데, **가르는 건 자리가 아니라 라벨**이다.
    ⚠ 어느 한 덩이가 없어도 그려진다 — 보스만, 파편만 있는 분류가 있을 수 있다. */
 function buildCrash2Panel(sec) {
     const wrap = document.createElement('section');
@@ -897,7 +898,7 @@ function buildCrash2Panel(sec) {
     wrap.appendChild(box);
 
     /* ── 머리 — 초상화 + 서술 줄들 ───────────────────────────
-       ⚠ 서술은 `Crash2_Boss_Notes.csv` 의 **행 하나가 줄 하나**다. `label` 이 있으면
+       ⚠ 서술은 `Crash2_Lines.csv` 의 `kind=note` 행 하나가 **줄 하나**다. `label` 이 있으면
          앞에 굵게 붙고 없으면 글만 나온다 — 시즌 소개처럼 이름 붙일 게 없는 줄이 있다. */
     if (boss || sec.notes.length) {
         const head = document.createElement('div');
@@ -949,16 +950,16 @@ function buildCrash2Panel(sec) {
 /* 기믹 카드 한 장. 꼬리 줄은 그 본문이 실제로 가리킨 상태 중 **설명이 있는 것**만 낸다. */
 function bossSkillCard(s) {
     const seen = [];
-    ((s.skill_desc || '').match(/\[\[(.+?)\]\]/g) || []).forEach(m => {
+    ((s.desc || '').match(/\[\[(.+?)\]\]/g) || []).forEach(m => {
         const n = m.slice(2, -2), st = BOSS_STATES.get(n);
         if (st && st.desc && !seen.includes(n)) seen.push(n);
     });
     const gl = seen.map(n => `<i><b>${esc(n)}</b> — ${esc(BOSS_STATES.get(n).desc)}</i>`).join('');
     return `<div class="rc-boss-skill">
-        <span class="rc-boss-ico"><img src="${iconUrl(s.skill_icon, 'dimension')}"
+        <span class="rc-boss-ico"><img src="${iconUrl(s.icon, 'dimension')}"
               alt="" onerror="this.parentNode.remove()"></span>
-        <b>${esc(s.skill_name)}</b>
-        <p>${bossMark(s.skill_desc || '')}</p>
+        <b>${esc(s.name)}</b>
+        <p>${bossMark(s.desc || '')}</p>
         ${gl ? `<div class="rc-boss-gloss">${gl}</div>` : ''}
     </div>`;
 }
@@ -976,7 +977,8 @@ function buildRuleBox(rules) {
         </div>
         <div class="rc-rule-list">${rules.map(r => `
             <div class="rc-rule">
-                <img src="${iconUrl('SeasonRuleIcon_' + ((r.kind || '').trim() || 'Positive'),
+                <img src="${iconUrl((r.kind || '').trim() === 'rule_neg'
+                                    ? 'SeasonRuleIcon_Negative' : 'SeasonRuleIcon_Positive',
                                     'dimension')}" alt="" onerror="this.remove()">
                 <span>${esc(r.text)}</span>
             </div>`).join('')}</div>`;
@@ -1457,7 +1459,7 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
     });
     (bossSkillRows || []).forEach(r => {
         const sec = secByKey.get((r.sec_key || '').trim());
-        if (sec && (r.skill_name || '').trim()) sec.bossSkills.push(r);
+        if (sec && (r.name || '').trim()) sec.bossSkills.push(r);
     });
     /* 시즌 규칙과 이면의 파편도 분류에 매단다 */
     (ruleRows || []).forEach(r => {
@@ -1746,16 +1748,15 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
         const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT,
-               bossT, bossSkillT, bossStateT, ruleT, shardT, noteT, deckShardT] =
+               bossT, bossPartT, lineT, shardT, deckShardT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
                 'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv', 'Recommend_Deck_Members.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
                 'high_skill_DB.csv', 'buff_DB.csv', 'buff_desc_DB.csv', 'normal_Atk_DB.csv',
                 'low_skill_DB.csv', 'aside_DB.csv', 'sp_DB.csv', 'battle_item_DB.csv',
                 'artifact_DB.csv',
-                'Crash2_Boss.csv', 'Crash2_Boss_Skills.csv', 'Crash2_Boss_States.csv',
-                'Crash2_Season_Rules.csv', 'Crash2_Shards.csv',
-                'Crash2_Boss_Notes.csv', 'Crash2_Deck_Shards.csv'].map(get));
+                'Crash2_Boss.csv', 'Crash2_Boss_Skills.csv', 'Crash2_Lines.csv',
+                'Crash2_Shards.csv', 'Crash2_Deck_Shards.csv'].map(get));
         const P = t => Papa.parse(t, cfg).data;
 
         const db = P(dbT);
@@ -1780,13 +1781,26 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
                                       attach: (r.attach || '').trim() });
         });
 
-        /* 보스 전용 상태. ⚠ `description` 이 비면 말풍선을 안 단다 (`bossMark` 참조) */
-        P(bossStateT).forEach(r => {
-            const n = (r.state_name || '').trim();
+        /* `Crash2_Boss_Skills.csv` 한 장에 **기믹 카드와 보스 상태가 같이** 들어 있다
+           (`kind` 로 가른다). 둘 다 "보스가 가진 것" 이고 `이름 + 아이콘 + 설명` 으로
+           모양이 같아서, 한두 행짜리 파일을 늘리느니 한 표에 둔다.
+           ⚠ 상태 맵은 **분류를 안 따진다** (이름이 키다). 보스가 둘 이상인 분류가
+             생기고 이름이 겹치면 그때 `sec_key` 까지 키로 쓸 것.
+           ⚠ `desc` 가 비면 말풍선을 안 단다 — 본문 글줄에 아이콘만 붙는다 (`bossMark`) */
+        const bossParts = P(bossPartT);
+        bossParts.filter(r => (r.kind || '').trim() === 'state').forEach(r => {
+            const n = (r.name || '').trim();
             if (n) BOSS_STATES.set(n, { icon: (r.icon || '').trim(),
-                                        with: (r.with_icon || '').trim(),
-                                        desc: (r.description || '').trim() });
+                                        with: (r.icon2 || '').trim(),
+                                        desc: (r.desc || '').trim() });
         });
+        const bossSkillRows = bossParts.filter(r => (r.kind || '').trim() !== 'state');
+
+        /* `Crash2_Lines.csv` 도 한 장에 **서술 줄과 시즌 규칙**이 같이 있다.
+           둘 다 "시즌에 달린 한 줄 글" 이라 헤더가 사실상 같았다. */
+        const lineRows = P(lineT);
+        const noteRows = lineRows.filter(r => (r.kind || '').trim() === 'note');
+        const ruleRows = lineRows.filter(r => (r.kind || '').trim().startsWith('rule'));
 
         /* 파편 그림표 + 덱별 레벨. 둘 다 **이름으로 잇는다** */
         const shardRows = P(shardT);
@@ -1803,7 +1817,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
 
         const dbMap = new Map(db.filter(r => r.name).map(r => [r.name.trim(), r]));
         render(P(secT), P(rec), dbMap, P(chipT), P(deckT), P(swapT), P(memT),
-               P(bossT), P(bossSkillT), P(ruleT), shardRows, P(noteT));
+               P(bossT), bossSkillRows, ruleRows, shardRows, noteRows);
     } catch (e) {
         document.getElementById('rc-body').innerHTML =
             `<div class="rc-warn">데이터를 불러오지 못했습니다: ${esc(e.message)}</div>`;
