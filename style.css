@@ -1,6 +1,10 @@
 @font-face {
     font-family: 'OneMobilePop';
-    src: url('./assets/fonts/ONEMobilePOP.ttf') format('truetype');
+    /* ⚠ **TTF 를 되돌리지 말 것.** 원본이 3.9MB 라 방문자가 매번 그걸 받았다.
+         woff2 는 글리프 12,257자를 그대로 담은 채 371KB 다 (압축만 한 것, 손실 없음).
+       ⚠ 서브셋(쓰는 글자만 남기기)으로 더 줄이지 말 것 — 사도 이름·공략 글이 CSV 라
+         나중에 추가한 글자가 통째로 깨진다. */
+    src: url('./assets/fonts/ONEMobilePOP.woff2') format('woff2');
     font-weight: normal; font-style: normal; font-display: swap;
 }
 
