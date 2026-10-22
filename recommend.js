@@ -135,7 +135,7 @@ function buildCard(char, rec, secKey) {
             <div class="rc-card-meta">${esc(meta)}</div>
         </div>
         </div>
-        ${reason ? `<div class="rc-why"><p>${esc(reason)}</p></div>` : ''}`;
+        ${reason ? `<div class="rc-why"><p>${linkify(reason)}</p></div>` : ''}`;
     return card;
 }
 
@@ -151,6 +151,47 @@ function buildCard(char, rec, secKey) {
 /* 빈 자리 — `members` 에 `?` (또는 `???`) 를 쓰면 "여긴 상대 보고 고르세요" 가 된다.
    ⚠ 쉼표만 남기는 빈칸은 쓰지 않는다. CSV 에서 눈에 안 보이고, 끝 쉼표가 항목을
      한 칸씩 미는 함정이 이 프로젝트에 이미 있다. */
+/* ── 글 속의 주소를 링크로 ───────────────────────────────────────
+   `deck_sub` · `sec_tip` · `reason` 처럼 **사람이 쓴 문장**에 쓴다.
+
+   받는 꼴 둘 —
+     [라벨](https://…)   라벨을 보여준다
+     https://…           **도메인만** 보여준다
+
+   ⚠ 맨 주소를 그대로 찍지 않는다. 지금 들어 있는 디시 공략 주소가 70자라
+     줄을 통째로 먹고 폰에서는 두 줄이 된다. 도메인만 보여도 "어디로 가는가" 는
+     오히려 더 잘 읽힌다.
+   ⚠ `esc` 를 먼저 돌리고 정규식을 태우면 안 된다. `&` 가 `&amp;` 로 바뀌어
+     주소가 끊긴다 (디시 주소에 `&no=` 가 있다). **원문에서 잘라 조각마다 따로 escape 한다.**
+   ⚠ 바깥 사이트로 나가므로 `rel="noopener noreferrer"` 를 반드시 붙인다. */
+const LINK_RE = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<]+)/g;
+const LINK_ICON =
+    '<svg class="rc-link-ico" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"'
+  + ' fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"'
+  + ' stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/>'
+  + '<path d="M18 14.5V19a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 19V8a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
+
+function linkify(raw) {
+    const s = String(raw ?? '');
+    let out = '', last = 0, m;
+    LINK_RE.lastIndex = 0;
+    while ((m = LINK_RE.exec(s)) !== null) {
+        out += esc(s.slice(last, m.index));
+        let url = m[2] || m[3], tail = '';
+        /* 맨 주소 뒤에 붙은 문장부호는 주소가 아니다 — `…3848757 참조` 는 괜찮지만
+           `…3848757.` 이면 마침표까지 먹는다 */
+        if (!m[2]) {
+            const t = url.match(/[.,;:!?)\]}]+$/);
+            if (t) { tail = t[0]; url = url.slice(0, -tail.length); }
+        }
+        const label = m[1] || url.replace(/^https?:\/\//, '').replace(/[/?#].*$/, '');
+        out += `<a class="rc-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer"`
+             + `><span class="rc-link-t">${esc(label)}</span>${LINK_ICON}</a>` + esc(tail);
+        last = m.index + m[0].length;
+    }
+    return out + esc(s.slice(last));
+}
+
 const isFreeSlot = n => /^\?+$/.test(String(n || '').trim());
 
 /* 인게임 줘팸터 랭킹의 '조합 숨김' 칸과 같은 꼴 — 성격색도 별도 없는 평평한 회색 타일에
@@ -649,7 +690,7 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
     box.innerHTML = `
         <header class="rc-deck-head">
             <h4 class="rc-deck-name">${esc((deck.deck_name || '').trim() || '이름 없는 덱')}</h4>
-            ${sub ? `<p class="rc-deck-sub">${esc(sub)}</p>` : ''}
+            ${sub ? `<p class="rc-deck-sub">${linkify(sub)}</p>` : ''}
         </header>
         <div class="rc-deck-tiles"></div>
         <section class="rc-deck-block is-equip" hidden>
@@ -1057,7 +1098,7 @@ function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
                      stroke="currentColor" stroke-width="2.6" stroke-linecap="round"
                      stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></h3>
             ${sec.stale ? `<p class="rc-sec-stale">${esc(sec.stale)}</p>` : ''}
-            ${sec.tip ? `<p class="rc-sec-tip">${esc(sec.tip)}</p>` : ''}
+            ${sec.tip ? `<p class="rc-sec-tip">${linkify(sec.tip)}</p>` : ''}
         </header>
         <div class="rc-sec-body"></div>`;
 
