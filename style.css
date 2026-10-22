@@ -4408,3 +4408,46 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     .rc-board-row { flex-direction: column; align-items: center; }
     .rc-deck-shards { flex-direction: row; padding-top: 0; }
 }
+
+/* ══ 지난 분류 (`sec_stale`) ══════════════════════════════════════
+   끝난 시즌·이벤트. **글은 그대로 읽히게 두고 색만 뺀다.**
+
+   ⚠⚠ 흐리게(`opacity`)·흐릿하게(`blur`) 하지 않는다. 이걸 숨기지 않고 남기는 이유가
+     "다음 메타가 올 때까지 육성 방향을 고르는 데 쓸모가 있어서" 인데, 읽기를 나쁘게
+     만들면 남긴 이유를 스스로 깎는다.
+   ⚠ 흑백(`grayscale`)도 안 쓴다. 그건 `dim`(지금은 추천 안 함)이 **카드 단위**로
+     이미 쓰는 신호라, 분류 단위로 또 쓰면 한 화면에서 두 뜻이 된다.
+   → 쓰는 신호는 둘뿐이다. **성격색을 거둬들이고**, 머리에 **호박색 띠**로 사유를 적는다.
+     색이 빠진 자리가 "지금 돌아가는 판이 아니다" 를 말하고, 글자는 멀쩡히 남는다. */
+
+/* 머리의 띠 — `dim` 뱃지와 **같은 호박색**이다. 새로 정하지 않는다 */
+.rc-sec-stale {
+    margin: 6px 0 2px; padding: 7px 12px 8px;
+    background: #FFF4E0; border: 1px solid #F0C46A; border-radius: 9px;
+    font-size: .82rem; font-weight: 700; line-height: 1.55;
+    color: #8A5A10; word-break: keep-all;
+}
+[data-theme="dark"] .rc-sec-stale {
+    background: #3A2E18; border-color: #6B5324; color: #E8C98A;
+}
+/* ⚠ 접었을 때도 남는다. 무슨 칸인지와 **왜 지난 것인지**는 접어도 보여야 한다
+     (`sec_tip` 과 같은 자리·같은 규칙). */
+
+/* 색 거두기 — 성격색을 쓰는 상자들만 무채색으로 돌린다.
+   ⚠ `filter` 로 채도를 낮추지 않는다. 자식에서 되돌릴 수 없어 안의 초상화·아이콘까지
+     바래고, 그러면 결국 흑백 처리와 같아진다. **변수만 갈아끼운다.** */
+/* ⚠⚠ **껍데기에만 선언하면 안 먹는다.** 성격색은 `.rc-crash2[data-personality]` 가
+     **제 요소에 직접** 선언하므로, 부모에서 내린 값은 가려진다 (상속은 지역 선언에 진다).
+     요소 자신을 겨눠야 한다 — `.rc-sec.is-stale .rc-crash2` 가 (0,3,0) 이라 이긴다. */
+.rc-sec.is-stale .rc-crash2-wrap,
+.rc-sec.is-stale .rc-crash2 {
+    --p-bg: var(--modal-body-bg);
+    --p-edge: var(--border-soft);
+    --p-ink: var(--text-muted);
+}
+/* ⚠ 덱 상자는 변수가 아니라 `background` 를 **직접** 칠한다. 변수만 갈아선 안 바뀐다. */
+.rc-sec.is-stale .rc-deck[data-personality] {
+    background: var(--modal-body-bg);
+    border-color: var(--border-soft);
+    --rc-deck-tint: var(--border-soft);
+}

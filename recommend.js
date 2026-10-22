@@ -1043,6 +1043,8 @@ function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
        머리(제목 + `sec_tip`)만 남겨 목차처럼 읽히게 한다.
        ⚠ **처음 그릴 때만** 본다. 창을 줄였다고 사용자가 펼쳐 둔 걸 도로 접지 않는다. */
     if (RC_NARROW.matches) sEl.classList.add('is-folded');
+    /* 지난 시즌·끝난 이벤트 — 색만 빼고 글은 그대로 둔다 (`sec_stale`). */
+    if (sec.stale) sEl.classList.add('is-stale');
 
     /* ⚠ 소분류 설명을 툴팁에 숨기지 않는다. 이 페이지에서 가장 자주 읽힐 문장이다. */
     sEl.innerHTML = `
@@ -1054,6 +1056,7 @@ function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
                 <svg class="rc-fold" viewBox="0 0 24 24" width="20" height="20" fill="none"
                      stroke="currentColor" stroke-width="2.6" stroke-linecap="round"
                      stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></h3>
+            ${sec.stale ? `<p class="rc-sec-stale">${esc(sec.stale)}</p>` : ''}
             ${sec.tip ? `<p class="rc-sec-tip">${esc(sec.tip)}</p>` : ''}
         </header>
         <div class="rc-sec-body"></div>`;
@@ -1444,7 +1447,16 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
         if (!groups.has(gk)) groups.set(gk,
             { label: d.group_label, icon: d.group_icon, tip: (d.group_tip || '').trim(), secs: new Map() });
         const sec = { key: sk, label: d.sec_label, tip: d.sec_tip, icon: (d.sec_icon || '').trim(),
-                      chip: (d.sec_chip || '').trim(), rows: [], decks: [],
+                      chip: (d.sec_chip || '').trim(),
+                      /* `sec_hide` — 값이 있으면 **안 그린다.** 그 값이 곧 "왜 숨겼나" 다
+                         (`pick`·`dim` 과 같은 관례).
+                         ⚠ 배치를 지워 숨기지 말 것. 끝난 이벤트는 내년에 돌아오는데
+                           사도 수십 행을 지웠다 되살리는 건 손으로 할 일이 아니다.
+                         `sec_stale` — **그릴 건 다 그리되 "지난 것" 이라고 알린다.**
+                         ⚠ 숨김과 다른 쓰임이다. 끝난 시즌 정보도 다음 메타가 올 때까지는
+                           육성 방향을 고르는 데 쓸모가 있어 읽을 수 있어야 한다. */
+                      hide: (d.sec_hide || '').trim(), stale: (d.sec_stale || '').trim(),
+                      rows: [], decks: [],
                       boss: null, bossSkills: [], rules: [], shards: [], notes: [] };
         groups.get(gk).secs.set(sk, sec);
         secByKey.set(sk, sec);
@@ -1500,9 +1512,13 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
         sec.decks.push(d);
     });
 
-    /* 사도 → 배치된 소분류들. 그 분류의 `sec_chip` 이 카드의 자동 칩이 된다. */
+    /* 사도 → 배치된 소분류들. 그 분류의 `sec_chip` 이 카드의 자동 칩이 된다.
+       ⚠⚠ **숨긴 분류(`sec_hide`)는 칩도 내지 않는다.** 칩은 "저기 가서 고르세요" 라는
+         안내인데 갈 곳이 없으면 거짓말이 된다. 이 색인이 솎아내기보다 **먼저** 돌기
+         때문에, 여기서 안 걸러주면 숨긴 분류의 칩이 다른 탭 카드에 계속 붙는다. */
     const secIndex = new Map();
     groups.forEach(g => g.secs.forEach(sec => {
+        if (sec.hide) return;
         sec.rows.forEach(r => {
             const n = (r.chara_name || '').trim();
             if (!n) return;
@@ -1518,7 +1534,7 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
        **사도를 한 명 넣으면 그대로 다시 나온다.**
        ⚠ 그래서 분류가 안 보인다고 지워진 게 아니다. 편집기 목록에는 그대로 있다. */
     groups.forEach(g => g.secs.forEach((sec, k) => {
-        if (!sec.rows.length && !sec.decks.length) g.secs.delete(k);
+        if (sec.hide || (!sec.rows.length && !sec.decks.length)) g.secs.delete(k);
     }));
     groups.forEach((g, k) => { if (!g.secs.size) groups.delete(k); });
 
