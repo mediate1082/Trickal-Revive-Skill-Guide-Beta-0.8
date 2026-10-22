@@ -1517,15 +1517,33 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
          안내인데 갈 곳이 없으면 거짓말이 된다. 이 색인이 솎아내기보다 **먼저** 돌기
          때문에, 여기서 안 걸러주면 숨긴 분류의 칩이 다른 탭 카드에 계속 붙는다. */
     const secIndex = new Map();
+    /* 덱 멤버를 분류별로 모아 둔다 (아래에서 배치와 같이 센다) */
+    const memByDeck = new Map();
+    (memberRows || []).forEach(r => {
+        const k = (r.deck_key || '').trim();
+        if (!k) return;
+        if (!memByDeck.has(k)) memByDeck.set(k, []);
+        memByDeck.get(k).push(r);
+    });
     groups.forEach(g => g.secs.forEach(sec => {
         if (sec.hide) return;
-        sec.rows.forEach(r => {
-            const n = (r.chara_name || '').trim();
-            if (!n) return;
+        const add = raw => {
+            const n = (raw || '').trim();
+            if (!n || isFreeSlot(n)) return;
             if (!secIndex.has(n)) secIndex.set(n, []);
             if (!secIndex.get(n).some(x => x.key === sec.key))
                 secIndex.get(n).push({ key: sec.key, chip: sec.chip });
-        });
+        };
+        sec.rows.forEach(r => add(r.chara_name));
+        /* ⚠ **덱 편성에 선 사도도 그 분류의 추천픽이다.** 배치(`Recommend_Chara`)만
+             세면 덱 전용 분류가 칩을 아예 못 낸다 — 심해는 배치 0명에 편성 22명,
+             줘팸터는 0명에 9명이었다.
+           ⚠ **후보(`Recommend_Deck_Swaps`)는 안 센다.** 칩은 "이 콘텐츠의 추천픽" 이라는
+             뜻인데 후보는 "미보유면 이걸로" 라는 차선책이라 무게가 다르다. 세면 심해에만
+             24명이 더 붙어 칩이 뜻을 잃는다.
+           ⚠ 빈자리(`?`)는 거른다 — 사도가 아니다. */
+        (sec.decks || []).forEach(d =>
+            (memByDeck.get((d.deck_key || '').trim()) || []).forEach(m => add(m.chara_name)));
     }));
     window._rcSecIndex = secIndex;
 
