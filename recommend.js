@@ -1822,14 +1822,14 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
-        const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT,
+        const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT, immT,
                bossT, bossPartT, lineT, shardT, deckShardT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
                 'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv', 'Recommend_Deck_Members.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
                 'high_skill_DB.csv', 'buff_DB.csv', 'buff_desc_DB.csv', 'normal_Atk_DB.csv',
                 'low_skill_DB.csv', 'aside_DB.csv', 'sp_DB.csv', 'battle_item_DB.csv',
-                'artifact_DB.csv',
+                'artifact_DB.csv', 'Immunity_DB.csv',
                 'Crash2_Boss.csv', 'Crash2_Boss_Skills.csv', 'Crash2_Lines.csv',
                 'Crash2_Shards.csv', 'Crash2_Deck_Shards.csv'].map(get));
         const P = t => Papa.parse(t, cfg).data;
@@ -1839,6 +1839,10 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
         const allStateDB = [...buffDescDB, ...debuffDescDB];
         const battleItemDB = P(itemT);
         syncBattleItemTags(allStateDB, battleItemDB);
+
+        /* 제어 면역 — `ui.js` 의 효과 박스가 `window._immunityDB` 로 직접 읽는다.
+           (스킬 가이드 쪽은 `main.js` 가 같은 이름으로 심는다) */
+        window._immunityDB = P(immT);
 
         wireDetailModal({
             debuffDB: P(debuffT), buffDB: P(buffT),

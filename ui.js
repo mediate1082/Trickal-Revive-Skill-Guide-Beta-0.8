@@ -91,6 +91,25 @@ export function splitGlossary(raw, ctx) {
     return { body: body.join('<br>'), terms };
 }
 
+/* 용어 말풍선에 들어갈 설명의 `{이뮨}` 을 **지금 보고 있는 사도** 기준으로 채운다.
+ *
+ * ⚠ 효과 박스만 고치면 안 된다. 같은 설명이 **다른 글의 용어 말풍선**으로도 뜬다 —
+ *   에르핀(왕도) 어사이드2 설명 안의 `여왕의 의지` 가 그랬고, 거기엔 자리표가
+ *   `{이뮨}` 날것으로 노출됐다. 마스터를 보는 입구가 둘이라 둘 다 막아야 한다.
+ * ⚠ 말풍선은 `data-desc` 속성이라 **평문**이다. 효과 박스처럼 용어 버튼을 중첩할 수 없다.
+ * ⚠ 슬롯은 보지 않는다. 한 사도가 같은 이름의 면역 버프를 두 슬롯에 갖는 경우가 없고,
+ *   말풍선에는 어느 스킬인지가 이미 드러나지 않아서다. */
+function fillImmunitySlotText(desc, buffName) {
+    if (!desc.includes('{이뮨}')) return desc;
+    const nm = (currentApostle?.name || '').trim();
+    const row = (window._immunityDB || []).find(
+        r => (r.chara_name || '').trim() === nm
+          && (r.buff_name || '').trim() === String(buffName).trim());
+    const list = row ? (row.targets || '').split(',').map(t => t.trim()).filter(Boolean) : [];
+    if (!list.length) return desc.replace(/,?\s*\{이뮨\}/g, '').trim();
+    return desc.replace(/\{이뮨\}/g, list.join(', ') + '에 면역이 된다.');
+}
+
 /* allStateDB(버프+디버프 병합) 에서 용어 하나를 찾는다.
    버프·디버프 양쪽에 등록된 상태는 neutral (개전 효과, 최고로 멋진 요정). */
 export function lookupTerm(name, ctx) {
@@ -105,7 +124,7 @@ export function lookupTerm(name, ctx) {
     const icon = (row.icon_file || '').trim();
     return {
         name, kind,
-        desc: (row.description || '').trim(),
+        desc: fillImmunitySlotText((row.description || '').trim(), name),
         icon: (icon && !icon.includes('아이콘 없음')) ? `./assets/icons/state/${icon}` : ''
     };
 }
@@ -410,13 +429,13 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
             ${modeToggleHTML}
         </div>
         <div class="tg-skill-card-body"${tagSrcAttr}>
-            ${customContent ? customContent : renderEffectItems(buffString, condString, targetString, ctx.allStateDB, ctx.debuffDescDB)}
+            ${customContent ? customContent : renderEffectItems(buffString, condString, targetString, ctx.allStateDB, ctx.debuffDescDB, { name: currentApostle?.name, type })}
             ${!customContent ? '<div class="tg-effect-empty">표시할 효과가 없습니다</div>' : ''}
         </div>
     </div>`;
 }
 // 상태이상 개별 아이템 음각 박스
-function renderEffectItems(effectString, condString, targetString, allStateDB, debuffDescDB) {
+function renderEffectItems(effectString, condString, targetString, allStateDB, debuffDescDB, immCtx = null) {
     if (!effectString || effectString === 'X') return '';
     const names = effectString.split(',').map(s => s.trim());
     const conds = condString ? condString.split(',').map(s => s.trim()) : [];
@@ -434,6 +453,10 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
         const isDebuff = (info && (info.type === "약화" || info.type === "제어" || info.type === "지속피해"))
                       || (debuffDescDB.some(d => d.state_name === pureName || d.state_name === raw));
 
+        /* 제어 면역이면 설명문에 **그 사도가 막는 것**을 넣는다 (해당 없으면 '') */
+        const immSent = immunityDescHTML(immCtx, raw, pureName, { allStateDB, debuffDescDB });
+        const immDesc = applyImmunitySlot(info ? info.description : '', immSent);
+
         const defaultIcon = isDebuff ? '디버프_아이콘 없음.webp' : '버프_아이콘 없음.webp';
         const iconSrc = (info && info.icon_file)
             ? `./assets/icons/state/${info.icon_file}`
@@ -449,12 +472,81 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
                     ${conds[index] ? `<span class="tg-effect-item-chip" data-kind="cond">${conds[index]}</span>` : ''}
                     ${targets[index] ? `<span class="tg-effect-item-chip" data-kind="target">${targets[index]}</span>` : ''}
                 </div>
-                <div class="tg-effect-item-desc">${info ? info.description : "상세 정보가 없습니다."}</div>
+                <div class="tg-effect-item-desc">${immDesc || (info ? info.description : "상세 정보가 없습니다.")}</div>
                 ${renderBattleItems(info)}
             </div>
         </div>`;
     }).join('');
 }
+
+/* 설명문의 `{이뮨}` 자리에 면역 문장을 끼운다. **자리표가 있을 때만** 손댄다.
+ *
+ * ⚠⚠ 자리표가 없는 설명은 **그대로 둔다.** 한때 "자리표가 없으면 설명 전체를 갈아끼운다"
+ *   였는데, 그러면 요약문을 쓸 수가 없었다 — `디버프 면역` 은 막는 것이 **18종**이라
+ *   전부 늘어놓으면 벽이 되고, `감전, 화상, 중독 … 등 모든 상태이상에` 로 줄여 적고 싶어도
+ *   그 요약문이 통째로 교체돼 사라졌다. 지금은 `targets` 를 **필터에만** 쓰고 화면은
+ *   요약문을 유지하는 길이 열려 있다.
+ * ⚠ 그래서 자리표가 곧 선언이다. `제어 면역`·`번개 자극`·`굳건한 빛무리` 는 설명이
+ *   `{이뮨}` 한 글자이고, 할 말이 더 있는 `초 집중 취재`·`여왕의 의지` 는 문장 안에 끼운다.
+ *   **자리표를 빠뜨리면 대상이 화면에 안 나온다** (필터에는 잡힌다). `디버프 면역` 이
+ *   일부러 그렇게 돼 있어서 `db_check` 가 "자리표 없음" 을 오류로 잡을 수는 없다 —
+ *   거꾸로 **자리표만 있고 표에 아무 행도 없는** 경우를 잡는다.
+ * ⚠ 자리표가 있는데 그 사도의 행이 없으면 자리표만 걷어내고 원래 설명으로 떨어진다.
+ *   표가 비는 순간에도 `{이뮨}` 이 날것으로 노출되면 안 된다. */
+function applyImmunitySlot(desc, sentence) {
+    const base = String(desc || '');
+    if (!base.includes('{이뮨}')) return '';
+    if (!sentence) {
+        const stripped = base.replace(/,?\s*\{이뮨\}/g, '').trim();
+        return stripped || '';
+    }
+    return base.replace(/\{이뮨\}/g, sentence);
+}
+
+/* 제어 면역이 **무엇을** 막는지. `Immunity_DB.csv` 가 단일 출처다.
+ *
+ * 막는 대상이 사도마다 달라(우이(기억)은 도발만) 상태 마스터의 설명 한 줄로는 못 적는다.
+ * 그래서 마스터 설명(`다음 디버프에 면역이 된다.`)을 **그 사도의 문장으로 갈아끼운다** —
+ *   `도발에 면역이 된다.`  ·  `눈가림, 중독, 쓰라림, 기절, 넉백, 변이에 면역이 된다.`
+ *
+ * ⚠ 칩 줄로 따로 빼지 않는다. 설명문 바로 아래에 같은 말을 또 늘어놓는 꼴이 되고,
+ *   효과 박스(`.tg-effect-item`)가 이미 음각이라 안쪽에 상자를 더 파면 테두리가 겹친다.
+ * ⚠ 용어는 `renderDesc` 가 본문에 다는 것과 **같은 `.tg-term` 버튼**이다. 색·밑줄·말풍선이
+ *   저절로 따라오고, 말풍선 머리줄의 아이콘도 `lookupTerm` 이 실어 준다 —
+ *   여기서 따로 꾸미면 같은 용어가 한 화면에서 두 꼴로 보인다. */
+function immunityDescHTML(immCtx, raw, pureName, ctx) {
+    if (!immCtx || !immCtx.name) return '';
+    const rows = window._immunityDB || [];
+    if (!rows.length) return '';
+
+    /* 효과 카드의 type('aside') ↔ CSV 의 slot('aside_passive')
+       ⚠ 같은 변환이 `main.js` 의 `immSlotKey` 에도 있다 (그쪽은 필터용).
+         `ui.js` 는 동적 import 라 main 의 함수가 있다고 기대할 수 없어 따로 둔다 —
+         한쪽을 고치면 다른 쪽도 봐야 한다. */
+    const slot = immCtx.type === 'aside' ? 'aside_passive' : immCtx.type;
+    const nm = (immCtx.name || '').trim();
+
+    /* 괄호 표기(`제어 면역(개전)`)도 받도록 원본 → 순수 이름 순으로 찾는다. */
+    const find = bn => rows.find(r => (r.chara_name || '').trim() === nm
+                                   && (r.slot || '').trim() === slot
+                                   && (r.buff_name || '').trim() === bn);
+    const row = find(raw) || find(pureName);
+    if (!row) return '';
+
+    const list = (row.targets || '').split(',').map(t => t.trim()).filter(Boolean);
+    if (!list.length) return '';
+
+    const terms = list.map(t => {
+        const info = lookupTerm(t, ctx);
+        const d = info || { name: t, kind: 'debuff', desc: '', icon: '' };
+        return `<button type="button" class="tg-term" data-kind="${d.kind}"`
+             + ` data-name="${_escAttr(d.name)}" data-desc="${_escAttr(d.desc)}"`
+             + ` data-icon="${_escAttr(d.icon)}" aria-label="${_escAttr(d.name)} 설명 보기">${t}</button>`;
+    });
+
+    return terms.join(', ') + '에 면역이 된다.';
+}
+
 
 // 배틀 아이템을 생성하는 효과인지 (태그로 판별 — 새 효과가 생겨도 태그만 달면 됨)
 function hasBattleItemTag(info) {

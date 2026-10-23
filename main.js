@@ -31,7 +31,8 @@ let db = [],
     normalAtkDB = [],
     asideDB = [],
     spDB = [],
-    battleItemDB = []; // 쉼표로 연결하여 let 선언 공유
+    battleItemDB = [],
+    immunityDB = [];   // 제어 면역 표 (Immunity_DB.csv). 쉼표로 연결하여 let 선언 공유
     
 
 let isAscending = true, selectedStatees = new Set(), pendingStatees = new Set(), currentFilterTab = 'all';
@@ -49,7 +50,8 @@ window.openDetailModal = (char) => {
         normalAtkDB,
         asideDB,
         spDB,
-        battleItemDB
+        battleItemDB,
+        immunityDB
     });
 };
 
@@ -135,7 +137,7 @@ async function loadExternalData() {
     try {
         const v = window.APP_VERSION || '';
         // info.txt 는 도움말 모달이 HTML 로 옮겨가면서 폐기됨 (v1.4.13)
-        const [res1, res2, res3, res4, res6, res7, res8, res9, res10, res11, res12] = await Promise.all([
+        const [res1, res2, res3, res4, res6, res7, res8, res9, res10, res11, res12, res13] = await Promise.all([
             fetch(`./data/DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_desc_DB.csv?v=${v}`).then(res => res.text()),
@@ -147,6 +149,7 @@ async function loadExternalData() {
             fetch(`./data/aside_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/sp_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/battle_item_DB.csv?v=${v}`).then(res => res.text()),
+            fetch(`./data/Immunity_DB.csv?v=${v}`).then(res => res.text()),
         ]);
 
         const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
@@ -161,9 +164,11 @@ async function loadExternalData() {
         asideDB = Papa.parse(res10, cfg).data;
         spDB = Papa.parse(res11, cfg).data;
         battleItemDB = Papa.parse(res12, cfg).data;
-        
+        immunityDB = Papa.parse(res13, cfg).data;
+
         allStateDB = [...buffDescDB, ...debuffDescDB];
         window._battleItemDB = battleItemDB;
+        window._immunityDB = immunityDB;
         syncBattleItemTags();
 
         window._tmDB = db;
@@ -399,6 +404,51 @@ window.clearAttrFilter = function () {
 /* 배틀 아이템 태그 → '무작위 배틀 아이템 생성' 상태 태그로 동기화.
  * battle_item_DB.csv 를 단일 출처로 삼아, 아이템이 추가/수정돼도
  * 부가 효과 필터가 자동으로 따라오게 한다. (수기 관리 시 어긋나는 것을 방지) */
+/* ── 제어 면역 ────────────────────────────────────────────────────────────
+ * `Immunity_DB.csv` 가 "누가 어느 스킬로 무엇을 막는가" 의 단일 출처다.
+ * 막는 대상이 사도마다 달라서(우이(기억)은 도발만) `buff_desc_DB` 의 설명 한 줄로는
+ * 표현할 수 없다 — 그래서 상태 마스터가 아니라 별 표로 뺐다.
+ *
+ * ⚠ 세부 면역 태그를 `제어 면역` 상태 행의 `tag` 열에 넣지 말 것.
+ *   `checkTagMatch` 의 4차 검사가 그 행의 태그를 보고 판정하는데, 태그는 전원 공용이라
+ *   **도발만 막는 사도가 '기절 면역' 으로도 걸린다.** 사도별 판정은 아래 5차 검사가 맡고,
+ *   태그는 `immunityFilterTags()` 로 **선택지만** 만든다 (배틀 아이템과 같은 방식). */
+const IMM_SLOT_LABEL = {
+    low: '저학년', high: '고학년', normal: '일반공격',
+    power: '강화공격', aside_passive: '어사이드 패시브',
+};
+
+/* 효과 카드의 type('aside')과 CSV 의 slot('aside_passive')을 잇는다. */
+function immSlotKey(type) {
+    return type === 'aside' ? 'aside_passive' : type;
+}
+
+/* 그 사도가 그 슬롯의 그 버프로 막는 상태들. 없으면 빈 배열. */
+function immunityTargets(charName, type, buffName) {
+    const rows = window._immunityDB || [];
+    const slot = immSlotKey(type);
+    const nm = (charName || '').trim();
+    const bn = (buffName || '').trim();
+    const row = rows.find(r => (r.chara_name || '').trim() === nm
+                            && (r.slot || '').trim() === slot
+                            && (!bn || (r.buff_name || '').trim() === bn));
+    if (!row) return [];
+    return (row.targets || '').split(',').map(t => t.trim()).filter(Boolean);
+}
+
+/* 부가 효과 필터에 낼 선택지. 표에 쓰인 대상에서 `{상태} 면역` 을 만들어 낸다 —
+ * 표에 사도를 더하면 필터가 알아서 따라온다 (`syncBattleItemTags` 와 같은 뜻). */
+function immunityFilterTags() {
+    const out = new Set();
+    (window._immunityDB || []).forEach(r =>
+        (r.targets || '').split(',').forEach(t => {
+            const v = t.trim();
+            if (v) out.add(v + ' 면역');
+        }));
+    if (out.size) out.add('제어 면역');   // 세부를 안 가리고 통째로 찾는 길
+    return out;
+}
+
 function syncBattleItemTags() {
     const st = allStateDB.find(d => d.state_name === '무작위 배틀 아이템 생성');
     if (!st || !battleItemDB.length) return;
@@ -682,7 +732,11 @@ function handleSortFilter() {
                             effs.forEach((eff, idx) => {
                                 if (excludeSelf && targets[idx] === '자신') return;
                                 // 이름(name)과 조건(cond)을 세트로 묶어서 저장!
-                                myData.push({ name: eff, cond: conds[idx] || '' }); 
+                                myData.push({
+                                    name: eff,
+                                    cond: conds[idx] || '',
+                                    imm: immunityTargets(char.name, key.replace('_buff', ''), eff),
+                                });
                             });
                         }
                     });
@@ -834,7 +888,16 @@ function checkTagMatch(list, kw) {
         const info = allStateDB.find(d => (d.state_name || "").trim() === pureName);
         if (info && info.tag) {
             const tags = info.tag.split(',').map(t => t.trim());
-            return tags.includes(targetKw);
+            if (tags.includes(targetKw)) return true;
+        }
+
+        /* ★ 5차 검사: 제어 면역 — 막는 대상이 **사도마다 다르므로** 태그가 아니라
+           그 사도의 행(`item.imm`)을 본다. 4차에서 처리하면 전원이 같은 태그를
+           공유해 도발만 막는 사도가 '기절 면역' 으로도 걸린다. */
+        if (item.imm && item.imm.length) {
+            if (targetKw === '제어 면역') return true;
+            const m = targetKw.match(/^(.+)\s*면역$/);
+            if (m && item.imm.includes(m[1].trim())) return true;
         }
         return false;
     });
@@ -855,6 +918,9 @@ function refreshFilterList() {
             });
         }
     });
+    /* 제어 면역 세부 선택지. 면역은 버프라 '디버프만' 탭에서는 내지 않는다. */
+    const immTags = (currentFilterTab === 'debuff') ? new Set() : immunityFilterTags();
+    immTags.forEach(t => tagSet.add(t));
 
     const items = Array.from(tagSet)
         .filter(tagName => tagName.toLowerCase().includes(search))
@@ -869,7 +935,10 @@ function refreshFilterList() {
             const isChecked = pendingStatees.has(tagName);
             const isInBuff = buffDescDB.some(b => b.state_name === tagName || (b.tag && b.tag.split(',').map(t => t.trim()).includes(tagName)));
             const isInDebuff = debuffDescDB.some(d => d.state_name === tagName || (d.tag && d.tag.split(',').map(t => t.trim()).includes(tagName)));
-            const type = (isInBuff && isInDebuff) ? 'neutral' : (isInBuff ? 'buff' : 'debuff');
+            /* ⚠ 면역 태그는 두 마스터 어디에도 없다. 그냥 두면 `isInBuff` 가 false 라
+               디버프(▼)로 찍히는데, 막아 주는 효과이므로 버프(▲)다. */
+            const type = immTags.has(tagName) ? 'buff'
+                       : (isInBuff && isInDebuff) ? 'neutral' : (isInBuff ? 'buff' : 'debuff');
             const markerHTML = type === 'neutral'
                 ? '<span class="tg-neutral-bar"></span>'
                 : (type === 'buff' ? '▲' : '▼');
