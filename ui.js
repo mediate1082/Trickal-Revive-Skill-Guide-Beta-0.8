@@ -311,6 +311,8 @@ function hideTermTip() {
     });
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && _tipAnchor) {
+            /* 한 겹만 벗긴다 — 안 막으면 window 의 Esc 처리까지 내려가 모달이 통째로 닫힌다 */
+            e.stopPropagation();
             const a = _tipAnchor;
             hideTermTip();
             a.focus?.();

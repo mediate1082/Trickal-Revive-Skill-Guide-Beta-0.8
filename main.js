@@ -878,8 +878,13 @@ function checkTagMatch(list, kw) {
         // 효과명(state_name)인 키워드는 건너뜀 — '보호막 파괴 시' 조건 오탐 방지
         if (!isStateName && item.cond && item.cond.includes(targetKw)) return true;
 
-        // ★ 2차 검사: 버프 이름(원본)에 키워드가 있는지
-        if (item.name.includes(targetKw)) return true;
+        /* ★ 2차 검사: 키워드를 **꼬리로** 갖는 더 좁은 이름 (`물리 공격력 증가` → `공격력 증가`).
+           ⚠ 예전엔 `includes` 였다. 그러면 **뜻이 반대인 효과**가 같이 걸렸다 —
+             `기절` ← `기절 해제` · `버프 해제` ← `디버프 해제` · `보호막` ← `보호막 파괴` ·
+             `피해량 증가` ← `받는 피해량 증가`(적에게 거는 디버프). 9개 필터에서 사도 28건이었다.
+           낱말 경계(앞에 공백)로 붙어야 하고, `받는 …` 은 대상이 뒤집히므로 뺀다.
+           넓게 묶고 싶은 효과는 여기를 넓히지 말고 **상태 마스터의 `tag` 열**로 잇는다 (4차 검사). */
+        if (pureName.endsWith(' ' + targetKw) && !pureName.startsWith('받는 ')) return true;
 
         // ★ 3차 검사: 괄호를 제외한 순수 이름 일치 여부
         if (pureName === targetKw) return true;
@@ -1299,13 +1304,16 @@ window.addEventListener('keydown', (e) => {
     const isFilterVisible = filterModal && !filterModal.classList.contains('hidden');
     const isAsideVisible = asideModal && !asideModal.classList.contains('hidden');
 
+    /* ⚠ **열린 것만** 닫는다. 예전엔 필터 모달 셋의 close 를 무조건 불렀는데,
+         각자 `body.style.overflow` 를 풀어 버려 도움말이 떠 있는 채로 뒤 페이지가
+         스크롤됐다 (도움말 자체는 Esc 목록에 없어 안 닫혔다). */
     if (e.key === 'Escape') {
-        if (isDetailVisible) {
-            if (typeof window.closeDetailModal === 'function') window.closeDetailModal();
-        }
-        if (typeof window.closeFilterModal === 'function') window.closeFilterModal();
-        if (typeof window.closeAsideFilter === 'function') window.closeAsideFilter();
-        if (typeof window.closeAttrFilter === 'function') window.closeAttrFilter();
+        const shown = id => { const m = document.getElementById(id); return m && !m.classList.contains('hidden'); };
+        if (isDetailVisible) window.closeDetailModal?.();
+        else if (isFilterVisible) window.closeFilterModal?.();
+        else if (isAsideVisible) window.closeAsideFilter?.();
+        else if (shown('modal-attr-filter')) window.closeAttrFilter?.();
+        else if (shown('modal-info')) closeModal('modal-info');
     }
 
     if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && isDetailVisible) {

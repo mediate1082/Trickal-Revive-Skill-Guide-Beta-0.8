@@ -310,11 +310,10 @@ const GRADE_FRAME = {
    초상화·이름표·고학년 표지를 새로 짜지 않는다 — 같은 사도가 배치 격자와
    아티팩트 줄에 동시에 나오므로, 두 곳이 다르게 생기면 같은 사도로 안 읽힌다.
 
-   ⚠ **아직 어디서도 호출하지 않는다.** 아티팩트 데이터가 통째로 비어 있다 —
-     `Recommend.csv` 의 `art_*` 는 47행 전부 공백이고 `assets/icons/artifacts/`
-     폴더 자체가 없다. 슬롯은 **빈 칸으로만** 그려진다 (잠든 기능 절 참조).
+   `equip` 이 켜진 덱(`buildDeck`)에서 부른다. 이름은 `Recommend_Deck_Members.artifact`,
+   아이콘·등급은 `artifact_DB` 에서 온다 (`ARTIFACTS`).
 
-   `slots` 는 몇 칸을 그릴지다. 인게임은 사도마다 2~3개라 나중에 데이터에서 온다. */
+   `slots` 는 최소 몇 칸을 그릴지다. 적힌 아티팩트가 더 많으면 그만큼 (최대 3). */
 /* ── 편성판 (쐐기 보드) ────────────────────────────────
    인게임 편성 화면을 그대로 옮긴다. 좌표는 CLAUDE.md 의 **실측표**를 비율로 환산한 값이고,
    이 상수들을 손으로 고치지 말 것 — 실측표에서 다시 환산한다.
@@ -806,8 +805,7 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
        **역할로 묶는다** — 같은 역할이면 받는 아티팩트 유형이 비슷해서, 묶어 두면
        "이 묶음엔 이런 걸 준다" 가 한 번에 읽힌다. 묶음 순서는 `ROLE_ORDER`. */
     /* `equip` — 아티팩트 줄을 그릴지. **덱마다 따로**다.
-       ⚠ 아티팩트 데이터가 아직 통째로 비어 있어 지금은 **빈 슬롯만** 나온다.
-         값을 넣은 덱에서만 보이므로, 비워 두면 화면에 아무 영향이 없다. */
+       값을 넣은 덱에서만 보이므로, 비워 두면 화면에 아무 영향이 없다. */
     if ((deck.equip || '').trim()) {
         const erow = box.querySelector('.rc-equip-row');
         const byRole = new Map();
@@ -1744,7 +1742,11 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
                 });
         }
 
-        window._rcFlat[key] = flat;
+        /* ⚠ **이름으로 한 번씩만** 남긴다 (처음 나온 자리 순서). 같은 사도가 편성판·메모·
+             후보·분류 카드에 여러 번 나오는데, `navigateApostle` 이 `findIndex` 로 **첫 자리**를
+             찾으므로 겹치면 ← → 가 앞쪽으로 되돌아가 고리에 갇혔다 —
+             콘텐츠 탭에서 62명 중 19명밖에 못 돌았다. */
+        window._rcFlat[key] = [...new Map(flat.map(c => [c.name, c])).values()];
         body.appendChild(panel);
     });
 
