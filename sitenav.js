@@ -10,6 +10,10 @@
         { key: 'tier',      href: './tiermaker.html', label: '티어 메이커', icon: '아이콘_티어 메이커.webp', color: '#F2B13C' },
     ];
     const v = typeof APP_VERSION !== 'undefined' ? '?v=' + APP_VERSION : '';
+    // ⚠ 미리 띄워 둔 페이지(아래 Speculation Rules)는 **안 보이는 채로** 스크립트가 다 돈다.
+    //   움직임은 실제로 화면에 나타난 뒤에 시작해야 한다 — 안 그러면 보기도 전에 끝나 있다
+    const whenShown = fn => document.prerendering
+        ? document.addEventListener('prerenderingchange', fn, { once: true }) : fn();
     document.querySelectorAll('.tg-sitenav').forEach(nav => {
         const cur = PAGES.find(p => p.key === nav.dataset.page);
         nav.setAttribute('aria-label', '사이트 메뉴');
@@ -43,6 +47,7 @@
             if (!e.target.closest('.tg-sitenav-tab')) return;
             try { sessionStorage.setItem('tgPill', JSON.stringify({ l: pill.offsetLeft, w: pill.offsetWidth })); } catch (_) {}
         });
+        whenShown(() => {
         let from = null;
         try { from = JSON.parse(sessionStorage.getItem('tgPill')); sessionStorage.removeItem('tgPill'); } catch (_) {}
         if (from && from.w && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -56,6 +61,7 @@
                 pill.addEventListener('transitionend', () => { pill.style.transition = ''; }, { once: true });
             }
         }
+        });
         // 좁은 화면에서 가로로 밀릴 때 지금 페이지가 보이게
         nav.firstChild.scrollLeft = on.offsetLeft - 16;
     });
@@ -90,7 +96,40 @@
         if (i) mo.disconnect();   // 한 번 걸었으면 끝 — 필터·탭 전환은 각 페이지의 애니메이션이 맡는다
     }
     const mo = new MutationObserver(() => { if (!pending) pending = requestAnimationFrame(stagger); });
-    // 속성도 본다 — 카드를 숨긴 채 다 그려 두고 나중에 `hidden`·클래스만 풀어 보이는 페이지가 있다
-    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
-    setTimeout(() => mo.disconnect(), 5000);   // 데이터가 끝내 안 오면 지켜보기를 그만둔다
+    whenShown(() => {
+        // 속성도 본다 — 카드를 숨긴 채 다 그려 두고 나중에 `hidden`·클래스만 풀어 보이는 페이지가 있다
+        mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+        stagger();   // 미리 띄워 둔 페이지는 카드가 이미 다 그려져 있어 바뀜이 안 온다
+        setTimeout(() => mo.disconnect(), 5000);   // 데이터가 끝내 안 오면 지켜보기를 그만둔다
+    });
+})();
+
+// ── 다음 페이지 미리 받기 ──
+// 첫 페이지는 지금 그대로 빠르게, 넘어갈 때만 빨라지게 한다. 로딩 화면은 두지 않는다 —
+// 대부분 링크로 와서 한 페이지만 보고 가는데 전부를 기다리게 하면 손해다.
+(function () {
+    if (document.prerendering) return;   // 미리 띄워진 쪽에서 또 미리 받지 않는다
+    // 1) 탭에 마우스를 잠깐 올리면 그 페이지를 안 보이게 통째로 띄워 둔다 (크롬 계열. 나머지는 무시)
+    //    `moderate` = 호버 약 0.2초 / 터치는 누르는 순간
+    if (HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules')) {
+        const sr = document.createElement('script');
+        sr.type = 'speculationrules';
+        sr.textContent = JSON.stringify({ prerender: [{ where: { selector_matches: '.tg-sitenav-tab:not(.on)' }, eagerness: 'moderate' }] });
+        document.head.appendChild(sr);
+    }
+    // 2) 브라우저가 한가해지면 다른 페이지가 읽을 CSV 를 캐시에 넣어 둔다. **이미지는 받지 않는다** — 폰 데이터가 아깝다
+    //    ⚠ 주소가 페이지 쪽 fetch 와 **글자 하나까지** 같아야 캐시가 맞는다 (`data/{이름}?v=APP_VERSION`)
+    //    ⚠ 각 페이지가 읽는 CSV 가 바뀌면 여기도 고친다 (CLAUDE.md 의 "어느 페이지가 어느 CSV 를 읽는가" 표)
+    const CSV = ['DB', 'aside_DB', 'low_skill_DB', 'high_skill_DB', 'normal_Atk_DB', 'buff_DB', 'debuff_DB',
+        'buff_desc_DB', 'debuff_desc_DB', 'sp_DB', 'battle_item_DB', 'Immunity_DB', 'artifact_DB',
+        'Artifact_Stats', 'Artifact_Effects', 'Artifact_Attach', 'Artifact_Tags',
+        'Recommend_Sections', 'Recommend_Chara', 'Recommend_Chips', 'Recommend_Decks', 'Recommend_Deck_Members',
+        'Recommend_Deck_Swaps', 'Crash2_Boss', 'Crash2_Boss_Skills', 'Crash2_Lines', 'Crash2_Shards', 'Crash2_Deck_Shards'];
+    const conn = navigator.connection;
+    if (conn && (conn.saveData || /2g/.test(conn.effectiveType || ''))) return;   // 데이터 절약 모드·느린 망은 건너뛴다
+    const idle = window.requestIdleCallback || (f => setTimeout(f, 1500));
+    addEventListener('load', () => idle(() => {
+        const ver = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '';
+        CSV.forEach(n => fetch('data/' + n + '.csv?v=' + ver, { priority: 'low' }).catch(() => {}));
+    }, { timeout: 4000 }));
 })();

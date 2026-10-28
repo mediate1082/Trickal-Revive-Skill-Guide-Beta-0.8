@@ -195,15 +195,15 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 }
 .tg-accent-strip { height: 3px; background: var(--accent-green); }
 .tg-header-logo { display: flex; align-items: center; gap: 12px; }
-.tg-logo-img { width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; }
+.tg-logo-img { width: 60px; height: 60px; object-fit: contain; flex-shrink: 0; }
 .tg-title-wrap { text-align: left; }
 .tg-eyebrow {
-    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em;
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em;
     color: var(--text-muted); text-transform: uppercase; margin-bottom: 1px;
 }
 .tg-title {
     font-family: 'OneMobilePop', sans-serif;
-    font-size: 1.25rem; font-weight: 800;
+    font-size: 1.6rem; font-weight: 800;
     color: var(--text-dark); line-height: 1.1; margin: 0;
 }
 .tg-title em { font-style: normal; color: var(--accent-green-strong); }
@@ -672,7 +672,8 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 }
 @media (max-width: 420px) {
     .tg-header-inner { padding: 8px 12px; }
-    .tg-title { font-size: 1.1rem; }
+    .tg-title { font-size: 1.3rem; }
+    .tg-logo-img { width: 48px; height: 48px; }
     .tg-nav-wrap, .tg-chips-wrap { padding-left: 10px; padding-right: 10px; }
     .tg-grid { padding: 0 10px; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
     .tg-btn { font-size: 0.74rem; padding: 6px 10px; }
@@ -2525,7 +2526,7 @@ body.tm-is-dragging .tm-add-slot { display: none; }
    본문(이유·설명)은 Pretendard 로 둔다 — Pop 체는 제목·라벨용이다 (진단 U31). */
 
 .rc-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
-.rc-brand-icon { width: 52px; height: 52px; flex-shrink: 0; object-fit: contain; }
+.rc-brand-icon { width: 60px; height: 60px; flex-shrink: 0; object-fit: contain; }
 .rc-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
 
 /* 분류 2열 × 카드 2열 = 한 줄에 4장. 그러려면 본문이 1800px 쯤 필요하다.
@@ -3954,7 +3955,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 
 
 @media (max-width: 600px) {
-    .rc-brand-icon { width: 40px; height: 40px; }
+    .rc-brand-icon { width: 46px; height: 46px; }
     .rc-sec { padding: 14px 14px 4px; border-radius: 12px; }
     .rc-cards { grid-template-columns: 1fr; gap: 10px; }
     .rc-card { gap: 10px; padding: 10px; }
