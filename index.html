@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>트릭컬 스킬 가이드</title>
+    <title>스킬 가이드 — 트릭컬 사도 가이드</title>
     <link rel="icon" href="assets/icons/common_icons/NerIcon.webp" type="image/webp">
-    <meta property="og:title" content="트릭컬 스킬 가이드">
+    <meta property="og:title" content="트릭컬 사도 가이드">
     <meta property="og:description" content="트릭컬 리바이브 사도별 스킬 및 부가 효과 정리">
     <meta property="og:image" content="https://mediate1082.github.io/Trickal-Revive-Skill-Guide-Beta-0.8/assets/icons/common_icons/Skill.webp">
     <meta property="og:url" content="https://mediate1082.github.io/Trickal-Revive-Skill-Guide-Beta-0.8/">
@@ -36,36 +36,11 @@
             <div class="tg-header-logo">
                 <img src="assets/icons/common_icons/NerIcon2.webp" alt="로고" class="tg-logo-img">
                 <div class="tg-title-wrap">
-                    <div class="tg-eyebrow">Trickcal · Skill Guide</div>
-                    <h1 class="tg-title main-title">트릭컬 <em>스킬</em> 가이드</h1>
+                    <div class="tg-eyebrow">트릭컬 사도 가이드</div>
+                    <h1 class="tg-title main-title"><em>스킬</em> 가이드</h1>
                 </div>
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
-                <!-- 티어 메이커 버튼과 **같은 클래스**를 쓴다. 호버로 펼쳐지는 동작이 거기 붙어 있다.
-                     사도 추천 쪽에서 이리로 오는 버튼도 짝으로 있다 (recommend.html). -->
-                <a href="./recommend.html" class="tg-tier-btn" aria-label="사도 추천" title="사도 추천">
-                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
-                        <path d="M8 16l2 -6l6 -2l-2 6l-6 2"/>
-                        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>
-                    </svg>
-                    <span class="tm-btn-text">사도 추천</span>
-                </a>
-                <a href="./artifact.html" class="tg-tier-btn" aria-label="아티팩트" title="아티팩트">
-                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
-                        <rect x="5" y="3" width="14" height="18" rx="3"/><path d="M12 8l1.5 3 3 .5-2.2 2 .6 3-2.9-1.5-2.9 1.5.6-3-2.2-2 3-.5z"/>
-                    </svg>
-                    <span class="tm-btn-text">아티팩트</span>
-                </a>
-                <a href="./tiermaker.html" class="tg-tier-btn" aria-label="티어 메이커" title="티어 메이커">
-                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
-                        <path d="M8 21l8 0"/><path d="M12 17l0 4"/>
-                        <path d="M7 4l10 0"/>
-                        <path d="M17 4v8a5 5 0 0 1 -10 0v-8"/>
-                        <path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
-                        <path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
-                    </svg>
-                    <span class="tm-btn-text">티어 메이커</span>
-                </a>
                 <button id="theme-toggle" class="tg-theme-toggle" aria-label="테마 전환" title="테마 전환" onclick="window.toggleTheme()"></button>
                 <button class="tg-help-btn" onclick="openInfoModal()" aria-label="도움말">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
@@ -78,6 +53,8 @@
         </div>
 
     </header>
+    <nav class="tg-sitenav" data-page="skill"></nav>
+    <script>document.write('<script src="sitenav.js?v=' + APP_VERSION + '"><\/script>');</script>
 
     <div class="tg-subheader">
         <div class="tg-nav-wrap">
@@ -385,7 +362,7 @@
     <button id="top-btn" onclick="scrollToTop()">▲<div style="font-size:0.7rem;">TOP</div></button>
 
     <footer class="tg-footer">
-        <span>트릭컬 리바이브 © EPIDGames · 스킬 가이드 제작 by mediate1082</span>
+        <span>트릭컬 리바이브 © EPIDGames · 사도 가이드 제작 by mediate1082</span>
         <span>트릭컬 커뮤니티 공동 연구를 기반으로 작성됩니다</span>
     </footer>
 

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>사도 추천 — 트릭컬 스킬 가이드</title>
-    <meta property="og:title" content="콘텐츠별 사도 추천 — 트릭컬 스킬 가이드">
+    <title>사도 추천 — 트릭컬 사도 가이드</title>
+    <meta property="og:title" content="콘텐츠별 사도 추천 — 트릭컬 사도 가이드">
     <meta property="og:description" content="리세마라, 뉴비, 레이드 등 콘텐츠별로 유용한 사도를 정리했습니다">
     <link rel="icon" href="assets/icons/common_icons/NerIcon.webp" type="image/webp">
     <!-- ⚠ `version.js` 에는 `?v=APP_VERSION` 을 못 쓴다 — APP_VERSION 을 **정의하는** 파일이다.
@@ -27,38 +27,14 @@
 <header class="tg-header">
     <div class="tg-header-inner">
         <div class="rc-brand">
-            <img class="rc-brand-icon" src="assets/icons/common_icons/아이콘_침략.png" alt="">
+            <img class="rc-brand-icon" src="assets/icons/common_icons/아이콘_사도 추천.webp" alt="">
             <span class="rc-brand-text">
-                <span class="tg-eyebrow">Chara Recommend</span>
+                <span class="tg-eyebrow">트릭컬 사도 가이드</span>
                 <span class="tg-title main-title">사도 <em>추천</em></span>
             </span>
         </div>
 
         <div style="display:flex;align-items:center;gap:8px;">
-            <!-- 티어 메이커 버튼과 **같은 클래스**를 쓴다. 호버로 펼쳐지는 동작이 거기 붙어 있다 -->
-            <a href="./" class="tg-tier-btn" aria-label="스킬 가이드" title="스킬 가이드">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                    <path d="M9 7h7"/><path d="M9 11h5"/>
-                </svg>
-                <span class="tm-btn-text">스킬 가이드</span>
-            </a>
-            <a href="./artifact.html" class="tg-tier-btn" aria-label="아티팩트" title="아티팩트">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
-                    <rect x="5" y="3" width="14" height="18" rx="3"/><path d="M12 8l1.5 3 3 .5-2.2 2 .6 3-2.9-1.5-2.9 1.5.6-3-2.2-2 3-.5z"/>
-                </svg>
-                <span class="tm-btn-text">아티팩트</span>
-            </a>
-            <a href="./tiermaker.html" class="tg-tier-btn" aria-label="티어 메이커" title="티어 메이커">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
-                    <path d="M8 21l8 0"/><path d="M12 17l0 4"/><path d="M7 4l10 0"/>
-                    <path d="M17 4v8a5 5 0 0 1 -10 0v-8"/>
-                    <path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
-                    <path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>
-                </svg>
-                <span class="tm-btn-text">티어 메이커</span>
-            </a>
             <button id="theme-toggle" class="tg-theme-toggle" aria-label="테마 전환" title="테마 전환" onclick="window.toggleTheme()"></button>
             <button class="tg-help-btn" aria-label="도움말" title="도움말" onclick="document.getElementById('rc-help').hidden = !document.getElementById('rc-help').hidden">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -69,6 +45,8 @@
         </div>
     </div>
 </header>
+<nav class="tg-sitenav" data-page="recommend"></nav>
+<script>document.write('<script src="sitenav.js?v=' + APP_VERSION + '"><\/script>');</script>
 
 <main class="rc-main">
     <div id="rc-help" class="rc-help" hidden>
@@ -93,7 +71,7 @@
 </div>
 
 <footer class="tg-footer">
-    <span>트릭컬 리바이브 © EPIDGames · 스킬 가이드 제작 by mediate1082</span>
+    <span>트릭컬 리바이브 © EPIDGames · 사도 가이드 제작 by mediate1082</span>
     <span>트릭컬 커뮤니티 공동 연구를 기반으로 작성됩니다</span>
 </footer>
 

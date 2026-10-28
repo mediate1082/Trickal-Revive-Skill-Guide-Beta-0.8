@@ -2537,7 +2537,9 @@ body.tm-is-dragging .tm-add-slot { display: none; }
      무대 높이가 고른 분류에 맞춰 줄어들기 때문이라 없앨 수 없는 상황이다 —
      푸터를 바닥으로 밀어 두는 게 맞다. `:has` 로 이 페이지에만 건다. */
 body:has(.rc-main) { min-height: 100vh; display: flex; flex-direction: column; }
-body:has(.rc-main) .rc-main { flex: 1 0 auto; }
+/* ⚠ 세로 flex 안에서 margin: auto 는 폭을 내용만큼 쪼그라뜨린다 — 홈처럼 내용이 좁은 탭에서
+   탭 상자까지 같이 좁아졌다. 폭을 못박아 둔다 */
+body:has(.rc-main) .rc-main { flex: 1 0 auto; width: 100%; box-sizing: border-box; }
 body:has(.rc-main) .tg-footer { margin-top: auto; }
 
 body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
@@ -4647,11 +4649,11 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-panel.reset-ani { animation: resetFadeIn 0.5s ease-out; }
 /* ── 사도 추천 홈 (recommend.js · buildHome) ── */
 .rc-tab svg.rc-tab-icon { width: 22px; height: 22px; }
-.rc-home { max-width: var(--page-width); margin: 0 auto; padding: 8px 16px 40px; display: grid; gap: 18px; }
+.rc-home { margin: 0 auto; padding: 8px 0 40px; display: grid; gap: 18px; }
 .rc-home[hidden] { display: none; }
 .rc-home.reset-ani { animation: resetFadeIn 0.5s ease-out; }
 .rc-home-h { font-size: 14px; color: var(--text-muted); margin: 0 0 8px; }
-.rc-home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.rc-home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
 .rc-home-card { background: var(--header-bg); border: 1px solid var(--border-soft); border-radius: 18px; padding: 14px 16px 16px;
     box-shadow: 0 2px 8px var(--shadow-soft); display: flex; flex-direction: column; gap: 10px; }
 .rc-home-head { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; color: var(--text-dark); }
@@ -4674,3 +4676,123 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-home-sec.is-stale:hover { opacity: .75; }
 .rc-home-now { font-style: normal; font-size: 11px; font-weight: 800; color: #fff; background: #E8862A; border-radius: 999px; padding: 1px 7px; }
 @media (max-width: 720px) { .rc-home-grid { grid-template-columns: 1fr; } }
+
+/* ═══ 사이트 공용 탭 줄 (sitenav.js) — 네 페이지 헤더 바로 아래 ═══
+   예전 헤더 오른쪽 둥근 아이콘 버튼(.tg-tier-btn)을 대신한다.
+   ⚠ 따라다니지 않는다 — 필터 바(.tg-subheader)·분류 트레이가 이미 따라다녀서
+     둘이 겹쳐 붙으면 카드 볼 자리를 먹는다 */
+/* 세그먼트 트레이 — 회색 트레이 위에 **그 페이지 색** 알약 하나.
+   색이 쓰이는 곳이 "지금 페이지" 하나뿐이라 색 자체가 위치 표시가 된다.
+   ⚠ 트레이를 연두로 두지 말 것 — 보라·금색 알약이 연두 위에 얹혀 부딪힌다 (시안 3번에서 걸렀다)
+   페이지 색(`--pc`)은 `sitenav.js` 의 목록에 있고, 알약은 그 색 30% 를 헤더 바탕에 섞는다 —
+   그래서 다크에서는 저절로 어둡게 물든다 */
+.tg-sitenav { background: var(--header-bg); border-bottom: 1px solid var(--border-soft); }
+/* 위아래 여백을 같게 — 위를 2px 로 두었더니 트레이가 헤더 경계선에 붙어 떠 보였다 */
+.tg-sitenav-inner { margin: 0 auto; padding: 10px 16px; overflow-x: auto; scrollbar-width: none; }
+.tg-sitenav-inner::-webkit-scrollbar { display: none; }
+.tg-sitenav-row {
+    display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; position: relative; vertical-align: top;
+    background: color-mix(in srgb, var(--text-muted) 12%, var(--header-bg));
+    box-shadow: inset 0 1px 3px var(--shadow-soft);
+}
+.tg-sitenav-pill {
+    position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; border-radius: 999px;
+    background: color-mix(in srgb, var(--pc) 30%, var(--header-bg));
+    box-shadow: 0 2px 6px var(--shadow-soft), 0 0 0 1.5px color-mix(in srgb, var(--pc) 60%, transparent);
+}
+.tg-sitenav-tab {
+    display: flex; align-items: center; gap: 7px; flex: 0 0 auto; position: relative; z-index: 1;
+    padding: 7px 16px 7px 10px; border-radius: 999px; font-weight: 800; font-size: .9rem; word-break: keep-all;
+    color: var(--text-muted); text-decoration: none; transition: color .15s;
+}
+.tg-sitenav-tab img { width: 22px; height: 22px; object-fit: contain; opacity: .6; transition: opacity .15s; }
+.tg-sitenav-tab:hover, .tg-sitenav-tab.on { color: var(--text-dark); }
+.tg-sitenav-tab:hover img, .tg-sitenav-tab.on img { opacity: 1; }
+.tg-sitenav-tab:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+@media (max-width: 560px) {
+    .tg-sitenav-inner { padding: 8px; }
+    .tg-sitenav-tab { padding: 6px 11px 6px 8px; font-size: .82rem; gap: 5px; }
+    .tg-sitenav-tab img { width: 18px; height: 18px; }
+}
+
+/* 탭 줄 폭은 그 페이지 헤더와 같이 간다 — 로고 아래에 첫 탭이 서야 한다 */
+.tg-sitenav-inner { max-width: var(--page-width); }
+body:has(.rc-main) .tg-sitenav-inner { max-width: min(1800px, 100% - 24px); }
+body:has(.tm-body) .tg-sitenav-inner,
+body:has(.tm-body) .tg-header-inner { max-width: 1300px; }
+
+/* ═══ 페이지 간 이동 애니메이션 (View Transitions, 문서 간) ═══
+   페이지마다 본문 폭이 달라(1160 · 1800 · 1300) 탭을 옮겨 다니면 화면 좌우 여백이 툭 바뀐다.
+   탭 줄 트레이에 이름을 붙여 두면 브라우저가 두 페이지의 같은 이름끼리 **자리를 이어서**
+   미끄러뜨리고, 나머지는 겹쳐 사라지고 나타난다.
+   - ⚠⚠ **크기가 변하는 요소에 이름을 달지 말 것.** 헤더·탭 줄 통째로 달았더니 폭(1160↔1800)이
+     애니메이션되면서 프레임이 뚝뚝 끊겼다 — 크기 변화는 메인 스레드에서 돌아서, 새 페이지가
+     CSV 를 읽고 카드를 그리는 일과 부딪힌다. 로고·탭은 페이지마다 크기가 같아 **위치(transform)만**
+     움직이므로 GPU 가 혼자 돌린다. 본문도 opacity 만 쓴다
+   - 트레이·알약 이름은 아래 탭 줄 전환 절에 있다
+   - 지원 안 하는 브라우저(현재 Firefox 등)는 그냥 평소처럼 넘어간다 — 깨지지 않는다
+   - ⚠ 같은 페이지 안의 해시 이동(#tab)에는 안 걸린다. 문서가 바뀔 때만이다
+   - ⚠ 이름은 한 페이지에 **하나씩만** 있어야 한다. 겹치면 전환이 통째로 취소된다 */
+@view-transition { navigation: auto; }
+::view-transition-group(*) { animation-duration: .3s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
+::view-transition-old(root) { animation: tg-vt-out .16s ease both; }
+::view-transition-new(root) { animation: tg-vt-in .24s ease .04s both; }
+@keyframes tg-vt-out { to { opacity: 0; } }
+@keyframes tg-vt-in { from { opacity: 0; } }
+/* ⚠ 로고에는 이름을 달지 않는다. 달았더니 사도 추천(헤더 1800px)으로 넘어갈 때 로고가
+     화면 가운데 쪽에서 왼쪽 끝까지 **미끄러져 따라가** 어색했다. 이름이 없으면 본문과 함께
+     제자리에서 사라지고(.16s) 새 자리에서 나타난다(.24s) — 페이드 아웃 → 페이드 인 */
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+/* 티어 메이커 헤더는 버튼이 셋 더 있어 폰에서 한 줄에 안 들어간다 — 버튼 줄을 아래로 내린다 */
+@media (max-width: 640px) {
+    body:has(.tm-body) .tg-header-inner { flex-wrap: wrap; }
+    body:has(.tm-body) .tm-header-right { flex: 1 1 100%; justify-content: flex-end; flex-wrap: wrap; }
+}
+
+/* 첫 화면 카드 차례 등장 (sitenav.js) — `backwards` 라 끝나면 아무 흔적도 안 남는다.
+   ⚠ `both`·`forwards` 로 두면 끝난 뒤에도 transform 을 쥐고 있어 카드 호버 들림이 죽는다 */
+@keyframes tg-card-in { from { opacity: 0; transform: translateY(10px); } }
+.tg-card-in { animation: tg-card-in .32s cubic-bezier(.2, .7, .2, 1) var(--tg-in-delay, 0ms) backwards; }
+
+/* 조작 영역 등장 — 탭 줄 → 조작 영역 → 카드 순으로 나타나게 카드보다 한 박자 먼저 (카드는 sitenav.js 의 LEAD 로 늦춘다).
+   덩어리째 움직인다 — 안의 버튼까지 차례로 띄우면 카드 효과와 겹쳐 어수선하다.
+   ⚠ 사도 추천 안에서 탭을 바꿀 때는 안 걸린다 (상자를 다시 만들지 않는다). 페이지를 열 때 한 번뿐
+   ⚠ `backwards` — 끝난 뒤 transform 을 쥐고 있으면 따라다니는 필터 바 안의 드롭다운 기준이 바뀐다 */
+@keyframes tg-ctrl-in { from { opacity: 0; transform: translateY(-4px); } }
+.tg-subheader, .rc-navbox { animation: tg-ctrl-in .2s ease-out backwards; }
+@media (prefers-reduced-motion: reduce) {
+    .tg-subheader, .rc-navbox, .tg-card-in { animation: none; }
+}
+
+/* 탭 줄 전환 — 트레이 한 덩어리만 미끄러진다. 알약은 sitenav.js 가 트레이 안에서 따로 옮긴다.
+   ⚠ 알약을 전환에 맡겼던 두 번(따로 이름 → `view-transition-group: nearest` 로 묶기) 다 덜컥거렸다.
+     알약 폭이 탭마다 달라 크기 애니메이션이 메인 스레드에서 돌았기 때문이다 */
+.tg-sitenav-row { view-transition-name: site-tray; }
+/* 알약은 이름을 달지 않는다 — 트레이 안에서 sitenav.js 가 transform 으로 직접 옮긴다 (그쪽 주석 참조) */
+
+/* 탭 줄은 헤더 줄 **안**에 산다 (sitenav.js 가 로고와 오른쪽 버튼 사이로 옮긴다).
+   넓으면  [로고 | 트레이 | 버튼] 한 줄, 트레이는 **가운데 고정** —
+     로고 옆에 붙이면 로고 폭(스킬 가이드 / 아티팩트 가이드 …)에 따라 페이지마다 자리가 달라진다.
+     `1fr auto 1fr` 이라 양옆이 같은 폭을 먹어 트레이가 정확히 가운데 선다
+   좁으면  [로고 | 버튼] 아래 줄에 트레이 (트레이만 470px 쯤이라 한 줄에 안 들어간다)
+   ⚠ 문턱이 페이지마다 다르다 — 가운데 고정이라 양옆 중 **넓은 쪽 × 2 + 트레이** 가 필요하다.
+     티어 메이커는 오른쪽 버튼이 셋 더 있어(약 400px) 훨씬 넓어야 한다 */
+.tg-header-inner:has(> .tg-sitenav) { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 16px; row-gap: 6px; }
+.tg-header-inner > .tg-sitenav { grid-column: 1 / -1; grid-row: 2; background: none; border: 0; box-shadow: none; min-width: 0; }
+.tg-header-inner > .tg-sitenav .tg-sitenav-inner { max-width: none; padding: 0; }
+.tg-header-inner:has(> .tg-sitenav) > :last-child { justify-self: end; }
+@media (min-width: 1024px) {
+    body:not(:has(.tm-body)) .tg-header-inner:has(> .tg-sitenav) { grid-template-columns: 1fr auto 1fr; }
+    body:not(:has(.tm-body)) .tg-header-inner > .tg-sitenav { grid-column: 2; grid-row: 1; }
+}
+@media (min-width: 1360px) {
+    body:has(.tm-body) .tg-header-inner:has(> .tg-sitenav) { grid-template-columns: 1fr auto 1fr; }
+    body:has(.tm-body) .tg-header-inner > .tg-sitenav { grid-column: 2; grid-row: 1; }
+}
+@media (max-width: 640px) {
+    body:has(.tm-body) .tg-header-inner:has(> .tg-sitenav) { grid-template-columns: 1fr; }
+    body:has(.tm-body) .tg-header-inner > .tm-header-right { justify-self: start; }
+    body:has(.tm-body) .tg-header-inner > .tg-sitenav { grid-row: 3; }
+}
