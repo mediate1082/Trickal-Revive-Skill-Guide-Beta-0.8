@@ -1163,7 +1163,7 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     from { opacity: 0.3; transform: translateY(5px); }
     to   { opacity: 1;   transform: translateY(0); }
 }
-#main-grid.is-refreshing {
+#main-grid.is-refreshing, #ar-grid.is-refreshing {
     animation: tg-grid-refresh 0.22s ease-out;
 }
 

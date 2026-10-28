@@ -180,6 +180,11 @@ function render() {
     $('ar-grid').innerHTML = list.length ? list.map(a =>
         `<button class="ar-card" data-name="${esc(a.name)}" aria-label="${esc(a.name)}">${face(a)}</button>`).join('')
         : '<p class="ar-empty">조건에 맞는 아티팩트가 없어요. 필터를 하나 풀어 보세요.</p>';
+    /* 목록 갱신 애니메이션 — main.js 의 triggerGridRefresh 와 같은 클래스 (첫 그리기는 빼고) */
+    const g = $('ar-grid');
+    if (g.dataset.drawn) { g.classList.remove('is-refreshing'); void g.offsetWidth; g.classList.add('is-refreshing');
+        g.addEventListener('animationend', () => g.classList.remove('is-refreshing'), { once: true }); }
+    g.dataset.drawn = '1';
 }
 /* ── 효과문: 자리표 숫자만 강조, 용어는 .tg-term ── */
 function termify(html) {
