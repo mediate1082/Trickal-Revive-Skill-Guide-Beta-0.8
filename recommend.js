@@ -1379,7 +1379,10 @@ function writeHash(panel) {
     const sec = panel._secKeys && panel._secKeys[panel._slide || 0];
     const want = '#' + key + (effView() === 'slide' && sec ? '/' + sec : '');
     if (location.hash !== want) history.replaceState(null, '', want);
+    rememberHash(want);
 }
+/* 마지막으로 본 자리(탭/분류)를 기억한다 — 해시 없이 다시 들어오면 거기서 시작 */
+function rememberHash(h) { try { localStorage.setItem('rcLastHash', h); } catch (e) {} }
 
 /* 분류가 커지거나 줄면(그림이 늦게 뜨는 등) 무대 높이도 따라가야 한다.
    ⚠ `resize` 이벤트는 이 페이지에서 믿을 수 없다 — ResizeObserver 를 쓴다. */
@@ -1425,7 +1428,75 @@ document.addEventListener('keydown', e => {
 });
 
 /* 대분류 = 탭. 선택 상태는 URL 해시에 담아 링크로 공유할 수 있게 한다. */
+/* ── 홈 — 탭마다 카드 한 장 + 분류 바로가기 ──────────────────────
+   리세마라 탭을 거쳐야 다른 탭으로 갈 수 있던 불편을 덜려고 둔 첫 화면.
+   바로가기가 **분류까지** 바로 가므로 탭 → 분류 두 번이 한 번이 된다.
+   - `sec_now` 가 있는 분류는 맨 위 '지금 볼 것' 줄에 크게 한 번 더 낸다
+   - `sec_stale`(지난 시즌) 분류는 바로가기를 **흐리게** 하고 그 문구를 말풍선으로 단다
+   ⚠ 홈은 `.rc-panel` 이 **아니다.** 슬라이드·높이 계산이 전부 `.rc-panel` 을 돌므로
+     거기 섞으면 빈 무대를 재다 깨진다. 따로 `.rc-home` 으로 둔다 */
+function buildHome(groups, bar, body) {
+    const btn = document.createElement('button');
+    btn.className = 'rc-tab';
+    btn.dataset.key = HOME;
+    btn.setAttribute('role', 'tab');
+    btn.innerHTML = `<svg class="rc-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>홈`;
+    btn.onclick = () => activateTab(HOME);
+    bar.appendChild(btn);
+
+    const home = document.createElement('section');
+    home.className = 'rc-home';
+    home.hidden = true;
+    const go = (gk, sk) => { activateTab(gk, sk); window.scrollTo({ top: 0 }); };
+    const secBtn = (gk, sec, big) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'rc-home-sec' + (big ? ' is-big' : '') + (sec.stale ? ' is-stale' : '');
+        b.innerHTML = (sec.icon ? `<img src="${iconUrl(sec.icon, 'content')}" alt="" onerror="this.remove()">` : '')
+            + `<span>${esc(sec.label)}</span>`
+            + (sec.now ? `<em class="rc-home-now">${esc(sec.now)}</em>` : '');
+        if (sec.stale) b.dataset.tooltip = sec.stale;
+        b.onclick = () => go(gk, sec.key);
+        return b;
+    };
+
+    const nows = [];
+    groups.forEach((g, gk) => g.secs.forEach(sec => { if (sec.now && !sec.stale) nows.push([gk, sec]); }));
+    if (nows.length) {
+        const strip = document.createElement('div');
+        strip.className = 'rc-home-strip';
+        strip.innerHTML = '<h2 class="rc-home-h">지금 볼 것</h2>';
+        const row = document.createElement('div');
+        row.className = 'rc-home-secs';
+        nows.forEach(([gk, sec]) => row.appendChild(secBtn(gk, sec, true)));
+        strip.appendChild(row);
+        home.appendChild(strip);
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'rc-home-grid';
+    groups.forEach((g, gk) => {
+        const card = document.createElement('article');
+        card.className = 'rc-home-card';
+        card.innerHTML = `<button type="button" class="rc-home-head">
+                ${g.icon ? `<img src="${iconUrl(g.icon, 'common_icons')}" alt="" onerror="this.remove()">` : ''}
+                <span>${esc(g.label)}</span><i aria-hidden="true">›</i></button>
+            ${g.tip ? `<p class="rc-home-tip">${linkify(g.tip)}</p>` : ''}`;
+        card.querySelector('.rc-home-head').onclick = () => go(gk);
+        const secs = document.createElement('div');
+        secs.className = 'rc-home-secs';
+        g.secs.forEach(sec => secs.appendChild(secBtn(gk, sec, false)));
+        card.appendChild(secs);
+        grid.appendChild(card);
+    });
+    home.appendChild(grid);
+    body.appendChild(home);
+}
+
+const HOME = 'home';
 function activateTab(key, secKey) {
+    const home = document.querySelector('.rc-home');
+    if (home) home.hidden = key !== HOME;
     document.querySelectorAll('.rc-tab').forEach(b => {
         const on = b.dataset.key === key;
         b.classList.toggle('on', on);
@@ -1446,6 +1517,13 @@ function activateTab(key, secKey) {
             placeInd(active, true);
             requestAnimationFrame(() => placeInd(active, true));
         }
+    }
+    if (key === HOME) {
+        document.querySelector('.rc-subhost')?.querySelectorAll('.rc-subbar').forEach(el => el.remove());
+        if (location.hash !== '#' + HOME) history.replaceState(null, '', '#' + HOME);
+        rememberHash('#' + HOME);
+        window.currentDisplayedList = [];
+        return;
     }
     if (active) {
         const i = secKey && active._secKeys ? active._secKeys.indexOf(secKey) : -1;
@@ -1510,6 +1588,8 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
                          ⚠ 숨김과 다른 쓰임이다. 끝난 시즌 정보도 다음 메타가 올 때까지는
                            육성 방향을 고르는 데 쓸모가 있어 읽을 수 있어야 한다. */
                       hide: (d.sec_hide || '').trim(), stale: (d.sec_stale || '').trim(),
+                      /* `sec_now` — 홈에서 '지금 볼 것' 으로 띄운다. 값이 곧 뱃지 글자다 (`이번 시즌` 등) */
+                      now: (d.sec_now || '').trim(),
                       rows: [], decks: [],
                       boss: null, bossSkills: [], rules: [], shards: [], notes: [] };
         groups.get(gk).secs.set(sk, sec);
@@ -1638,6 +1718,7 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
         <button class="rc-view-btn" data-view="list"  title="전부 한 줄로 보기">1열</button>`;
 
     window._rcFlat = {};
+    buildHome(groups, bar, body);
     /* 패널을 다 만든 뒤에 단을 채운다 (아래 `packPanels()`) */
     groups.forEach((g, key) => {
         const btn = document.createElement('button');
@@ -1787,26 +1868,31 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
     /* 해시는 `#탭` 또는 `#탭/분류` */
     const read = () => decodeURIComponent(location.hash.slice(1)).split('/');
     const [wantTab, wantSec] = read();
-    activateTab(keys.includes(wantTab) ? wantTab : keys[0], wantSec);
+    /* 해시가 있으면 그 탭(공유 링크), 없으면 마지막으로 본 탭, 그것도 없으면 홈 */
+    let last = '';
+    try { last = localStorage.getItem('rcLastHash') || ''; } catch (e) {}
+    const [lastTab, lastSec] = decodeURIComponent(last.slice(1)).split('/');
+    const valid = k => k === HOME || keys.includes(k);
+    if (valid(wantTab)) activateTab(wantTab, wantSec);
+    else if (valid(lastTab)) activateTab(lastTab, lastSec);
+    else activateTab(HOME);
     window.addEventListener('hashchange', () => {
         const [k, sk] = read();
-        if (keys.includes(k)) activateTab(k, sk);
+        if (valid(k)) activateTab(k, sk);
     });
-    /* 제목을 누르면 첫 탭으로 돌아가 맨 위로 — 스킬 가이드·아티팩트의 '제목 클릭 초기화' 와 짝.
+    /* 제목을 누르면 홈으로 돌아가 맨 위로 — 스킬 가이드·아티팩트의 '제목 클릭 초기화' 와 짝.
        ⚠ 로고를 링크로 감싸지 않는다 (한때 스킬 가이드로 이동해 버렸다) */
     const title = document.querySelector('.rc-brand .main-title');
     if (title) {
         title.style.cursor = 'pointer';
-        title.title = '클릭 시 첫 탭으로';
+        title.title = '클릭 시 홈으로';
         title.onclick = () => {
-            /* 첫 분류부터 — `secKey` 로 넘기면 1열에서 그 분류로 스크롤해 버리므로 슬라이드 번호를 직접 되돌린다 */
-            const first = document.querySelector(`.rc-panel[data-key="${CSS.escape(keys[0])}"]`);
-            if (first) first._slide = 0;
-            activateTab(keys[0]); window.scrollTo({ top: 0, behavior: 'smooth' });
+            activateTab(HOME); window.scrollTo({ top: 0, behavior: 'smooth' });
             /* 스킬 가이드·아티팩트와 같은 초기화 애니메이션 (reset-ani) */
-            if (first) {
-                first.classList.remove('reset-ani'); void first.offsetWidth; first.classList.add('reset-ani');
-                first.addEventListener('animationend', () => first.classList.remove('reset-ani'), { once: true });
+            const home = document.querySelector('.rc-home');
+            if (home) {
+                home.classList.remove('reset-ani'); void home.offsetWidth; home.classList.add('reset-ani');
+                home.addEventListener('animationend', () => home.classList.remove('reset-ani'), { once: true });
             }
         };
     }

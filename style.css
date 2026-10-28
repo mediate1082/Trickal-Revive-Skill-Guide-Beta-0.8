@@ -4645,3 +4645,32 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 @media (max-width: 520px) { .ar-subs { margin-left: 0; } }
 /* 사도 추천 제목 클릭 — .rc-panel 의 자체 등장 애니메이션(rc-panel-in)보다 앞서야 한다 */
 .rc-panel.reset-ani { animation: resetFadeIn 0.5s ease-out; }
+/* ── 사도 추천 홈 (recommend.js · buildHome) ── */
+.rc-tab svg.rc-tab-icon { width: 22px; height: 22px; }
+.rc-home { max-width: var(--page-width); margin: 0 auto; padding: 8px 16px 40px; display: grid; gap: 18px; }
+.rc-home[hidden] { display: none; }
+.rc-home.reset-ani { animation: resetFadeIn 0.5s ease-out; }
+.rc-home-h { font-size: 14px; color: var(--text-muted); margin: 0 0 8px; }
+.rc-home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.rc-home-card { background: var(--header-bg); border: 1px solid var(--border-soft); border-radius: 18px; padding: 14px 16px 16px;
+    box-shadow: 0 2px 8px var(--shadow-soft); display: flex; flex-direction: column; gap: 10px; }
+.rc-home-head { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; color: var(--text-dark); }
+.rc-home-head img { width: 34px; height: 34px; object-fit: contain; }
+.rc-home-head i { margin-left: auto; font-style: normal; color: var(--text-muted); font-size: 22px; transition: transform .15s; }
+.rc-home-head:hover i { transform: translateX(3px); }
+.rc-home-head:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 3px; border-radius: 8px; }
+.rc-home-tip { margin: 0; font-size: 13px; line-height: 1.55; color: var(--text-muted); word-break: keep-all; }
+.rc-home-secs { display: flex; flex-wrap: wrap; gap: 6px; }
+.rc-home-sec { font: inherit; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    padding: 5px 11px 5px 6px; border-radius: 999px; border: 1px solid var(--border-soft); background: var(--modal-body-bg); color: var(--text-dark);
+    transition: border-color .15s, transform .15s; word-break: keep-all; }
+.rc-home-sec img { width: 22px; height: 22px; object-fit: contain; }
+.rc-home-sec:hover { border-color: var(--accent-green-strong); transform: translateY(-1px); }
+.rc-home-sec:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+.rc-home-sec.is-big { font-size: 15px; font-weight: 800; padding: 8px 16px 8px 8px; background: var(--header-bg); box-shadow: 0 2px 8px var(--shadow-soft); }
+.rc-home-sec.is-big img { width: 30px; height: 30px; }
+/* 지난 시즌 — 흐리게. 눌러서 들어가는 건 그대로 된다 */
+.rc-home-sec.is-stale { opacity: .45; filter: grayscale(1); }
+.rc-home-sec.is-stale:hover { opacity: .75; }
+.rc-home-now { font-style: normal; font-size: 11px; font-weight: 800; color: #fff; background: #E8862A; border-radius: 999px; padding: 1px 7px; }
+@media (max-width: 720px) { .rc-home-grid { grid-template-columns: 1fr; } }
