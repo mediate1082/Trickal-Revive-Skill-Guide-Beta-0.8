@@ -4633,3 +4633,13 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .ar-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
 .ar-body::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); background-clip: padding-box; }
 [data-theme="dark"] .ar-body { scrollbar-color: rgba(255,255,255,0.2) transparent; }
+/* 특징 소분류 트레이 — 대분류 줄 아래 음각 상자. 꺼져 있어도 태그 색 점이 보인다 */
+.ar-subs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -2px 0 0 58px;
+    padding: 8px 10px; border-radius: 12px; background: var(--stat-box-bg); box-shadow: var(--inset-shadow); border: 1px solid var(--border-soft); }
+.ar-subs[hidden] { display: none; }
+.ar-subs-h { font-size: 12px; color: var(--text-muted); margin-right: 4px; }
+.ar-chip.sub { font-size: 12.5px; padding: 4px 10px 4px 8px; background: var(--header-bg); }
+.ar-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.ar-chip.sub.on .ar-dot { background: #fff; }
+.ar-filters [data-group].on { background: var(--accent-green-strong); color: #fff; }
+@media (max-width: 520px) { .ar-subs { margin-left: 0; } }

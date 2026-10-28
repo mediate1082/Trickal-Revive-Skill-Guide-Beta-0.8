@@ -110,7 +110,8 @@ function buildFilters() {
     const box = $('ar-filters');
     box.innerHTML = `
         <div class="ar-frow"><b>특징</b>${groups.map(g => `<button class="ar-chip" data-group="${esc(g)}">${esc(g)}</button>`).join('')}
-            <span class="ar-subs" id="ar-subs"></span></div>
+</div>
+        <div class="ar-subs" id="ar-subs" hidden></div>
         <div class="ar-frow"><b>등급</b>${GRADES.map(g => `<button class="ar-chip" data-grade="${g}">${g}</button>`).join('')}
             <button class="ar-chip" data-attach>애착만</button></div>
         <div class="ar-frow"><b>스탯</b>${[...labels].sort((a, b) => b[1] - a[1]).map(([l]) =>
@@ -133,8 +134,11 @@ function syncChips() {
     box.querySelectorAll('[data-grade]').forEach(b => b.classList.toggle('on', F.grades.has(b.dataset.grade)));
     box.querySelector('[data-attach]').classList.toggle('on', F.attach);
     box.querySelectorAll('[data-stat]').forEach(b => b.classList.toggle('on', b.dataset.stat === F.stat));
-    $('ar-subs').innerHTML = F.group ? TAGS.filter(t => t.tag_group === F.group).map(t =>
-        `<button class="ar-chip sub${F.tags.has(t.tag_key) ? ' on' : ''}" data-tag="${esc(t.tag_key)}" style="--c:${t.tag_color}">${esc(t.tag_label || t.tag_key)}</button>`).join('') : '';
+    /* 소분류는 대분류 줄 **아래** 음각 트레이로 — 같은 줄에 두면 대분류와 구분이 안 됐다 */
+    const subs = $('ar-subs');
+    subs.hidden = !F.group;
+    subs.innerHTML = F.group ? `<span class="ar-subs-h">${esc(F.group)}</span>` + TAGS.filter(t => t.tag_group === F.group).map(t =>
+        `<button class="ar-chip sub${F.tags.has(t.tag_key) ? ' on' : ''}" data-tag="${esc(t.tag_key)}" style="--c:${t.tag_color}"><i class="ar-dot"></i>${esc(t.tag_label || t.tag_key)}</button>`).join('') : '';
     const n = (F.group ? 1 : 0) + F.tags.size + F.grades.size + (F.attach ? 1 : 0) + (F.stat ? 1 : 0);
     $('ar-filter-count').textContent = n || '';
 }
