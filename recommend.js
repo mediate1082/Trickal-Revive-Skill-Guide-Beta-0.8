@@ -1803,6 +1803,11 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
             const first = document.querySelector(`.rc-panel[data-key="${CSS.escape(keys[0])}"]`);
             if (first) first._slide = 0;
             activateTab(keys[0]); window.scrollTo({ top: 0, behavior: 'smooth' });
+            /* 스킬 가이드·아티팩트와 같은 초기화 애니메이션 (reset-ani) */
+            if (first) {
+                first.classList.remove('reset-ani'); void first.offsetWidth; first.classList.add('reset-ani');
+                first.addEventListener('animationend', () => first.classList.remove('reset-ani'), { once: true });
+            }
         };
     }
 }

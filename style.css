@@ -4643,3 +4643,5 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .ar-chip.sub.on .ar-dot { background: #fff; }
 .ar-filters [data-group].on { background: var(--accent-green-strong); color: #fff; }
 @media (max-width: 520px) { .ar-subs { margin-left: 0; } }
+/* 사도 추천 제목 클릭 — .rc-panel 의 자체 등장 애니메이션(rc-panel-in)보다 앞서야 한다 */
+.rc-panel.reset-ani { animation: resetFadeIn 0.5s ease-out; }
