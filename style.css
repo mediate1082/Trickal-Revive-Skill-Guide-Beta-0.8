@@ -4495,3 +4495,126 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     margin-left: .22em; flex: none;
 }
 
+
+
+/* ═══════════════════════════════════════════════════════════════
+   아티팩트 페이지 (artifact.html · artifact.js) — 전부 .ar- 접두사
+   시안: tools/artifact/artifact-preview.html
+   ═══════════════════════════════════════════════════════════════ */
+.ar-main { max-width: var(--page-width); margin: 0 auto; padding: 8px 16px 80px; }
+.ar-count { color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+.ar-filters[hidden] { display: none; }
+.ar-filters { margin-bottom: 4px; }
+.ar-freset { justify-content: flex-end; }
+/* ── 필터 ── */
+.ar-filters { background: var(--header-bg); border: 1px solid var(--border-soft); border-radius: 16px; padding: 12px 14px; display: grid; gap: 10px; box-shadow: 0 2px 8px var(--shadow-soft); }
+.ar-frow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ar-frow > b { font-size: 12px; color: var(--text-muted); width: 52px; flex: none; }
+.ar-chip { font: inherit; font-size: 13px; border: 1px solid var(--border-soft); background: var(--modal-body-bg); color: var(--text-dark); border-radius: 999px; padding: 5px 11px; cursor: pointer; display: inline-flex; gap: 5px; align-items: center; }
+.ar-chip img { width: 18px; height: 18px; }
+.ar-chip:hover { border-color: var(--accent-green-strong); }
+.ar-chip.on { background: var(--accent-green); border-color: var(--accent-green-strong); color: #2D3A12; font-weight: 800; }
+.ar-chip.sub.on { background: var(--c); border-color: var(--c); color: #fff; }
+.ar-chip:focus-visible, .ar-card:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+.ar-subs { display: contents; }
+
+/* ── 그리드: 인게임 카드 축소판 ── */
+.ar-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px 16px; margin-top: 18px; }
+.ar-card { all: unset; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; border-radius: 12px; }
+/* 인게임 카드 — 흰 외곽 프레임 + 등급 단색 프레임 2단, 바탕 위에 흰 그라디언트 + 이름 */
+.ar-face { position: relative; width: 100%; aspect-ratio: 5 / 6; container-type: inline-size; margin-top: 10px;
+  filter: drop-shadow(0 3px 4px var(--shadow-soft)); transition: transform .15s; }
+.ar-face[data-grade="전설"] { --g: #B371F5; } .ar-face[data-grade="희귀"] { --g: #69A5E5; }
+.ar-face[data-grade="고급"] { --g: #66DC84; } .ar-face[data-grade="일반"] { --g: #DFE1DD; }
+.ar-frame { position: absolute; inset: 0; border-radius: 15cqw; background: #fff; padding: 3.5cqw; }
+.ar-inner { position: relative; height: 100%; border-radius: 12cqw; background: var(--g); padding: 3.5cqw; }
+.ar-bg { position: relative; height: 100%; border-radius: 9cqw; overflow: hidden; background: var(--base) center / cover no-repeat; }
+.ar-bg::after { content: ''; position: absolute; inset: auto 0 0; height: 55%; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.92) 60%); }
+.ar-face .ic { position: absolute; left: 50%; top: 44%; width: 62cqw; translate: -50% -50%; z-index: 1; }
+.ar-label { position: absolute; left: 4cqw; right: 4cqw; bottom: 11cqw; z-index: 2; text-align: center; color: #111;
+  font-weight: 800; font-size: max(8.5cqw, min(10cqw, calc(88cqw / var(--n, 8)))); line-height: 1.1; word-break: keep-all; -webkit-text-stroke: 1.6cqw #fff; paint-order: stroke fill; }
+.ar-cost { position: absolute; left: 50%; top: -9cqw; translate: -50% 0; z-index: 3; width: 24cqw; aspect-ratio: 1; background: url(assets/icons/artifact_card/Ingame_IconCost_DefaultSmall.webp) center / contain no-repeat;
+  display: grid; place-items: center; color: #111; font-size: 13cqw; font-weight: 800; -webkit-text-stroke: 1.6cqw #fff; paint-order: stroke fill; }
+.ar-card:hover .ar-face { transform: translateY(-3px); }
+.ar-att { position: absolute; right: 5cqw; top: 5cqw; z-index: 3; width: 22cqw; aspect-ratio: 1; border-radius: 50%; border: 1.4cqw solid #fff; background: #eee center / cover; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.ar-empty { color: var(--text-muted); padding: 40px; text-align: center; grid-column: 1 / -1; }
+
+/* ── 상세 모달 ── */
+.ar-dim { position: fixed; inset: 0; background: rgba(20, 28, 8, .45); display: grid; place-items: center; padding: 16px; z-index: 50; }
+.ar-dim[hidden] { display: none; }
+.ar-modal { background: var(--ar-body-bg, #FBFCF6); width: min(640px, 100%); max-height: calc(100vh - 32px); overflow: auto; border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,.25); }
+.ar-mhead { display: grid; grid-template-columns: 128px 1fr; gap: 16px; padding: 20px 20px 16px; background: var(--ar-head-bg, #FFFFFF); border-bottom: 1px solid var(--border-soft); position: relative; }
+.ar-mhead .ar-face { width: 128px; }
+.ar-x { position: absolute; right: 12px; top: 12px; font: inherit; font-size: 20px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; }
+.ar-x:hover { background: var(--border-soft); }
+.ar-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-right: 34px; }
+.ar-title h2 { margin: 0; font-size: 21px; word-break: keep-all; }
+.ar-grade { font-size: 12px; font-weight: 800; color: #fff; border-radius: 6px; padding: 2px 8px; background: var(--g); }
+.ar-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0 8px; }
+.ar-stat { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; }
+.ar-stat img { width: 20px; height: 20px; }
+.ar-stat b { color: var(--buff-text); font-variant-numeric: tabular-nums; }
+.ar-effect { font-size: 14.5px; line-height: 1.65; word-break: keep-all; margin: 0; }
+.ar-effect .v { color: var(--skill-high); font-weight: 800; font-variant-numeric: tabular-nums; }
+.ar-note { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+.ar-body { padding: 16px 20px 22px; display: grid; gap: 18px; }
+.ar-lv { background: var(--stat-box-bg); box-shadow: var(--inset-shadow); border: 1px solid var(--border-soft); border-radius: 14px; padding: 12px 14px; }
+.ar-track { position: relative; padding-bottom: 22px; }
+.ar-lv input { width: 100%; accent-color: var(--accent-green-strong); margin: 4px 0 0; }
+.ar-lvnow { position: absolute; top: 26px; translate: -50% 0; font-size: 13px; color: var(--text-dark); white-space: nowrap; pointer-events: none; }
+.ar-lvmax:empty { display: none; }
+.ar-end { position: absolute; top: 27px; left: 0; font-size: 11px; color: var(--text-muted); }
+.ar-end.hi { left: auto; right: 0; }
+.ar-end[hidden] { display: none; }
+.ar-lv { padding-top: 16px !important; }
+/* 덱 칸은 '잘 어울리는 사도' 로 바꿀 때까지 숨긴다 */
+.ar-sec.ar-decksec { display: none; }
+.ar-lvmax { font-size: 12.5px; color: var(--text-muted); margin-top: 6px; word-break: keep-all; }
+.ar-lvmax b { color: var(--text-dark); }
+.ar-lv.locked input { opacity: .35; }
+.ar-sec h3 { font-size: 13px; color: var(--text-muted); margin: 0 0 8px; }
+/* 애착 — 인게임 '…의 애착 아티팩트' 팝업 */
+.ar-attach { --y: #F7D54A; --yl: #FFF7D6; border-radius: 18px; overflow: hidden; background: var(--yl); border: 3px solid #fff; box-shadow: 0 0 0 1px #EAD27A; }
+.ar-attach-h { padding: 12px; text-align: center; background: repeating-linear-gradient(45deg, #F9DC5C 0 12px, #F5D14A 12px 24px); border-bottom: 3px solid #E9C23A; }
+.ar-attach-title { display: inline-block; padding: 6px 28px; border-radius: 14px; background: #FFF4B8; border: 2px solid #fff; font-weight: 800; font-size: 15px; color: #3a3320; box-shadow: 0 2px 0 #E2B92F; }
+.ar-attach-note { margin: 12px 14px 4px; padding: 6px 10px; border-radius: 999px; background: #F3DCA8; color: #9A7A3F; font-size: 12px; text-align: center; word-break: keep-all; }
+.ar-attach-steps { padding: 6px 14px 14px; }
+.ar-step { display: grid; grid-template-columns: 128px 1fr; gap: 14px; padding: 12px 0; position: relative; }
+.ar-step + .ar-step { border-top: 1px solid #EBDDB0; }
+.ar-step[data-step="1"]::before { content: ''; position: absolute; left: 13px; top: 44px; bottom: -14px; border-left: 3px dotted #8B7A3A; }
+.ar-step-l { display: flex; align-items: center; gap: 4px; height: 28px; background: linear-gradient(to right, transparent 34px, var(--y) 34px) no-repeat 0 60% / 100% 60%; border-radius: 0 999px 999px 0; }
+.ar-chk { width: 28px; height: 28px; position: relative; z-index: 1; }
+.ar-leaf { width: 30px; height: 30px; background: url('assets/icons/common_icons/애착 아티팩트_ 효과 발동.webp') center / contain no-repeat; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: #fff; -webkit-text-stroke: 2px #A07A0C; paint-order: stroke fill; }
+.ar-step-l b { font-size: 17px; color: #2d2a20; margin-left: 4px; }
+.ar-step-r { font-size: 13.5px; line-height: 1.6; color: #2d2a20; word-break: keep-all; display: grid; gap: 2px; }
+.ar-step-r b { color: #6FAE1C; }
+.ar-attach-skill { font-weight: 800; } .ar-attach-skill em { font-style: normal; color: #E59A0B; }
+.ar-kv { display: grid; gap: 0; }
+.ar-kv b { color: #6FAE1C; }
+.ar-step.off { opacity: .55; } .ar-step.off .ar-leaf { background-image: url('assets/icons/common_icons/애착 아티팩트_ 효과 미발동.webp'); }
+.ar-step.off .ar-step-l { filter: grayscale(1); } .ar-step.off .ar-step-r b { color: inherit; }
+.ar-attach-title { display: inline-flex !important; align-items: center; gap: 8px; }
+.ar-attach-face { width: 34px; height: 34px; margin: -8px 0 -8px -14px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; object-position: top; background: #fff; }
+.ar-skt { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; padding: 1px 8px 1px 4px; border-radius: 999px; background: #fff; border: 1px solid #EAD27A; font-size: inherit; font-weight: 800; color: #7A6420; vertical-align: 1px; line-height: 1.4; }
+.ar-skt img { width: 1.3em; height: 1.3em; }
+:root[data-theme="dark"] .ar-attach { --yl: #3A3422; box-shadow: 0 0 0 1px #6b5a20; border-color: #4a4230; }
+:root[data-theme="dark"] .ar-step-r, :root[data-theme="dark"] .ar-step-l b { color: #F1E9CF; }
+:root[data-theme="dark"] .ar-step + .ar-step { border-color: #5a4f30; }
+.ar-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.ar-tag { font: inherit; font-size: 12px; font-weight: 800; color: #fff; border: 0; border-radius: 999px; padding: 4px 10px; background: var(--c); cursor: pointer; }
+.ar-decks { display: flex; flex-wrap: wrap; gap: 6px; }
+.ar-decks a { font-size: 13px; color: var(--rc-link); text-decoration: none; border: 1px solid var(--border-soft); border-radius: 8px; padding: 4px 9px 4px 4px; display: inline-flex; gap: 6px; align-items: center; }
+.ar-decks a img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+.ar-decks a:hover { border-color: var(--rc-link); }
+.ar-none { font-size: 13px; color: var(--text-muted); }
+@media (max-width: 900px) { .ar-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 560px) { .ar-grid { grid-template-columns: repeat(3, 1fr); gap: 16px 10px; } }
+@media (max-width: 520px) {
+  .ar-mhead { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .ar-title, .ar-stats { justify-content: center; padding-right: 0; }
+  .ar-frow > b { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .ar-face { transition: none; } }
+:root[data-theme="dark"] { --ar-head-bg: #26272A; --ar-body-bg: #1E1F22; --ar-name: #F1F1F1; }
+.ar-title h2 { color: var(--ar-name, #333333); }
