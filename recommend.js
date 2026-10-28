@@ -1792,6 +1792,19 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
         const [k, sk] = read();
         if (keys.includes(k)) activateTab(k, sk);
     });
+    /* 제목을 누르면 첫 탭으로 돌아가 맨 위로 — 스킬 가이드·아티팩트의 '제목 클릭 초기화' 와 짝.
+       ⚠ 로고를 링크로 감싸지 않는다 (한때 스킬 가이드로 이동해 버렸다) */
+    const title = document.querySelector('.rc-brand .main-title');
+    if (title) {
+        title.style.cursor = 'pointer';
+        title.title = '클릭 시 첫 탭으로';
+        title.onclick = () => {
+            /* 첫 분류부터 — `secKey` 로 넘기면 1열에서 그 분류로 스크롤해 버리므로 슬라이드 번호를 직접 되돌린다 */
+            const first = document.querySelector(`.rc-panel[data-key="${CSS.escape(keys[0])}"]`);
+            if (first) first._slide = 0;
+            activateTab(keys[0]); window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+    }
 }
 
 /* ── 상세 모달용 데이터 컨텍스트 ────────────────────────────────
