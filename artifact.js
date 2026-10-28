@@ -98,6 +98,22 @@ $('ar-filter-btn').onclick = () => {
     const box = $('ar-filters'); box.hidden = !box.hidden;
     $('ar-filter-btn').setAttribute('aria-expanded', String(!box.hidden));
 };
+/* 제목을 누르면 전부 초기화 — main.js 의 '타이틀 클릭 시 모든 상태 초기화' 와 같다.
+   필터·검색을 풀고 정렬을 기본(등급순 ▼)으로 돌린 뒤, 평소 갱신보다 강한 reset-ani 를 건다 */
+const title = document.querySelector('.main-title');
+title.style.cursor = 'pointer';
+title.title = '클릭 시 필터 및 검색 초기화';
+title.onclick = () => {
+    F.group = null; F.tags.clear(); F.grades.clear(); F.attach = false; F.stat = null;
+    F.q = ''; $('ar-search').value = '';
+    F.sort = 'grade'; F.desc = false;
+    $('arSort').querySelector('.tg-dropdown-label').textContent = '등급순';
+    $('ar-order').textContent = '▼';
+    render();
+    const g = $('ar-grid');
+    g.classList.remove('is-refreshing', 'reset-ani'); void g.offsetWidth; g.classList.add('reset-ani');
+    g.addEventListener('animationend', () => g.classList.remove('reset-ani'), { once: true });
+};
 $('ar-grid').onclick = e => { const c = e.target.closest('.ar-card'); if (c) openModal(c.dataset.name); };
 window.addEventListener('scroll', () => { $('top-btn').style.display = window.scrollY > 300 ? 'flex' : 'none'; });
 }
