@@ -1,7 +1,10 @@
 /* ── 아티팩트 페이지 (artifact.html) ─────────────────────────────
    목록 + 상세 모달. 시안은 tools/artifact/artifact-preview.html.
    읽는 CSV — artifact_DB · Artifact_Stats · Artifact_Effects · Artifact_Attach ·
-   Artifact_Tags · buff_desc_DB · debuff_desc_DB                                */
+   Artifact_Tags · buff_desc_DB · debuff_desc_DB
+   ⚠ 상세 모달은 **다른 페이지도 쓴다** (사도 추천의 아티팩트 슬롯).
+     window.openArtifactModal(이름) 이 입구이고, 목록·필터 쪽은 #ar-grid 가 있을 때만 돈다.
+     모달 껍데기(#ar-dim)가 없는 페이지에서는 여기서 만들어 붙인다                */
 (() => {
 const GRADES = ['일반', '고급', '희귀', '전설'];
 const GRADE_COLOR = { 일반: '#8D9A86', 고급: '#4FA45E', 희귀: '#4C86D9', 전설: '#A35BDB' };
@@ -18,11 +21,14 @@ const lines = s => String(s ?? '').split('\\n');
 const lvVals = (row, lv) => String(row?.['Lv.' + lv] ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
 const lastLv = row => { let n = 0; for (let i = 1; i <= 12; i++) if (lvVals(row, i).length) n = i; return n; };
 const $ = id => document.getElementById(id);
+const PAGE = !!$('ar-grid');
+if (!$('ar-dim')) document.body.insertAdjacentHTML('beforeend',
+    '<div class="ar-dim" id="ar-dim" hidden><div class="ar-modal" role="dialog" aria-modal="true" id="ar-modal"></div></div>');
 
 let A = [], STATS = {}, EFF = {}, ATT = {}, TAGS = [], TERMS = {};
 const F = { group: null, tags: new Set(), grades: new Set(), attach: false, stat: null, q: '', sort: 'grade', desc: false };
 
-Promise.all(['artifact_DB.csv', 'Artifact_Stats.csv', 'Artifact_Effects.csv', 'Artifact_Attach.csv', 'Artifact_Tags.csv',
+const READY = Promise.all(['artifact_DB.csv', 'Artifact_Stats.csv', 'Artifact_Effects.csv', 'Artifact_Attach.csv', 'Artifact_Tags.csv',
     'buff_desc_DB.csv', 'debuff_desc_DB.csv'].map(load))
 .then(([art, st, ef, at, tg, bd, dd]) => {
     A = art; TAGS = tg;
@@ -32,8 +38,12 @@ Promise.all(['artifact_DB.csv', 'Artifact_Stats.csv', 'Artifact_Effects.csv', 'A
     const KEEP = new Set(['직접 피해', '무적']);
     [...bd.filter(r => KEEP.has(r.state_name)), ...dd.filter(r => r.type === '제어' || r.type === '지속피해')]
         .forEach(r => { if (r.state_name && r.description && !r.description.includes('{')) TERMS[r.state_name.trim()] = r.description; });
+    if (!PAGE) return;
     buildFilters(); render();
-}).catch(err => { $('ar-grid').innerHTML = `<p class="ar-empty">데이터를 불러오지 못했어요 (${esc(err.message)})</p>`; });
+    /* artifact.html#이름 으로 들어오면 그 모달을 연다 */
+    const h = decodeURIComponent(location.hash.slice(1));
+    if (h) openModal(h);
+}).catch(err => { if (PAGE) $('ar-grid').innerHTML = `<p class="ar-empty">데이터를 불러오지 못했어요 (${esc(err.message)})</p>`; });
 
 /* 기본 스탯: "라벨 : {0}%" 줄 → {label, idx, unit}. 비용 줄은 스탯이 아니다 */
 function statLines(name) {
@@ -51,8 +61,18 @@ const costAt = (name, lv) => {
     return c ? (lvVals(STATS[name], lv)[c.idx] ?? STATS[name].cost) : STATS[name]?.cost;
 };
 
+/* 필터 박스가 상단에 붙었는지 — main.js 의 watchStuck 과 같다.
+   붙은 동안에만 .tg-nav 가 프리즘 글라스가 되고, 아닐 때는 그리드 색 띠다 */
+if (PAGE && 'IntersectionObserver' in window) {
+    const sub = document.querySelector('.tg-subheader');
+    const mark = document.createElement('div');
+    mark.setAttribute('aria-hidden', 'true'); mark.style.cssText = 'height:0;margin:0;padding:0;border:0;';
+    sub.parentNode.insertBefore(mark, sub);
+    new IntersectionObserver(([e]) => sub.classList.toggle('is-stuck', !e.isIntersecting), { threshold: 0 }).observe(mark);
+}
+
 /* ── 정렬 드롭다운 — main.js 의 initSortDropdown 과 같은 마크업·클래스 ── */
-(function initSort() {
+if (PAGE) (function initSort() {
     const root = $('arSort'), btn = root.querySelector('.tg-dropdown-btn'), label = root.querySelector('.tg-dropdown-label');
     let menu = null;
     const close = () => { if (!menu) return; menu.remove(); menu = null; btn.setAttribute('aria-expanded', 'false'); document.removeEventListener('mousedown', onDoc); };
@@ -71,12 +91,16 @@ const costAt = (name, lv) => {
     });
     root._close = close;
 })();
+if (PAGE) {
 $('ar-order').onclick = () => { F.desc = !F.desc; $('ar-order').textContent = F.desc ? '▲' : '▼'; render(); };
 $('ar-search').oninput = e => { F.q = e.target.value.trim(); render(); };
 $('ar-filter-btn').onclick = () => {
     const box = $('ar-filters'); box.hidden = !box.hidden;
     $('ar-filter-btn').setAttribute('aria-expanded', String(!box.hidden));
 };
+$('ar-grid').onclick = e => { const c = e.target.closest('.ar-card'); if (c) openModal(c.dataset.name); };
+window.addEventListener('scroll', () => { $('top-btn').style.display = window.scrollY > 300 ? 'flex' : 'none'; });
+}
 
 /* ── 필터 ── */
 function buildFilters() {
@@ -153,8 +177,6 @@ function render() {
         `<button class="ar-card" data-name="${esc(a.name)}" aria-label="${esc(a.name)}">${face(a)}</button>`).join('')
         : '<p class="ar-empty">조건에 맞는 아티팩트가 없어요. 필터를 하나 풀어 보세요.</p>';
 }
-$('ar-grid').onclick = e => { const c = e.target.closest('.ar-card'); if (c) openModal(c.dataset.name); };
-
 /* ── 효과문: 자리표 숫자만 강조, 용어는 .tg-term ── */
 function termify(html) {
     const names = Object.keys(TERMS).filter(n => n.length >= 2).sort((a, b) => b.length - a.length);
@@ -232,17 +254,18 @@ function openModal(name) {
     $('ar-mrange').oninput = e => draw(+e.target.value);
     m.querySelector('.ar-x').onclick = closeModal;
     m.querySelector('.ar-tags').onclick = e => { const t = e.target.closest('.ar-tag'); if (!t) return;
+        if (!PAGE) return;   /* 다른 페이지에서는 거를 목록이 없다 */
         F.group = t.dataset.g || null; F.tags = new Set([t.dataset.t]);
         $('ar-filters').hidden = false; $('ar-filter-btn').setAttribute('aria-expanded', 'true');
         closeModal(); render(); };
     $('ar-dim').hidden = false; document.body.style.overflow = 'hidden';
-    m.scrollTop = 0; m.querySelector('.ar-x').focus();
+    m.querySelector('.ar-body').scrollTop = 0; m.querySelector('.ar-x').focus();
 }
 function closeModal() { $('ar-dim').hidden = true; document.body.style.overflow = ''; lastFocus?.focus(); }
 $('ar-dim').onclick = e => { if (e.target.id === 'ar-dim') closeModal(); };
 document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
-    if (!$('ar-dim').hidden) closeModal(); else $('arSort')._close?.();
+    if (!$('ar-dim').hidden) { e.stopImmediatePropagation(); closeModal(); } else $('arSort')?._close?.();
 });
-window.addEventListener('scroll', () => { $('top-btn').style.display = window.scrollY > 300 ? 'flex' : 'none'; });
+window.openArtifactModal = name => READY.then(() => openModal(name));
 })();

@@ -592,6 +592,10 @@ function buildEquipCard(char, info, slots = 3) {
                  <img class="s-icon" src="./assets/icons/artifacts/ArtifactIcon_${esc(art.icon_no)}.webp"
                       alt="" onerror="this.remove()">`;
             sl.dataset.tooltip = `${nm} · ${art.grade}`;
+            /* 누르면 아티팩트 상세 모달 — artifact.js 가 window.openArtifactModal 로 연다.
+               카드 자체도 눌리는(사도 모달) 자리라 전파를 끊는다 */
+            /* ⚠ 핸들러는 아래 문서 위임으로 단다 — 슬라이드 복제본(cloneNode)은 onclick 을 못 물려받는다 */
+            sl.classList.add('is-link'); sl.tabIndex = 0; sl.setAttribute('role', 'button'); sl.dataset.art = nm;
         } else if (nm === FREE_ART) {
             /* `자유` — **아무거나 껴도 되는 칸**이다. 빈 칸과 눈으로 갈라야 한다.
                비워 두면 "아직 안 적었나" 로 읽힌다 (어사이드 `무관` 과 같은 이유).
@@ -1398,8 +1402,19 @@ function watchStuck() {
 }
 window.addEventListener('scroll', watchStuck, { passive: true });
 
+/* 아티팩트 슬롯 → 아티팩트 상세 모달 (artifact.js). 카드(사도 모달)로 전파되지 않게 끊는다 */
+document.addEventListener('click', e => {
+    const sl = e.target.closest('.rc-equip-slot.is-link'); if (!sl) return;
+    e.stopPropagation(); window.openArtifactModal?.(sl.dataset.art);
+}, true);
+document.addEventListener('keydown', e => {
+    const sl = (e.key === 'Enter' || e.key === ' ') && e.target.closest?.('.rc-equip-slot.is-link'); if (!sl) return;
+    e.preventDefault(); e.stopPropagation(); window.openArtifactModal?.(sl.dataset.art);
+}, true);
+
 document.addEventListener('keydown', e => {
     if (effView() !== 'slide') return;
+    if (document.getElementById('ar-dim')?.hidden === false) return;   /* 아티팩트 모달이 떠 있으면 넘기지 않는다 */
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;

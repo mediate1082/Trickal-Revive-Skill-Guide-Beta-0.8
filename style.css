@@ -4618,3 +4618,18 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 @media (prefers-reduced-motion: reduce) { .ar-face { transition: none; } }
 :root[data-theme="dark"] { --ar-head-bg: #26272A; --ar-body-bg: #1E1F22; --ar-name: #F1F1F1; }
 .ar-title h2 { color: var(--ar-name, #333333); }
+/* 사도 추천의 아티팩트 슬롯 → 아티팩트 모달 (recommend.js · buildEquipCard) */
+.rc-equip-slot.is-link { cursor: pointer; transition: transform .12s; }
+.rc-equip-slot.is-link:hover { transform: translateY(-2px); }
+.rc-equip-slot.is-link:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+.ar-dim { z-index: 1000; }
+/* 상세 모달 짜임 — 사도 상세 모달(#detail-body-scroll)과 같다: 머리는 서 있고 몸통만 스크롤 */
+.ar-modal { display: flex; flex-direction: column; overflow: hidden; }
+.ar-mhead { flex: none; }
+.ar-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable;
+    scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent; }
+.ar-body::-webkit-scrollbar { width: 8px; }
+.ar-body::-webkit-scrollbar-track { background: transparent; }
+.ar-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+.ar-body::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); background-clip: padding-box; }
+[data-theme="dark"] .ar-body { scrollbar-color: rgba(255,255,255,0.2) transparent; }
