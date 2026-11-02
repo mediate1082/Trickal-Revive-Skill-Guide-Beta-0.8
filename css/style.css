@@ -4846,7 +4846,10 @@ body:has(.tm-body) .tg-header-inner { max-width: 1300px; }
 .tg-at-link { cursor: pointer; }
 .tg-at-icons .tg-at-ico { transition: transform .12s; }
 .tg-at-icons .tg-at-ico:hover, .tg-at-icons .tg-at-ico:focus-visible { transform: translateY(-2px); outline: none; }
-.tg-at-more { font-size: .74rem; font-weight: 800; color: var(--text-muted); padding: 3px 9px; border-radius: 99px; border: 1px solid var(--border-soft); cursor: default; }
+.tg-at-more { font: inherit; font-size: .74rem; font-weight: 800; color: var(--text-muted); padding: 3px 9px; border-radius: 99px;
+               border: 1px solid var(--border-soft); background: transparent; cursor: pointer; }
+.tg-at-more:hover, .tg-at-more:focus-visible { color: var(--text-heading); border-color: var(--text-muted); outline: none; }
+.tg-at-icons:not(.is-open) > .is-extra { display: none; }
 .tg-at-own { display: flex; align-items: center; gap: 10px; }
 .tg-at-own .tg-at-ico { width: 46px; height: 46px; }
 .tg-at-own b { display: block; font-size: .84rem; color: var(--text-heading); line-height: 1.3; word-break: keep-all; }

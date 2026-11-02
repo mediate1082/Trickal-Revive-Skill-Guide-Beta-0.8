@@ -735,8 +735,11 @@ function artTagBox(raw, who, D) {
     const slot = a => `<img src="./assets/icons/common_icons/Ingame_ArtifactBase_${frame(a)}.webp" alt=""><img class="ico" src="./assets/icons/artifacts/ArtifactIcon_${(a.icon_no || '').trim()}.webp" alt="">`;
     const ico = a => `<span class="tg-at-ico tg-at-link" role="button" tabindex="0" data-art="${escA(nm(a))}"
         data-tooltip="${escA(nm(a))}\n${escA(gr(a))}${used(a) ? ' · 덱 ' + used(a) + '곳' : ''}">${slot(a)}</span>`;
-    const row = (label, list) => `<div class="tg-at-row"><div class="tg-at-label">${label}</div><div class="tg-at-icons">${list.slice(0, ART_TAG_MAX).map(ico).join('')}${list.length > ART_TAG_MAX
-        ? `<span class="tg-at-more" data-tooltip="${escA(list.slice(ART_TAG_MAX).map(nm).join('\n'))}">+${list.length - ART_TAG_MAX}</span>` : ''}</div></div>`;
+    /* `+N` 은 **누르면 그 줄을 펼친다.** 말풍선에 이름을 늘어놓았더니 폰에서 화면 높이를 넘어 잘리고
+       스크롤도 안 됐다 (슈로 +36). 넘친 아이콘은 처음부터 그려 두고 숨겨 둔다 */
+    const row = (label, list) => `<div class="tg-at-row"><div class="tg-at-label">${label}</div><div class="tg-at-icons">${list.map((a, i) =>
+        i < ART_TAG_MAX ? ico(a) : ico(a).replace('class="tg-at-ico', 'class="tg-at-ico is-extra')).join('')}${list.length > ART_TAG_MAX
+        ? `<button type="button" class="tg-at-more" data-n="${list.length - ART_TAG_MAX}" aria-expanded="false">+${list.length - ART_TAG_MAX}</button>` : ''}</div></div>`;
 
     const parts = [];
     const own = keys.includes('애착') ? D.arts.find(a => (a.attach || '').trim() === who) : null;
@@ -849,6 +852,11 @@ const openUsageArt = el => {
         .catch(() => { location.href = './artifact.html#' + encodeURIComponent(name); });
 };
 document.addEventListener('click', e => { const el = e.target.closest('.tg-usage-art.is-link, .tg-at-link'); if (el) openUsageArt(el); });
+document.addEventListener('click', e => {
+    const b = e.target.closest('.tg-at-more'); if (!b) return;
+    const open = b.closest('.tg-at-icons').classList.toggle('is-open');
+    b.textContent = open ? '접기' : '+' + b.dataset.n; b.setAttribute('aria-expanded', open);
+});
 document.addEventListener('keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const el = e.target.closest && e.target.closest('.tg-usage-art.is-link, .tg-at-link'); if (el) { e.preventDefault(); openUsageArt(el); }
