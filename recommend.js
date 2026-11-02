@@ -1944,7 +1944,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
         const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT, immT,
-               bossT, bossPartT, lineT, shardT, deckShardT] =
+               bossT, bossPartT, lineT, shardT, deckShardT, usageT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
                 'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv', 'Recommend_Deck_Members.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
@@ -1952,10 +1952,13 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
                 'low_skill_DB.csv', 'aside_DB.csv', 'sp_DB.csv', 'battle_item_DB.csv',
                 'artifact_DB.csv', 'Immunity_DB.csv',
                 'Crash2_Boss.csv', 'Crash2_Boss_Skills.csv', 'Crash2_Lines.csv',
-                'Crash2_Shards.csv', 'Crash2_Deck_Shards.csv'].map(get));
+                'Crash2_Shards.csv', 'Crash2_Deck_Shards.csv', 'Usage_DB.csv'].map(get));
         const P = t => Papa.parse(t, cfg).data;
 
         const db = P(dbT);
+        /* 운용 정보 탭 데이터 — `main.js` 의 `mergeUsage` 와 같은 일 (거기 주석 참조) */
+        const usage = new Map(P(usageT).map(r => [(r.name || '').trim(), r]));
+        db.forEach(c => { const u = usage.get((c.name || '').trim()); if (u) Object.assign(c, u); });
         const buffDescDB = P(buffDescT), debuffDescDB = P(debuffDescT);
         const allStateDB = [...buffDescDB, ...debuffDescDB];
         const battleItemDB = P(itemT);

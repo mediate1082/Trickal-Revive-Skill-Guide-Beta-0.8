@@ -133,11 +133,21 @@ function makeStarHTML(rarity) {
 
 
 // [4] 데이터 로직 및 필터 함수들
+
+/* 운용 정보 탭 데이터(`Usage_DB.csv`)를 사도 행에 붙인다.
+   강화 추천 레벨(`low/high_grade`) · 변경점 · 종합 평가(`note`) · 세부 역할 · 고학년/어사이드 판단이
+   `DB.csv` 에서 이 파일로 옮겨 갔다 — 붙여 두면 `char.low_grade` 를 읽던 코드는 그대로 돈다.
+   ⚠ 사도 추천(`recommend.js`)에도 같은 함수가 있다. 둘 다 고칠 것 */
+function mergeUsage(db, usage) {
+    const U = new Map(usage.map(r => [(r.name || '').trim(), r]));
+    db.forEach(c => { const u = U.get((c.name || '').trim()); if (u) Object.assign(c, u); });
+}
+
 async function loadExternalData() {
     try {
         const v = window.APP_VERSION || '';
         // info.txt 는 도움말 모달이 HTML 로 옮겨가면서 폐기됨 (v1.4.13)
-        const [res1, res2, res3, res4, res6, res7, res8, res9, res10, res11, res12, res13] = await Promise.all([
+        const [res1, res2, res3, res4, res6, res7, res8, res9, res10, res11, res12, res13, res14] = await Promise.all([
             fetch(`./data/DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_desc_DB.csv?v=${v}`).then(res => res.text()),
@@ -150,10 +160,12 @@ async function loadExternalData() {
             fetch(`./data/sp_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/battle_item_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/Immunity_DB.csv?v=${v}`).then(res => res.text()),
+            fetch(`./data/Usage_DB.csv?v=${v}`).then(res => res.text()),
         ]);
 
         const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
         db = Papa.parse(res1, cfg).data;
+        mergeUsage(db, Papa.parse(res14, cfg).data);
         debuffDB = Papa.parse(res2, cfg).data;
         debuffDescDB = Papa.parse(res3, cfg).data;
         highSkillDB = Papa.parse(res4, cfg).data;

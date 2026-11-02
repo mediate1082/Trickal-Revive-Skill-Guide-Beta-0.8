@@ -655,6 +655,205 @@ const renderAsideTabContent = (char, asideData) => {
    ⚠ `br { display:block; margin-top }` 으로 띄우는 꼼수는 쓰지 않는다 — 환경을 탄다.
      `<p>` 로 감싸면 간격을 CSS 가 확실히 잡는다.
    ⚠ 빈 조각은 버린다. 줄 끝에 `<br>` 이 붙어 있으면 빈 문단이 하나 더 생긴다. */
+/* 고학년 운용 · 어사이드 의존도 — CSV 값이 곧 화면 글자다 (덱 편성의 `aside` 열과 같은 관례) */
+const HIGH_USE = { 사용: 'use', 조건부: 'cond', 무관: 'none', 봉인: 'seal' };
+const ASIDE_NEED = { 필수: ['필수', 'req'], 권장: ['권장', 'rec'], 무관: ['무관', 'none'] };
+
+/* 판단 + 이유 음각 상자. 왼쪽 색띠와 뱃지가 같은 색이다 (`.tg-recommend-box` 와 같은 꼴) */
+function usageVerdictBox(title, st, note, foot) {
+    const label = Object.keys(HIGH_USE).find(k => HIGH_USE[k] === st);
+    if (!st && !note) return '';
+    return `<div class="tg-usage-box"${st ? ` data-st="${st}"` : ''}>
+        <div class="tg-usage-box-title">${title}${st ? `<span class="tg-usage-pill" data-v="${st}">${label}</span>` : ''}</div>
+        ${note ? `<div class="tg-recommend-box-body">${note}</div>` : ''}${foot ? `<div class="tg-usage-foot">${foot}</div>` : ''}</div>`;
+}
+/* 고학년 판단의 기준 — 줘팸터는 고학년이 자동이라 고를 수 없다. **전원에게 단다** —
+   줘팸터 덱에 선 사도로만 거르면, 이상적인 덱을 못 짜는 사람이 다른 사도를 넣을 때 기준이 안 보인다 */
+const HIGH_USE_FOOT = '※ PvE 콘텐츠 기준 · 줘팸터에서는 고학년이 자동으로 발동됩니다';
+
+/* ── 육성 포인트 — 추천 콘텐츠 · 추천 아티팩트 ─────────────────
+   **손으로 적지 않는다.** 사도 추천 페이지의 분류 배치(`Recommend_Chara`)와 덱 편성
+   (`Recommend_Deck_Members`)에서 모은다 — 같은 판단을 두 곳에 적으면 한쪽만 고쳐진다.
+   표 다섯 장은 처음 연 모달에서 한 번만 받는다 (스킬 가이드 페이지는 원래 안 받는 표다).
+   ⚠ 받는 사이 다른 사도로 넘어갔으면 버린다 (`data-name` 대조) */
+let _growthData = null;
+function loadGrowthData() {
+    if (_growthData) return _growthData;
+    const v = window.APP_VERSION || '', cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
+    const get = f => fetch(`./data/${f}.csv?v=${v}`).then(r => r.text()).then(t => Papa.parse(t, cfg).data);
+    _growthData = Promise.all(['Recommend_Sections', 'Recommend_Chara', 'Recommend_Decks', 'Recommend_Deck_Members', 'artifact_DB', 'Artifact_Tags', 'Artifact_Tag_Rank'].map(get))
+        .then(([secs, chara, decks, members, arts, tags, ranks]) => {
+            const by = (rows, k) => new Map(rows.map(r => [(r[k] || '').trim(), r]));
+            // 덱 채용 수 — 태그 아이콘 줄의 순서. 사도 구분 없이 전체 덱에서 센다
+            const USED = new Map();
+            members.forEach(m => (m.artifact || '').split(',').map(s => s.trim()).filter(Boolean).forEach(a => USED.set(a, (USED.get(a) || 0) + 1)));
+            // 태그 안 순위 — `Artifact_Tag_Rank` 에 적은 것만. 키는 `태그|이름`
+            const RANK = new Map();
+            ranks.forEach(r => { const n = parseFloat(r.rank); if (!isNaN(n)) RANK.set(`${(r.tag_key || '').trim()}|${(r.name || '').trim()}`, n); });
+            return { SEC: by(secs, 'sec_key'), chara, DECK: by(decks, 'deck_key'), members, ART: by(arts, 'name'), arts, TAG: by(tags, 'tag_key'), USED, RANK };
+        })
+        .catch(() => { _growthData = null; return null; });
+    return _growthData;
+}
+
+const FREE_ART = '자유';
+const ART_FRAME = { 일반: 1, 고급: 2, 희귀: 3, 전설: 4 };
+const escA = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+/* ── 선택 기준 글의 자리표 (`art_note`) ─────────────────────────
+   `{태그}` = `Artifact_Tags` 의 소분류 → 글 속에선 칩, 상자 안엔 그 태그의 아티팩트 아이콘 줄.
+   `{애착}` = 자기 애착 아티팩트가 필수 → 상자 머리에 그 아티팩트.
+   `{대분류}` (`생존` 등 `tag_group`) = 그 묶음의 소분류 전부. "생존템 아무거나" 를 적는 자리다
+     (칩 색은 그 묶음 첫 소분류의 색)
+   상자 짜임은 위에서부터 머리(애착) · 아이콘 줄 · 문장. 칸 사이는 점선.
+   - 두 태그 이상에 걸리는 아티팩트는 **맨 위 `A + B` 줄에 한 번만** 나온다 (글 순서와 무관하게 같은 결과)
+   - 줄 순서는 **순위(`Artifact_Tag_Rank`) → 덱 채용 많은 순 → 등급 순**, 5개까지. 넘치는 건 `+N` (말풍선에 이름)
+     순위는 적은 것만 앞에 선다 — 다 채우지 않아도 된다. 대분류·겹침 줄은 그 아티팩트의 해당 소분류 순위 중 가장 앞선 값
+   - ⚠ 남의 애착도 넣는다. 애착 효과는 주인만 받지만 일반 효과는 누구나 받아서, 덱 편성에서
+     남의 애착을 끼는 게 흔하다 (레비의 단도 22건 등). 걸렀다가 `마법딜` 이 4개만 남았다
+   - 문장은 자리표·쉼표·`중심` 을 걷고도 글이 남을 때만 그린다. 나열형은 아이콘 줄이 같은 말을 한다
+   - 없는 태그는 빨간 `키?` 칩 — 조용히 빠지면 오타를 못 잡는다 (`db_check` 도 본다) */
+const ART_TAG_MAX = 5;
+const ART_GRADE_RANK = { 전설: 4, 희귀: 3, 고급: 2, 일반: 1 };
+function artTagBox(raw, who, D) {
+    const keys = [...new Set([...raw.matchAll(/\{([^}]+)\}/g)].map(m => m[1].trim()))];
+    if (!keys.length) return `<div class="tg-usage-box">${raw}</div>`;
+    const tagsOf = a => (a.tags || '').split(',').map(s => s.trim());
+    const GROUP = new Map();
+    D.TAG.forEach(t => { const g = (t.tag_group || '').trim(); if (g && !GROUP.has(g)) GROUP.set(g, t); });
+    const known = k => D.TAG.has(k) || GROUP.has(k);
+    const has = (a, k) => tagsOf(a).some(t => t === k || (GROUP.has(k) && (D.TAG.get(t)?.tag_group || '').trim() === k));
+    const nm = a => (a.name || '').trim(), gr = a => (a.grade || '').trim();
+    const used = a => D.USED.get(nm(a)) || 0;
+    // 순위 — 줄의 키들(소분류 · 대분류) 에 걸리는 소분류 순위 중 가장 앞선 것. 없으면 Infinity (뒤로)
+    const rankOf = (a, ks) => Math.min(Infinity, ...tagsOf(a).filter(t => ks.some(k => t === k || (D.TAG.get(t)?.tag_group || '').trim() === k))
+        .map(t => D.RANK.get(`${t}|${nm(a)}`) ?? Infinity));
+    const order = ks => (x, y) => (rankOf(x, ks) - rankOf(y, ks) || 0) || used(y) - used(x) || (ART_GRADE_RANK[gr(y)] || 0) - (ART_GRADE_RANK[gr(x)] || 0);
+    const chip = k => { const t = D.TAG.get(k) || GROUP.get(k); return t
+        ? `<span class="tg-at-chip" style="--c:${escA(t.tag_color || '#888')}">${escA(D.TAG.has(k) ? (t.tag_label || k) : k)}</span>`
+        : `<span class="tg-at-chip is-bad" data-tooltip="아티팩트 태그 목록에 없는 이름입니다">${escA(k)}?</span>`; };
+    const frame = a => (a.attach || '').trim() ? 'Rarity_SignatureCard' : 'Rarity_' + ART_FRAME[gr(a)];
+    const slot = a => `<img src="./assets/icons/common_icons/Ingame_ArtifactBase_${frame(a)}.webp" alt=""><img class="ico" src="./assets/icons/artifacts/ArtifactIcon_${(a.icon_no || '').trim()}.webp" alt="">`;
+    const ico = a => `<span class="tg-at-ico tg-at-link" role="button" tabindex="0" data-art="${escA(nm(a))}"
+        data-tooltip="${escA(nm(a))}\n${escA(gr(a))}${used(a) ? ' · 덱 ' + used(a) + '곳' : ''}">${slot(a)}</span>`;
+    const row = (label, list) => `<div class="tg-at-row"><div class="tg-at-label">${label}</div><div class="tg-at-icons">${list.slice(0, ART_TAG_MAX).map(ico).join('')}${list.length > ART_TAG_MAX
+        ? `<span class="tg-at-more" data-tooltip="${escA(list.slice(ART_TAG_MAX).map(nm).join('\n'))}">+${list.length - ART_TAG_MAX}</span>` : ''}</div></div>`;
+
+    const parts = [];
+    const own = keys.includes('애착') ? D.arts.find(a => (a.attach || '').trim() === who) : null;
+    if (own) parts.push(`<div class="tg-at-own tg-at-link" role="button" tabindex="0" data-art="${escA(nm(own))}">
+        <span class="tg-at-ico">${slot(own)}</span><span><b>${escA(nm(own))}</b><small>${escA(gr(own))}</small></span><em>애착 필수</em></div>`);
+
+    const ok = keys.filter(known), bad = keys.filter(k => k !== '애착' && !known(k));
+    const seen = new Set(own ? [nm(own)] : []);
+    let rows = '';
+    if (ok.length > 1) {
+        const inter = D.arts.filter(a => !seen.has(nm(a)) && ok.filter(k => has(a, k)).length > 1).sort(order(ok));
+        inter.forEach(a => seen.add(nm(a)));
+        if (inter.length) rows += row(`<span class="tg-at-both">${ok.filter(k => inter.some(a => has(a, k))).map(chip).join('<i>+</i>')}</span>`, inter);
+    }
+    ok.forEach(k => {
+        const list = D.arts.filter(a => !seen.has(nm(a)) && has(a, k)).sort(order([k]));
+        if (list.length) rows += row(chip(k), list);
+    });
+    if (bad.length) rows += `<div class="tg-at-row"><div class="tg-at-label">${bad.map(chip).join(' ')}</div><div class="tg-at-icons"></div></div>`;
+    if (rows) parts.push(`<div class="tg-at-rows">${rows}</div>`);
+
+    // 문장 — 줄(`<br>`)마다 보고, 자리표·쉼표·'중심' 만 있는 나열 줄은 버린다 (아이콘 줄이 같은 말을 한다).
+    // 그래서 `{물리딜}, {버프 지원} 중심<br>설명…` 처럼 나열 한 줄 + 설명을 같이 적을 수 있다
+    const text = raw.split(/<br\s*\/?>/i).map(t => t.trim()).filter(t => t.replace(/\{[^}]+\}/g, '').replace(/[,\s]|중심/g, ''));
+    if (text.length)
+        parts.push(`<div class="tg-at-text">${text.join('<br>').replace(/\{([^}]+)\}/g, (_, k) => k.trim() === '애착' ? '애착 아티팩트' : chip(k.trim()))}</div>`);
+    return `<div class="tg-usage-box tg-at-box">${parts.join('')}</div>`;
+}
+
+const recIcon = (v, base) => './assets/icons/' + (String(v).includes('/') ? '' : base + '/') + v + '.webp';
+
+async function fillGrowthExtras(c) {
+    const D = await loadGrowthData();
+    const host = document.querySelector(`.tg-usage-extra[data-name="${CSS.escape(c.name)}"]`);
+    if (!host) return;
+    let html = '';
+    if (D) {
+        // 추천 콘텐츠 — `콘텐츠별 추천 사도` 탭만. 뉴비 선택 가이드 · 리세마라는 "처음에 무엇을 고를까" 라
+        // 이 사도를 어디에 쓰나와 결이 다르다. 한 분류에 덱이 여럿이면 칩 하나 (덱 이름은 말풍선)
+        const groups = new Map();
+        const add = (secKey, u) => {
+            const s = D.SEC.get((secKey || '').trim()); if (!s || (s.sec_hide || '').trim() || s.group_key !== 'content') return;
+            const g = groups.get(s.group_key) || groups.set(s.group_key, { s, items: new Map() }).get(s.group_key);
+            const it = g.items.get(secKey) || g.items.set(secKey, { s, sec: secKey, decks: [], tips: [] }).get(secKey);
+            if (u.deck) it.decks.push(u.deck);
+            if ((u.pick || '').trim()) it.pick = 1;
+            if ((u.dim || '').trim()) it.dim = u.dim.trim();
+            if ((u.tip || '').trim()) it.tips.push(u.deck ? `${u.deck} — ${u.tip.trim()}` : u.tip.trim());
+        };
+        D.chara.filter(x => (x.chara_name || '').trim() === c.name).forEach(x => add(x.sec_key, { pick: x.pick, dim: x.dim, tip: x.reason }));
+        D.members.filter(m => (m.chara_name || '').trim() === c.name).forEach(m => {
+            const d = D.DECK.get((m.deck_key || '').trim()); if (d) add(d.sec_key, { deck: d.deck_name, tip: m.note });
+        });
+        if (groups.size) html += `<div class="tg-usage-sub"><div class="tg-usage-title">추천 콘텐츠<i>누르면 사도 추천의 그 분류로</i></div>
+            ${[...groups.values()].map(g => `<div class="tg-usage-group">
+            <div class="tg-usage-chips">${[...g.items.values()].map(u => {
+                const stale = (u.s.sec_stale || '').trim();
+                const tip = [u.dim && '지금은 비추천 — ' + u.dim, stale, ...u.tips].filter(Boolean).join('\n');
+                return `<a class="tg-usage-chip${u.dim ? ' is-dim' : ''}${stale ? ' is-stale' : ''}" href="./recommend.html#${escA(u.s.group_key)}/${escA(u.sec)}"
+                    onclick="window.closeDetailModal && window.closeDetailModal()"${tip ? ` data-tooltip="${escA(tip)}"` : ''}>
+                    ${u.s.sec_icon ? `<img src="${recIcon(u.s.sec_icon, 'content')}" alt="" onerror="this.remove()">` : ''}${u.pick ? '<span class="star">★</span>' : ''}${escA(u.s.sec_label)}${u.decks.length > 1 ? ` <span class="deck">· 덱 ${u.decks.length}개</span>` : u.decks.length ? ' <span class="deck">· 덱</span>' : ''}</a>`;
+            }).join('')}</div></div>`).join('')}</div>`;
+
+        // 추천 아티팩트 — 덱 편성에서 모은다. 3개 이하면 3칸, 4~6 이면 6칸, 모자란 칸은 빈 상자
+        const got = new Map();
+        D.members.filter(m => (m.chara_name || '').trim() === c.name && (m.artifact || '').trim()).forEach(m => {
+            const d = D.DECK.get((m.deck_key || '').trim());
+            m.artifact.split(',').map(s => s.trim()).filter(Boolean)
+                .forEach(a => (got.get(a) || got.set(a, []).get(a)).push(d ? d.deck_name : m.deck_key));
+        });
+        const list = [...got.entries()].sort((a, b) => (a[0] === FREE_ART) - (b[0] === FREE_ART) || b[1].length - a[1].length).slice(0, 6);
+        const artNote = (c.art_note || '').trim();
+        if (list.length || artNote) {
+            const base = './assets/icons/common_icons/Ingame_ArtifactBase_';
+            const cell = i => {
+                const e = list[i];
+                if (!e) return `<div class="tg-usage-art is-empty"><div class="tg-usage-slot"><img class="base-empty" src="${base}Empty.webp" alt=""></div></div>`;
+                const [a, ds] = e, tip = ds.length ? ` data-tooltip="${escA(ds.join('\n'))}"` : '';
+                if (a === FREE_ART) return `<div class="tg-usage-art"${tip || ' data-tooltip="아무 아티팩트나 괜찮습니다"'}><div class="tg-usage-slot"><img class="base-empty" src="${base}Empty.webp" alt=""><img class="ico" src="./assets/icons/common_icons/PVP_HidingIcon.webp" alt=""></div><div><b>자유</b><small>아무거나</small></div></div>`;
+                const r = D.ART.get(a);
+                const frame = r ? ((r.attach || '').trim() ? 'Rarity_SignatureCard' : 'Rarity_' + ART_FRAME[(r.grade || '').trim()]) : '';
+                return `<div class="tg-usage-art is-link" role="button" tabindex="0" data-art="${escA(a)}"${tip}><div class="tg-usage-slot">${r ? `<img src="${base}${frame}.webp" alt=""><img class="ico" src="./assets/icons/artifacts/ArtifactIcon_${(r.icon_no || '').trim()}.webp" alt="">` : ''}</div>
+                    <div><b>${escA(a)}</b><small>${ds.length ? ds.length + '개 덱' : (r ? r.grade : '?')}${r && (r.attach || '').trim() ? ' · 애착' : ''}</small></div></div>`;
+            };
+            html += `<div class="tg-usage-sub"><div class="tg-usage-title">추천 아티팩트${list.length ? '<i>누르면 상세</i>' : ''}</div>
+                ${artNote ? artTagBox(artNote, c.name, D) : ''}
+                ${list.length ? `<div class="tg-usage-arts">${Array.from({ length: list.length <= 3 ? 3 : 6 }, (_, i) => cell(i)).join('')}</div>` : ''}</div>`;
+        }
+    }
+    host.innerHTML = html;
+    // 어사이드도 · 추천도 없으면 육성 포인트 카드를 통째로 걷는다
+    const card = document.getElementById('usage-growth');
+    if (card && !card.querySelector('.tg-usage-sub')) card.remove();
+}
+
+/* 아티팩트 칸 → 아티팩트 모달. 스킬 가이드처럼 `artifact.js` 가 없는 페이지에서는 **처음 누를 때 받아 붙인다**
+   (페이지 이동은 사도 모달을 닫아 버려서 보던 자리를 잃는다). 못 받으면 그때만 아티팩트 페이지로 간다.
+   artifact.js 는 `#ar-grid` 가 없으면 모달만 차린다 — 사도 추천 페이지가 이미 그렇게 쓴다 */
+let _artJs = null;
+const loadArtJs = () => _artJs || (_artJs = new Promise((ok, no) => {
+    const s = document.createElement('script');
+    s.src = 'artifact.js?v=' + (window.APP_VERSION || '');
+    s.onload = () => window.openArtifactModal ? ok() : no(); s.onerror = no;
+    document.head.appendChild(s);
+}).catch(e => { _artJs = null; throw e; }));
+const openUsageArt = el => {
+    const name = el.dataset.art;
+    if (window.openArtifactModal) return window.openArtifactModal(name);
+    loadArtJs().then(() => window.openArtifactModal(name))
+        .catch(() => { location.href = './artifact.html#' + encodeURIComponent(name); });
+};
+document.addEventListener('click', e => { const el = e.target.closest('.tg-usage-art.is-link, .tg-at-link'); if (el) openUsageArt(el); });
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target.closest && e.target.closest('.tg-usage-art.is-link, .tg-at-link'); if (el) { e.preventDefault(); openUsageArt(el); }
+});
+
 function noteParagraphs(raw) {
     return String(raw || '')
         .replace(/\\n/g, '<br>').replace(/\n/g, '<br>')
@@ -780,6 +979,15 @@ export function openDetailModal(char, dataContext) {
 
         const hitSP = parseInt(spData['타수당 SP']) || 0;
 
+        /* 어사이드 ★2 의 '웨이브 시작 시 SP 전체 회복' (스패럿 · 롤렛).
+           ⚠ 따로 열을 두지 않고 **부가 효과 탭과 같은 출처**(buff_DB 의 aside_passive)를 본다 —
+           두 곳에 적으면 한쪽만 고쳐진다. 대상이 `자신`, 조건이 `개전` 인 것만 친다 —
+           조건을 `개전 시` 로 적는 건 부가 효과 필터의 '개전' 이 조건 글자로 거르기 때문이다 (main.js checkTagMatch 1차) */
+        const ab = getMergedSafe(apostleBuffs?.aside_passive, apostleBuffs?.aside_cond, apostleBuffs?.aside_target);
+        const waveFull = ab.names.some((n, i) => n === 'SP 전체 회복' && ab.targets[i] === '자신' && ab.conds[i].includes('개전'));
+        const asideHTML = waveFull ? `
+            <div class="tg-sp-time-sub is-aside">어사이드 ★2 이상이면 <b>전투 시작 시 즉시</b> 저학년 스킬을 사용합니다</div>` : '';
+
         let supHTML = '';
         if (isSupporter) {
             const ticksSup = Math.ceil((maxSP - startSP) / (tickSP * 1.3));
@@ -824,126 +1032,35 @@ export function openDetailModal(char, dataContext) {
                 </div>
             </div>
             <div class="tg-sp-time">전투 시작 후 최대 약 <b>${secs}초</b> 이내에 저학년 스킬을 사용합니다</div>
-            ${supHTML}
+            ${supHTML}${asideHTML}
         </div>`;
     }
 
     // ── 종합-강화추천 탭 본문 빌더 ────────────────────────────────────────────
-    function buildOverallBody(c) {
-        // 메타픽([1]) · 성격덱([2]) 티어만 신규 UI 적용
-        const isTargetTier = /^\[1\]|\[2\]/.test(c.tier || '');
-        const hasNew = isTargetTier && (
-            c.detail_role || c.pvp || c.invasion || c.colosseum ||
-            c.col2_rim || c.col2_shady || c.frontier || c.art_main
-        );
+    /* ── 운용 정보 탭 (Usage_DB.csv) ───────────────────────────
+       저학년 · 고학년 · 육성 포인트 · 종합 평가 의 네 카드. 위 둘은 원래 카드에 상자만 더했다.
+       ⚠ 비어 있는 칸은 **그리지 않는다** — 판단 데이터는 아직 일부 사도만 있다.
+         `아직 없음` 을 깔면 대부분의 사도가 빈 상자 셋을 달고 나온다 */
+    // 이름표 윗줄은 사도 이름 — 초상화와 짝을 이뤄 "이 사도의 무엇" 으로 읽힌다
+    function usageCard(title, body, name, id) {
+        if (!body) return '';
+        return `<div class="tg-skill-card" data-type="overall"${id ? ` id="${id}"` : ''}>
+            <div class="tg-skill-card-head"><div class="tg-skill-card-icon-wrap">
+                <div class="tg-skill-card-icon-rel"><img class="tg-skill-card-icon" src="./assets/images/${name}.webp" onerror="this.onerror=null;this.removeAttribute('src')"></div>
+                <div class="tg-skill-card-titles"><span class="tg-skill-card-type-label">${name}</span><span class="tg-skill-card-name">${title}</span></div>
+            </div></div>
+            <div class="tg-skill-card-body">${body}</div></div>`;
+    }
 
-        // ── 구 방식 fallback (대상 티어 아니거나 신규 데이터 없을 때) ──
-        if (!hasNew) {
-            return `
-                ${c.recommend_reason ? `<div class="tg-recommend-summary">
-                    <strong>추천 레벨: ${c.recommend_lv}</strong>
-                    <div>${c.recommend_reason}</div>
-                </div>` : ''}
-                ${c.note ? `<div class="tg-recommend-note">
-                    ${noteParagraphs(c.note)}
-                </div>` : ''}`;
-        }
-
-        // ── 파싱 헬퍼 ──
-        // "A|CC기 핵심픽" → { grade:'A', note:'CC기 핵심픽' }
-        const parseScore = (raw) => {
-            if (!raw) return null;
-            const [grade, ...rest] = raw.split('|');
-            return { grade: grade.trim(), note: rest.join('|').trim() };
-        };
-
-        // ── 1. 세부 역할 버블 ──
-        const roleHTML = c.detail_role ? (() => {
-            const chips = c.detail_role.split(',').map(t => t.trim()).filter(Boolean)
-                .map(t => `<span class="tg-role-chip">${t}</span>`).join('');
-            return `<div class="tg-overall-section">
-                <div class="tg-overall-section-title">세부 역할</div>
-                <div class="tg-role-chips">${chips}</div>
-            </div>`;
-        })() : '';
-
-        // ── 2. 콘텐츠별 활용도 카드 그리드 ──
-        const CONTENT_LIST = [
-            { key: 'pvp',       label: '줘팸터',         cat: 'pvp',  icon: '⚔️' },
-            { key: 'invasion',  label: '침략',            cat: 'pve',  icon: '🏰' },
-            { key: 'colosseum', label: '차원대충돌',      cat: 'pve',  icon: '🌀' },
-            { key: 'col2_rim',  label: '림의 차원',       cat: 'pve',  icon: '🌊' },
-            { key: 'col2_shady',label: '셰이디의 차원',   cat: 'pve',  icon: '⭐' },
-            { key: 'frontier',  label: '엘리아스 프론티어', cat: 'pve', icon: '🏆' },
-        ];
-        const hasContent = CONTENT_LIST.some(ci => c[ci.key]);
-        const contentHTML = hasContent ? (() => {
-            const cards = CONTENT_LIST.map((ci, idx) => {
-                const score = parseScore(c[ci.key]);
-                const checker = idx % 2 === 0 ? 'is-even' : 'is-odd';
-                if (!score) return `<div class="tg-content-card ${checker} is-empty"></div>`;
-                return `<div class="tg-content-card ${checker}">
-                    <div class="tg-content-card-head">
-                        <span class="tg-content-icon">${ci.icon}</span>
-                        <span class="tg-content-name">${ci.label}</span>
-                    </div>
-                    <div class="tg-content-grade" data-grade="${score.grade}">${score.grade}</div>
-                    ${score.note ? `<div class="tg-content-note">${score.note}</div>` : ''}
-                </div>`;
-            }).join('');
-            return `<div class="tg-overall-section">
-                <div class="tg-overall-section-title">콘텐츠별 활용도</div>
-                <div class="tg-content-grid">${cards}</div>
-            </div>`;
-        })() : '';
-
-        // ── 3. 아티팩트 추천 ──
-        const renderArtCombo = (raw, note, label) => {
-            if (!raw) return '';
-            const arts = raw.split('|').map(a => a.trim());
-            const slots = Array.from({length: 3}, (_, i) => {
-                const name = arts[i] || '';
-                return name
-                    ? `<div class="tg-art-slot" data-name="${name}" title="${name}">
-                           <img src="./assets/icons/artifacts/${name}.webp"
-                                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
-                                alt="${name}">
-                           <div class="tg-art-slot-fallback" style="display:none">${name.slice(0,2)}</div>
-                       </div>`
-                    : `<div class="tg-art-slot is-empty"></div>`;
-            }).join('');
-            return `<div class="tg-art-combo">
-                <div class="tg-art-combo-label">${label}</div>
-                <div class="tg-art-slots">${slots}</div>
-                ${note ? `<div class="tg-art-combo-note">${note}</div>` : ''}
-            </div>`;
-        };
-
-        const artHTML = c.art_main ? `<div class="tg-overall-section">
-            <div class="tg-overall-section-title">아티팩트 추천</div>
-            <div class="tg-art-section">
-                ${renderArtCombo(c.art_main,  c.art_main_note,  '기본')}
-                ${renderArtCombo(c.art_alt1,  c.art_alt1_note,  '대체 1')}
-                ${renderArtCombo(c.art_alt2,  c.art_alt2_note,  '대체 2')}
-            </div>
-        </div>` : '';
-
-        // ── 기존 note는 신규 데이터 있어도 보존 ──
-        const noteHTML = c.note ? `<div class="tg-overall-section">
-            <div class="tg-overall-section-title">종합 메모</div>
-            <div class="tg-recommend-note">
-                ${noteParagraphs(c.note)}
-            </div>
-        </div>` : '';
-
-        return `<div class="tg-overall-body">
-            ${roleHTML}
-            <div class="tg-overall-2col">
-                <div class="tg-overall-left">${contentHTML}</div>
-                <div class="tg-overall-right">${artHTML}</div>
-            </div>
-            ${noteHTML}
-        </div>`;
+    /* 육성 포인트 — 어사이드는 바로 그리고, 추천 콘텐츠 · 추천 아티팩트는 사도 추천 표가 있어야
+       해서 `fillGrowthExtras` 가 나중에 채운다 (스킬 가이드 페이지는 그 표를 처음에 안 받는다) */
+    function buildGrowthBody(c) {
+        const need = ASIDE_NEED[c.aside_need];
+        const aside = (need || c.aside_note) ? `<div class="tg-usage-sub">
+            <div class="tg-usage-head"><img src="./assets/icons/aside/aside_icons/어사이드_${c.name}_아이콘.webp" alt="" onerror="this.remove()"><b>어사이드</b>
+                ${need ? `<span class="tg-usage-pill ${need[1]}">A2 ${need[0]}</span>` : ''}</div>
+            ${c.aside_note ? `<div class="tg-usage-box"${need ? ` data-st="${need[1]}"` : ''}>${c.aside_note}</div>` : ''}</div>` : '';
+        return `${aside}<div class="tg-usage-extra" data-name="${c.name}"></div>`;
     }
 
     // 3. 각 탭의 내용물(HTML) 미리 준비하기
@@ -958,7 +1075,7 @@ export function openDetailModal(char, dataContext) {
     <div class="tg-recommend-box" data-grade="${gradeToAttr(char.high_grade)}">
         <div class="tg-recommend-box-title">강화 시 변경점</div>
         <div class="tg-recommend-box-body">${formatDescWithBullets(char.high_desc)}</div>
-    </div>`;
+    </div>${usageVerdictBox('고학년 운용', HIGH_USE[char.high_use], char.high_note, HIGH_USE_FOOT)}`;
 
     // [Tab 2 준비]
     const makeTicks = (max) => Array.from({length: max}, (_, i) => {
@@ -1066,6 +1183,13 @@ export function openDetailModal(char, dataContext) {
             <span>${a.label}</span>
         </span>`).join('');
 
+    /* 세부 역할 — 인게임 분류 칩과 같은 무테 칩, 색만 다르다 (게임이 정한 분류 ↔ 우리가 붙인 해석).
+       앞의 `세부 역할` 표지는 뺐다 — 0.66rem 이라 안 읽혔고, 칩 색만으로 이미 갈린다 */
+    const roles = (char.detail_role || '').split(',').map(s => s.trim()).filter(Boolean);
+    const rolesHTML = roles.length
+        ? `<div class="tg-detail-roles" aria-label="세부 역할">${roles.map(t => `<span class="tg-detail-role">${t}</span>`).join('')}</div>`
+        : '';
+
     const iconX = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>`;
     const iconChevL = `<svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="19 7 11 16 19 25"/><polyline points="25 7 17 16 25 25"/></svg>`;
     const iconChevR = `<svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 7 21 16 13 25"/><polyline points="7 7 15 16 7 25"/></svg>`;
@@ -1089,6 +1213,7 @@ export function openDetailModal(char, dataContext) {
                             </div>
                         </div>
                         <div class="tg-detail-attrs">${attrsHTML}</div>
+                        ${rolesHTML}
                     </div>
                 </div>
                 <button class="tg-modal-close" onclick="window.closeDetailModal()" aria-label="닫기">${iconX}</button>
@@ -1096,7 +1221,7 @@ export function openDetailModal(char, dataContext) {
 
             <div class="tg-detail-tabs-wrap">
                 <div class="tg-segmented" id="detail-segmented">
-                    <button class="tg-segmented-btn is-active" onclick="switchTab(0)">강화 추천</button>
+                    <button class="tg-segmented-btn is-active" onclick="switchTab(0)">운용 정보</button>
                     <button class="tg-segmented-btn" onclick="switchTab(1)">부가 효과</button>
                     <button class="tg-segmented-btn" onclick="switchTab(2)">스킬 정보</button>
                     <button class="tg-segmented-btn" onclick="switchTab(3)">어사이드</button>
@@ -1121,22 +1246,8 @@ export function openDetailModal(char, dataContext) {
                         <div id="tab-0" class="tab-content">
                             ${renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowRecContent, false, true)}
                             ${renderEffectCard('high', skillData, null, null, null, dataContext, highRecContent, false, true)}
-                            <div class="tg-skill-card" data-type="overall">
-                                <div class="tg-skill-card-head">
-                                    <div class="tg-skill-card-icon-wrap">
-                                        <div class="tg-skill-card-icon-rel">
-                                            <img class="tg-skill-card-icon" src="./assets/images/${char.name}.webp" onerror="this.onerror=null;this.removeAttribute('src')">
-                                        </div>
-                                        <div class="tg-skill-card-titles">
-                                            <span class="tg-skill-card-type-label">종합</span>
-                                            <span class="tg-skill-card-name">강화 추천</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="tg-skill-card-body">
-                                    ${buildOverallBody(char)}
-                                </div>
-                            </div>
+                            ${usageCard('육성 포인트', buildGrowthBody(char), char.name, 'usage-growth')}
+                            ${char.note ? usageCard('종합 평가', `<div class="tg-recommend-note">${noteParagraphs(char.note)}</div>`, char.name) : ''}
                         </div>
 
                         <div id="tab-1" class="tab-content hidden">
@@ -1157,6 +1268,9 @@ export function openDetailModal(char, dataContext) {
                 </div>
             </div>
         </div>`;
+
+    // 육성 포인트의 추천 콘텐츠 · 추천 아티팩트 (표를 받은 뒤 채운다)
+    fillGrowthExtras(char);
 
     // 5. 모달 표시
     overlay.classList.remove('hidden');

@@ -120,9 +120,9 @@
     // 2) 브라우저가 한가해지면 다른 페이지가 읽을 CSV 를 캐시에 넣어 둔다. **이미지는 받지 않는다** — 폰 데이터가 아깝다
     //    ⚠ 주소가 페이지 쪽 fetch 와 **글자 하나까지** 같아야 캐시가 맞는다 (`data/{이름}?v=APP_VERSION`)
     //    ⚠ 각 페이지가 읽는 CSV 가 바뀌면 여기도 고친다 (CLAUDE.md 의 "어느 페이지가 어느 CSV 를 읽는가" 표)
-    const CSV = ['DB', 'aside_DB', 'low_skill_DB', 'high_skill_DB', 'normal_Atk_DB', 'buff_DB', 'debuff_DB',
+    const CSV = ['DB', 'Usage_DB', 'aside_DB', 'low_skill_DB', 'high_skill_DB', 'normal_Atk_DB', 'buff_DB', 'debuff_DB',
         'buff_desc_DB', 'debuff_desc_DB', 'sp_DB', 'battle_item_DB', 'Immunity_DB', 'artifact_DB',
-        'Artifact_Stats', 'Artifact_Effects', 'Artifact_Attach', 'Artifact_Tags',
+        'Artifact_Stats', 'Artifact_Effects', 'Artifact_Attach', 'Artifact_Tags', 'Artifact_Tag_Rank',
         'Recommend_Sections', 'Recommend_Chara', 'Recommend_Chips', 'Recommend_Decks', 'Recommend_Deck_Members',
         'Recommend_Deck_Swaps', 'Crash2_Boss', 'Crash2_Boss_Skills', 'Crash2_Lines', 'Crash2_Shards', 'Crash2_Deck_Shards'];
     const conn = navigator.connection;
