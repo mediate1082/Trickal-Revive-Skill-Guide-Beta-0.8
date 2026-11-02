@@ -995,7 +995,7 @@ export function openDetailModal(char, dataContext) {
             supHTML = `
             <div class="tg-sp-time-sub">
                 <img src="./assets/icons/role/서포터.webp" class="tg-sp-role-icon" alt="서포터">
-                6학년 이상일 때 SP 회복 +30% → 약 <b>${secsSup}초</b> 이내
+                <span>6학년 이상일 때 SP 회복 +30% → 약 <b>${secsSup}초</b> 이내</span>
             </div>`;
         }
 
