@@ -183,7 +183,8 @@ function sorted(list) {
 
 /* ── 카드 ── */
 const baseImg = a => 'assets/icons/artifact_card/Ingame_CardBase_Artifact_' + (a.attach ? 'SignatureCard' : 'Grade_' + (GRADES.indexOf(a.grade) + 1)) + '.webp';
-const face = (a, lv = 1) => `<div class="ar-face" data-grade="${esc(a.grade)}" style="--base:url('${baseImg(a)}')">
+/* ⚠ --base 의 url() 은 css/style.css 기준으로 풀리므로 절대 주소로 넘긴다 (js/·css/ 로 옮긴 뒤 깨졌다) */
+const face = (a, lv = 1) => `<div class="ar-face" data-grade="${esc(a.grade)}" style="--base:url('${new URL(baseImg(a), document.baseURI).href}')">
     <div class="ar-frame"><div class="ar-inner"><div class="ar-bg"></div></div></div>
     <img class="ic" src="assets/icons/artifacts/ArtifactIcon_${a.icon_no}.webp" alt="" loading="lazy">
     <span class="ar-label" style="--n:${a.name.length}">${esc(a.name)}</span>

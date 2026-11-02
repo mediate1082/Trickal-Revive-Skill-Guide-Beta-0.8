@@ -1,5 +1,4 @@
-/* ── 캐시 버스팅 버전 ──────────────────────────────────────────
-   배포할 때 이 숫자만 올리면 CSS·JS·CSV 캐시가 전 페이지에서 갱신됩니다.
-   index.html, tiermaker.html 등 모든 페이지가 이 파일 하나를 참조합니다.
-   ⚠ 이 파일 자체는 캐시 버스팅 대상이 아니므로 짧은 캐시가 걸릴 수 있습니다. */
-var APP_VERSION = '2.18.29';
+/* ⚠ 옛 자리 — 2026-11-03 에 js/version.js 로 옮겼다.
+   옮기기 전 HTML 이 캐시에 남은 방문자(GitHub Pages max-age 10분)는 이 주소를 부른다.
+   한 번만 새로 받게 해 새 HTML 로 갈아타게 한다. 일주일쯤 지나면 지울 것 */
+try { if (!sessionStorage.getItem('tgMoved')) { sessionStorage.setItem('tgMoved', '1'); location.reload(); } } catch (e) {}

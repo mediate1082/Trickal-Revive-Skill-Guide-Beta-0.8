@@ -838,7 +838,7 @@ async function fillGrowthExtras(c) {
 let _artJs = null;
 const loadArtJs = () => _artJs || (_artJs = new Promise((ok, no) => {
     const s = document.createElement('script');
-    s.src = 'artifact.js?v=' + (window.APP_VERSION || '');
+    s.src = 'js/artifact.js?v=' + (window.APP_VERSION || '');
     s.onload = () => window.openArtifactModal ? ok() : no(); s.onerror = no;
     document.head.appendChild(s);
 }).catch(e => { _artJs = null; throw e; }));

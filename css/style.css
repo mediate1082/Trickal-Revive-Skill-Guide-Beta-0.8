@@ -4,7 +4,7 @@
          woff2 는 글리프 12,257자를 그대로 담은 채 371KB 다 (압축만 한 것, 손실 없음).
        ⚠ 서브셋(쓰는 글자만 남기기)으로 더 줄이지 말 것 — 사도 이름·공략 글이 CSV 라
          나중에 추가한 글자가 통째로 깨진다. */
-    src: url('./assets/fonts/ONEMobilePOP.woff2') format('woff2');
+    src: url('../assets/fonts/ONEMobilePOP.woff2') format('woff2');
     font-weight: normal; font-style: normal; font-display: swap;
 }
 
@@ -2432,7 +2432,7 @@ body.tm-is-dragging .tm-add-slot { display: none; }
 /* 인게임 체크 아이콘 (외곽선·그림자가 구워져 있어 원본 색 그대로 사용) */
 .tg-attr-grid .filter-label input[type="checkbox"]:checked::after {
     content: ''; width: 21px; height: 21px; border: 0; transform: none;
-    background: url('assets/icons/common_icons/Check2.webp') center/contain no-repeat;
+    background: url('../assets/icons/common_icons/Check2.webp') center/contain no-repeat;
 }
 /* 꺼진 항목은 눌러서 다시 켠다는 게 보이도록 흐리게만 */
 .tg-attr-grid .filter-label:not(:has(input:checked)) { opacity: 0.45; }
@@ -3067,7 +3067,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
        가로에도 여유를 만든 뒤 자리를 잡았다.
        ⚠ 이 네 숫자는 **상자 비율(패딩 13/2.5/3.5%)과 한 묶음**이다. 패딩을 바꾸면
          5번 칸 위치가 달라지니 다시 계산할 것. */
-    background: url('./assets/bg/Deck_Bg.webp') 4.4% 63% / 200% auto no-repeat;
+    background: url('../assets/bg/Deck_Bg.webp') 4.4% 63% / 200% auto no-repeat;
 }
 /* 배경마다 초점이 달라 자리를 따로 잡는다. `board_bg` 가 비면 위의 기본값을 쓴다.
    ⚠ 원본은 전부 2048px PNG (1.2~3MB) 다. **1536px webp 로 줄여** `assets/bg/` 에 넣었다
@@ -3215,8 +3215,8 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     display: inline-block; width: 1.05em; height: .72em; margin-left: 4px;
     vertical-align: -.04em;
     background: currentColor;
-    -webkit-mask: url('./assets/icons/common_icons/movable.webp') center / contain no-repeat;
-            mask: url('./assets/icons/common_icons/movable.webp') center / contain no-repeat;
+    -webkit-mask: url('../assets/icons/common_icons/movable.webp') center / contain no-repeat;
+            mask: url('../assets/icons/common_icons/movable.webp') center / contain no-repeat;
     opacity: .75;
 }
 
@@ -3824,8 +3824,8 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-pick-star {
     flex: none; align-self: center; width: 25px; height: 25px; cursor: help;
     background: #E2453C;
-    -webkit-mask: url('assets/icons/common_icons/CommonIcon_Star.webp') center / contain no-repeat;
-            mask: url('assets/icons/common_icons/CommonIcon_Star.webp') center / contain no-repeat;
+    -webkit-mask: url('../assets/icons/common_icons/CommonIcon_Star.webp') center / contain no-repeat;
+            mask: url('../assets/icons/common_icons/CommonIcon_Star.webp') center / contain no-repeat;
 }
 [data-theme="dark"] .rc-pick-star { background: #FF7063; }
 
@@ -4063,8 +4063,8 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-shard-glow {
     width: 128.3%; height: 123.7%;          /* 417/325 · 464/375 */
     background: var(--col);
-    -webkit-mask: url('./assets/icons/dimension/Dimension_Icon_01_Glow.webp') center / contain no-repeat;
-            mask: url('./assets/icons/dimension/Dimension_Icon_01_Glow.webp') center / contain no-repeat;
+    -webkit-mask: url('../assets/icons/dimension/Dimension_Icon_01_Glow.webp') center / contain no-repeat;
+            mask: url('../assets/icons/dimension/Dimension_Icon_01_Glow.webp') center / contain no-repeat;
     opacity: var(--glow, .5); filter: blur(1px);
 }
 /* 그림은 Base 를 마스크로 써서 파편 모양으로 잘린다.
@@ -4075,21 +4075,21 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     background-image: var(--art);
     background-size: cover;
     background-position: var(--art-pos, 50% 35%);
-    -webkit-mask: url('./assets/icons/dimension/Dimension_Icon_01_Base.webp') center / contain no-repeat;
-            mask: url('./assets/icons/dimension/Dimension_Icon_01_Base.webp') center / contain no-repeat;
+    -webkit-mask: url('../assets/icons/dimension/Dimension_Icon_01_Base.webp') center / contain no-repeat;
+            mask: url('../assets/icons/dimension/Dimension_Icon_01_Base.webp') center / contain no-repeat;
 }
 .rc-shard-border {
     width: 107.7%; height: 106.7%;          /* 350/325 · 400/375 */
     background: var(--col);
-    -webkit-mask: url('./assets/icons/dimension/Dimension_Icon_01_Border.webp') center / contain no-repeat;
-            mask: url('./assets/icons/dimension/Dimension_Icon_01_Border.webp') center / contain no-repeat;
+    -webkit-mask: url('../assets/icons/dimension/Dimension_Icon_01_Border.webp') center / contain no-repeat;
+            mask: url('../assets/icons/dimension/Dimension_Icon_01_Border.webp') center / contain no-repeat;
 }
 /* 둘레 삼각형 — 자리는 카드 기준 % */
 .rc-shard-deco {
     position: absolute; width: 11%; aspect-ratio: 77/84;
     background: var(--col);
-    -webkit-mask: url('./assets/icons/dimension/Dimension_Icon_Deco1.webp') center / contain no-repeat;
-            mask: url('./assets/icons/dimension/Dimension_Icon_Deco1.webp') center / contain no-repeat;
+    -webkit-mask: url('../assets/icons/dimension/Dimension_Icon_Deco1.webp') center / contain no-repeat;
+            mask: url('../assets/icons/dimension/Dimension_Icon_Deco1.webp') center / contain no-repeat;
 }
 .rc-shard-deco.d1 { left: -7%;  top: 30%; transform: rotate(180deg); }
 .rc-shard-deco.d2 { left: -4%;  top: 44%; transform: rotate(180deg) scale(.8); }
@@ -4125,7 +4125,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     margin-top: 10px; width: calc(var(--w) + 18px);
     min-height: calc((var(--w) + 18px) * 252 / 491);
     padding: 13px 16px; display: grid; place-items: center;
-    background: url('./assets/icons/dimension/Dimension_BuffSlot_Box_01.webp') center / 100% 100% no-repeat;
+    background: url('../assets/icons/dimension/Dimension_BuffSlot_Box_01.webp') center / 100% 100% no-repeat;
     font-size: .76rem; line-height: 1.55; color: #EDE7F6;
     text-align: center; word-break: keep-all;
 }
@@ -4208,7 +4208,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     position: relative; flex: none; align-self: stretch;
     width: 136px; min-height: 136px;
     border-radius: 14px; overflow: hidden;
-    background: #0B0712 url('./assets/icons/dimension/DimensionalClash_MainLobby_ImgBlack.webp')
+    background: #0B0712 url('../assets/icons/dimension/DimensionalClash_MainLobby_ImgBlack.webp')
                 35% 26% / 420% no-repeat;
     border: 2px solid var(--p-edge, var(--border-soft));
 }
@@ -4463,7 +4463,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .ar-face .ic { position: absolute; left: 50%; top: 44%; width: 62cqw; translate: -50% -50%; z-index: 1; }
 .ar-label { position: absolute; left: 4cqw; right: 4cqw; bottom: 11cqw; z-index: 2; text-align: center; color: #111;
   font-weight: 800; font-size: max(8.5cqw, min(10cqw, calc(88cqw / var(--n, 8)))); line-height: 1.1; word-break: keep-all; -webkit-text-stroke: 1.6cqw #fff; paint-order: stroke fill; }
-.ar-cost { position: absolute; left: 50%; top: -9cqw; translate: -50% 0; z-index: 3; width: 24cqw; aspect-ratio: 1; background: url(assets/icons/artifact_card/Ingame_IconCost_DefaultSmall.webp) center / contain no-repeat;
+.ar-cost { position: absolute; left: 50%; top: -9cqw; translate: -50% 0; z-index: 3; width: 24cqw; aspect-ratio: 1; background: url(../assets/icons/artifact_card/Ingame_IconCost_DefaultSmall.webp) center / contain no-repeat;
   display: grid; place-items: center; color: #111; font-size: 13cqw; font-weight: 800; -webkit-text-stroke: 1.6cqw #fff; paint-order: stroke fill; }
 .ar-card:hover .ar-face { transform: translateY(-3px); }
 .ar-att { position: absolute; right: 5cqw; top: 5cqw; z-index: 3; width: 22cqw; aspect-ratio: 1; border-radius: 50%; border: 1.4cqw solid #fff; background: #eee center / cover; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
@@ -4515,14 +4515,14 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .ar-step[data-step="1"]::before { content: ''; position: absolute; left: 13px; top: 44px; bottom: -14px; border-left: 3px dotted #8B7A3A; }
 .ar-step-l { display: flex; align-items: center; gap: 4px; height: 28px; background: linear-gradient(to right, transparent 34px, var(--y) 34px) no-repeat 0 60% / 100% 60%; border-radius: 0 999px 999px 0; }
 .ar-chk { width: 28px; height: 28px; position: relative; z-index: 1; }
-.ar-leaf { width: 30px; height: 30px; background: url('assets/icons/common_icons/애착 아티팩트_ 효과 발동.webp') center / contain no-repeat; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: #fff; -webkit-text-stroke: 2px #A07A0C; paint-order: stroke fill; }
+.ar-leaf { width: 30px; height: 30px; background: url('../assets/icons/common_icons/애착 아티팩트_ 효과 발동.webp') center / contain no-repeat; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: #fff; -webkit-text-stroke: 2px #A07A0C; paint-order: stroke fill; }
 .ar-step-l b { font-size: 17px; color: #2d2a20; margin-left: 4px; }
 .ar-step-r { font-size: 13.5px; line-height: 1.6; color: #2d2a20; word-break: keep-all; display: grid; gap: 2px; }
 .ar-step-r b { color: #6FAE1C; }
 .ar-attach-skill { font-weight: 800; } .ar-attach-skill em { font-style: normal; color: #E59A0B; }
 .ar-kv { display: grid; gap: 0; }
 .ar-kv b { color: #6FAE1C; }
-.ar-step.off { opacity: .55; } .ar-step.off .ar-leaf { background-image: url('assets/icons/common_icons/애착 아티팩트_ 효과 미발동.webp'); }
+.ar-step.off { opacity: .55; } .ar-step.off .ar-leaf { background-image: url('../assets/icons/common_icons/애착 아티팩트_ 효과 미발동.webp'); }
 .ar-step.off .ar-step-l { filter: grayscale(1); } .ar-step.off .ar-step-r b { color: inherit; }
 .ar-attach-title { display: inline-flex !important; align-items: center; gap: 8px; }
 .ar-attach-face { width: 34px; height: 34px; margin: -8px 0 -8px -14px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; object-position: top; background: #fff; }

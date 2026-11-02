@@ -1073,7 +1073,8 @@ function buildShard(s) {
                 : ''}</div>`;
 
     const art = el.querySelector('.rc-shard-art');
-    art.style.setProperty('--art', `url('${iconUrl(s.art, 'dimension')}')`);
+    // ⚠ 사용자 속성 속 url() 은 **그 var() 를 쓰는 스타일시트(css/) 기준**으로 풀린다 — 절대 주소로 넘긴다
+    art.style.setProperty('--art', `url('${new URL(iconUrl(s.art, 'dimension'), document.baseURI).href}')`);
     if ((s.art_pos || '').trim()) art.style.setProperty('--art-pos', s.art_pos.trim());
     return el;
 }

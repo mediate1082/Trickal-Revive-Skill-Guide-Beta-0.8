@@ -18,13 +18,13 @@
          그래서 여기만 시각으로 턴다 — 495바이트라 매번 받아도 부담이 없다.
          `theme.js` 는 APP_VERSION 이 생긴 **뒤**라야 버스팅할 수 있어 아래로 옮겼다
          (사이에 스타일시트가 없으므로 초기 테마 플래시는 그대로 막힌다). -->
-    <script>document.write('<script src="version.js?t=' + Date.now() + '"><\/script>');</script>
-    <script>document.write('<script src="theme.js?v=' + APP_VERSION + '"><\/script>');</script>
+    <script>document.write('<script src="js/version.js?t=' + Date.now() + '"><\/script>');</script>
+    <script>document.write('<script src="js/theme.js?v=' + APP_VERSION + '"><\/script>');</script>
     <script>
-        document.write('<link rel="stylesheet" href="style.css?v=' + APP_VERSION + '">');
+        document.write('<link rel="stylesheet" href="css/style.css?v=' + APP_VERSION + '">');
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script>document.write('<script src="tooltip.js?v=' + APP_VERSION + '"><\/script>');</script>
+    <script>document.write('<script src="js/tooltip.js?v=' + APP_VERSION + '"><\/script>');</script>
 
   
 </head>
@@ -54,7 +54,7 @@
 
     </header>
     <nav class="tg-sitenav" data-page="skill"></nav>
-    <script>document.write('<script src="sitenav.js?v=' + APP_VERSION + '"><\/script>');</script>
+    <script>document.write('<script src="js/sitenav.js?v=' + APP_VERSION + '"><\/script>');</script>
 
     <div class="tg-subheader">
         <div class="tg-nav-wrap">
@@ -371,7 +371,7 @@
     (function () {
         var s = document.createElement('script');
         s.type = 'module';
-        s.src = 'main.js?v=' + APP_VERSION;
+        s.src = 'js/main.js?v=' + APP_VERSION;
         document.body.appendChild(s);
     })();
 </script>
