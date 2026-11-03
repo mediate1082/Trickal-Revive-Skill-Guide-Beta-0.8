@@ -752,7 +752,7 @@ function artTagBox(raw, who, D) {
     if (ok.length > 1) {
         const inter = D.arts.filter(a => !seen.has(nm(a)) && ok.filter(k => has(a, k)).length > 1).sort(order(ok));
         inter.forEach(a => seen.add(nm(a)));
-        if (inter.length) rows += row(`<span class="tg-at-both">${ok.filter(k => inter.some(a => has(a, k))).map(chip).join('<i>+</i>')}</span>`, inter);
+        if (inter.length) rows += row(`<span class="tg-at-both">${ok.filter(k => inter.some(a => has(a, k))).map(chip).join('')}</span>`, inter);
     }
     ok.forEach(k => {
         const list = D.arts.filter(a => !seen.has(nm(a)) && has(a, k)).sort(order([k]));
