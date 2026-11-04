@@ -700,9 +700,9 @@ const escA = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': 
    - 없는 태그는 빨간 `키?` 칩 — 조용히 빠지면 오타를 못 잡는다 (`db_check` 도 본다) */
 const ART_TAG_MAX = 5;
 const ART_GRADE_RANK = { 전설: 4, 희귀: 3, 고급: 2, 일반: 1 };
-function artTagBox(raw, who, D) {
-    const keys = [...new Set([...raw.matchAll(/\{([^}]+)\}/g)].map(m => m[1].trim()))];
-    if (!keys.length) return `<div class="tg-usage-box">${raw}</div>`;
+/* 태그 줄을 만드는 부품 — 상세 모달의 선택 기준(`artTagBox`)과 사도 추천 덱의 태그 칸(`deckTagBoxes`)이 같이 쓴다.
+   ⚠ 줄 모양 · 순서 규칙을 바꾸면 **두 자리가 같이** 바뀐다 (그러라고 한 곳에 뒀다) */
+function artTagKit(D) {
     const tagsOf = a => (a.tags || '').split(',').map(s => s.trim());
     const GROUP = new Map();
     D.TAG.forEach(t => { const g = (t.tag_group || '').trim(); if (g && !GROUP.has(g)) GROUP.set(g, t); });
@@ -726,6 +726,13 @@ function artTagBox(raw, who, D) {
     const row = (label, list) => `<div class="tg-at-row"><div class="tg-at-label">${label}</div><div class="tg-at-icons">${list.map((a, i) =>
         i < ART_TAG_MAX ? ico(a) : ico(a).replace('class="tg-at-ico', 'class="tg-at-ico is-extra')).join('')}${list.length > ART_TAG_MAX
         ? `<button type="button" class="tg-at-more" data-n="${list.length - ART_TAG_MAX}" aria-expanded="false">+${list.length - ART_TAG_MAX}</button>` : ''}</div></div>`;
+    return { tagsOf, GROUP, known, has, nm, gr, used, order, chip, slot, row };
+}
+
+function artTagBox(raw, who, D) {
+    const keys = [...new Set([...raw.matchAll(/\{([^}]+)\}/g)].map(m => m[1].trim()))];
+    if (!keys.length) return `<div class="tg-usage-box">${raw}</div>`;
+    const { known, has, nm, gr, order, chip, slot, row } = artTagKit(D);
 
     const parts = [];
     const own = keys.includes('애착') ? D.arts.find(a => (a.attach || '').trim() === who) : null;
@@ -753,6 +760,20 @@ function artTagBox(raw, who, D) {
     if (text.length)
         parts.push(`<div class="tg-at-text">${text.join('<br>').replace(/\{([^}]+)\}/g, (_, k) => k.trim() === '애착' ? '애착 아티팩트' : chip(k.trim()))}</div>`);
     return `<div class="tg-usage-box tg-at-box">${parts.join('')}</div>`;
+}
+
+/* 사도 추천 덱의 「아티팩트 태그」 칸 — 덱 아티팩트 칸에 적힌 `{태그}` 마다 **음각 박스 하나**에
+   상세 모달과 같은 줄(칩 | 아이콘 5개 + `+N`)을 담는다. 칸에 `마법딜` 이라고만 있으면
+   "그게 무슨 아티팩트인데?" 가 되기 때문이다 (2026-11-04).
+   겹침 줄(`A + B`)은 만들지 않는다 — 태그 하나가 박스 하나라야 칸의 태그와 짝이 읽힌다 */
+export async function deckTagBoxes(keys) {
+    const D = await loadGrowthData();
+    if (!D) return '';
+    const { known, has, order, chip, row } = artTagKit(D);
+    return keys.filter(known).map(k => {
+        const list = D.arts.filter(a => has(a, k)).sort(order([k]));
+        return list.length ? `<div class="tg-usage-box tg-at-box rc-deck-tagbox"><div class="tg-at-rows">${row(chip(k), list)}</div></div>` : '';
+    }).join('');
 }
 
 const recIcon = (v, base) => './assets/icons/' + (String(v).includes('/') ? '' : base + '/') + v + '.webp';

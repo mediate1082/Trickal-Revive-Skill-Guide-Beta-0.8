@@ -6,7 +6,7 @@
    복제해 쓰다가 떼어냈습니다 — 저/고 강화 게이지는 여기서 답할 질문이 아닙니다.  */
 
 /* ui.js 는 상세 모달 전용. closeDetailModal·toggleSkillMode 등은 import 시 자동 등록됩니다. */
-const { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter }
+const { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter, deckTagBoxes }
     = await import('./ui.js?v=' + (window.APP_VERSION || ''));
 
 const PERSONALITY_COLORS = {
@@ -716,6 +716,10 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
             <h5 class="rc-deck-eyebrow">아티팩트</h5>
             <div class="rc-equip-row"></div>
         </section>
+        <section class="rc-deck-block is-tags" hidden>
+            <h5 class="rc-deck-eyebrow">아티팩트 태그</h5>
+            <div class="rc-deck-tagwrap"></div>
+        </section>
         <section class="rc-deck-block is-swaps" hidden>
             <h5 class="rc-deck-eyebrow"></h5>
             <div class="rc-deck-swapwrap"></div>
@@ -856,6 +860,16 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
             erow.appendChild(g);
         });
         if (erow.children.length) box.querySelector('.is-equip').hidden = false;
+
+        /* 아티팩트 칸에 `{태그}` 가 있으면 그 태그들의 아티팩트를 아래 칸에 펼친다 (`ui.js` 의 `deckTagBoxes`).
+           표 받기가 늦을 수 있어 나중에 채운다 — 처음 한 번만 받고 그 뒤로는 바로 온다 */
+        const tagKeys = [...new Set(members.flatMap(m => (m.artifacts || [])
+            .map(a => (a.match(/^\{(.+)\}$/) || [])[1]).filter(Boolean).map(s => s.trim())))];
+        if (tagKeys.length) deckTagBoxes(tagKeys).then(html => {
+            if (!html) return;
+            box.querySelector('.rc-deck-tagwrap').innerHTML = html;
+            box.querySelector('.is-tags').hidden = false;
+        });
     }
     return box;
 }
