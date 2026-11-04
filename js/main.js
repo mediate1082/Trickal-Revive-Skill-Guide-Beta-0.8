@@ -55,25 +55,7 @@ window.openDetailModal = (char) => {
     });
 };
 
-window.navigateApostle = (dir) => {
-    const list = window.currentDisplayedList;
-    if (!list || !window.currentApostleName) return;
-    const idx = list.findIndex(c => c.name === window.currentApostleName);
-    if (idx < 0) return;
-    const next = list[(idx + dir + list.length) % list.length];
-    const card = document.querySelector('#modal-detail .tg-modal-card');
-    if (card) {
-        card.style.animation = dir > 0
-            ? 'tg-slide-out-left 0.15s ease forwards'
-            : 'tg-slide-out-right 0.15s ease forwards';
-        setTimeout(() => {
-            window._navDir = dir;
-            window.openDetailModal(next);
-        }, 150);
-    } else {
-        window.openDetailModal(next);
-    }
-};
+/* `navigateApostle` 은 ui.js 가 단다 (사도 추천과 공용). 순서는 `window.currentDisplayedList` */
 
 window.switchTab = switchTab;
 window.updateLowSkillLv = (lv, name) => updateLowSkillLv(lv, name, lowSkillDB);
@@ -637,24 +619,43 @@ function _jamoToSyl(cho, jung, jong = 0) {
     return String.fromCharCode(0xAC00 + ci * 588 + ji * 28 + jong);
 }
 
+/* 겹모음 · 겹받침 조합표 — 두벌식 자판에서 두 번 눌러 만드는 것들 */
+const _VOWEL_PAIR = {
+    'ㅗㅏ':'ㅘ','ㅗㅐ':'ㅙ','ㅗㅣ':'ㅚ','ㅜㅓ':'ㅝ','ㅜㅔ':'ㅞ','ㅜㅣ':'ㅟ','ㅡㅣ':'ㅢ'
+};
+const _JONG_PAIR = {
+    'ㄱㅅ':'ㄳ','ㄴㅈ':'ㄵ','ㄴㅎ':'ㄶ','ㄹㄱ':'ㄺ','ㄹㅁ':'ㄻ','ㄹㅂ':'ㄼ',
+    'ㄹㅅ':'ㄽ','ㄹㅌ':'ㄾ','ㄹㅍ':'ㄿ','ㄹㅎ':'ㅀ','ㅂㅅ':'ㅄ'
+};
+
 function _assembleJamo(jamo) {
     const isC = c => _CHOSEONG.includes(c);
     const isV = c => _JUNGSEONG.includes(c);
-    let res = '', i = 0;
     const cs = [...jamo];
+    // 받침 자리의 자음이 다음 모음의 초성으로 넘어가야 하는가 (가나 ≠ 간아)
+    const takesVowel = k => k + 1 < cs.length && isV(cs[k + 1]);
+    // 모음 하나를 읽되, 겹모음이 되면 둘을 합친다
+    const readVowel = k => {
+        const pair = k + 1 < cs.length ? _VOWEL_PAIR[cs[k] + cs[k + 1]] : null;
+        return pair ? [pair, k + 2] : [cs[k], k + 1];
+    };
+    let res = '', i = 0;
     while (i < cs.length) {
         const c = cs[i];
         if (isC(c) && i + 1 < cs.length && isV(cs[i + 1])) {
-            const [cho, jung] = [c, cs[i + 1]]; i += 2;
-            if (i < cs.length && isC(cs[i]) && !(i + 1 < cs.length && isV(cs[i + 1]))) {
-                const ji = _JONGSEONG.indexOf(cs[i]);
-                res += _jamoToSyl(cho, jung, ji > 0 ? ji : 0);
-                if (ji > 0) i++;
-            } else {
-                res += _jamoToSyl(cho, jung);
+            const cho = c;
+            let jung; [jung, i] = readVowel(i + 1);
+            let jong = '';
+            if (i < cs.length && isC(cs[i]) && !takesVowel(i) && _JONGSEONG.indexOf(cs[i]) > 0) {
+                jong = cs[i]; i++;
+                // 겹받침 — 둘째 자음도 다음 모음으로 안 넘어갈 때만 (달가 ≠ 닭아)
+                const pair = i < cs.length ? _JONG_PAIR[jong + cs[i]] : null;
+                if (pair && !takesVowel(i)) { jong = pair; i++; }
             }
+            res += _jamoToSyl(cho, jung, jong ? _JONGSEONG.indexOf(jong) : 0);
         } else if (isV(c)) {
-            res += _jamoToSyl('ㅇ', c); i++;
+            let jung; [jung, i] = readVowel(i);
+            res += _jamoToSyl('ㅇ', jung);
         } else {
             res += c; i++;
         }
@@ -685,24 +686,48 @@ function _korSearchMatch(name, query) {
     try { return new RegExp(pattern, 'i').test(name); } catch { return false; }
 }
 
-function _matchesKorQuery(name, query) {
+/* 영타 → 한글. 대문자는 Shift 자모(ㅃ ㅉ ㄸ ㄲ ㅆ ㅒ ㅖ)이고, 대응이 없는 대문자는 소문자 자모로 친다 */
+function _engToKor(text) {
+    return _assembleJamo([...text].map(c => _ENG_TO_JAMO[c] || _ENG_TO_JAMO[c.toLowerCase()] || c).join(''));
+}
+
+/* ㅖ→ㅔ · ㅒ→ㅐ 로 눌러 편 글자. 소리가 같아 Shift 를 빼먹고 치는 경우가 많다
+   (`qmffkdtp` 로 블랑셰를 찾는 것). 쌍자음은 뜻이 갈리므로 펴지 않는다 */
+function _loosenVowel(text) {
+    return text.replace(/[가-힣]/g, ch => {
+        const c = ch.charCodeAt(0) - 0xAC00;
+        const ji = Math.floor(c % 588 / 28);
+        const to = ji === 7 ? 5 : ji === 3 ? 1 : ji;   // ㅖ(7)→ㅔ(5), ㅒ(3)→ㅐ(1)
+        return to === ji ? ch : String.fromCharCode(ch.charCodeAt(0) + (to - ji) * 28);
+    });
+}
+
+/* query 는 소문자로 바꾼 검색어, rawQuery 는 소문자화 전 원문이다.
+   영타 변환은 대소문자로 자모가 갈리므로 원문을 쓴다 (`tPdlel` → 셰이디).
+   Caps Lock 이 켜진 경우를 위해 소문자로도 한 번 더 본다. */
+function _matchesKorQuery(name, query, rawQuery = query) {
     if (!query) return true;
     if (name.toLowerCase().includes(query)) return true;
-    if (/^[a-z]+$/.test(query)) {
-        const assembled = _assembleJamo([...query].map(c => _ENG_TO_JAMO[c] || c).join(''));
-        if (name.includes(assembled)) return true;
+    // 영타 — 띄어쓰기·숫자·괄호가 섞인 이름(`마에스트로 2호`)도 받는다
+    if (/[a-zA-Z]/.test(rawQuery) && /^[a-zA-Z0-9\s()]+$/.test(rawQuery)) {
+        const exact = _engToKor(rawQuery);
+        if (name.includes(exact)) return true;
+        // Caps Lock 이 켜졌거나 Shift 를 빼먹은 경우
+        const loose = _loosenVowel(_engToKor(query));
+        if (_loosenVowel(name).includes(loose)) return true;
     }
     return _korSearchMatch(name, query);
 }
 
 function handleSortFilter() {
-    const query = document.getElementById('search-input').value.toLowerCase().trim();
+    const rawQuery = document.getElementById('search-input').value.trim();
+    const query = rawQuery.toLowerCase();
     const sort = document.getElementById('sort-select').value;
     const mode = document.querySelector('input[name="filter-mode"]:checked').value;
     const excludeSelf = document.getElementById('exclude-self-toggle')?.checked || false;
 
     let filtered = db.filter(char => {
-        const nameMatch = _matchesKorQuery(char.name || "", query);
+        const nameMatch = _matchesKorQuery(char.name || "", query, rawQuery);
         if (!nameMatch) return false;
 
         if (!passesAttrFilter(char)) return false;
@@ -1189,16 +1214,16 @@ function closeFilterModal() {
     document.body.style.overflow = '';
     document.body.classList.remove('modal-open');
 }
+/* 모달의 `초기화` · `모두 해제` — 고르는 중인 값(pending)과 화면만 비운다.
+   그리드에 반영하는 건 `적용` 이다 (표시 필터의 resetAttrFilter 와 같음).
+   모달 밖에서 즉시 푸는 길은 `clearAllFilters` · 칩의 ✕ 가 따로 맡는다 */
 function resetFilters() {
-    selectedStatees.clear();
     pendingStatees.clear();
     const searchInput = document.getElementById('filter-search');
     if (searchInput) searchInput.value = '';
     setFilterTab('all');
     refreshClearAllBtn();
     refreshModalCount();
-    handleSortFilter();
-    triggerGridRefresh();
 }
 /* 도움말 모달.
    등급 샘플은 카드와 **같은 makeSkillGauge()** 로 그린다.
@@ -1321,18 +1346,14 @@ window.addEventListener('keydown', (e) => {
          스크롤됐다 (도움말 자체는 Esc 목록에 없어 안 닫혔다). */
     if (e.key === 'Escape') {
         const shown = id => { const m = document.getElementById(id); return m && !m.classList.contains('hidden'); };
-        if (isDetailVisible) window.closeDetailModal?.();
+        if (isDetailVisible) { /* 상세 모달의 Esc 는 ui.js 가 받는다 (닫히는 중이면 무시) */ }
         else if (isFilterVisible) window.closeFilterModal?.();
         else if (isAsideVisible) window.closeAsideFilter?.();
         else if (shown('modal-attr-filter')) window.closeAttrFilter?.();
         else if (shown('modal-info')) closeModal('modal-info');
     }
 
-    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && isDetailVisible) {
-        e.preventDefault();
-        window.navigateApostle(e.key === 'ArrowRight' ? 1 : -1);
-        return;
-    }
+    /* ←/→ 사도 이동은 ui.js 가 받는다 (아티팩트 모달·닫히는 중 거름 포함) */
 
     if (e.key === 'Tab') {
         if (isDetailVisible) {
@@ -1361,58 +1382,7 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-/* 모바일 스와이프로 사도 이동
-   ⚠ 예전에는 `clientX` 만 봤다. 세로로 스크롤하다 손가락이 옆으로 60px 밀리기만 해도
-     사도가 넘어갔다 — 특히 태블릿에서. 화면이 크면 스크롤 거리가 길고 그만큼 옆으로
-     휘는 양도 쌓이는데, 문턱값은 화면 크기와 무관한 60px 고정이었다.
-
-   그래서 세 가지를 본다.
-   1. **축 잠금** — 움직이는 도중 세로가 먼저 기준을 넘으면 그 제스처는 스크롤로 확정하고
-      끝까지 무시한다. 끝점만 비교하면 "세로로 긁다가 옆으로 샌 것" 과 구별할 수 없다
-   2. **가로가 세로보다 확실히 커야 한다** (1.5배). 비스듬한 건 넘기지 않는다
-   3. **문턱값이 화면을 따라간다** — 태블릿에서 60px 은 너무 얕다
-
-   ⚠ `touchmove` 는 `passive: true` 로 둔다. 세로 스크롤을 막으면 안 된다 —
-     우리는 판정만 하고 스크롤 자체는 브라우저에 맡긴다. */
-const SWIPE_LOCK_Y   = 12;    // 이만큼 세로로 움직이면 스크롤로 확정
-const SWIPE_RATIO    = 1.5;   // 가로가 세로의 몇 배여야 하는가
-const SWIPE_MAX_MS   = 700;   // 느릿한 끌기는 스와이프가 아니다
-const swipeMin = () => Math.max(60, Math.min(window.innerWidth, window.innerHeight) * 0.10);
-
-let _swX = 0, _swY = 0, _swT = 0, _swLive = false;
-const detailOpen = () =>
-    !document.getElementById('modal-detail')?.classList.contains('hidden');
-
-document.addEventListener('touchstart', (e) => {
-    _swLive = false;
-    if (!detailOpen() || e.touches.length !== 1) return;   // 두 손가락(확대 등)은 제외
-    _swX = e.touches[0].clientX;
-    _swY = e.touches[0].clientY;
-    _swT = Date.now();
-    _swLive = true;
-}, { passive: true });
-
-document.addEventListener('touchmove', (e) => {
-    if (!_swLive) return;
-    if (e.touches.length !== 1) { _swLive = false; return; }
-    const dx = Math.abs(e.touches[0].clientX - _swX);
-    const dy = Math.abs(e.touches[0].clientY - _swY);
-    /* 세로가 먼저 기준을 넘으면 스크롤이다 — 이후 가로로 아무리 가도 안 넘긴다 */
-    if (dy > SWIPE_LOCK_Y && dy > dx) _swLive = false;
-}, { passive: true });
-
-document.addEventListener('touchend', (e) => {
-    if (!_swLive || !detailOpen()) { _swLive = false; return; }
-    _swLive = false;
-    if (Date.now() - _swT > SWIPE_MAX_MS) return;
-    const dx = e.changedTouches[0].clientX - _swX;
-    const dy = e.changedTouches[0].clientY - _swY;
-    if (Math.abs(dx) < swipeMin()) return;
-    if (Math.abs(dx) < Math.abs(dy) * SWIPE_RATIO) return;
-    window.navigateApostle(dx > 0 ? -1 : 1);
-}, { passive: true });
-
-document.addEventListener('touchcancel', () => { _swLive = false; }, { passive: true });
+/* 모바일 스와이프로 사도 이동 — ui.js 로 옮겼다 (사도 추천과 공용) */
 
 window.addEventListener('mouseup', (e) => {
     if (e.button !== 3) return;

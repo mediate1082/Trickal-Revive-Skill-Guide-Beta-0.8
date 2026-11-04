@@ -1,0 +1,1091 @@
+/* ═══════════════════════════════════════════
+   modal.css — 상세 모달 (js/ui.js) + 필터 모달 껍데기
+   index · recommend. 운용 정보 · 스킬 · 어사이드 · 부가 효과 · SP 블록
+   ⚠ 필터 모달(.tg-modal-card · .tg-segmented · .filter-label)을 상세 모달이 같이 쓴다 — 갈라 두지 말 것
+═══════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════ */
+
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100%; background: var(--overlay-bg); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+.modal-content {
+    background: var(--modal-card-bg); width: 92%; max-width: 500px; padding: 0; border-radius: 20px;
+    max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; position: relative;
+}
+.modal-fixed-header {
+    padding: 20px 20px 0 20px; background: var(--modal-card-bg); z-index: 10; flex-shrink: 0;
+    border-bottom: 1px solid #eee; border-top-left-radius: 20px; border-top-right-radius: 20px;
+}
+#detail-body-scroll {
+    flex: 1 1 auto; background: #f1f3f5; padding: 20px;
+    overflow-y: auto; scrollbar-gutter: stable;
+    scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent;
+    border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
+}
+#detail-body-scroll::-webkit-scrollbar { width: 8px; }
+#detail-body-scroll::-webkit-scrollbar-track { background: transparent; }
+#detail-body-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; border: 2px solid #f1f3f5; }
+#detail-body-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
+
+.modal-close-x {
+    position: absolute; top: 15px; right: 15px;
+    width: 32px; height: 32px; background: #f1f3f5; border: none; border-radius: 50%;
+    font-size: 22px; color: #666; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; z-index: 100; transition: all 0.2s;
+}
+.modal-close-x:hover { background: #e2e8f0; color: #000; }
+
+.modal-tabs { display: flex; position: relative !important; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+.tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: bold; color: #888; font-family: inherit; z-index: 5; transition: color 0.3s ease; }
+.tab-btn.active { color: var(--text-dark); border-bottom: none !important; }
+.tab-indicator { position: absolute; bottom: -2px; left: 0; width: 25%; height: 3px; background-color: var(--accent-green) !important; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 10; display: block !important; }
+
+/* ════════════════════════════════════
+   TG MODAL (부가 효과 & 어사이드 필터)
+════════════════════════════════════ */
+.tg-modal-overlay {
+    position: fixed; inset: 0; width: 100vw;
+    background: var(--overlay-bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2000; padding: 16px;
+    animation: tg-fade 0.18s ease-out;
+}
+/* @keyframes tg-fade 는 base.css 로 옮겼다 — 용어 말풍선(.tg-term-tip)도 쓴다 */
+.tg-modal-card {
+    background: var(--modal-card-bg); border-radius: 22px;
+    width: 100%; max-width: 540px; max-height: 88vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.06);
+    animation: tg-pop 0.22s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes tg-pop {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.tg-modal-header {
+    position: relative; flex-shrink: 0;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border-soft);
+}
+.tg-modal-title-wrap {
+    display: flex; flex-direction: column; gap: 2px;
+    text-align: center; padding: 0 56px;
+}
+.tg-modal-eyebrow { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.tg-modal-title { font-family: 'OneMobilePop', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--text-dark); margin: 0; line-height: 1.2; }
+.tg-modal-title em { font-style: normal; color: var(--accent-green-strong); }
+.tg-modal-count {
+    position: absolute; top: 26px; right: 62px;
+    display: inline-flex; align-items: center;
+    padding: 3px 10px; border-radius: 999px;
+    background: var(--accent-green); border: 1px solid var(--accent-green-strong);
+    color: #2D3812; font-size: 0.72rem; font-weight: 800;
+    box-shadow: 0 1px 3px rgba(143, 185, 62, 0.3); pointer-events: none;
+    animation: tg-count-pop 0.2s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes tg-count-pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+.tg-modal-card.is-aside .tg-modal-eyebrow { color: var(--aside-accent-strong); }
+.tg-modal-card.is-aside .tg-modal-title em { color: var(--aside-accent-strong); }
+.tg-modal-card.is-aside .tg-modal-count { background: var(--aside-accent); border-color: var(--aside-accent-strong); color: #fff; box-shadow: 0 1px 3px rgba(163, 97, 255, 0.4); }
+.tg-modal-card.is-aside .tg-modal-header { border-bottom-color: var(--aside-accent-border); }
+.tg-modal-card.is-aside .tg-btn-primary { background: var(--aside-accent); border-color: var(--aside-accent); color: #fff; box-shadow: 0 2px 8px rgba(163, 97, 255, 0.35); }
+.tg-modal-card.is-aside .tg-btn-primary:hover { background: var(--aside-accent-strong); border-color: var(--aside-accent-strong); }
+.tg-modal-close {
+    position: absolute; top: 18px; right: 18px;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--border-soft); background: var(--modal-card-bg);
+    color: var(--text-muted); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.tg-modal-close:hover { background: #FEE2E2; border-color: #FCA5A5; color: #DC2626; }
+.tg-modal-body {
+    position: relative; flex: 1; overflow: hidden;
+    padding: 16px 24px 0;
+    display: flex; flex-direction: column; gap: 14px; min-height: 0;
+}
+.tg-modal-body::after { content: ''; position: absolute; left: 24px; right: 24px; bottom: 0; height: 12px; background: linear-gradient(to top, var(--modal-card-bg), transparent); pointer-events: none; z-index: 5; }
+.tg-filter-scroll { flex: 1; overflow-y: auto; padding-right: 4px; margin-right: -4px; padding-bottom: 16px; scrollbar-width: thin; scrollbar-color: rgba(63,79,31,0.2) transparent; min-height: 0; position: relative; }
+/* 어사이드 필터: 탭 전환 시 높이가 요동치지 않도록 최대 탭(효과 12개) 기준 고정 */
+#aside-filter-scroll { min-height: 280px; }
+/* 스크롤 상단 fade — 스크롤이 내려갔을 때만 표시 */
+.tg-filter-scroll::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    display: block;
+    height: 9px;
+    margin-bottom: -9px;
+    background: linear-gradient(to bottom, var(--modal-card-bg) 30%, transparent);
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.tg-filter-scroll.is-scrolled::before { opacity: 1; }
+.tg-filter-scroll::-webkit-scrollbar { width: 8px; }
+.tg-filter-scroll::-webkit-scrollbar-thumb { background: rgba(63,79,31,0.15); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+.tg-filter-scroll::-webkit-scrollbar-thumb:hover { background: rgba(63,79,31,0.3); background-clip: padding-box; border: 2px solid transparent; }
+.tg-modal-footer { flex-shrink: 0; padding: 14px 24px 18px; border-top: 1px solid var(--border-soft); background: var(--footer-bg); display: flex; gap: 10px; }
+.tg-modal-footer .tg-btn-secondary,
+.tg-modal-footer .tg-btn-primary { flex: 1; appearance: none; border-radius: 12px; padding: 11px 16px; font-family: 'OneMobilePop', sans-serif; font-size: 0.92rem; font-weight: 800; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.tg-btn-secondary { background: var(--modal-card-bg); border: 1.5px solid var(--border-soft); color: var(--text-muted); }
+.tg-btn-secondary:hover { background: #FFE4E6; border-color: var(--debuff); color: var(--debuff-text); }
+.tg-btn-primary { background: var(--accent-green); border: 1.5px solid var(--accent-green-strong); color: #2D3812; box-shadow: 0 4px 14px rgba(143, 185, 62, 0.45), inset 0 -2px 0 rgba(143, 185, 62, 0.4); }
+.tg-btn-primary:hover { background: var(--accent-green-strong); border-color: var(--accent-green-strong); color: #fff; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(143, 185, 62, 0.5); }
+/* Segmented tabs */
+.tg-segmented { position: relative; display: inline-flex; padding: 4px; background: var(--segmented-bg); border: 1px solid var(--border-soft); border-radius: 14px; width: 100%; }
+.tg-segmented-indicator { position: absolute; top: 4px; left: 4px; height: calc(100% - 8px); background: var(--segmented-indicator); border-radius: 10px; box-shadow: 0 1px 3px rgba(63,79,31,0.10), 0 0 0 1px var(--border-soft); transition: transform 0.28s cubic-bezier(.4,0,.2,1), width 0.28s cubic-bezier(.4,0,.2,1); z-index: 0; pointer-events: none; }
+.tg-segmented-btn { appearance: none; flex: 1; background: transparent; border: none; padding: 8px 14px; border-radius: 10px; font-family: 'OneMobilePop', sans-serif; font-size: 0.85rem; font-weight: 800; color: var(--text-muted); cursor: pointer; transition: color 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; position: relative; z-index: 1; }
+.tg-segmented-btn:hover { color: var(--text-dark); }
+.tg-segmented-btn.is-active { color: var(--text-dark); }
+.tg-segmented-btn .tg-seg-icon { display: inline-flex; width: 12px; height: 12px; flex-shrink: 0; }
+.tg-segmented-btn.is-active.is-buff   { color: var(--buff-text); }
+.tg-segmented-btn.is-active.is-debuff { color: var(--debuff-text); }
+/* Modal search */
+.tg-modal-search { position: relative; width: 100%; }
+.tg-modal-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); display: inline-flex; pointer-events: none; }
+.tg-modal-search input { width: 100%; padding: 10px 14px 10px 40px; border-radius: 12px; border: 1.5px solid var(--border-soft); background: var(--search-input-bg); font-family: 'OneMobilePop', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--text-dark); transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
+.tg-modal-search input:focus { outline: none; border-color: var(--accent-green); background: var(--modal-card-bg); box-shadow: 0 0 0 3px rgba(185, 221, 99, 0.35); }
+.tg-modal-search input::placeholder { color: var(--text-muted); font-weight: 500; }
+/* Mode switch (OR/AND) */
+.tg-mode-row { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
+.tg-mode-label { font-size: 0.78rem; font-weight: 800; color: var(--text-muted); flex-shrink: 0; }
+.tg-mode-switch { position: relative; display: flex; background: var(--segmented-bg); padding: 4px; border-radius: 12px; border: 1px solid var(--border-soft); flex: 1; }
+.tg-mode-switch input { display: none; }
+.tg-mode-switch label { flex: 1; text-align: center; padding: 7px 0; font-family: 'OneMobilePop', sans-serif; font-size: 0.82rem; font-weight: 800; cursor: pointer; color: var(--text-muted); z-index: 1; transition: color 0.25s; }
+.tg-mode-switch input:checked + label { color: #2D3812; }
+.tg-mode-switch #mode-and:checked + label { color: #fff; }
+.tg-mode-glider { position: absolute; top: 4px; left: 4px; height: calc(100% - 8px); width: calc(50% - 4px); background: var(--accent-green); border-radius: 8px; transition: transform 0.25s cubic-bezier(.4,0,.2,1), background 0.25s; z-index: 0; }
+#mode-and:checked ~ .tg-mode-glider { transform: translateX(100%); background: #3488F0; }
+.tg-mode-switch:hover label:not(.is-active) { color: var(--text-dark); }
+.tg-mode-switch:hover .tg-mode-glider { box-shadow: 0 2px 8px rgba(143, 185, 62, 0.4); }
+.tg-mode-switch:hover #mode-and:checked ~ .tg-mode-glider { box-shadow: 0 2px 8px rgba(52, 138, 241, 0.45); }
+/* Toggle row */
+.tg-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: var(--search-input-bg); border: 1px solid var(--border-soft); border-radius: 12px; }
+.tg-toggle-row-text { display: flex; flex-direction: column; gap: 1px; flex: 1; }
+.tg-toggle-row-label { font-size: 0.85rem; font-weight: 800; color: var(--text-dark); }
+.tg-toggle-row-hint  { font-size: 0.7rem; color: var(--text-muted); }
+.tg-switch { position: relative; display: inline-block; width: 38px; height: 22px; flex-shrink: 0; }
+.tg-switch input { display: none; }
+.tg-switch-slider { position: absolute; inset: 0; background: var(--switch-off-bg); border-radius: 999px; transition: 0.25s; cursor: pointer; }
+.tg-switch-slider::before { content: ''; position: absolute; height: 16px; width: 16px; left: 3px; top: 3px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.15); transition: 0.25s; }
+.tg-switch input:checked + .tg-switch-slider { background: var(--accent-green); }
+.tg-switch input:checked + .tg-switch-slider::before { transform: translateX(16px); }
+.tg-switch:hover:not(:has(input:checked)) .tg-switch-slider { background: #c6cfac; }
+.tg-switch:hover:not(:has(input:checked)) .tg-switch-slider::before { transform: translateX(2px); box-shadow: 0 2px 6px rgba(0,0,0,0.22); }
+.tg-switch:hover:has(input:checked) .tg-switch-slider { background: var(--accent-green-strong); }
+.tg-switch:hover:has(input:checked) .tg-switch-slider::before { transform: translateX(14px); box-shadow: 0 2px 6px rgba(0,0,0,0.22); }
+/* "무관" any option */
+.tg-any-option { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--modal-card-bg); border: 1.5px solid var(--border-soft); border-radius: 12px; cursor: pointer; transition: all 0.15s; flex-shrink: 0; }
+.tg-any-option:hover { background: var(--aside-accent-soft); border-color: var(--aside-accent-border); }
+.tg-any-option.is-active { background: var(--aside-accent-soft); border-color: var(--aside-accent); box-shadow: 0 0 0 3px rgba(163, 97, 255, 0.18); }
+.tg-any-option.is-active:hover { background: var(--aside-accent-soft); border-color: var(--aside-accent-strong); }
+.tg-any-option input { display: none; }
+.tg-any-option .tg-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border-soft); flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.tg-any-option.is-active .tg-radio { border-color: var(--aside-accent-strong); background: var(--aside-accent-strong); }
+.tg-any-option.is-active .tg-radio::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+.tg-any-option .tg-any-text { display: flex; flex-direction: column; gap: 1px; }
+.tg-any-option .tg-any-label { font-size: 0.9rem; font-weight: 800; color: var(--text-dark); }
+.tg-any-option.is-active .tg-any-label { color: var(--aside-accent-strong); }
+.tg-any-option .tg-any-hint { font-size: 0.72rem; color: var(--text-muted); }
+/* Aside modal filter-label overrides */
+.tg-modal-card.is-aside .filter-label:has(input:checked) { background: var(--aside-accent-soft); border-color: var(--aside-accent); color: var(--aside-accent-strong); box-shadow: 0 0 0 3px rgba(163, 97, 255, 0.18); }
+.tg-modal-card.is-aside .filter-label:has(input:checked)::before { background: var(--aside-accent); }
+.tg-modal-card.is-aside .filter-label input[type="checkbox"]:checked,
+.tg-modal-card.is-aside .filter-label input[type="radio"]:checked { background: var(--aside-accent); border-color: var(--aside-accent-strong); }
+.tg-modal-card.is-aside .filter-label input[type="checkbox"]:checked::after { border-color: #fff; }
+.tg-modal-card.is-aside .filter-label input[type="radio"]:checked::after { background: #fff; }
+.tg-modal-card.is-aside .filter-label:hover { background: var(--aside-accent-soft); border-color: var(--aside-accent-border); }
+.tg-modal-card.is-aside .tg-section-action { color: var(--text-muted); }
+.tg-modal-card.is-aside .tg-section-action:hover { background: #FFE4E6; color: var(--debuff-text); }
+/* Section heading */
+.tg-section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: -4px; }
+.tg-section-title { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.tg-section-action { appearance: none; background: transparent; border: none; font-family: 'OneMobilePop', sans-serif; font-size: 0.72rem; font-weight: 800; color: var(--text-muted); cursor: pointer; padding: 2px 6px; border-radius: 6px; transition: all 0.15s; }
+.tg-section-action:hover { background: #FFE4E6; color: var(--debuff-text); }
+/* Filter checkbox grid */
+.tg-filter-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; min-height: 240px; align-content: start; }
+.tg-filter-grid--empty { display: flex; align-items: center; justify-content: center; text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 40px 20px; }
+/* filter-label (shared — replaces old definition) */
+.filter-label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--border-soft); background: var(--modal-card-bg); font-size: 0.82rem; font-weight: 700; color: var(--text-dark); cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; }
+.filter-label::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: transparent; transition: background 0.15s, width 0.15s; }
+.filter-label:hover { background: var(--accent-soft); border-color: var(--accent-green); }
+.filter-label[data-type="buff"]:hover:not(:has(input:checked))    { background: var(--buff-pale);    border-color: var(--buff-soft); }
+.filter-label[data-type="buff"]:hover:not(:has(input:checked))::before    { background: var(--buff); }
+.filter-label[data-type="debuff"]:hover:not(:has(input:checked))  { background: var(--debuff-pale);  border-color: var(--debuff-soft); }
+.filter-label[data-type="debuff"]:hover:not(:has(input:checked))::before  { background: var(--debuff); }
+.filter-label[data-type="neutral"]:hover:not(:has(input:checked)) { background: var(--neutral-pale); border-color: var(--neutral-soft); }
+.filter-label[data-type="neutral"]:hover:not(:has(input:checked))::before { background: var(--neutral); }
+.filter-label input[type="checkbox"],
+.filter-label input[type="radio"] { appearance: none; width: 16px; height: 16px; border: 1.5px solid var(--border-soft); background: var(--modal-card-bg); cursor: pointer; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.filter-label input[type="checkbox"] { border-radius: 4px; }
+.filter-label input[type="radio"]    { border-radius: 50%; }
+.filter-label input[type="checkbox"]:checked,
+.filter-label input[type="radio"]:checked { background: var(--accent-green); border-color: var(--accent-green-strong); }
+.filter-label input[type="checkbox"]:checked::after { content: ''; width: 4px; height: 8px; border: 1.8px solid #2D3812; border-top: 0; border-left: 0; transform: rotate(45deg) translate(-1px, -1px); }
+.filter-label input[type="radio"]:checked::after    { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #2D3812; }
+.filter-label:has(input:checked) { background: var(--accent-soft); border-color: var(--accent-green-strong); color: #2D3812; box-shadow: 0 0 0 3px rgba(185, 221, 99, 0.25); }
+.filter-label:has(input:checked)::before { background: var(--accent-green-strong); width: 4px; }
+.filter-label[data-type="buff"]::before    { background: var(--buff-soft); }
+.filter-label[data-type="debuff"]::before  { background: var(--debuff-soft); }
+.filter-label[data-type="neutral"]::before { background: var(--neutral-soft); }
+.filter-label[data-type="buff"]:has(input:checked)    { background: var(--buff-pale);    border-color: var(--buff);    color: var(--buff-text);    box-shadow: 0 0 0 3px rgba(52, 138, 241, 0.18); }
+.filter-label[data-type="buff"]:has(input:checked)::before    { background: var(--buff); }
+.filter-label[data-type="buff"]:has(input:checked) input[type="checkbox"]    { background: var(--buff);    border-color: var(--buff-text); }
+.filter-label[data-type="buff"]:has(input:checked) input[type="checkbox"]::after    { border-color: #fff; }
+.filter-label[data-type="debuff"]:has(input:checked)  { background: var(--debuff-pale);  border-color: var(--debuff);  color: var(--debuff-text);  box-shadow: 0 0 0 3px rgba(252, 104, 129, 0.18); }
+.filter-label[data-type="debuff"]:has(input:checked)::before  { background: var(--debuff); }
+.filter-label[data-type="debuff"]:has(input:checked) input[type="checkbox"]  { background: var(--debuff);  border-color: var(--debuff-text); }
+.filter-label[data-type="debuff"]:has(input:checked) input[type="checkbox"]::after  { border-color: #fff; }
+.filter-label[data-type="neutral"]:has(input:checked) { background: var(--neutral-pale); border-color: var(--neutral); color: var(--neutral-text); box-shadow: 0 0 0 3px rgba(163, 97, 255, 0.18); }
+.filter-label[data-type="neutral"]:has(input:checked)::before { background: var(--neutral); }
+.filter-label[data-type="neutral"]:has(input:checked) input[type="checkbox"] { background: var(--neutral); border-color: var(--neutral-text); }
+.filter-label[data-type="neutral"]:has(input:checked) input[type="checkbox"]::after { border-color: #fff; }
+.filter-label .tg-type-mark { display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; flex-shrink: 0; width: 12px; height: 12px; transition: color 0.15s; }
+.filter-label[data-type="buff"]    .tg-type-mark { color: var(--buff); }
+.filter-label[data-type="debuff"]  .tg-type-mark { color: var(--debuff); }
+.filter-label[data-type="neutral"] .tg-type-mark { color: var(--neutral); }
+.filter-label[data-type="buff"]:has(input:checked)    .tg-type-mark { color: var(--buff-text); }
+.filter-label[data-type="debuff"]:has(input:checked)  .tg-type-mark { color: var(--debuff-text); }
+.filter-label[data-type="neutral"]:has(input:checked) .tg-type-mark { color: var(--neutral-text); }
+.tg-neutral-bar { display: inline-block; width: 10px; height: 3px; background: currentColor; border-radius: 1.5px; }
+.filter-label .tg-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aside-line-icon { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+@media (max-width: 520px) {
+    .tg-filter-grid  { grid-template-columns: 1fr; }
+    .tg-modal-body   { padding: 14px 16px 0; }
+    .tg-modal-header { padding: 16px 18px 14px; }
+    .tg-modal-footer { padding: 12px 18px 16px; }
+}
+
+
+/* ═══════════════════════════════════════════
+   DETAIL MODAL — v1 디자인
+═══════════════════════════════════════════ */
+
+/* ── 오버레이 ──────────────────────────── */
+#modal-detail {
+    position: fixed; inset: 0;
+    background: var(--overlay-bg);
+    backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2000; padding: 16px;
+    animation: tg-fade 0.18s ease-out;
+}
+#modal-detail.is-closing {
+    animation: tg-fade-out 0.18s ease-in forwards;
+}
+@keyframes tg-fade-out { from { opacity: 1; } to { opacity: 0; } }
+
+/* 디테일 카드: 필터 모달 .tg-modal-card와 max-width만 다름 */
+#modal-detail .tg-modal-card { max-width: 620px; height: 88vh; }
+#modal-detail.is-closing .tg-modal-card {
+    animation: tg-pop-out 0.2s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes tg-pop-out {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(6px) scale(0.96); }
+}
+@keyframes tg-slide-out-left  { from { opacity: 1; transform: translateX(0);      } to { opacity: 0; transform: translateX(-50px); } }
+@keyframes tg-slide-out-right { from { opacity: 1; transform: translateX(0);      } to { opacity: 0; transform: translateX( 50px); } }
+@keyframes tg-slide-in-right  { from { opacity: 0; transform: translateX( 50px); } to { opacity: 1; transform: translateX(0);      } }
+@keyframes tg-slide-in-left   { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0);      } }
+
+/* ── Nav 화살표 ────────────────────────── */
+.tg-modal-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 56px; height: 56px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,0.12); backdrop-filter: blur(2px);
+    color: rgba(255,255,255,0.85); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    z-index: 10; transition: background 0.18s, color 0.18s, transform 0.18s;
+}
+.tg-modal-nav:hover { background: rgba(255,255,255,0.22); color: #fff; }
+.tg-modal-nav:active { transform: translateY(-50%) scale(0.94); }
+.tg-modal-nav.prev { left: max(8px, calc(50% - 386px)); }
+.tg-modal-nav.next { right: max(8px, calc(50% - 386px)); }
+#modal-detail.is-closing .tg-modal-nav { opacity: 0; transition: opacity 0.18s ease; }
+@media (max-width: 820px) {
+    .tg-modal-nav { width: 44px; height: 44px; }
+    .tg-modal-nav.prev { left: 8px; }
+    .tg-modal-nav.next { right: 8px; }
+}
+@media (max-width: 520px) { .tg-modal-nav { display: none; } }
+
+/* ── 디테일 헤더 ───────────────────────── */
+.tg-detail-header {
+    position: relative; flex-shrink: 0; padding: 22px 24px 14px;
+}
+.tg-detail-header-row {
+    display: flex; gap: 18px; align-items: center; padding-right: 44px;
+}
+.tg-detail-portrait {
+    width: 88px; height: 88px; border-radius: 20px; object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12); flex-shrink: 0; background: var(--accent-soft);
+}
+.tg-detail-meta { flex: 1; min-width: 0; }
+.tg-detail-eyebrow {
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px;
+}
+.tg-detail-name {
+    font-family: 'OneMobilePop', sans-serif; font-size: 1.5rem; font-weight: 800;
+    color: var(--text-heading); margin: 0; line-height: 1.15;
+}
+.tg-detail-name-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 2px 0 4px;
+}
+.tg-detail-tier-row {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.tg-detail-tier {
+    --tier-color: var(--tier-default);
+    display: inline-block; padding: 3px 11px; border-radius: 999px;
+    font-size: 0.74rem; font-weight: 800;
+    background: var(--tier-color);
+    color: color-mix(in srgb, var(--tier-color) 8%, var(--modal-card-bg));
+    border: none;
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--tier-color) 35%, transparent);
+}
+.tg-detail-tier[data-tier*="메타픽"]      { --tier-color: var(--tier-meta); }
+.tg-detail-tier[data-tier*="성격덱"]      { --tier-color: var(--tier-pers); }
+.tg-detail-tier[data-tier*="메타 부적합"] { --tier-color: var(--tier-unfit); }
+.tg-detail-tier[data-tier*="태생 1성"]    { --tier-color: var(--tier-1star); }
+.tg-detail-eldyne {
+    --eldyne-color: #C28A1C;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 11px 3px 9px; border-radius: 999px;
+    font-size: 0.74rem; font-weight: 800;
+    background: var(--eldyne-color);
+    color: color-mix(in srgb, var(--eldyne-color) 8%, var(--modal-card-bg));
+    border: none;
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--eldyne-color) 35%, transparent);
+    line-height: 1.2; white-space: nowrap;
+}
+.tg-detail-eldyne-icon { display: inline-flex; width: 11px; height: 11px; flex-shrink: 0; }
+.tg-detail-eldyne[data-eldyne="영원살이"]      { --eldyne-color: #C28A1C; }
+.tg-detail-eldyne[data-eldyne="몽환살이"]      { --eldyne-color: #8B5CF6; }
+.tg-detail-eldyne[data-eldyne="염원살이"]      { --eldyne-color: #E11D74; }
+.tg-detail-eldyne[data-eldyne="별바라기"]       { --eldyne-color: #3B82F6; }
+.tg-detail-eldyne[data-eldyne="영원의 메아리"] { --eldyne-color: #0EA5A4; }
+.tg-detail-eldyne[data-eldyne="약속의 메아리"] { --eldyne-color: #F97316; }
+.tg-detail-attrs {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    font-size: 0.78rem; color: var(--text-muted); font-weight: 700;
+}
+.tg-detail-attr {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 9px 2px 6px; background: var(--attr-pill-bg); border-radius: 7px;
+}
+.tg-detail-attr-icon { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
+
+/* ── 닫기 버튼 ─────────────────────────── */
+.tg-modal-close {
+    position: absolute; top: 18px; right: 18px;
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--border-soft); background: var(--modal-card-bg);
+    color: var(--text-muted); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.tg-modal-close:hover { background: #FEE2E2; border-color: #FCA5A5; color: #DC2626; }
+.tg-modal-close svg { pointer-events: none; }
+
+/* ── 세그멘티드 탭 래퍼 ─────────────────── */
+.tg-detail-tabs-wrap {
+    flex-shrink: 0; padding: 14px 24px 0;
+    background: var(--modal-card-bg); border-bottom: 1px solid var(--border-soft);
+}
+.tg-detail-tabs-wrap .tg-segmented { margin-bottom: 14px; }
+.tg-detail-tabs-wrap .tg-segmented-btn { padding: 9px 10px; font-size: 0.82rem; }
+.tg-detail-tabs-wrap .tg-seg-icon { width: 13px; height: 13px; }
+
+/* ── Modal Body + Scroll Area ──────────── */
+.tg-modal-body {
+    position: relative; flex: 1; overflow: hidden;
+    padding: 16px 24px 0;
+    display: flex; flex-direction: column; gap: 12px; min-height: 0;
+    background: var(--modal-body-bg);
+}
+.tg-scroll-area {
+    position: relative; flex: 1; min-height: 0;
+    display: flex; margin-right: -24px;
+}
+.tg-scroll-area::before,
+.tg-scroll-area::after {
+    content: ''; position: absolute; left: 0; right: 0; height: 11px;
+    pointer-events: none; z-index: 5; opacity: 1; transition: opacity 0.2s ease;
+}
+.tg-scroll-area::before { top: 0; background: linear-gradient(to bottom, var(--modal-body-bg), transparent); }
+.tg-scroll-area::after  { bottom: 0; background: linear-gradient(to top, var(--modal-body-bg), transparent); }
+.tg-scroll-area.is-at-top::before   { opacity: 0; }
+.tg-scroll-area.is-at-bottom::after { opacity: 0; }
+.tg-detail-scroll {
+    flex: 1; overflow-y: auto; padding-bottom: 20px;
+    scrollbar-width: thin; scrollbar-color: rgba(63,79,31,0.22) transparent;
+    min-height: 0; display: flex; flex-direction: column; gap: 12px;
+}
+.tg-detail-scroll > * { margin-right: 24px; }
+.tg-detail-scroll::-webkit-scrollbar { width: 6px; }
+.tg-detail-scroll::-webkit-scrollbar-track { background: transparent; margin: 4px 0; }
+.tg-detail-scroll::-webkit-scrollbar-thumb { background: rgba(63,79,31,0.18); border-radius: 999px; }
+.tg-detail-scroll::-webkit-scrollbar-thumb:hover { background: rgba(63,79,31,0.34); }
+
+/* ── 퀵필터 칩 (부가 효과 탭) ──────────── */
+.tg-quickfilters-row {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    padding: 2px 0 10px; border-bottom: 1px solid var(--border-soft); flex-shrink: 0;
+}
+.tg-quickfilters-label { font-size: 0.72rem; font-weight: 800; color: var(--text-muted); letter-spacing: 0.04em; }
+.tg-quickfilter-chip {
+    appearance: none; display: inline-flex; align-items: center;
+    padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--border-soft);
+    background: var(--modal-card-bg); font-family: 'OneMobilePop', sans-serif;
+    font-size: 0.74rem; font-weight: 800; color: var(--text-muted); cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.tg-quickfilter-chip:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
+.tg-quickfilter-chip.is-active { background: var(--text-dark); border-color: var(--text-dark); color: var(--accent-green); }
+.tg-qf-suffix {
+    display: inline-block; max-width: 0; overflow: hidden; opacity: 0;
+    vertical-align: middle; white-space: nowrap;
+    transition: max-width 0.28s cubic-bezier(.4,0,.2,1), opacity 0.2s ease;
+}
+.tg-quickfilter-chip.is-active .tg-qf-suffix { max-width: 3em; opacity: 1; }
+.tg-quickfilter-chip-check {
+    display: inline-block; font-size: 0.78rem; opacity: 0; max-width: 0; margin-left: 0;
+    overflow: hidden; vertical-align: middle;
+    transition: max-width 0.28s cubic-bezier(.4,0,.2,1), opacity 0.2s ease, margin-left 0.28s cubic-bezier(.4,0,.2,1);
+}
+.tg-quickfilter-chip.is-active .tg-quickfilter-chip-check { opacity: 0.85; max-width: 1.5em; margin-left: 4px; }
+
+/* ════════════════════════════════════
+   SKILL CARDS
+════════════════════════════════════ */
+.tg-skill-card {
+    --card-accent: var(--skill-low);
+    background: var(--modal-card-bg); border-radius: 15px; padding: 18px 18px 16px;
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 2px 8px rgba(63,79,31,0.05);
+    display: flex; flex-direction: column; gap: 14px;
+}
+.tg-skill-card[data-type="low"]              { --card-accent: var(--skill-low); }
+.tg-skill-card[data-type="high"]             { --card-accent: var(--skill-high); }
+.tg-skill-card[data-type="high"] .tg-skill-card-icon {
+    border-color: var(--skill-high);
+    background: color-mix(in srgb, var(--skill-high) 12%, var(--modal-card-bg));
+}
+.tg-skill-card[data-type="high"].is-pvp      { --card-accent: var(--skill-pvp); }
+.tg-skill-card[data-type="normal"],
+.tg-skill-card[data-type="power"]            { --card-accent: var(--skill-normal); }
+.tg-skill-card[data-type="aside"]            { --card-accent: var(--skill-aside); }
+.tg-skill-card[data-type="overall"]          { --card-accent: var(--skill-overall); }
+.tg-skill-card-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+}
+.tg-skill-card-icon-wrap { display: flex; gap: 14px; align-items: center; min-width: 0; }
+.tg-skill-card-icon-rel  { position: relative; flex-shrink: 0; }
+.tg-skill-card-icon {
+    width: 58px; height: 58px; border-radius: 13px;
+    border: 3px solid var(--card-accent); object-fit: cover;
+    background: color-mix(in srgb, var(--card-accent) 12%, var(--modal-card-bg));
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.tg-skill-card-icon-badge {
+    position: absolute; top: -5px; left: -5px;
+    width: 22px; height: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: 800; color: var(--card-accent); z-index: 2;
+    overflow: hidden;
+}
+.tg-skill-card-icon-badge img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.tg-skill-card-icon-lv {
+    position: absolute; right: -5px; bottom: -5px;
+    background: #333; color: #fff; font-size: 0.72rem; font-weight: 800;
+    padding: 3px 7px; border-radius: 8px; z-index: 3;
+}
+.tg-skill-card-titles { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tg-skill-card-type-label { font-size: 0.78rem; font-weight: 800; color: var(--card-accent); }
+.tg-skill-card-name-row { display: flex; align-items: center; gap: 6px; }
+.tg-skill-card-name { font-size: 1.25rem; font-weight: 800; color: var(--text-heading); line-height: 1.2; }
+.tg-skill-card-body { display: flex; flex-direction: column; }
+.tg-skill-card-body > * + * { margin-top: 12px; }
+.tg-skill-card-divider { height: 1px; background: var(--border-soft); margin: 14px 0; }
+.tg-normal-section { display: flex; flex-direction: column; gap: 10px; }
+.tg-normal-sub-head { display: flex; flex-direction: column; gap: 2px; }
+.tg-skill-desc, .tg-aside-desc { font-size: 0.9rem; color: var(--text-body); line-height: 1.6; }
+.tg-skill-cooldown { display: flex; align-items: center; gap: 5px; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); }
+.tg-skill-cooldown-icon { width: 22px; height: 22px; object-fit: contain; flex-shrink: 0; }
+.tg-skill-cooldown b { color: var(--card-accent); font-weight: 800; }
+.tg-skill-stat-box {
+    background: var(--stat-box-bg); border-radius: 12px; padding: 14px;
+    font-size: 0.92rem; color: var(--text-heading); line-height: 1.6;
+    border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow);
+}
+.tg-skill-stat-box b { color: var(--card-accent); font-size: 1.05rem; font-weight: 800; }
+
+/* ── PvE/PvP 모드 스위치 ─────────────── */
+.tg-mode-switch-mini {
+    position: relative; display: flex;
+    background: color-mix(in srgb, var(--card-accent) 14%, var(--modal-card-bg));
+    padding: 3px; border-radius: 11px;
+    border: 1px solid color-mix(in srgb, var(--card-accent) 30%, transparent);
+    flex-shrink: 0;
+}
+.tg-mode-switch-mini input { display: none; }
+.tg-mode-switch-mini label {
+    text-align: center; padding: 5px 14px;
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.78rem; font-weight: 800;
+    cursor: pointer; color: var(--text-body); z-index: 1; transition: color 0.25s; min-width: 42px;
+}
+.tg-mode-switch-mini input:checked + label { color: #fff; }
+.tg-mode-glider-mini {
+    position: absolute; top: 3px; left: 3px;
+    height: calc(100% - 6px); width: calc(50% - 3px);
+    background: var(--card-accent); border-radius: 8px;
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1), background 0.25s; z-index: 0;
+}
+.tg-mode-switch-mini.is-pvp .tg-mode-glider-mini { transform: translateX(100%); }
+.tg-mode-switch-mini:hover .tg-mode-glider-mini {
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--card-accent) 45%, transparent);
+}
+
+/* ── Level Slider ──────────────────────── */
+.tg-lv-slider { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.tg-lv-slider input[type="range"] {
+    appearance: none; width: 100%; height: 8px;
+    background: linear-gradient(
+        to right,
+        var(--card-accent) 0%, var(--card-accent) var(--lv-progress, 0%),
+        #E3E8D5 var(--lv-progress, 0%), #E3E8D5 100%
+    );
+    border-radius: 999px; outline: none; cursor: pointer;
+}
+.tg-lv-slider input[type="range"]::-webkit-slider-thumb {
+    appearance: none; width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--card-accent);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: grab;
+}
+.tg-lv-slider input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.1); }
+.tg-lv-slider input[type="range"]::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--card-accent);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15); cursor: grab;
+}
+.tg-lv-slider-marks {
+    display: flex; justify-content: space-between;
+    font-size: 0.74rem; font-weight: 800; color: var(--text-muted);
+}
+.tg-lv-ticks {
+    position: relative; display: flex; justify-content: space-between;
+    align-items: flex-start; height: 12px; padding: 0 11px; margin-top: -2px;
+}
+.tg-lv-tick { width: 2px; height: 5px; background: var(--border-soft); border-radius: 1px; flex-shrink: 0; }
+.tg-lv-tick.is-major { height: 11px; width: 2.5px; background: var(--card-accent); opacity: 0.85; }
+.tg-normal-sub-type { font-size: 0.78rem; font-weight: 800; color: var(--skill-normal); }
+.tg-normal-sub-name { font-size: 1.25rem; font-weight: 800; color: var(--text-heading); }
+
+/* ════════════════════════════════════
+   EFFECT ITEMS
+════════════════════════════════════ */
+.tg-effect-item {
+    --effect-color: var(--buff);
+    position: relative; background: var(--modal-card-bg); border-radius: 12px;
+    padding: 11px 12px 11px 16px; border: 1px solid var(--border-soft);
+    box-shadow: var(--inset-shadow);
+    display: flex; align-items: flex-start; gap: 12px; overflow: hidden;
+    transition: opacity 0.25s ease, max-height 0.35s cubic-bezier(.4,0,.2,1),
+                transform 0.3s ease, margin-top 0.35s cubic-bezier(.4,0,.2,1),
+                padding 0.35s cubic-bezier(.4,0,.2,1), border-width 0.35s;
+    max-height: 500px;
+}
+.tg-effect-item::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px; background: var(--effect-color);
+}
+.tg-effect-item[data-kind="debuff"] { --effect-color: var(--debuff); }
+.tg-effect-item.is-hidden {
+    opacity: 0; max-height: 0; transform: scale(0.96);
+    padding-top: 0 !important; padding-bottom: 0 !important;
+    margin-top: 0 !important; margin-bottom: 0 !important;
+    border-top-width: 0 !important; border-bottom-width: 0 !important;
+    pointer-events: none;
+}
+.tab-content { display: flex; flex-direction: column; gap: 12px; }
+
+.tg-effect-empty {
+    display: none;
+    padding: 14px 16px; font-size: 0.84rem; font-weight: 800;
+    color: var(--text-muted); text-align: center;
+    background: var(--stat-box-bg); border-radius: 12px; border: 1px dashed var(--border-soft);
+}
+.tg-skill-card-body:not(:has(.tg-effect-item:not(.is-hidden))) .tg-effect-empty { display: block; }
+.tg-effect-item-icon {
+    width: 36px; height: 36px; flex-shrink: 0; border-radius: 8px;
+    background: color-mix(in srgb, var(--effect-color) 12%, var(--modal-card-bg));
+    display: inline-flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.tg-effect-item-icon img { width: 100%; height: 100%; object-fit: cover; }
+.tg-effect-item-body { flex: 1; min-width: 0; }
+.tg-effect-item-head {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;
+}
+.tg-effect-item-name { color: var(--text-heading); font-size: 0.98rem; font-weight: 800; }
+.tg-effect-item-chip { font-size: 0.7rem; padding: 2px 7px; border-radius: 6px; font-weight: 800; }
+.tg-effect-item-chip[data-kind="cond"]   { background: #fff3e0; color: #e65100; }
+.tg-effect-item-chip[data-kind="target"] { background: #DCFCE7; color: #166534; }
+.tg-effect-item-desc { font-size: 0.85rem; color: var(--text-body); line-height: 1.5; word-break: keep-all; }
+
+/* ── Grade Badge ───────────────────────── */
+.tg-grade-badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 9px; border-radius: 999px;
+    background: var(--grade-x); color: white;
+    font-size: 0.72rem; font-weight: 800;
+    margin-left: 8px; line-height: 1.2; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.tg-grade-badge[data-grade*="10"] { background: var(--grade-10); }
+.tg-grade-badge[data-grade*="-"]  { background: var(--grade-7m); }
+.tg-grade-badge[data-grade*="7+"] { background: var(--grade-7p); }
+
+/* ── Recommend Boxes ───────────────────── */
+.tg-recommend-box {
+    --rec-color: var(--grade-x);
+    position: relative; background: var(--stat-box-bg); border-radius: 12px;
+    padding: 13px 16px 13px 18px; border: 1px solid var(--border-soft);
+    box-shadow: var(--inset-shadow); overflow: hidden;
+}
+.tg-recommend-box::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--rec-color);
+}
+.tg-recommend-box[data-grade*="10"] { --rec-color: var(--grade-10); }
+.tg-recommend-box[data-grade*="7+"] { --rec-color: var(--grade-7p); }
+.tg-recommend-box[data-grade*="7-"] { --rec-color: var(--grade-7m); }
+.tg-recommend-box-title { font-size: 0.92rem; font-weight: 800; color: var(--text-heading); margin-bottom: 6px; }
+.tg-recommend-box-body  { font-size: 0.86rem; color: var(--text-body); line-height: 1.7; word-break: keep-all; }
+.tg-recommend-note {
+    position: relative; background: var(--recommend-note-bg); border-radius: 12px;
+    padding: 12px 16px 12px 18px; border: 1px solid var(--recommend-note-border);
+    font-size: 0.86rem; color: var(--recommend-note-text); line-height: 1.7; word-break: keep-all; overflow: hidden;
+}
+/* 문단 사이만 띄운다. 줄 안쪽 간격(`line-height`)은 그대로 둬야
+   한 문단이 흩어져 보이지 않는다. */
+.tg-recommend-note p { margin: 0; }
+.tg-recommend-note p + p { margin-top: 0.75em; }
+.tg-recommend-note::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #fadb14;
+}
+
+/* ── Aside Cards ───────────────────────── */
+.tg-aside-card {
+    --card-accent: var(--skill-aside);
+    background: var(--modal-card-bg); border-radius: 15px; padding: 18px;
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 2px 8px rgba(63,79,31,0.05);
+    display: flex; flex-direction: column; gap: 12px;
+}
+.tg-aside-global-box {
+    position: relative; background: var(--stat-box-bg); border-radius: 12px; padding: 16px 18px;
+    border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow); overflow: hidden;
+}
+.tg-aside-global-box::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--skill-aside);
+}
+.tg-aside-global-title strong { color: var(--text-heading); font-size: 0.92rem; }
+.tg-aside-global-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.tg-aside-global-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--modal-card-bg); padding: 9px 13px; border-radius: 9px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03); border: 1px solid var(--border-soft);
+}
+.tg-aside-global-item-left { display: flex; align-items: center; gap: 9px; }
+.tg-aside-global-item-left img { width: 26px; height: 26px; border-radius: 6px; }
+.tg-aside-global-item-label { font-size: 0.84rem; font-weight: 800; color: var(--text-heading); }
+.tg-aside-global-item-value { font-size: 1rem; font-weight: 800; color: var(--text-heading); }
+.tg-aside-global-item-value .num { color: var(--skill-aside); }
+.tg-aside-global-footer {
+    margin-top: 10px; text-align: center; font-size: 0.72rem; font-weight: 800;
+    color: var(--text-muted); opacity: 0.9;
+}
+
+/* ── 어사이드 스킬 ──────────────────────
+   ★3 달성으로 얻는 전투 효과. 편성하지 않아도 발동하므로 편성 시 효과와
+   **박스를 갈라** 둔다. 옆의 `사도 전체 능력치` 와 형제 관계라 뼈대는 같고,
+   레일 색만 인게임 배너의 분홍→민트를 따른다 — 게임이 이 기능에 쓰는 색이다.
+   ⚠ 배너 자체는 재현하지 않는다. 어사이드 카드 세 장이 `아이콘 + 라벨 + 이름`
+     문법으로 서 있어서 배너 하나만 인게임 톤이면 튄다. */
+.tg-aside-skill-box {
+    --as-a: #F2A2D0; --as-b: #A9C7E8; --as-c: #74DDBA;
+    position: relative; background: var(--stat-box-bg); border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 12px;
+    border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow); overflow: hidden;
+    /* ⚠ `.tg-skill-card-body > * + *` 의 12px 은 **직계 자식**에만 걸린다.
+         설명과 음각 박스가 이 박스 안으로 들어가면서 그 간격을 못 받아 붙어 보였다.
+         같은 리듬을 여기서 다시 준다. */
+    display: flex; flex-direction: column; gap: 12px;
+}
+[data-theme="dark"] .tg-aside-skill-box { --as-a: #D97FB4; --as-b: #7FA3CC; --as-c: #4FB795; }
+.tg-aside-skill-box::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: linear-gradient(180deg, var(--as-a), var(--as-b), var(--as-c));
+}
+.tg-aside-skill-head { display: flex; align-items: center; gap: 11px; }
+.tg-aside-skill-icon { width: 34px; height: 34px; flex-shrink: 0; object-fit: contain; }
+.tg-aside-skill-titles { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+/* 밝은 그라디언트 위라 글자는 **어두워야** 한다 — 흰 글자는 거의 안 보인다 */
+.tg-aside-skill-label {
+    align-self: flex-start; padding: 2px 9px; border-radius: 999px;
+    background: linear-gradient(90deg, var(--as-a), var(--as-c));
+    color: #2C3A33; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.02em;
+}
+.tg-aside-skill-name { font-size: 0.92rem; font-weight: 800; color: var(--text-heading); }
+.tg-aside-skill-footer {
+    text-align: center; font-size: 0.72rem; font-weight: 800;
+    color: var(--text-muted); opacity: 0.9;
+}
+
+/* ★3 아이콘에 겹치는 테두리 — 어사이드 스킬이 **있다는 신호**다.
+   카드를 펼쳐 읽지 않아도 어사이드 탭을 훑는 것만으로 보인다 (인게임도 같은 방식).
+   ⚠ `.tg-skill-card-icon-rel` 이 `position: relative` 라 그 위에 얹힌다.
+     아이콘이 58px(border-box) 이므로 사방 4px 씩 넉넉히 빼서 모서리 장식을 살린다. */
+.tg-aside-skill-frame {
+    position: absolute; left: -4px; top: -4px;
+    width: calc(100% + 8px); aspect-ratio: 1;
+    pointer-events: none; z-index: 2;
+}
+
+/* ── Empty State ───────────────────────── */
+.tg-empty-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 280px; text-align: center; gap: 14px;
+}
+.tg-empty-state img { width: 80px; opacity: 0.5; }
+.tg-empty-state-text { color: var(--text-muted); font-weight: 800; font-size: 0.96rem; }
+
+/* ── Mobile ─────────────────────────────── */
+@media (max-width: 560px) {
+    .tg-detail-header { padding: 18px 18px 14px; }
+    .tg-detail-header-row { padding-right: 40px; gap: 14px; }
+    .tg-detail-portrait { width: 72px; height: 72px; border-radius: 16px; }
+    .tg-detail-name { font-size: 1.25rem; }
+    .tg-modal-body { padding: 14px 18px 0; }
+    .tg-detail-tabs-wrap { padding: 12px 18px 0; }
+    .tg-detail-tabs-wrap .tg-segmented-btn { padding: 8px 6px; font-size: 0.74rem; }
+}
+
+/* ════════════════════════════════════
+   다크 모드 칩 오버라이드
+════════════════════════════════════ */
+
+/* 디테일 모달 — 필터용 바텀 페이드 오버라이드 제거 */
+#modal-detail .tg-modal-body::after { display: none; }
+
+
+/* 인포 모달 */
+#modal-info .modal-content {
+    padding: 24px;
+    font-size: 0.88rem;
+    overflow-y: auto;
+    max-height: 80vh;
+}
+
+/* 부가효과 아이콘 프레임 다크 보정 */
+[data-theme="dark"] .tg-effect-item-icon {
+    background: color-mix(in srgb, var(--effect-color) 18%, #1A1A1D);
+}
+
+[data-theme="dark"] .filter-label input[type="checkbox"],
+[data-theme="dark"] .filter-label input[type="radio"] { border-color: #71717A; }
+[data-theme="dark"] .tg-effect-item-chip[data-kind="cond"]   { background: #4A3010; color: #FFB260; }
+[data-theme="dark"] .tg-effect-item-chip[data-kind="target"] { background: #1D3520; color: #76D093; }
+[data-theme="dark"] .tg-skill-card-icon-lv { background: #52525B; color: #F4F4F5; }
+
+
+/* ════════════════════════════════════
+   SP INFO BOX
+════════════════════════════════════ */
+.tg-sp-box {
+    --sp-color: #75A5F8;
+    background: var(--modal-card-bg);
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 2px 8px rgba(63,79,31,0.05);
+    border-radius: 15px; padding: 18px 18px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.tg-sp-header { display: flex; align-items: center; gap: 8px; }
+.tg-sp-icon {
+    width: 26px; height: 26px; flex-shrink: 0;
+    background: rgba(117, 165, 248, 0.18);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+}
+.tg-sp-icon img { width: 17px; height: 17px; object-fit: contain; }
+.tg-sp-title { font-weight: 800; font-size: 0.95rem; color: var(--text-heading); }
+.tg-sp-header-sub { font-size: 0.78rem; color: var(--text-muted); }
+
+.tg-sp-bar-wrap {
+    position: relative;
+    background: var(--border-soft);
+    border-radius: 999px; height: 7px;
+    margin-bottom: 10px;
+}
+.tg-sp-bar-fill {
+    position: absolute; left: 0; top: 0; height: 100%;
+    background: var(--sp-color); border-radius: 999px;
+    min-width: 0;
+}
+.tg-sp-bar-label {
+    position: absolute; right: 0; top: 10px;
+    font-size: 0.75rem; color: var(--text-muted); font-weight: 600;
+}
+
+.tg-sp-chips { display: flex; gap: 8px; }
+.tg-sp-chip {
+    flex: 1;
+    background: var(--stat-box-bg);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--inset-shadow);
+    border-radius: 10px;
+    padding: 10px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.tg-sp-chip-val { font-size: 1.05rem; font-weight: 800; color: var(--sp-color); }
+.tg-sp-chip-val.sp-max   { color: #75A5F8; }
+.tg-sp-chip-val.sp-start { color: #2DD4BF; }
+.tg-sp-chip-val.sp-tick  { color: #A78BFA; }
+.tg-sp-chip-val.sp-hit   { color: #F472B6; }
+.tg-sp-chip-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; word-break: keep-all; text-align: center; line-height: 1.3; }
+/* 폰 — 네 칸이 60px 남짓이라 `타수당 회복` 이 `회 / 복` 으로 갈렸다. 낱말 단위로 접고 안쪽 여백을 줄인다 */
+@media (max-width: 520px) { .tg-sp-chip { padding: 10px 4px; } }
+
+.tg-sp-time {
+    font-size: 0.88rem; color: var(--text-body); line-height: 1.5;
+    text-align: center; margin-top: 10px;
+}
+.tg-sp-time b { color: var(--sp-color); font-size: 1rem; }
+
+.tg-sp-time-sub {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;
+}
+.tg-sp-time-sub b { color: #C4B5E8; font-style: normal; }
+.tg-sp-role-icon { width: 15px; height: 15px; object-fit: contain; flex-shrink: 0; }
+/* 글은 span 한 덩어리로 — 맨 글자를 flex 에 두면 익명 상자가 되어 폰에서 `→ 약` 뒤가 따로 접혔다 */
+.tg-sp-time-sub > span { min-width: 0; word-break: keep-all; text-align: center; }
+/* 어사이드 ★2 '개전 시 SP 전체 회복' 한 줄 (스패럿 · 롤렛). 게이지는 기본값 그대로 — 어사이드가 없는 사람도 본다 */
+/* 상자가 flex gap 10px 이라 margin 으로 끌어올려 윗줄(N초 이내)에 붙인다. 색은 채도를 뺀 라벤더 */
+.tg-sp-time-sub.is-aside { margin-top: -6px; color: #9C88CC; font-weight: 600; flex-wrap: wrap; word-break: keep-all; text-align: center; }
+[data-theme="dark"] .tg-sp-time-sub.is-aside { color: #C4B5E8; }
+.tg-sp-time-sub.is-aside b { color: inherit; font-weight: 800; }
+
+
+/* ── 배틀 아이템 (부가 효과 박스 안 인라인) ── */
+.tg-bi-inline {
+    margin-top: 8px;
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    background: var(--stat-box-bg);
+    overflow: hidden;
+}
+.tg-bi-inline > summary {
+    padding: 7px 11px;
+    cursor: pointer;
+    font-family: 'OneMobilePop', sans-serif;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    list-style: none;
+    user-select: none;
+    transition: background .12s, color .12s;
+}
+.tg-bi-inline > summary::-webkit-details-marker { display: none; }
+.tg-bi-inline > summary::before {
+    content: '▸';
+    display: inline-block;
+    margin-right: 6px;
+    transition: transform .15s;
+}
+.tg-bi-inline[open] > summary::before { transform: rotate(90deg); }
+.tg-bi-inline > summary:hover { background: var(--accent-soft); color: var(--text-dark); }
+.tg-bi-inline > summary b { color: var(--accent-green-strong); }
+
+.tg-bi-body {
+    padding: 4px 10px 9px;
+    display: flex; flex-direction: column; gap: 7px;
+    border-top: 1px solid var(--border-soft);
+    /* 카드(.tg-effect-item)가 max-height:500px + overflow:hidden 이라
+       목록이 길면(리코타 10종) 잘린다. 카드 한도 안에서 자체 스크롤. */
+    max-height: 340px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* 스크롤바 서식은 상세 모달(.tg-detail-scroll)과 통일 */
+    scrollbar-width: thin; scrollbar-color: rgba(63,79,31,0.22) transparent;
+}
+.tg-bi-body::-webkit-scrollbar { width: 6px; }
+.tg-bi-body::-webkit-scrollbar-track { background: transparent; margin: 4px 0; }
+.tg-bi-body::-webkit-scrollbar-thumb { background: rgba(63,79,31,0.18); border-radius: 999px; }
+.tg-bi-body::-webkit-scrollbar-thumb:hover { background: rgba(63,79,31,0.34); }
+.tg-bi-item { display: flex; gap: 8px; align-items: flex-start; padding-top: 6px; }
+.tg-bi-ic {
+    width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; margin-top: 1px;
+}
+.tg-bi-txt { flex: 1; min-width: 0; }
+.tg-bi-nm {
+    font-family: 'OneMobilePop', sans-serif;
+    font-size: 0.8rem; color: var(--text-heading);
+}
+/* 대상 뱃지는 부가 효과의 target 칩(.tg-effect-item-chip)과 동일 서식 */
+.tg-bi-sc {
+    font-style: normal; margin-left: 5px;
+    font-size: 0.7rem; padding: 2px 7px; border-radius: 6px; font-weight: 800;
+    background: #DCFCE7; color: #166534;
+}
+[data-theme="dark"] .tg-bi-sc { background: #1D3520; color: #76D093; }
+.tg-bi-ef {
+    margin-top: 2px;
+    font-size: 0.76rem; line-height: 1.45; color: var(--text-body);
+}
+
+
+/* ═══ 운용 정보 탭 (ui.js — Usage_DB.csv) ═══
+   저학년 · 고학년 · 육성 포인트 · 종합 평가. 시안은 tools/overall/overall-preview.html */
+
+/* 세부 역할 — 머리의 인게임 분류 칩(.tg-detail-attr)과 같은 무테 칩, **색만** 다르다
+   (연두 채움 · 아이콘 없음). 위 줄은 게임이 정한 분류, 이 줄은 우리가 붙인 해석이다 */
+.tg-detail-roles { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.tg-detail-roles > small { font-size: .66rem; font-weight: 800; color: var(--text-muted); letter-spacing: .04em; margin-right: 2px; }
+.tg-detail-role { padding: 2px 9px; border-radius: 7px; background: #EAF6C8; color: #4D6B1E; font-size: .78rem; font-weight: 700; }
+/* ⚠ 글자를 `--accent-green-strong`(#8FB93E) 로 두면 연두 바탕 위 대비가 2.0:1 이라 안 읽힌다. 올리브(5.4:1) */
+[data-theme="dark"] .tg-detail-role { background: #2A331C; color: #B9DD63; }
+
+/* 판단 + 이유 음각 상자. 왼쪽 색띠는 .tg-recommend-box 와 같은 꼴 (4px) */
+.tg-usage-box { position: relative; overflow: hidden; background: var(--stat-box-bg); box-shadow: var(--inset-shadow);
+                border: 1px solid var(--border-soft); border-radius: 12px; padding: 13px 16px;
+                font-size: .86rem; line-height: 1.7; color: var(--text-body); word-break: keep-all; }
+.tg-usage-box[data-st] { padding-left: 18px; }
+.tg-usage-box[data-st]::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--st); }
+/* ⚠ 판단 색은 **강화 등급 색(초록 10+ · 주황 7+ · 빨강 7-)과 겹치지 않는 계열**이다.
+     한 카드 안에 추천 레벨 뱃지와 판단 뱃지가 같이 있어서, 주황·빨강을 쓰면 "레벨" 과 "판단" 이 섞여 읽혔다.
+     보라는 어사이드가 쓰므로 피한다 */
+.tg-usage-box[data-st="use"]  { --st: #14A098; }
+.tg-usage-box[data-st="cond"] { --st: #3B82F6; }
+.tg-usage-box[data-st="none"] { --st: #A8B0A0; }
+.tg-usage-box[data-st="seal"] { --st: #475569; }
+.tg-usage-box[data-st="req"]  { --st: var(--aside-accent-strong); }
+.tg-usage-box[data-st="rec"]  { --st: color-mix(in srgb, var(--aside-accent-strong) 45%, transparent); }
+/* 뱃지는 제목에 붙인다 — 스킬 이름 ↔ 추천 레벨 뱃지 간격(이름 줄 gap 6 + 뱃지 margin 8 = 14px)과 같게 */
+.tg-usage-box-title { display: flex; align-items: center; gap: 14px; font-size: .92rem; font-weight: 800; color: var(--text-heading); margin-bottom: 6px; }
+/* 판단 기준 각주 (고학년 운용) — 본문보다 한 단 작고 흐리게 */
+.tg-usage-foot { margin-top: 8px; font-size: .74rem; line-height: 1.5; color: var(--text-muted); }
+
+/* 판단 뱃지 — 고학년(사용·조건부·무관·봉인) / 어사이드(필수·권장·무관 — 덱 편성 A2 뱃지와 같은 문법) */
+.tg-usage-pill { padding: 2px 10px; border-radius: 99px; font-size: .74rem; font-weight: 800; white-space: nowrap; border: 1.5px solid transparent; }
+.tg-usage-pill[data-v="use"]  { background: #CCFBF1; color: #0F766E; }
+.tg-usage-pill[data-v="cond"] { background: #DBEAFE; color: #1D4ED8; }
+.tg-usage-pill[data-v="none"], .tg-usage-pill.none { color: var(--text-muted); border-color: var(--border-soft); }
+.tg-usage-pill[data-v="seal"] { background: #E2E8F0; color: #334155; }
+.tg-usage-pill.req { background: var(--aside-accent-strong); color: #fff; }
+.tg-usage-pill.rec { color: var(--aside-accent-strong); border-color: var(--aside-accent-border); }
+[data-theme="dark"] .tg-usage-pill[data-v="use"]  { background: rgba(45,212,191,.14); color: #5EEAD4; }
+[data-theme="dark"] .tg-usage-pill[data-v="cond"] { background: rgba(96,165,250,.16); color: #93C5FD; }
+[data-theme="dark"] .tg-usage-pill[data-v="seal"] { background: rgba(148,163,184,.18); color: #CBD5E1; }
+[data-theme="dark"] .tg-usage-box[data-st="seal"] { --st: #94A3B8; }
+
+/* 육성 포인트 카드 안 소절 — 흰 카드 안에 카드를 또 파지 않고 구분선으로만 가른다 */
+.tg-usage-extra:empty { display: none; }
+.tg-usage-sub { display: grid; gap: 12px; }
+.tg-usage-sub + .tg-usage-sub, .tg-usage-sub + .tg-usage-extra .tg-usage-sub:first-child,
+.tg-usage-extra .tg-usage-sub + .tg-usage-sub { margin-top: 8px; padding-top: 20px; border-top: 1px solid var(--border-soft); }   /* 구분선 위아래로 숨 — 칩·아티팩트 칸이 선에 붙어 보였다 */
+.tg-usage-head { display: flex; align-items: center; gap: 10px; }
+/* 어사이드 아이콘 틀 — 스킬 카드 아이콘(.tg-skill-card-icon)과 같은 58px · 3px 테두리 · 그 색 12% 바탕. 색만 어사이드 보라.
+   아이콘(48px)은 여백을 잘라 둔 에셋이라 padding 2px 로 틀을 꽉 채운다 */
+.tg-usage-head img { box-sizing: border-box; width: 58px; height: 58px; padding: 2px; border-radius: 13px; object-fit: contain;
+                     border: 3px solid var(--aside-accent); background: color-mix(in srgb, var(--aside-accent) 12%, var(--modal-card-bg)); }
+.tg-usage-head b { font-size: 1.05rem; color: var(--text-heading); }
+.tg-usage-head .tg-usage-pill { margin-left: 4px; }   /* gap 10 + 4 = 14px */
+.tg-usage-title { display: flex; align-items: center; gap: 8px; font-size: .78rem; font-weight: 800; color: var(--text-muted); }
+.tg-usage-title i { font-style: normal; margin-left: auto; font-weight: 600; font-size: .72rem; }
+
+/* 추천 콘텐츠 칩 — 누르면 사도 추천의 그 분류로 */
+.tg-usage-group { display: grid; gap: 6px; }
+.tg-usage-group > small { display: flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 800; color: var(--text-muted); }
+.tg-usage-group > small img { width: 16px; height: 16px; object-fit: contain; }
+.tg-usage-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tg-usage-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 6px; border-radius: 99px; text-decoration: none;
+                 background: var(--modal-card-bg); border: 1px solid var(--border-soft); font-size: .8rem; font-weight: 700; color: var(--text-heading);
+                 box-shadow: 0 1px 3px var(--shadow-soft); transition: transform .15s, border-color .15s; }
+.tg-usage-chip:hover { transform: translateY(-1px); border-color: var(--accent-green-strong); }
+.tg-usage-chip img { width: 22px; height: 22px; object-fit: contain; }
+.tg-usage-chip .star { color: #E0473A; font-size: .9rem; margin-right: -2px; }
+.tg-usage-chip .deck { font-weight: 600; color: var(--text-muted); font-size: .74rem; }
+.tg-usage-chip.is-dim { opacity: .55; filter: grayscale(.7); }
+.tg-usage-chip.is-stale { border-style: dashed; color: var(--text-muted); }
+
+/* 추천 아티팩트 — 3열. 3개 이하면 1줄, 4~6 이면 2줄. 모자란 칸은 점선 빈 상자 */
+.tg-usage-arts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tg-usage-art { display: grid; grid-template-columns: 44px 1fr; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 12px; min-height: 58px;
+                background: var(--stat-box-bg); box-shadow: var(--inset-shadow); border: 1px solid var(--border-soft); }
+.tg-usage-art.is-link { cursor: pointer; }
+.tg-usage-art.is-link:hover, .tg-usage-art.is-link:focus-visible { border-color: var(--accent-green-strong); outline: none; }
+.tg-usage-art.is-empty { background: transparent; box-shadow: none; border: 1.5px dashed var(--border-soft); }
+.tg-usage-slot { width: 44px; height: 44px; position: relative; }
+.tg-usage-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.tg-usage-slot img.ico { inset: 12%; width: 76%; height: 76%; }
+.tg-usage-slot img.base-empty { opacity: .42; }
+.tg-usage-art b { display: block; font-size: .78rem; color: var(--text-heading); line-height: 1.3; word-break: keep-all; }
+.tg-usage-art small { display: block; font-size: .68rem; color: var(--text-muted); }
+
+/* 선택 기준 상자 — `art_note` 의 `{태그}`·`{애착}` 자리표 (ui.js `artTagBox`). 위에서부터 머리(애착) · 아이콘 줄 · 문장 */
+.tg-at-box { display: grid; }
+.tg-at-box > * + * { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-soft); }
+/* 태그 칩 — 아티팩트 페이지 `.ar-tag` 와 같은 색 규칙 (tag_color 바탕 + 흰 글자 800) */
+.tg-at-chip { display: inline-block; vertical-align: 1px; margin: 0 1px; padding: 0 8px; border-radius: 99px;
+              font-size: .74rem; font-weight: 800; line-height: 1.6; color: #fff; background: var(--c); white-space: nowrap; }
+.tg-at-chip.is-bad { background: #DC2626; }
+/* 태그 칸 | 아이콘 칸 — 줄마다 폭이 다르면 아이콘 시작점이 들쭉날쭉해서 **한 격자**로 묶는다 (줄은 `display: contents`).
+   칸 사이 세로 점선은 태그 칸의 오른쪽 테두리 — 줄 간격을 패딩으로 줘야 선이 끊기지 않는다 */
+.tg-at-rows { display: grid; grid-template-columns: max-content minmax(0, 1fr); }
+.tg-at-row { display: contents; }
+.tg-at-label { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 3px;
+               padding: 4px 10px 4px 0; border-right: 1px dashed var(--border-soft); }
+.tg-at-rows > .tg-at-row:first-child > * { padding-top: 0; }
+.tg-at-rows > .tg-at-row:last-child > * { padding-bottom: 0; }
+/* 폰 — 태그 칸이 폭을 먹어 아이콘이 두 개씩 접혔다. 태그를 위에, 아이콘을 아래에 놓고 줄 사이를 점선으로 가른다 */
+@media (max-width: 520px) {
+    .tg-at-rows { grid-template-columns: minmax(0, 1fr); }
+    .tg-at-label { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; align-items: center; border-right: 0; padding: 8px 0 6px; }
+    .tg-at-rows > .tg-at-row + .tg-at-row > .tg-at-label { border-top: 1px dashed var(--border-soft); }
+    .tg-at-icons { padding: 0 0 8px; }
+}
+/* 겹침 줄 — 카드를 겹쳐 쥔 꼴. 뒤 칩이 오른쪽 아래로 **끝만** 물린다 (더 물리면 앞 칩 글자를 가린다).
+   흰 글자 대신 바탕색 테두리로 앞뒤를 가른다. 시안 tools/overall/both-chip-preview.html 의 A */
+.tg-at-both { display: inline-block; white-space: nowrap; padding-bottom: 11px; }
+.tg-at-both .tg-at-chip + .tg-at-chip { position: relative; margin-left: -9px; top: 11px;
+    box-shadow: 0 0 0 2px var(--stat-box-bg), 0 2px 4px rgba(0, 0, 0, .18); }
+/* 태그 칸의 칩은 크게 — 흰 글자 800 이 12px 에서는 획이 붙어 안 읽혔다. 세로 점선으로 칸이 갈려 있어 커도 아이콘과 안 엉킨다.
+   글 속(.tg-at-text) 칩은 문장 줄 높이를 지키려고 작은 그대로 둔다 */
+.tg-at-label .tg-at-chip { font-size: .9rem; padding: 2px 11px; letter-spacing: .03em; line-height: 1.5; }
+@media (max-width: 520px) { .tg-at-label .tg-at-chip { font-size: .84rem; padding: 2px 10px; } }
+.tg-at-icons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 4px 0 4px 10px; }
+.tg-at-ico { flex: 0 0 auto; width: 38px; height: 38px; position: relative; display: block; }
+.tg-at-ico img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.tg-at-ico img.ico { inset: 12%; width: 76%; height: 76%; }
+.tg-at-link { cursor: pointer; }
+.tg-at-icons .tg-at-ico { transition: transform .12s; }
+.tg-at-icons .tg-at-ico:hover, .tg-at-icons .tg-at-ico:focus-visible { transform: translateY(-2px); outline: none; }
+.tg-at-more { font: inherit; font-size: .74rem; font-weight: 800; color: var(--text-muted); padding: 3px 9px; border-radius: 99px;
+               border: 1px solid var(--border-soft); background: transparent; cursor: pointer; }
+.tg-at-more:hover, .tg-at-more:focus-visible { color: var(--text-heading); border-color: var(--text-muted); outline: none; }
+.tg-at-icons:not(.is-open) > .is-extra { display: none; }
+.tg-at-own { display: flex; align-items: center; gap: 10px; }
+.tg-at-own .tg-at-ico { width: 46px; height: 46px; }
+.tg-at-own b { display: block; font-size: .84rem; color: var(--text-heading); line-height: 1.3; word-break: keep-all; }
+.tg-at-own small { display: block; font-size: .7rem; color: var(--text-muted); line-height: 1.3; }
+.tg-at-own em { margin-left: auto; font-style: normal; font-size: .72rem; font-weight: 800; padding: 2px 10px; border-radius: 99px;
+                background: #F5C542; color: #5B4300; white-space: nowrap; }
+[data-theme="dark"] .tg-at-own em { background: rgba(245,197,66,.18); color: #F5C542; }
+.tg-at-own:hover b { color: var(--accent-green-strong); }
+.tg-at-text { word-break: keep-all; }
+@media (max-width: 520px) { .tg-usage-arts { grid-template-columns: repeat(2, 1fr); } }
+/* 육성 포인트 카드는 추천 콘텐츠·아티팩트를 **나중에** 채운다(fillGrowthExtras). 어사이드도 없는 사도는
+   채워지기 전까지 제목뿐인 빈 카드가 떴다가 사라졌다 — 소절이 하나도 없으면 숨긴다 */
+#usage-growth:not(:has(.tg-usage-sub)) { display: none; }

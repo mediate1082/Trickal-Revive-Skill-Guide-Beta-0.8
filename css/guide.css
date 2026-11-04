@@ -1,0 +1,220 @@
+/* ═══════════════════════════════════════════
+   guide.css — 스킬 가이드(index.html) 전용
+   도움말 모달 · 빈 상태 · 표시 필터 모달
+   ⚠ modal.css **뒤에** 싣는다 — 표시 필터가 필터 모달(.filter-label 등) 위에 덧칠한다
+═══════════════════════════════════════════ */
+
+/* ── 도움말 모달 (#modal-info) ──────────────────────────
+   범례 + 주의 + 기능 안내. 등급 샘플은 main.js 가 makeSkillGauge() 로 채운다. */
+.tg-help-sec { margin-bottom: 26px; }
+.tg-help-sec:last-child { margin-bottom: 4px; }
+
+/* 위계 — 섹션 1.0rem / 항목 0.82rem / 본문 0.84rem.
+   크기를 한 단계 안에 몰아넣으면 굵기만으로는 층이 안 보인다.
+   섹션 헤더에는 밑줄을 둬서 시작점을 확실히 한다. */
+.tg-help-h {
+    display: flex; align-items: center; gap: 6px;
+    margin: 0 0 12px; padding-bottom: 7px;
+    font-size: 1.12rem; font-weight: 800; line-height: 1.3;
+    color: var(--text-dark); letter-spacing: 0.01em;
+    border-bottom: 1px solid var(--border-soft);
+}
+.tg-help-sec p {
+    margin: 0 0 8px; font-size: 0.94rem; line-height: 1.72;
+    color: var(--text-muted);
+}
+.tg-help-sec p:last-child { margin-bottom: 0; }
+.tg-help-sec b { color: var(--text-dark); font-weight: 800; }
+.tg-help-sec code {
+    font-family: inherit; font-weight: 800; font-size: 0.95em;
+    padding: 1px 5px; border-radius: 5px;
+    background: var(--grid-bg); color: var(--text-dark);
+}
+
+/* 도움말 안 외부 링크 (호출벨) — 밑줄이 왼쪽에서 자라 들어온다.
+   background-size 전환이라 레이아웃을 건드리지 않는다 (text-decoration 은 전환이 안 먹는다). */
+.tg-help-link {
+    display: inline-flex; align-items: center; gap: 3px;
+    color: var(--accent-green-strong); font-weight: 800;
+    text-decoration: none;
+    background-image: linear-gradient(var(--accent-green-strong), var(--accent-green-strong));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1.5px;
+    transition: background-size 0.22s cubic-bezier(.4,0,.2,1), color 0.15s ease;
+}
+.tg-help-link:hover,
+.tg-help-link:focus-visible { background-size: 100% 1.5px; }
+.tg-help-link:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 3px; border-radius: 3px; }
+.tg-help-link:active { opacity: 0.75; }
+
+/* 새 창으로 열린다는 표시. 평소엔 살짝 물러나 있다가 호버에서 함께 뜬다 */
+.tg-help-link-ic {
+    flex-shrink: 0; opacity: 0.55;
+    transform: translate(0, 0);
+    transition: opacity 0.18s ease, transform 0.18s cubic-bezier(.4,0,.2,1);
+}
+.tg-help-link:hover .tg-help-link-ic,
+.tg-help-link:focus-visible .tg-help-link-ic { opacity: 1; transform: translate(1px, -1px); }
+
+@media (prefers-reduced-motion: reduce) {
+    .tg-help-link, .tg-help-link-ic { transition: none; }
+}
+
+/* 주의 섹션 — 오해를 바로잡는 내용이라 왼쪽 띠로 무게를 준다 */
+.tg-help-caution {
+    padding: 12px 14px; border-radius: 12px;
+    background: var(--grid-bg);
+    border-left: 3px solid var(--grade-7m);
+}
+.tg-help-caution .tg-help-h {
+    color: var(--grade-7m-text);
+    border-bottom: none; padding-bottom: 0; margin-bottom: 9px;
+    font-size: 1.02rem;   /* 박스 안이라 한 단계 낮춘다 */
+}
+
+/* 등급 샘플 — 게이지 폭을 고정해 세 줄의 설명 시작점을 맞춘다 */
+.tg-help-grades { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.tg-help-grades li { display: flex; align-items: center; gap: 12px; }
+.tg-help-gauge { flex: 0 0 96px; display: flex; align-items: center; }
+.tg-help-gauge-text { font-size: 0.94rem; line-height: 1.6; color: var(--text-muted); }
+
+/* 기능 안내 — 용어와 설명을 두 열로 */
+.tg-help-tips { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; align-items: baseline; }
+.tg-help-tips dt {
+    font-size: 0.9rem; font-weight: 800; color: var(--text-dark);
+    white-space: nowrap;
+}
+.tg-help-tips dd { margin: 0; font-size: 0.92rem; line-height: 1.62; color: var(--text-muted); }
+
+@media (max-width: 480px) {
+    /* 좁은 화면에서는 용어를 위에, 설명을 아래로. 글자도 한 단계 낮춘다 */
+    .tg-help-tips { grid-template-columns: 1fr; gap: 2px; }
+    .tg-help-tips dd { margin-bottom: 9px; font-size: 0.87rem; }
+    .tg-help-tips dt { font-size: 0.85rem; }
+    .tg-help-gauge { flex-basis: 84px; }
+    .tg-help-h { font-size: 1.02rem; }
+    .tg-help-caution .tg-help-h { font-size: 0.95rem; }
+    .tg-help-sec p, .tg-help-gauge-text { font-size: 0.88rem; }
+}
+
+/* ── 빈 상태 (검색·필터 결과 0건) ───────────────────────
+   .tg-grid 의 자식이므로 grid-column 으로 전 열을 차지해야 한다.
+   그렇지 않으면 첫 칸(170px)에 끼어 찌그러진다. */
+.tg-no-results {
+    grid-column: 1 / -1;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: 56px 20px 64px;
+    animation: tg-no-results-in 0.24s cubic-bezier(.4, 0, .2, 1);
+}
+.tg-no-results-icon {
+    width: 88px; height: auto; margin-bottom: 18px;
+    opacity: 0.9;
+    /* 원본이 밝은 로즈라 어두운 배경에서 떠 보인다. 다크에서만 살짝 눌러준다. */
+}
+[data-theme="dark"] .tg-no-results-icon { opacity: 0.75; }
+
+.tg-no-results-title {
+    margin: 0; font-size: 1.05rem; font-weight: 800; line-height: 1.55;
+    color: var(--text-dark);
+    max-width: 26em; text-wrap: balance;
+}
+.tg-no-results-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+.tg-no-results-btn {
+    padding: 8px 16px; border-radius: 999px; cursor: pointer;
+    font-size: 0.82rem; font-weight: 700; font-family: inherit;
+    color: var(--text-dark);
+    background: var(--nav-bg);
+    border: 1.5px solid var(--border-soft);
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+.tg-no-results-btn:hover { background: var(--grid-bg); border-color: var(--text-muted); }
+.tg-no-results-btn:active { transform: translateY(1px); }
+.tg-no-results-btn:focus-visible { outline: 2px solid var(--grade-10); outline-offset: 2px; }
+
+@keyframes tg-no-results-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tg-no-results { animation: none; }
+}
+
+
+/* ── 표시 필터 (티어/성격/역할/배치/성급) ── */
+.tg-attr-hint {
+    margin: 0 0 2px; font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;
+}
+.tg-attr-cat + .tg-attr-cat { margin-top: 14px; }
+.tg-attr-cat .tg-section-head { margin-bottom: 6px; }
+.tg-attr-cnt {
+    font-style: normal; margin-left: 4px;
+    color: var(--accent-green-strong); font-variant-numeric: tabular-nums;
+}
+.tg-attr-grid { min-height: 0; grid-template-columns: repeat(3, 1fr); }
+.tg-attr-grid .filter-label { font-size: 0.8rem; gap: 7px; }
+
+/* 분류 색은 왼쪽 세로 바에만 (--cat 은 JS 가 값별로 주입).
+   :has(input:checked)::before 쪽 명시도가 더 높아 선택자를 나란히 맞춰 둔다 */
+.tg-attr-grid .filter-label::before,
+.tg-attr-grid .filter-label:has(input:checked)::before { background: var(--cat, var(--border-soft)); width: 4px; }
+.tg-attr-grid .filter-label[data-rainbow]::before,
+.tg-attr-grid .filter-label[data-rainbow]:has(input:checked)::before {
+    background: linear-gradient(180deg, #ff8fb1 0%, #ffd48f 25%, #b9f08f 50%, #8fd0ff 75%, #d08fff 100%);
+}
+.tg-attr-ic { width: 19px; height: 19px; object-fit: contain; flex-shrink: 0; }
+.tg-attr-stars { display: inline-flex; align-items: center; }
+.tg-attr-stars img {
+    width: 17px; height: 17px; margin: 0 -2px;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+}
+
+/* 선택 상태는 체크 아이콘으로만 표현 — 연두 하이라이트는 호버 전용 */
+.tg-attr-grid .filter-label:has(input:checked) {
+    background: var(--modal-card-bg); border-color: var(--border-soft);
+    color: var(--text-dark); box-shadow: none;
+}
+/* 호버 — 연두 대신 그 항목의 분류색으로 물들인다.
+   --hov 는 틴트용. 무지개(공명)처럼 그대로 쓸 수 없는 값만 따로 지정 */
+.tg-attr-grid .filter-label {
+    --hov: var(--cat, var(--accent-green-strong));
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s,
+                transform 0.12s ease, opacity 0.15s;
+}
+.tg-attr-grid .filter-label[data-rainbow] { --hov: #D08FFF; }
+.tg-attr-grid .filter-label:hover {
+    background: color-mix(in srgb, var(--hov) 13%, var(--modal-card-bg));
+    border-color: color-mix(in srgb, var(--hov) 55%, var(--border-soft));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hov) 22%, transparent);
+    transform: translateY(-1px);
+}
+.tg-attr-grid .filter-label:active { transform: translateY(0) scale(0.985); }
+/* 세로 바가 살짝 두꺼워지며 반응 (:has 쪽 명시도가 높아 선택자를 함께 적어 준다) */
+.tg-attr-grid .filter-label:hover::before,
+.tg-attr-grid .filter-label:has(input:checked):hover::before { width: 7px; }
+.tg-attr-ic, .tg-attr-stars { transition: transform 0.12s ease, filter 0.15s; }
+.tg-attr-grid .filter-label:hover .tg-attr-ic { transform: scale(1.14); }
+.tg-attr-grid .filter-label:hover .tg-attr-stars { transform: scale(1.08); }
+/* 꺼진 항목은 호버하면 되살아나 다시 켤 수 있다는 걸 보여준다 */
+.tg-attr-grid .filter-label:not(:has(input:checked)):hover { opacity: 0.85; }
+.tg-attr-grid .filter-label:not(:has(input:checked)):hover .tg-attr-ic,
+.tg-attr-grid .filter-label:not(:has(input:checked)):hover .tg-attr-stars { filter: grayscale(0.3); }
+.tg-attr-grid .filter-label input[type="checkbox"] { width: 18px; height: 18px; border-radius: 5px; }
+.tg-attr-grid .filter-label input[type="checkbox"]:checked {
+    background: transparent; border-color: transparent;
+}
+/* 인게임 체크 아이콘 (외곽선·그림자가 구워져 있어 원본 색 그대로 사용) */
+.tg-attr-grid .filter-label input[type="checkbox"]:checked::after {
+    content: ''; width: 21px; height: 21px; border: 0; transform: none;
+    background: url('../assets/icons/common_icons/Check2.webp') center/contain no-repeat;
+}
+/* 꺼진 항목은 눌러서 다시 켠다는 게 보이도록 흐리게만 */
+.tg-attr-grid .filter-label:not(:has(input:checked)) { opacity: 0.45; }
+.tg-attr-grid .filter-label:not(:has(input:checked)) .tg-attr-ic,
+.tg-attr-grid .filter-label:not(:has(input:checked)) .tg-attr-stars { filter: grayscale(1); }
+.tg-chip-attr { background: #FFEDD5; color: #9A3412; border-color: #FDBA74; }
+[data-theme="dark"] .tg-chip-attr { background: #45280F; color: #FDBA74; border-color: #7C3A12; }
+@media (max-width: 600px) {
+    .tg-attr-grid { grid-template-columns: repeat(2, 1fr); }
+}
+

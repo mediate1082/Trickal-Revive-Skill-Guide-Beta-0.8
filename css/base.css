@@ -1,0 +1,814 @@
+/* ═══════════════════════════════════════════
+   base.css — 네 페이지 공용 (index · recommend · artifact · tiermaker)
+   글꼴 · 토큰(밝은/다크) · 헤더 · 필터 바 · 버튼 · 드롭다운 · 검색 · 푸터 ·
+   용어 말풍선 · 떠 있는 툴팁 · 테마 토글 · 공용 탭 줄 · 페이지 전환
+   ⚠ 늘 맨 먼저 싣는다. 페이지별 싣는 순서는 CLAUDE.md 「CSS 파일」 표
+   ⚠ 필터 바·드롭다운·검색(.tg-nav·.tg-dropdown·.tg-search)은 스킬 가이드·아티팩트 둘이 쓴다.
+     파일을 하나 더 두기엔 작아(약 6KB) 여기 뒀다
+═══════════════════════════════════════════ */
+
+@font-face {
+    font-family: 'OneMobilePop';
+    /* ⚠ **TTF 를 되돌리지 말 것.** 원본이 3.9MB 라 방문자가 매번 그걸 받았다.
+         woff2 는 글리프 12,257자를 그대로 담은 채 371KB 다 (압축만 한 것, 손실 없음).
+       ⚠ 서브셋(쓰는 글자만 남기기)으로 더 줄이지 말 것 — 사도 이름·공략 글이 CSV 라
+         나중에 추가한 글자가 통째로 깨진다. */
+    src: url('../assets/fonts/ONEMobilePOP.woff2') format('woff2');
+    font-weight: normal; font-style: normal; font-display: swap;
+}
+
+/* ── Design Tokens ─────────────────────── */
+:root {
+    --bg-main: #F7FBEF;
+    --header-bg: #FFFFFF;
+    --nav-bg: #FFFDF6;
+    --grid-bg: #F2F8E6;
+    --text-dark: #3F4F1F;
+    --text-muted: #7A806D;
+    --accent-green: #B9DD63;
+    --accent-green-strong: #8FB93E;
+    --term-accent: #DE3503;      /* 용어 하이라이트 (라이트) — 대비 4.55:1 on #fff */
+    --accent-soft: #EAF6C8;
+    --border-soft: #E3E8D5;
+    --shadow-soft: rgba(63, 79, 31, 0.08);
+    /* Legacy */
+    --card-bg: #ECF7CD;
+    --color-O: #27ae60; --color-delta: #d35400; --color-X: #c0392b;
+    /* 의미 컬러 (필터 모달) */
+    --buff:        #348AF1;
+    --buff-pale:   #DCEBFD;
+    --buff-soft:   #C2DBF9;
+    --buff-text:   #1E66C4;
+    --debuff:      #FC6881;
+    --debuff-pale: #FFE3E8;
+    --debuff-soft: #FCB7C2;
+    --debuff-text: #D63A57;
+    --neutral:      #A361FF;
+    --neutral-pale: #EFE3FF;
+    --neutral-soft: #D4B6FB;
+    --neutral-text: #7C3DD6;
+    /* 어사이드 모달 정체성 컬러 */
+    --aside-accent:        #A361FF;
+    --aside-accent-strong: #7C3DD6;
+    --aside-accent-soft:   #F3E8FF;
+    --aside-accent-border: #D4B6FB;
+    /* 디테일 모달 v1 토큰 */
+    --skill-low:     #22C55E;
+    --skill-high:    #16A34A;
+    --skill-pvp:     #A361FF;
+    --skill-normal:  #84CC16;
+    --skill-aside:   #A855F7;
+    --skill-overall: #e67e22;
+    --grade-10:  #22C55E;
+    --grade-7p:  #F59E0B;
+    --grade-7m:  #EF4444;
+    --grade-x:   #94a3b8;
+    /* 게이지 라벨 전용 — 막대는 --grade-*, 글자는 아래 값.
+       라이트는 흰 카드 위 4.5:1 이상을 맞추려고 더 진하다. */
+    --grade-10-text: #15803D;
+    --grade-7p-text: #B45309;
+    --grade-7m-text: #B91C1C;
+    --grade-x-text:  #64748B;
+    --tier-meta:    #E91E63;
+    --tier-pers:    #2980B9;
+    --tier-unfit:   #7F8C8D;
+    --tier-1star:   #BCD3C7;
+    --tier-default: #e67e22;
+    --inset-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08);
+    /* 본문 최대 폭 — 헤더·네비·칩·카드 그리드·추천 페이지가 모두 이 값을 쓴다.
+       카드 6칸을 유지하려면 1160px 이상이어야 한다. */
+    --page-width: 1160px;
+
+    /* 신규 토큰 — 다크 모드 대응 */
+    --modal-card-bg:            #FFFFFF;
+    --modal-body-bg:            #FBFCF6;
+    --stat-box-bg:              #F8F9FA;
+    --search-input-bg:          #FAFBF3;
+    --segmented-bg:             #F4F8E6;
+    --segmented-indicator:      #FFFFFF;
+    --switch-off-bg:            #d6dec0;
+    --attr-pill-bg:             #F4F8E6;
+    --footer-bg:                #FFFFFF;
+    --overlay-bg:               rgba(0,0,0,0.8);
+    --recommend-summary-bg:     #FFF7ED;
+    --recommend-summary-border: #fed7aa;
+    --recommend-note-bg:        #FFFBEB;
+    --recommend-note-border:    #fde68a;
+    --recommend-note-text:      #78350F;
+    --text-heading:             #333333;
+    --text-body:                #555555;
+}
+
+/* ════════════════════════════════════════
+   다크 모드 — zinc 뉴트럴 그레이
+   배경·표면은 무채, 액센트(그린)만 아이덴티티로 유지
+════════════════════════════════════════ */
+[data-theme="dark"] {
+    --term-accent: #FC5220;      /* 다크에서는 같은 색상·채도로 명도만 올린다 — 4.52:1 */
+    /* ── 배경 계층 ── */
+    --bg-main:        #18181B;
+    --grid-bg:        #131316;
+    --header-bg:      #232327;
+    --nav-bg:         #1D1D20;
+    --card-bg:        #27272A;
+
+    /* ── 텍스트 ── */
+    --text-dark:      #E4E4E7;
+    --text-muted:     #8B8B92;
+
+    /* ── 경계선/그림자 ── */
+    --border-soft:    #313135;
+    --shadow-soft:    rgba(0,0,0,0.45);
+    --inset-shadow:   inset 0 2px 5px rgba(0, 0, 0, 0.4);
+
+    /* ── 액센트 ── */
+    --accent-green:        #6DA63A;
+    --accent-green-strong: #84C046;
+    --accent-soft:         #2A331C;
+
+    /* ── 의미 컬러 ── */
+    --buff-pale:   #16243A;
+    --buff-soft:   #243752;
+    --buff-text:   #7BB4F4;
+
+    --debuff-pale: #3A1820;
+    --debuff-soft: #5A2838;
+    --debuff-text: #FA8FA3;
+
+    --neutral-pale: #2A1A3F;
+    --neutral-soft: #3F2A55;
+    --neutral-text: #C49EFF;
+
+    /* ── 어사이드 모달 ── */
+    --aside-accent-soft:   #2A1A3F;
+    --aside-accent-border: #3F2A55;
+
+    /* ── 스킬/등급 보정 ── */
+    --skill-low:     #4ADE80;
+    --skill-high:    #34D060;
+    --skill-normal:  #A6E435;
+    --grade-10:      #4ADE80;
+    --grade-7p:      #FBBF24;
+    --grade-7m:      #F87171;
+    /* 다크 카드(--modal-card-bg) 위에서는 밝은 쪽이 읽힌다 */
+    --grade-10-text: #4ADE80;
+    --grade-7p-text: #FBBF24;
+    --grade-7m-text: #F87171;
+    --grade-x-text:  #A1A1AA;
+
+    /* ── 신규 토큰 다크 값 ── */
+    --modal-card-bg:            #27272A;
+    --modal-body-bg:            #1E1E21;
+    --stat-box-bg:              #1A1A1D;
+    --search-input-bg:          #1A1A1D;
+    --segmented-bg:             #1A1A1D;
+    --segmented-indicator:      #353539;
+    --switch-off-bg:            #3F3F45;
+    --attr-pill-bg:             #2D2D31;
+    --footer-bg:                #232327;
+    --overlay-bg:               rgba(0,0,0,0.8);
+    --recommend-summary-bg:     #2A1F10;
+    --recommend-summary-border: #4A3818;
+    --recommend-note-bg:        #2A2410;
+    --recommend-note-border:    #4A4018;
+    --recommend-note-text:      #F5D88A;
+    --text-heading:             #FAFAFA;
+    --text-body:                #A1A1AA;
+}
+
+/* 글 속 바깥 링크 색 (사도 추천 `linkify` · 아티팩트 모달 `.ar-decks a`).
+   근거(대비 4.5:1 · 다크의 형광끼)는 recommend.css 의 「글 속 바깥 링크」 절 주석에 있다 */
+:root        { --rc-link: #0078BE; --rc-link-hot: #005C92; }
+[data-theme="dark"] { --rc-link: #6FD2FF; --rc-link-hot: #A5E4FF; }
+
+/* ── Global ────────────────────────────── */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { overflow-x: clip; scrollbar-gutter: stable; }
+body {
+    font-family: 'OneMobilePop', 'Pretendard', sans-serif;
+    background: var(--bg-main);
+    color: var(--text-dark);
+    margin: 0; padding: 0; width: 100%;
+    overflow-x: clip; font-size: 18px; line-height: 1.5;
+}
+.hidden { display: none !important; }
+
+/* 모달이 열려 있는 동안 html 스크롤 잠금 */
+html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow: hidden; }
+
+/* ── Header ───────────────────────────── */
+.tg-header {
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border-soft);
+    box-shadow: 0 1px 0 var(--shadow-soft);
+    padding: 0;
+}
+.tg-header-inner {
+    max-width: var(--page-width); margin: 0 auto; padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.tg-accent-strip { height: 3px; background: var(--accent-green); }
+.tg-header-logo { display: flex; align-items: center; gap: 12px; }
+.tg-logo-img { width: 60px; height: 60px; object-fit: contain; flex-shrink: 0; }
+.tg-title-wrap { text-align: left; }
+.tg-eyebrow {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em;
+    color: var(--text-muted); text-transform: uppercase; margin-bottom: 1px;
+}
+.tg-title {
+    font-family: 'OneMobilePop', sans-serif;
+    font-size: 1.6rem; font-weight: 800;
+    color: var(--text-dark); line-height: 1.1; margin: 0;
+}
+.tg-title em { font-style: normal; color: var(--accent-green-strong); }
+.tg-help-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--modal-card-bg); border: 1px solid var(--border-soft);
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-muted); transition: all 0.15s ease;
+}
+.tg-help-btn svg { width: 18px; height: 18px; display: block; }
+.tg-help-btn:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
+
+/* ── Nav / Filter Bar ───────────────────── */
+/* 좌우 8px 은 의도적으로 그리드보다 넓다. 떠 있는 층이라는 신호. */
+.tg-nav-wrap { max-width: var(--page-width); margin: 0 auto; padding: 14px 8px 20px; }
+.tg-nav {
+    background: var(--nav-bg); border: 1px solid var(--border-soft);
+    border-radius: 18px; padding: 14px 14px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    /* 카드 위에 떠 있는 상태이므로 그림자를 조금 더 준다 */
+    box-shadow: 0 4px 14px rgba(63, 79, 31, 0.13);
+}
+[data-theme="dark"] .tg-nav { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45); }
+.tg-nav-left { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 1 1 auto; }
+.tg-nav-search { flex: 0 0 auto; min-width: 220px; width: 300px; max-width: 100%; }
+
+/* ── Buttons ─────────────────────────── */
+.tg-btn {
+    appearance: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--modal-card-bg); border: 1px solid var(--border-soft); border-radius: 12px;
+    padding: 8px 14px;
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.82rem; font-weight: 800;
+    color: var(--text-dark); cursor: pointer;
+    transition: background 0.15s, border-color 0.15s; white-space: nowrap;
+}
+.tg-btn:hover { background: var(--accent-soft); border-color: var(--accent-green); }
+.tg-btn:focus-visible { outline: none; border-color: var(--accent-green); box-shadow: 0 0 0 3px rgba(185,221,99,0.35); }
+.tg-btn .tg-btn-icon { display: inline-flex; color: var(--text-muted); }
+.tg-btn:hover .tg-btn-icon { color: var(--accent-green-strong); }
+.tg-btn-circle { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 50%; font-size: 0.85rem; }
+/* 아이콘만 있는 버튼 (라벨은 title/aria-label 로).
+   배지가 붙고 빠져도 높이가 흔들리지 않게 고정 */
+.tg-btn-iconly { height: 32px; padding: 0 11px; justify-content: center; }
+.tg-btn-muted { color: var(--text-muted); }
+.tg-btn-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent-green); color: #2D3812;
+    border-radius: 999px; height: 18px; min-width: 18px; padding: 0 5px;
+    font-size: 0.65rem; font-weight: 800; margin-left: 2px;
+}
+.tg-btn-badge:empty { display: none; }
+
+/* 모달 내부 버튼 (기존 .btn 클래스 — modal HTML에서 계속 사용) */
+.btn {
+    padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd;
+    background: var(--modal-card-bg); cursor: pointer; font-size: 0.9rem;
+    font-family: inherit; transition: all 0.2s ease-out; white-space: nowrap;
+}
+.btn:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--accent-green); background-color: #f9fdf0; }
+
+/* ── Custom Dropdown ─────────────────── */
+.tg-dropdown { position: relative; display: inline-block; }
+.tg-dropdown-btn {
+    appearance: none; display: inline-flex; align-items: center; gap: 8px;
+    background: var(--modal-card-bg); border: 1px solid var(--border-soft); border-radius: 12px;
+    padding: 8px 12px 8px 14px;
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.82rem; font-weight: 800;
+    color: var(--text-dark); cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    min-width: 96px; justify-content: space-between;
+}
+.tg-dropdown-btn:hover { background: var(--accent-soft); border-color: var(--accent-green); }
+.tg-dropdown-btn[aria-expanded="true"] {
+    border-color: var(--accent-green); background: var(--accent-soft);
+    box-shadow: 0 0 0 3px rgba(185,221,99,0.35);
+}
+.tg-dropdown-caret { font-size: 0.6rem; color: var(--text-muted); transition: transform 0.15s; }
+.tg-dropdown-btn[aria-expanded="true"] .tg-dropdown-caret { transform: rotate(180deg); }
+
+.tg-dropdown-menu {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 200;
+    min-width: 100%; background: var(--modal-card-bg);
+    border: 1px solid var(--border-soft); border-radius: 12px; padding: 6px;
+    box-shadow: 0 8px 24px rgba(63,79,31,0.12), 0 2px 6px rgba(63,79,31,0.06);
+    display: flex; flex-direction: column; gap: 2px;
+    animation: tg-dd-in 0.12s ease-out;
+}
+@keyframes tg-dd-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.tg-dropdown-item {
+    appearance: none; background: transparent; border: none; text-align: left;
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.82rem; font-weight: 800;
+    color: var(--text-dark); padding: 7px 12px; border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    white-space: nowrap; transition: background 0.1s;
+}
+.tg-dropdown-item:hover { background: var(--accent-soft); }
+.tg-dropdown-item[aria-selected="true"] { background: var(--accent-soft); color: var(--accent-green-strong); }
+.tg-dropdown-item-check { color: var(--accent-green-strong); font-size: 0.78rem; }
+
+/* ── Search ──────────────────────────── */
+.tg-search { position: relative; width: 100%; }
+.tg-search-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); display: inline-flex; pointer-events: none;
+}
+.tg-search input {
+    width: 100%; padding: 9px 38px 9px 38px;
+    border-radius: 999px; border: 1.5px solid var(--border-soft);
+    background: var(--modal-card-bg); font-family: 'OneMobilePop', sans-serif;
+    font-size: 0.85rem; font-weight: 700; color: var(--text-dark);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tg-search input::placeholder { color: var(--text-muted); font-weight: 500; }
+.tg-search input:focus { outline: none; border-color: var(--accent-green); box-shadow: 0 0 0 3px rgba(185,221,99,0.35); }
+
+#search-clear-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    width: 20px; height: 20px; background: #e5e7eb; color: #6b7280;
+    border: none; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; padding: 0; z-index: 10;
+}
+#search-clear-btn:hover { background: #d1d5db; color: #374151; }
+#search-input { padding-right: 35px !important; }
+
+/* ── Sub-header (nav + chips, sticky) ── */
+.tg-subheader {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    /* 배경·테두리를 비워 전체 폭 띠가 따라오지 않게 한다.
+       실제로 떠다니는 것은 안쪽 .tg-nav 박스뿐. */
+    background: transparent;
+    border-bottom: none;
+    box-shadow: none;
+    pointer-events: none;                 /* 빈 여백이 아래 카드 클릭을 막지 않도록 */
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+}
+/* 실제 조작 대상만 클릭을 받는다. 래퍼의 여백까지 auto 로 두면
+   그 아래를 지나는 카드가 눌리지 않는다. */
+.tg-subheader .tg-nav { pointer-events: auto; }
+
+/* 정지 상태에서는 아래 그리드와 같은 색으로 칠해 경계를 없앤다.
+   (--bg-main #F7FBEF 과 --grid-bg #F2F8E6 이 맞닿으면 근거 없는 선이 보인다)
+   고정되면 투명으로 돌아가 전체 폭 띠가 생기지 않는다. */
+.tg-subheader:not(.is-stuck) { background: var(--grid-bg); }
+
+/* 상단에 고정된 동안에만 박스에 배경을 준다.
+   정지 상태에서는 배경이 없어 그리드와 경계가 생기지 않는다.
+   전체 폭 띠를 쓰지 않으므로 카드가 화면을 가로지르는 선에 잘리지 않는다. */
+.tg-subheader.is-stuck .tg-nav {
+    background: color-mix(in srgb, var(--nav-bg) 78%, transparent);
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    box-shadow: 0 6px 20px rgba(63, 79, 31, 0.16);
+}
+[data-theme="dark"] .tg-subheader.is-stuck .tg-nav {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+/* backdrop-filter 미지원 브라우저는 불투명 배경으로 떨어진다 */
+@supports not (backdrop-filter: blur(1px)) {
+    .tg-subheader.is-stuck .tg-nav { background: var(--nav-bg); }
+}
+/* ⚠ 터치 기기 — 아이폰 SE(크롬=WebKit)에서 그리드를 내리다 페이지가 통째로 죽는 제보 (2026-11-03).
+   메모리가 작은 기기에서 **그리드 위로 흐림 유리가 붙는 순간**(is-stuck)과 카드마다 걸린 drop-shadow
+   필터 수백 개가 합성 레이어를 크게 늘린다. 폰에서는 둘 다 끈다 — 생김새 차이는 거의 없다 */
+@media (hover: none) and (pointer: coarse) {
+    .tg-subheader.is-stuck .tg-nav { background: var(--nav-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
+    .char-card .icon, .eldyne-corner-icon { filter: none; }
+}
+/* 모달이 열렸을 때 내비바를 위로 치우던 규칙은 제거했다 (v1.4.14).
+   · 모달 오버레이가 z-index 2000, 내비바가 50 이라 어차피 완전히 덮인다
+   · v1.4.4 에서 .tg-subheader 에 transform 전환을 넣은 뒤로는 그 이동이 눈에 보여,
+     모달을 열 때마다 내비바가 슬쩍 올라갔다 내려오는 것처럼 보였다
+   되살릴 일이 있다면 transition 을 함께 끊을 것. */
+
+/* ── Active Filter Chips ─────────────────── */
+/* 칩 영역 — 배경을 그리드와 같은 색으로 전체 폭에 깔아 경계가 생기지 않게 한다.
+   가운데 정렬은 안쪽 .tg-chips 가 맡는다. */
+.tg-chips-wrap {
+    background: var(--grid-bg);
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.24s cubic-bezier(.4,0,.2,1);
+}
+.tg-chips-wrap.is-open { max-height: 140px; }
+/* ⚠ 배경을 가진 이 래퍼에는 opacity 전환을 걸지 말 것.
+   반투명해지는 순간 뒤의 --bg-main 이 비쳐 더 밝은 띠가 생긴다.
+   페이드가 필요하면 배경이 없는 안쪽 .tg-chips 에 건다. */
+.tg-chips { opacity: 0; transition: opacity 0.16s ease; }
+.tg-chips-wrap.is-open .tg-chips { opacity: 1; }
+.tg-chips { max-width: var(--page-width); margin: 0 auto; padding: 0 16px 10px;
+            display: flex; flex-wrap: wrap; gap: 6px; }
+.tg-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px;
+    font-family: 'OneMobilePop', sans-serif; font-size: 0.74rem; font-weight: 800;
+    cursor: default; background: var(--accent-soft);
+    border: 1px solid var(--accent-green); color: var(--text-dark);
+}
+.tg-chip .tg-x { opacity: 0.45; cursor: pointer; font-size: 0.7rem; transition: opacity 0.1s, color 0.1s; }
+.tg-chip .tg-x:hover { opacity: 1; color: #DC2626; }
+.tg-chip-buff    { background: var(--buff-pale); border-color: var(--buff-soft); color: var(--buff-text); }
+.tg-chip-debuff  { background: var(--debuff-pale); border-color: var(--debuff-soft); color: var(--debuff-text); }
+.tg-chip-neutral { background: var(--neutral-pale); border-color: var(--neutral-soft); color: var(--neutral-text); }
+.tg-chip-aside  { background: var(--aside-accent-soft); border-color: var(--aside-accent-border); color: var(--aside-accent-strong); }
+.tg-chip-clear  { background: var(--modal-card-bg); border-color: var(--border-soft); color: var(--text-muted); cursor: pointer; }
+.tg-chip-clear:hover { background: #FEF2F2; border-color: #FCA5A5; color: #DC2626; }
+
+/* ── Grid ────────────────────────────── */
+.tg-grid-wrap {
+    background: var(--grid-bg);
+    padding: 20px 0 40px;
+}
+
+/* ── Footer ─────────────────────────────── */
+.tg-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 14px 20px;
+    background: var(--footer-bg);
+    border-top: 1px solid var(--border-soft);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+    word-break: keep-all;
+}
+
+/* span 사이 CSS 구분선 */
+.tg-footer span + span::before {
+    content: '';
+    display: inline-block;
+    width: 1px;
+    height: 0.75em;
+    background: var(--border-soft);
+    margin: 0 12px;
+    vertical-align: middle;
+    opacity: 0.8;
+}
+
+@media (max-width: 600px) {
+    .tg-footer {
+        flex-direction: column;
+        gap: 6px;
+        text-align: center;
+    }
+    .tg-footer span + span::before {
+        display: none;
+    }
+}
+.tg-grid {
+    max-width: var(--page-width); margin: 0 auto; padding: 0 16px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px;
+}
+
+/* ── 용어 하이라이트 + 툴팁 ─────────────────────────────
+   인게임 설명문 꼬리의 "용어 : 설명" 블록을 걷어내고(ui.js: splitGlossary),
+   본문의 그 용어를 버튼으로 감싼다. button 이라 키보드 포커스·Enter 가 공짜다. */
+.tg-term {
+    font: inherit; color: var(--term-accent);
+    font-weight: 800;
+    background: none; border: 0; padding: 0; margin: 0;
+    cursor: help;
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 2px;
+    text-decoration-color: color-mix(in srgb, var(--term-accent) 45%, transparent);
+    transition: text-decoration-color 0.15s ease, background-color 0.15s ease;
+    border-radius: 3px;
+}
+.tg-term:hover,
+.tg-term[aria-expanded="true"] {
+    text-decoration-color: var(--term-accent);
+    background: color-mix(in srgb, var(--term-accent) 12%, transparent);
+}
+.tg-term:focus-visible { outline: 2px solid var(--term-accent); outline-offset: 2px; }
+
+/* 툴팁은 body 밑 노드 하나를 재사용한다.
+   모달 본문이 overflow 로 잘리므로 용어 옆에 absolute 로 붙이면 잘려나간다.
+   fixed 로 띄우고 좌표는 ui.js 의 _placeTip() 이 매번 계산한다. */
+.tg-term-tip {
+    position: fixed; z-index: 2600;
+    max-width: min(330px, calc(100vw - 32px));
+    padding: 13px 15px; border-radius: 13px;
+    background: var(--modal-card-bg);
+    border: 1.5px solid var(--border-soft);
+    box-shadow: 0 14px 34px rgba(0,0,0,0.22), 0 3px 8px rgba(0,0,0,0.10);
+    pointer-events: none;                 /* 호버 미리보기는 마우스를 통과시킨다 */
+    animation: tg-fade 0.12s ease-out;
+}
+@keyframes tg-fade { from { opacity: 0; } to { opacity: 1; } }
+.tg-term-tip.is-pinned { pointer-events: auto; }   /* 고정 상태에서만 안쪽 선택 가능 */
+
+/* 꼬리 — 어느 용어에서 나온 설명인지 잇는다.
+   --tail-x 는 ui.js 가 용어 중심에 맞춰 넣는다 (툴팁이 화면 가장자리에서
+   좌우로 당겨져도 꼬리는 용어를 계속 가리켜야 한다). */
+.tg-term-tip::after {
+    content: ''; position: absolute;
+    left: var(--tail-x, 50%); margin-left: -7px;
+    width: 13px; height: 13px;
+    background: var(--modal-card-bg);
+    border-left: 1.5px solid var(--border-soft);
+    border-top: 1.5px solid var(--border-soft);
+    transform: rotate(45deg);
+    top: -7.5px;
+}
+.tg-term-tip.is-above::after {           /* 위로 뒤집혔을 때는 꼬리도 아래로 */
+    top: auto; bottom: -7.5px;
+    border-left: 0; border-top: 0;
+    border-right: 1.5px solid var(--border-soft);
+    border-bottom: 1.5px solid var(--border-soft);
+}
+
+.tg-term-tip-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.tg-term-tip-ic { width: 22px; height: 22px; flex-shrink: 0; object-fit: contain; }
+.tg-term-tip-name { font-size: 1.05rem; font-weight: 800; line-height: 1.3; color: var(--text-dark); }
+.tg-term-tip-desc { margin: 0; font-size: 0.94rem; line-height: 1.65; color: var(--text-muted); }
+
+/* 버프/디버프/혼합 — 왼쪽 띠로만 구분한다 (인라인 글자색은 하나로 통일) */
+.tg-term-tip[data-kind="buff"]    .tg-term-tip-name { color: var(--buff-text); }
+.tg-term-tip[data-kind="debuff"]  .tg-term-tip-name { color: var(--debuff-text); }
+.tg-term-tip[data-kind="neutral"] .tg-term-tip-name { color: var(--neutral-text); }
+
+@media (prefers-reduced-motion: reduce) { .tg-term-tip { animation: none; } }
+
+
+/* ── Responsive ──────────────────────── */
+@media (max-width: 720px) {
+    .tg-nav { padding: 8px 10px; gap: 6px; }
+    .tg-nav-left { flex: 1 1 100%; gap: 6px; }
+    .tg-nav-search { flex: 1 1 100%; width: 100%; min-width: 0; order: 99; }
+    .tg-btn { font-size: 0.78rem; padding: 7px 12px; }
+}
+@media (max-width: 420px) {
+    .tg-header-inner { padding: 8px 12px; }
+    .tg-title { font-size: 1.3rem; }
+    .tg-logo-img { width: 48px; height: 48px; }
+    .tg-nav-wrap, .tg-chips-wrap { padding-left: 10px; padding-right: 10px; }
+    .tg-grid { padding: 0 10px; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+    .tg-btn { font-size: 0.74rem; padding: 6px 10px; }
+}
+
+
+/* ── 떠 있는 툴팁 (`tooltip.js`, `data-tooltip` 속성) ──
+   `<body>` 바로 아래 하나만 두고 자리를 옮긴다 — `overflow: hidden` 안에 있는 것에도
+   띄울 수 있고(엘다인 별은 초상화 프레임 안이다), 나타나는 속도도 우리가 정한다.
+   ⚠ `.rc-tab[data-tip]::after` 는 **다른 것**이다 (탭 설명). 이름만 비슷하다. */
+.tg-tip {
+    position: fixed; left: 0; top: 0; z-index: 9999;
+    max-width: min(320px, 82vw); padding: 10px 13px; border-radius: 11px;
+    background: #33372F; color: #F4F6F1;
+    font-family: 'OneMobilePop', sans-serif;
+    font-size: .8rem; font-weight: 500; line-height: 1.6;
+    word-break: keep-all; text-align: left;
+    /* ⚠ `data-tooltip` 에 `
+` 으로 줄을 나눈 곳이 여럿이다 (핀의 이름/자리규칙/고정,
+         빈자리의 후보 수…). 이 선언이 없으면 **전부 한 줄로 뭉쳐 붙는다.** */
+    white-space: pre-line;
+    box-shadow: 0 8px 22px rgba(0,0,0,.22);
+    opacity: 0; visibility: hidden; transform: translateY(-3px);
+    transition: opacity .12s ease, transform .12s ease, visibility .12s;
+    pointer-events: none;
+}
+.tg-tip.is-on { opacity: 1; visibility: visible; transform: none; }
+/* 말풍선 머리줄 — 아이콘(`data-tooltip-icon`)이 **이름 왼쪽**에 선다.
+   ⚠ `.tg-tip` 이 `white-space: pre-line` 이라 그냥 두면 줄바꿈이 어긋난다.
+     머리줄만 `flex` 로 떼어 한 줄을 쓰게 하고, 설명은 그 아래로 떨어진다. */
+.tg-tip-head {
+    display: flex; align-items: center; gap: 7px;
+    margin-bottom: 5px; font-weight: 800;
+}
+/* ⚠ `/` 구분자는 **글자 그대로** 넣는다 — 겹친 하나가 아니라 나란히 선 둘이라는 뜻이다. */
+.tg-tip-icons {
+    display: inline-flex; align-items: center; gap: 5px;
+    flex: none; font-size: .9em; opacity: .9;
+}
+.tg-tip-icons img { width: 20px; height: 20px; object-fit: contain; display: block; }
+[data-theme="dark"] .tg-tip { background: #E8EBE3; color: #24261F; }
+/* 둘째 상자 — 첫째(이름) 아래에 붙는 **딸린 설명**이라 한 톤 낮춘다 */
+.tg-tip-2 { font-size: .74rem; padding: 8px 11px; background: #434838; }
+[data-theme="dark"] .tg-tip-2 { background: #D6DACE; }
+
+/* ── Misc ─────────────────────────────── */
+#top-btn {
+    position: fixed; bottom: 30px; right: 25px; z-index: 999; width: 50px; height: 50px;
+    background-color: #2D331D; color: white; border: none; border-radius: 50%;
+    cursor: pointer; display: none; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s; font-family: 'OneMobilePop', sans-serif;
+}
+#top-btn:hover { background-color: var(--accent-green); transform: translateY(-5px); }
+
+.card { background: var(--card-bg); border-radius: 12px; padding: 8px; text-align: center; cursor: pointer; border: 1px solid #d0e0a0; transition: all 0.2s ease-out; }
+.card:hover { transform: translateY(-8px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: var(--accent-green); }
+
+/* 타이틀 클릭 리셋 호버 */
+.main-title { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; user-select: none; }
+.main-title:hover { color: var(--accent-green); transform: scale(1.05); text-shadow: 0 4px 8px rgba(188,221,95,0.3); }
+.main-title:active { transform: scale(0.95); }
+
+
+/* 필터 적용 시 카드 목록 갱신 애니메이션 */
+@keyframes tg-grid-refresh {
+    from { opacity: 0.3; transform: translateY(5px); }
+    to   { opacity: 1;   transform: translateY(0); }
+}
+#main-grid.is-refreshing, #ar-grid.is-refreshing {
+    animation: tg-grid-refresh 0.22s ease-out;
+}
+
+@keyframes resetFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.reset-ani { animation: resetFadeIn 0.5s ease-out forwards; }
+
+
+/* ── 테마 토글 — 해/달 교차 애니메이션 ── */
+.tg-theme-toggle {
+    position: relative;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border-soft);
+    background: var(--modal-card-bg);
+    cursor: pointer;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.tg-theme-toggle:hover {
+    border-color: var(--accent-green);
+    background: var(--accent-soft);
+}
+.tg-theme-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(109, 166, 58, 0.35);
+}
+.tg-theme-toggle:active { transform: scale(0.92); }
+
+.tg-theme-toggle::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: var(--accent-green);
+    opacity: 0;
+    transform: scale(0.5);
+    pointer-events: none;
+}
+.tg-theme-toggle.is-pulsing::after {
+    animation: tg-toggle-pulse 0.55s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes tg-toggle-pulse {
+    0%   { opacity: 0.3;  transform: scale(0.3); }
+    70%  { opacity: 0.15; transform: scale(1.05); }
+    100% { opacity: 0;    transform: scale(1.3); }
+}
+
+
+/* ── 테마 토글 아이콘 ── */
+.tg-theme-toggle svg {
+    width: 18px; height: 18px; display: block; pointer-events: none;
+}
+[data-theme="dark"]  .tg-theme-toggle { color: #B9DD63; }
+[data-theme="light"] .tg-theme-toggle,
+:root                .tg-theme-toggle { color: #94A3B8; }
+
+
+/* ═══ 사이트 공용 탭 줄 (sitenav.js) — 네 페이지 헤더 바로 아래 ═══
+   예전 헤더 오른쪽 둥근 아이콘 버튼(.tg-tier-btn)을 대신한다.
+   ⚠ 따라다니지 않는다 — 필터 바(.tg-subheader)·분류 트레이가 이미 따라다녀서
+     둘이 겹쳐 붙으면 카드 볼 자리를 먹는다 */
+/* 세그먼트 트레이 — 회색 트레이 위에 **그 페이지 색** 알약 하나.
+   색이 쓰이는 곳이 "지금 페이지" 하나뿐이라 색 자체가 위치 표시가 된다.
+   ⚠ 트레이를 연두로 두지 말 것 — 보라·금색 알약이 연두 위에 얹혀 부딪힌다 (시안 3번에서 걸렀다)
+   페이지 색(`--pc`)은 `sitenav.js` 의 목록에 있고, 알약은 그 색 30% 를 헤더 바탕에 섞는다 —
+   그래서 다크에서는 저절로 어둡게 물든다 */
+.tg-sitenav { background: var(--header-bg); border-bottom: 1px solid var(--border-soft); }
+/* 위아래 여백을 같게 — 위를 2px 로 두었더니 트레이가 헤더 경계선에 붙어 떠 보였다 */
+.tg-sitenav-inner { margin: 0 auto; padding: 10px 16px; overflow-x: auto; scrollbar-width: none; }
+.tg-sitenav-inner::-webkit-scrollbar { display: none; }
+.tg-sitenav-row {
+    display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; position: relative; vertical-align: top;
+    background: color-mix(in srgb, var(--text-muted) 12%, var(--header-bg));
+    box-shadow: inset 0 1px 3px var(--shadow-soft);
+}
+.tg-sitenav-pill {
+    position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; border-radius: 999px;
+    background: color-mix(in srgb, var(--pc) 30%, var(--header-bg));
+    box-shadow: 0 2px 6px var(--shadow-soft), 0 0 0 1.5px color-mix(in srgb, var(--pc) 60%, transparent);
+}
+.tg-sitenav-tab {
+    display: flex; align-items: center; gap: 7px; flex: 0 0 auto; position: relative; z-index: 1;
+    padding: 7px 16px 7px 10px; border-radius: 999px; font-weight: 800; font-size: .9rem; word-break: keep-all;
+    color: var(--text-muted); text-decoration: none; transition: color .15s;
+}
+.tg-sitenav-tab img { width: 22px; height: 22px; object-fit: contain; opacity: .6; transition: opacity .15s; }
+.tg-sitenav-tab:hover, .tg-sitenav-tab.on { color: var(--text-dark); }
+.tg-sitenav-tab:hover img, .tg-sitenav-tab.on img { opacity: 1; }
+.tg-sitenav-tab:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+@media (max-width: 560px) {
+    .tg-sitenav-inner { padding: 8px; }
+    .tg-sitenav-tab { padding: 6px 11px 6px 8px; font-size: .82rem; gap: 5px; }
+    .tg-sitenav-tab img { width: 18px; height: 18px; }
+}
+
+/* 탭 줄 폭은 그 페이지 헤더와 같이 간다 — 로고 아래에 첫 탭이 서야 한다 */
+.tg-sitenav-inner { max-width: var(--page-width); }
+body:has(.rc-main) .tg-sitenav-inner { max-width: min(1800px, 100% - 24px); }
+body:has(.tm-body) .tg-sitenav-inner,
+body:has(.tm-body) .tg-header-inner { max-width: 1300px; }
+
+/* ═══ 페이지 간 이동 애니메이션 (View Transitions, 문서 간) ═══
+   페이지마다 본문 폭이 달라(1160 · 1800 · 1300) 탭을 옮겨 다니면 화면 좌우 여백이 툭 바뀐다.
+   탭 줄 트레이에 이름을 붙여 두면 브라우저가 두 페이지의 같은 이름끼리 **자리를 이어서**
+   미끄러뜨리고, 나머지는 겹쳐 사라지고 나타난다.
+   - ⚠⚠ **크기가 변하는 요소에 이름을 달지 말 것.** 헤더·탭 줄 통째로 달았더니 폭(1160↔1800)이
+     애니메이션되면서 프레임이 뚝뚝 끊겼다 — 크기 변화는 메인 스레드에서 돌아서, 새 페이지가
+     CSV 를 읽고 카드를 그리는 일과 부딪힌다. 로고·탭은 페이지마다 크기가 같아 **위치(transform)만**
+     움직이므로 GPU 가 혼자 돌린다. 본문도 opacity 만 쓴다
+   - 트레이·알약 이름은 아래 탭 줄 전환 절에 있다
+   - 지원 안 하는 브라우저(현재 Firefox 등)는 그냥 평소처럼 넘어간다 — 깨지지 않는다
+   - ⚠ 같은 페이지 안의 해시 이동(#tab)에는 안 걸린다. 문서가 바뀔 때만이다
+   - ⚠ 이름은 한 페이지에 **하나씩만** 있어야 한다. 겹치면 전환이 통째로 취소된다 */
+@view-transition { navigation: auto; }
+::view-transition-group(*) { animation-duration: .3s; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
+::view-transition-old(root) { animation: tg-vt-out .16s ease both; }
+::view-transition-new(root) { animation: tg-vt-in .24s ease .04s both; }
+@keyframes tg-vt-out { to { opacity: 0; } }
+@keyframes tg-vt-in { from { opacity: 0; } }
+/* ⚠ 로고에는 이름을 달지 않는다. 달았더니 사도 추천(헤더 1800px)으로 넘어갈 때 로고가
+     화면 가운데 쪽에서 왼쪽 끝까지 **미끄러져 따라가** 어색했다. 이름이 없으면 본문과 함께
+     제자리에서 사라지고(.16s) 새 자리에서 나타난다(.24s) — 페이드 아웃 → 페이드 인 */
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+/* 티어 메이커 헤더는 버튼이 셋 더 있어 폰에서 한 줄에 안 들어간다 — 버튼 줄을 아래로 내린다 */
+@media (max-width: 640px) {
+    body:has(.tm-body) .tg-header-inner { flex-wrap: wrap; }
+    body:has(.tm-body) .tm-header-right { flex: 1 1 100%; justify-content: flex-end; flex-wrap: wrap; }
+}
+
+/* 첫 화면 카드 차례 등장 (sitenav.js) — `backwards` 라 끝나면 아무 흔적도 안 남는다.
+   ⚠ `both`·`forwards` 로 두면 끝난 뒤에도 transform 을 쥐고 있어 카드 호버 들림이 죽는다 */
+@keyframes tg-card-in { from { opacity: 0; transform: translateY(10px); } }
+.tg-card-in { animation: tg-card-in .32s cubic-bezier(.2, .7, .2, 1) var(--tg-in-delay, 0ms) backwards; }
+
+/* 조작 영역 등장 — 탭 줄 → 조작 영역 → 카드 순으로 나타나게 카드보다 한 박자 먼저 (카드는 sitenav.js 의 LEAD 로 늦춘다).
+   덩어리째 움직인다 — 안의 버튼까지 차례로 띄우면 카드 효과와 겹쳐 어수선하다.
+   ⚠ 사도 추천 안에서 탭을 바꿀 때는 안 걸린다 (상자를 다시 만들지 않는다). 페이지를 열 때 한 번뿐
+   ⚠ `backwards` — 끝난 뒤 transform 을 쥐고 있으면 따라다니는 필터 바 안의 드롭다운 기준이 바뀐다 */
+@keyframes tg-ctrl-in { from { opacity: 0; transform: translateY(-4px); } }
+.tg-subheader, .rc-navbox { animation: tg-ctrl-in .2s ease-out backwards; }
+@media (prefers-reduced-motion: reduce) {
+    .tg-subheader, .rc-navbox, .tg-card-in { animation: none; }
+}
+
+/* 탭 줄 전환 — 트레이 한 덩어리만 미끄러진다. 알약은 sitenav.js 가 트레이 안에서 따로 옮긴다.
+   ⚠ 알약을 전환에 맡겼던 두 번(따로 이름 → `view-transition-group: nearest` 로 묶기) 다 덜컥거렸다.
+     알약 폭이 탭마다 달라 크기 애니메이션이 메인 스레드에서 돌았기 때문이다 */
+.tg-sitenav-row { view-transition-name: site-tray; }
+/* 알약은 이름을 달지 않는다 — 트레이 안에서 sitenav.js 가 transform 으로 직접 옮긴다 (그쪽 주석 참조) */
+
+/* 탭 줄은 헤더 줄 **안**에 산다 (sitenav.js 가 로고와 오른쪽 버튼 사이로 옮긴다).
+   넓으면  [로고 | 트레이 | 버튼] 한 줄, 트레이는 **가운데 고정** —
+     로고 옆에 붙이면 로고 폭(스킬 가이드 / 아티팩트 가이드 …)에 따라 페이지마다 자리가 달라진다.
+     `1fr auto 1fr` 이라 양옆이 같은 폭을 먹어 트레이가 정확히 가운데 선다
+   좁으면  [로고 | 버튼] 아래 줄에 트레이 (트레이만 470px 쯤이라 한 줄에 안 들어간다)
+   ⚠ 문턱이 페이지마다 다르다 — 가운데 고정이라 양옆 중 **넓은 쪽 × 2 + 트레이** 가 필요하다.
+     티어 메이커는 오른쪽 버튼이 셋 더 있어(약 400px) 훨씬 넓어야 한다 */
+.tg-header-inner:has(> .tg-sitenav) { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 16px; row-gap: 6px; }
+.tg-header-inner > .tg-sitenav { grid-column: 1 / -1; grid-row: 2; background: none; border: 0; box-shadow: none; min-width: 0; }
+.tg-header-inner > .tg-sitenav .tg-sitenav-inner { max-width: none; padding: 0; }
+.tg-header-inner:has(> .tg-sitenav) > :last-child { justify-self: end; }
+@media (min-width: 1024px) {
+    body:not(:has(.tm-body)) .tg-header-inner:has(> .tg-sitenav) { grid-template-columns: 1fr auto 1fr; }
+    body:not(:has(.tm-body)) .tg-header-inner > .tg-sitenav { grid-column: 2; grid-row: 1; }
+}
+@media (min-width: 1360px) {
+    body:has(.tm-body) .tg-header-inner:has(> .tg-sitenav) { grid-template-columns: 1fr auto 1fr; }
+    body:has(.tm-body) .tg-header-inner > .tg-sitenav { grid-column: 2; grid-row: 1; }
+}
+@media (max-width: 640px) {
+    body:has(.tm-body) .tg-header-inner:has(> .tg-sitenav) { grid-template-columns: 1fr; }
+    body:has(.tm-body) .tg-header-inner > .tm-header-right { justify-self: start; }
+    body:has(.tm-body) .tg-header-inner > .tg-sitenav { grid-row: 3; }
+}
+

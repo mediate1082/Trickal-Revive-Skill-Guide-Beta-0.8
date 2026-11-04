@@ -5,6 +5,10 @@ window.activeAsideFilters = {
     targets: [],
     effects: []
 };
+/* 어사이드 필터 모달에서 고르는 중인 값. 부가 효과 필터(pendingStatees)·표시 필터(pendingAttrs)와 같은 꼴 —
+   열 때 적용값을 복사하고, 고르기는 여기에만, `적용` 에서만 activeAsideFilters 로 옮긴다. 닫으면 버린다 */
+let pendingAsideFilters = { targets: [], effects: [] };
+const _copyAside = f => ({ targets: [...f.targets], effects: [...f.effects] });
 // [컬러 가이드]
 const COLORS = {
     low: '#22C55E',      // 저학년 테마
@@ -311,8 +315,9 @@ function hideTermTip() {
     });
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && _tipAnchor) {
-            /* 한 겹만 벗긴다 — 안 막으면 window 의 Esc 처리까지 내려가 모달이 통째로 닫힌다 */
-            e.stopPropagation();
+            /* 한 겹만 벗긴다 — 안 막으면 아래 상세 모달 키 처리(같은 document)와
+               window 의 Esc 처리까지 내려가 모달이 통째로 닫힌다 */
+            e.stopImmediatePropagation();
             const a = _tipAnchor;
             hideTermTip();
             a.focus?.();
@@ -932,6 +937,9 @@ function renderAsideGlobalBox(char, asideData) {
 }
 
 export function openDetailModal(char, dataContext) {
+    /* 닫히는 중(200ms)에 다시 열리면 남은 닫기 타이머가 새 모달을 숨긴다 — 먼저 거둔다 */
+    clearTimeout(_closeTimer); _closeTimer = 0;
+    document.getElementById('modal-detail')?.classList.remove('is-closing');
     currentSkillMode = 'PvE';
     currentApostle = char;
     currentDataContext = dataContext;
@@ -1416,6 +1424,7 @@ const ASIDE_EFFECTS = [
 
 // [2] 모달 열기
 window.openAsideFilter = () => {
+    pendingAsideFilters = _copyAside(window.activeAsideFilters); // 현재 적용 상태를 pending으로 복사
     document.getElementById('modal-aside-filter').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open');
@@ -1448,7 +1457,7 @@ export function updateSegmentedIndicator(segId) {
 function refreshAsideAnyOption() {
     const anyEl = document.getElementById('aside-any-option');
     const input = document.getElementById('aside-any-input');
-    const set = currentAsideTab === 0 ? window.activeAsideFilters.targets : window.activeAsideFilters.effects;
+    const set = currentAsideTab === 0 ? pendingAsideFilters.targets : pendingAsideFilters.effects;
     const isAny = set.length === 0 || set.some(v => v.includes('무관'));
     if (anyEl) anyEl.classList.toggle('is-active', isAny);
     if (input) input.checked = isAny;
@@ -1458,7 +1467,7 @@ function refreshAsideAnyOption() {
 function refreshAsideClearAllBtn() {
     const btn = document.getElementById('aside-clear-all-btn');
     if (!btn) return;
-    const set = currentAsideTab === 0 ? window.activeAsideFilters.targets : window.activeAsideFilters.effects;
+    const set = currentAsideTab === 0 ? pendingAsideFilters.targets : pendingAsideFilters.effects;
     const count = set.filter(v => !v.includes('무관')).length;
     if (count > 0) {
         btn.style.visibility = 'visible'; btn.tabIndex = 0; btn.removeAttribute('aria-hidden');
@@ -1494,8 +1503,16 @@ window.switchAsideFilterTab = (idx) => {
     }
     refreshAsideAnyOption();
     refreshAsideClearAllBtn();
-    if (typeof window.updateAsideFilterCount === 'function') window.updateAsideFilterCount();
+    refreshAsideModalCount();
 };
+
+// 모달 머리의 개수 뱃지 — 고르는 중인 값(pending)을 센다
+function refreshAsideModalCount() {
+    const n = pendingAsideFilters.targets.filter(v => !v.includes('무관')).length
+            + pendingAsideFilters.effects.filter(v => !v.includes('무관')).length;
+    const el = document.getElementById('modal-aside-count');
+    if (el) { el.hidden = n === 0; if (n > 0) el.textContent = `${n}개`; }
+}
 
 // [공통] 필터 체크박스 아이템 렌더링 — 두 필터 모달이 공유
 export function renderFilterCheckbox(value, isChecked, onchangeAttr, prefixHTML = '') {
@@ -1530,7 +1547,7 @@ const ASIDE_TARGET_ICONS = {
 };
 
 function renderAsideOption(type, value, inputType = 'checkbox') {
-    const isChecked = window.activeAsideFilters[type].includes(value);
+    const isChecked = pendingAsideFilters[type].includes(value);
     const iconMap = type === 'targets' ? ASIDE_TARGET_ICONS : ASIDE_EFFECT_ICONS;
     const iconPath = iconMap[value] ?? null;
     const iconHTML = iconPath
@@ -1545,13 +1562,14 @@ function renderAsideOption(type, value, inputType = 'checkbox') {
 // [5] 필터 토글 (무관 처리 포함)
 window.toggleAsideFilter = (type, value, checkbox) => {
     // 어사이드 대상(targets)은 단일 선택 (라디오 동작)
+    // 모달 내 pending 상태만 변경 — 적용 버튼 누를 때까지 카드 목록 갱신 안 함
     if (type === 'targets') {
-        window.activeAsideFilters[type] = [value];
+        pendingAsideFilters[type] = [value];
     } else {
-        window.activeAsideFilters[type] = window.activeAsideFilters[type].filter(v => !v.includes('무관'));
-        const index = window.activeAsideFilters[type].indexOf(value);
-        if (index > -1) window.activeAsideFilters[type].splice(index, 1);
-        else window.activeAsideFilters[type].push(value);
+        pendingAsideFilters[type] = pendingAsideFilters[type].filter(v => !v.includes('무관'));
+        const index = pendingAsideFilters[type].indexOf(value);
+        if (index > -1) pendingAsideFilters[type].splice(index, 1);
+        else pendingAsideFilters[type].push(value);
     }
     const tabIdx = type === 'targets' ? 0 : 1;
     window.switchAsideFilterTab(tabIdx);
@@ -1559,11 +1577,8 @@ window.toggleAsideFilter = (type, value, checkbox) => {
 
 // [6] 필터 적용 함수
 window.applyAsideFilter = () => {
-    const t = window.activeAsideFilters.targets.filter(v => !v.includes('무관')).length;
-    const e = window.activeAsideFilters.effects.filter(v => !v.includes('무관')).length;
-    const asideN = t + e;
-    const asideCount = document.getElementById('modal-aside-count');
-    if (asideCount) { if (asideN > 0) { asideCount.hidden = false; asideCount.textContent = `${asideN}개`; } else { asideCount.hidden = true; } }
+    window.activeAsideFilters = _copyAside(pendingAsideFilters); // pending → 실제 적용
+    if (typeof window.updateAsideFilterCount === 'function') window.updateAsideFilterCount();
 
     window.closeAsideFilter();
 
@@ -1573,20 +1588,16 @@ window.applyAsideFilter = () => {
 };
 
 // [7] 초기화 함수
+// 모달 안의 선택만 비운다. 그리드에 반영하는 건 `적용` 이다 (표시 필터의 resetAttrFilter 와 같음)
 window.resetAsideFilter = () => {
-    window.activeAsideFilters = { targets: [], effects: [] };
-    const asideCount = document.getElementById('modal-aside-count');
-    if (asideCount) asideCount.hidden = true;
+    pendingAsideFilters = { targets: [], effects: [] };
     window.switchAsideFilterTab(0);
-    if (typeof window.handleSortFilter === 'function') {
-        window.handleSortFilter();
-    }
 };
 
 // [8] 어사이드 현재 탭 전체 해제
 window.clearAsideFilter = () => {
     const key = currentAsideTab === 0 ? 'targets' : 'effects';
-    window.activeAsideFilters[key] = [];
+    pendingAsideFilters[key] = [];
     window.switchAsideFilterTab(currentAsideTab);
 };
 
@@ -1622,8 +1633,12 @@ window.addEventListener('click', (e) => {
 window.closeDetailModal = () => {
     const overlay = document.getElementById('modal-detail');
     if (!overlay) return;
+    /* 넘기는 중(150ms)에 닫히면 대기 중인 이동이 모달을 다시 연다 — 같이 거둔다 */
+    cancelNav();
+    if (_closeTimer) return;   /* 이미 닫히는 중 */
     overlay.classList.add('is-closing');
-    setTimeout(() => {
+    _closeTimer = setTimeout(() => {
+        _closeTimer = 0;
         overlay.classList.add('hidden');
         overlay.classList.remove('is-closing');
         document.body.style.overflow = '';
@@ -1633,7 +1648,148 @@ window.closeDetailModal = () => {
     }, 200);
 };
 
-// closeAsideFilter
+/* ── 상세 모달의 키 · 사도 이동 · 스와이프 (스킬 가이드 · 사도 추천 공용) ─────────
+   예전엔 main.js 에만 있어 사도 추천에서는 Esc 로 안 닫히고, ←/→ 가 뒤의 슬라이드를
+   넘겼다. `navigateApostle` 도 두 페이지에 같은 코드가 두 벌 있었다.
+   이동 순서는 각 페이지가 `window.currentDisplayedList` 로 넘긴다 —
+   스킬 가이드는 지금 그리드 순서(필터·정렬 반영), 사도 추천은 그 분류의 순서다.
+
+   ⚠ **연타는 쌓는다** (버리지 않는다). 넘기는 애니메이션(150ms) 동안 들어온 입력은
+     목표(`_navTarget`)만 한 칸씩 더 옮기고, 타이머가 끝날 때 **마지막 목표를 한 번만** 연다.
+     예전엔 두 번째 입력도 아직 안 바뀐 `currentApostleName` 에서 계산해 같은 사도를 또 열었다.
+   ⚠ 닫히는 중(`is-closing`)·아티팩트 모달(`#ar-dim`)이 위에 떠 있을 때는 이동을 안 받는다. */
+let _closeTimer = 0;
+let _navTimer = 0;
+let _navTarget = null;   // 넘기는 중일 때 지금까지 쌓인 목표 사도 이름
+
+function cancelNav() {
+    clearTimeout(_navTimer); _navTimer = 0; _navTarget = null;
+}
+
+/* 모달이 떠 있고 닫히는 중이 아니다 */
+function detailActive() {
+    const m = document.getElementById('modal-detail');
+    return !!m && !m.classList.contains('hidden') && !m.classList.contains('is-closing');
+}
+/* 아티팩트 모달이 위에 떠 있다 — 그쪽이 키를 가져간다 */
+function artifactOnTop() {
+    return document.getElementById('ar-dim')?.hidden === false;
+}
+
+export function navigateApostle(dir) {
+    if (!detailActive() || artifactOnTop()) return;
+    const list = window.currentDisplayedList;
+    const from = _navTarget || window.currentApostleName;
+    if (!list || !list.length || !from) return;
+    const idx = list.findIndex(c => c.name === from);
+    if (idx < 0) return;
+    const next = list[(idx + dir + list.length) % list.length];
+    const card = document.querySelector('#modal-detail .tg-modal-card');
+    if (!card) { cancelNav(); window.openDetailModal(next); return; }
+
+    _navTarget = next.name;
+    window._navDir = dir;
+    if (_navTimer) return;   /* 이미 넘기는 중 — 목표만 옮겨 두고 타이머가 연다 */
+    card.style.animation = dir > 0
+        ? 'tg-slide-out-left 0.15s ease forwards'
+        : 'tg-slide-out-right 0.15s ease forwards';
+    _navTimer = setTimeout(() => {
+        const name = _navTarget;
+        _navTimer = 0; _navTarget = null;
+        const target = (window.currentDisplayedList || []).find(c => c.name === name);
+        if (target) window.openDetailModal(target);
+    }, 150);
+}
+window.navigateApostle = navigateApostle;
+
+/* 글자를 치는 칸에서는 ←/→ 가 커서 이동이다. 슬라이더(range)는 예전처럼 사도 이동이 이긴다 */
+function isTextField(t) {
+    if (!t) return false;
+    if (t.isContentEditable || t.tagName === 'TEXTAREA') return true;
+    if (t.tagName !== 'INPUT') return false;
+    return !['range', 'checkbox', 'radio', 'button', 'submit', 'reset', 'color', 'file'].includes((t.type || '').toLowerCase());
+}
+
+/* ⚠ `document` 에 단다. 페이지 쪽 키 처리(main.js 는 `window`, recommend.js 의 슬라이드는
+     `document` 이지만 이 모듈을 import 한 **뒤에** 단다)보다 먼저 돌아,
+     처리한 키는 `stopImmediatePropagation` 으로 끊는다.
+   ⚠ 아티팩트 모달이 떠 있으면 아무것도 안 한다 — Esc 는 artifact.js 가 받고, ←/→ 는 버린다.
+   Tab(탭 전환)은 여기서 다루지 않는다 — main.js 에 그대로 있다. */
+document.addEventListener('keydown', (e) => {
+    /* 편집기에서 이 모달은 편집 대상 시뮬레이터다 — 키는 편집기(서랍 Esc 등)가 가져간다 */
+    if (window.__editorMode) return;
+    const m = document.getElementById('modal-detail');
+    if (!m || m.classList.contains('hidden')) return;
+    if (artifactOnTop()) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') e.stopImmediatePropagation();
+        return;
+    }
+    if (e.key === 'Escape') {
+        e.stopImmediatePropagation();
+        if (detailActive()) window.closeDetailModal();
+        return;
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        /* 모달 **안의** 입력칸만 거른다 — 뒤 페이지 검색창에 포커스가 남아 있어도 이동은 된다 (예전과 같음) */
+        if (isTextField(e.target) && m.contains(e.target)) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        navigateApostle(e.key === 'ArrowRight' ? 1 : -1);
+    }
+});
+
+/* 모바일 스와이프로 사도 이동 (main.js 에서 옮겨 옴)
+   ⚠ 예전에는 `clientX` 만 봤다. 세로로 스크롤하다 손가락이 옆으로 60px 밀리기만 해도
+     사도가 넘어갔다 — 특히 태블릿에서. 화면이 크면 스크롤 거리가 길고 그만큼 옆으로
+     휘는 양도 쌓이는데, 문턱값은 화면 크기와 무관한 60px 고정이었다.
+
+   그래서 세 가지를 본다.
+   1. **축 잠금** — 움직이는 도중 세로가 먼저 기준을 넘으면 그 제스처는 스크롤로 확정하고
+      끝까지 무시한다. 끝점만 비교하면 "세로로 긁다가 옆으로 샌 것" 과 구별할 수 없다
+   2. **가로가 세로보다 확실히 커야 한다** (1.5배). 비스듬한 건 넘기지 않는다
+   3. **문턱값이 화면을 따라간다** — 태블릿에서 60px 은 너무 얕다
+
+   ⚠ `touchmove` 는 `passive: true` 로 둔다. 세로 스크롤을 막으면 안 된다 —
+     우리는 판정만 하고 스크롤 자체는 브라우저에 맡긴다. */
+const SWIPE_LOCK_Y   = 12;    // 이만큼 세로로 움직이면 스크롤로 확정
+const SWIPE_RATIO    = 1.5;   // 가로가 세로의 몇 배여야 하는가
+const SWIPE_MAX_MS   = 700;   // 느릿한 끌기는 스와이프가 아니다
+const swipeMin = () => Math.max(60, Math.min(window.innerWidth, window.innerHeight) * 0.10);
+
+let _swX = 0, _swY = 0, _swT = 0, _swLive = false;
+
+document.addEventListener('touchstart', (e) => {
+    _swLive = false;
+    if (window.__editorMode || !detailActive() || artifactOnTop() || e.touches.length !== 1) return;   // 두 손가락(확대 등)은 제외
+    _swX = e.touches[0].clientX;
+    _swY = e.touches[0].clientY;
+    _swT = Date.now();
+    _swLive = true;
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+    if (!_swLive) return;
+    if (e.touches.length !== 1) { _swLive = false; return; }
+    const dx = Math.abs(e.touches[0].clientX - _swX);
+    const dy = Math.abs(e.touches[0].clientY - _swY);
+    /* 세로가 먼저 기준을 넘으면 스크롤이다 — 이후 가로로 아무리 가도 안 넘긴다 */
+    if (dy > SWIPE_LOCK_Y && dy > dx) _swLive = false;
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+    if (!_swLive || !detailActive()) { _swLive = false; return; }
+    _swLive = false;
+    if (Date.now() - _swT > SWIPE_MAX_MS) return;
+    const dx = e.changedTouches[0].clientX - _swX;
+    const dy = e.changedTouches[0].clientY - _swY;
+    if (Math.abs(dx) < swipeMin()) return;
+    if (Math.abs(dx) < Math.abs(dy) * SWIPE_RATIO) return;
+    navigateApostle(dx > 0 ? -1 : 1);
+}, { passive: true });
+
+document.addEventListener('touchcancel', () => { _swLive = false; }, { passive: true });
+
+// closeAsideFilter — X / 배경 / Esc: pending 버리고 닫기 (필터 적용 안 함)
 window.closeAsideFilter = () => {
     const modal = document.getElementById('modal-aside-filter');
     if (modal) {
@@ -1650,7 +1806,7 @@ window.closeAsideFilter = () => {
     anyOption.addEventListener('click', (e) => {
         e.preventDefault();
         const key = currentAsideTab === 0 ? 'targets' : 'effects';
-        window.activeAsideFilters[key] = ['무관(상관없음)'];
+        pendingAsideFilters[key] = ['무관(상관없음)'];
         window.switchAsideFilterTab(currentAsideTab);
     });
 })();

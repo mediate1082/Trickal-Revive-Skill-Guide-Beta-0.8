@@ -1419,6 +1419,8 @@ document.addEventListener('keydown', e => {
 document.addEventListener('keydown', e => {
     if (effView() !== 'slide') return;
     if (document.getElementById('ar-dim')?.hidden === false) return;   /* 아티팩트 모달이 떠 있으면 넘기지 않는다 */
+    /* 상세 모달이 떠 있으면(닫히는 중 포함) ←/→ 는 모달의 사도 이동이다 — ui.js 가 받는다 */
+    if (!document.getElementById('modal-detail')?.classList.contains('hidden')) return;
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
@@ -1909,22 +1911,8 @@ function wireDetailModal(ctx) {
     window.toggleQuickFilter = (type) => toggleQuickFilter(type);
     window._battleItemDB = ctx.battleItemDB;
 
-    window.navigateApostle = (dir) => {
-        const list = window.currentDisplayedList;
-        if (!list || !window.currentApostleName) return;
-        const idx = list.findIndex(c => c.name === window.currentApostleName);
-        if (idx < 0) return;
-        const next = list[(idx + dir + list.length) % list.length];
-        const card = document.querySelector('#modal-detail .tg-modal-card');
-        if (card) {
-            card.style.animation = dir > 0
-                ? 'tg-slide-out-left 0.15s ease forwards'
-                : 'tg-slide-out-right 0.15s ease forwards';
-            setTimeout(() => { window._navDir = dir; window.openDetailModal(next); }, 150);
-        } else {
-            window.openDetailModal(next);
-        }
-    };
+    /* `navigateApostle`·Esc·스와이프는 ui.js 가 단다 (스킬 가이드와 공용).
+       순서는 `activateTab` 이 채우는 `window.currentDisplayedList` */
 }
 
 /* '무작위 배틀 아이템 생성' 상태에 배틀 아이템 태그를 합쳐 넣는다 (main.js 와 동일) */

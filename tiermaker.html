@@ -15,7 +15,10 @@
     <script>document.write('<script src="js/version.js?t=' + Date.now() + '"><\/script>');</script>
     <script>document.write('<script src="js/theme.js?v=' + APP_VERSION + '"><\/script>');</script>
     <script>
-        document.write('<link rel="stylesheet" href="css/style.css?v=' + APP_VERSION + '">');
+        /* 페이지마다 필요한 CSS 만 싣는다 — 순서가 곧 캐스케이드 순서다 (CLAUDE.md 「CSS 파일」) */
+        ['base', 'cards', 'tiermaker'].forEach(function (f) {
+            document.write('<link rel="stylesheet" href="css/' + f + '.css?v=' + APP_VERSION + '">');
+        });
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
