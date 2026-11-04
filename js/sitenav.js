@@ -129,22 +129,30 @@
          스킬 가이드에서 13개가 거의 동시에 두 번씩 나갔다 — 앞 요청이 아직 받는 중이라 캐시가 안 맞았다.
          `performance` 기록은 **다 받은 것만** 올라와 받는 중인 요청을 못 본다. 그래서 `fetch` 를
          지켜보며 이름만 적는다 (요청 자체는 그대로 넘긴다).
-       ⚠ 이 파일은 네 페이지 모두 **페이지 스크립트보다 먼저** 싣는다 — 그래야 첫 요청부터 보인다 */
+       ⚠ 이 파일은 네 페이지 모두 **페이지 스크립트보다 먼저** 싣는다 — 그래야 첫 요청부터 보인다
+       ⚠⚠ `load` 만 기다리면 모자란다. 스킬 가이드는 `main.js` 가 맨 위에서 `ui.js` import 를 기다린 **뒤에**
+         CSV 를 요청하는데, 그 사이 `load` 가 먼저 나 미리 받기가 페이지 요청보다 앞섰다 (그래도 13개가 두 번씩).
+         그래서 **페이지가 첫 CSV 를 요청할 때까지** 기다린다. 네 페이지 모두 자기 CSV 를 한 번에(`Promise.all`)
+         요청하므로 첫 요청이 보이면 나머지도 같은 순간에 적혀 있다. 페이지가 아예 못 돌면 5초 뒤 그냥 받는다 */
     const asked = new Set();
+    let firstAsk;
+    const asking = new Promise(r => { firstAsk = r; });
     const fetch0 = window.fetch;
     window.fetch = function (input, init) {
         try {
             const m = String(input && input.url || input).match(/data\/([^/?]+)\.csv/);
-            if (m) asked.add(decodeURIComponent(m[1]));
+            if (m) { asked.add(decodeURIComponent(m[1])); firstAsk(); }
         } catch (e) {}
         return fetch0.apply(this, arguments);
     };
     const conn = navigator.connection;
     if (conn && (conn.saveData || /2g/.test(conn.effectiveType || ''))) return;   // 데이터 절약 모드·느린 망은 건너뛴다
     const idle = window.requestIdleCallback || (f => setTimeout(f, 1500));
-    addEventListener('load', () => idle(() => {
-        const ver = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '';
-        CSV.filter(n => !asked.has(n))
-            .forEach(n => fetch('data/' + n + '.csv?v=' + ver, { priority: 'low' }).catch(() => {}));
-    }, { timeout: 4000 }));
+    addEventListener('load', () => {
+        Promise.race([asking, new Promise(r => setTimeout(r, 5000))]).then(() => idle(() => {
+            const ver = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '';
+            CSV.filter(n => !asked.has(n))
+                .forEach(n => fetch('data/' + n + '.csv?v=' + ver, { priority: 'low' }).catch(() => {}));
+        }, { timeout: 4000 }));
+    });
 })();
