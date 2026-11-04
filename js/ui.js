@@ -1105,6 +1105,8 @@ export function openDetailModal(char, dataContext) {
         return `<div class="tg-lv-tick${(lv === 7 || lv === 10) ? ' is-major' : ''}"></div>`;
     }).join('');
 
+    /* ⚠ 탭 1~3 은 **필요할 때 만든다** (아래 `fillDetailTab`). 그래서 이 셋은 함수로 들고 있다 */
+    const buildTab2 = () => {
     let lowDetail = "";
     if (lowSkillData) {
         let maxL = 1;
@@ -1151,10 +1153,18 @@ export function openDetailModal(char, dataContext) {
             </div>` : ''}`;
         normalAtkHTML = renderEffectCard('normal', { low_skill_name: "기본 공격" }, null, null, null, dataContext, normalContent, false);
     }
+    return `
+                            ${buildSpBlock(spData, char.role === '서포터')}
+                            ${lowSkillData ? renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowDetail, true) : ''}
+                            ${skillData ? renderEffectCard('high', skillData, null, null, null, dataContext, highDetail, true) : ''}
+                            ${normalAtkHTML}
+                        `;
+    };
 
     // [Tab 1 준비]
     let hasEffects = false;
-    const tab1ContentHTML = (() => {
+    const buildTab1 = () => `
+                            ${(() => {
         const types = ['low', 'high', 'normal', 'power'];
         let html = types.map(t => {
             const d = combineTab1(t);
@@ -1175,13 +1185,22 @@ export function openDetailModal(char, dataContext) {
         }
         hasEffects = true;
         return html;
-    })();
+    })()}
+                        `;
 
     // [SP 블록 준비]
     const spData = spDB ? spDB.find(s => s['사도'] === char.name) : null;
 
     // [Tab 3 준비]
-    const asideContentHTML = renderAsideTabContent(char, asideData);
+    const buildTab3 = () => `
+                            ${renderAsideTabContent(char, asideData)}
+                        `;
+
+    /* 편집기는 모든 탭의 `data-src` 를 붙잡고 고친다 — 편집기에서는 처음부터 다 만든다 */
+    const eager = !!window.__editorMode;
+    const tabInner = [null, buildTab1, buildTab2, buildTab3];
+    const eagerTab = i => eager ? tabInner[i]() : '';
+    const tab1HTML = eagerTab(1);   // hasEffects 를 정하므로 머리 줄보다 먼저
 
     // 헤더 배지 데이터
     const tierDisplay = (char.tier || '').replace(/\[.*?\]\s*/g, '').trim();
@@ -1278,24 +1297,22 @@ export function openDetailModal(char, dataContext) {
                             ${char.note ? usageCard('종합 평가', `<div class="tg-recommend-note">${noteParagraphs(char.note)}</div>`, char.name) : ''}
                         </div>
 
-                        <div id="tab-1" class="tab-content hidden">
-                            ${tab1ContentHTML}
-                        </div>
+                        <div id="tab-1" class="tab-content hidden">${tab1HTML}</div>
 
-                        <div id="tab-2" class="tab-content hidden">
-                            ${buildSpBlock(spData, char.role === '서포터')}
-                            ${lowSkillData ? renderEffectCard('low', lowSkillData, null, null, null, dataContext, lowDetail, true) : ''}
-                            ${skillData ? renderEffectCard('high', skillData, null, null, null, dataContext, highDetail, true) : ''}
-                            ${normalAtkHTML}
-                        </div>
+                        <div id="tab-2" class="tab-content hidden">${eagerTab(2)}</div>
 
-                        <div id="tab-3" class="tab-content hidden">
-                            ${asideContentHTML}
-                        </div>
+                        <div id="tab-3" class="tab-content hidden">${eagerTab(3)}</div>
                     </div>
                 </div>
             </div>
         </div>`;
+
+    /* 안 보이는 탭 — 처음 보일 때(`switchTab`) 또는 한가할 때 채운다.
+       ⚠ 채운 결과는 예전에 한 번에 넣던 것과 **글자까지 같다** (탭 안 줄바꿈·들여쓰기까지 함수가 들고 있다) */
+    const fills = overlay._tabFill = eager ? [] : [null, 1, 2, 3].map(i => i && (() => {
+        overlay.querySelector('#tab-' + i).innerHTML = tabInner[i]();
+        if (i === 1) overlay.querySelector('#detail-quickfilters').dataset.hasEffects = hasEffects;
+    }));
 
     // 육성 포인트의 추천 콘텐츠 · 추천 아티팩트 (표를 받은 뒤 채운다)
     fillGrowthExtras(char);
@@ -1308,6 +1325,7 @@ export function openDetailModal(char, dataContext) {
 
     // 세그멘티드 인디케이터 초기 위치 + 사도 이동 슬라이드-인 애니메이션
     requestAnimationFrame(() => {
+        if (fills.length) requestAnimationFrame(() => prefillDetailTabs(overlay, fills));
         updateSegmentedIndicator('detail-segmented');
         if (window._navDir !== undefined) {
             const card = overlay.querySelector('.tg-modal-card');
@@ -1412,7 +1430,33 @@ export function parseSkillLevelText(template, raw, color = '#e74c3c') {
     return res;
 }
 
+/* ── 상세 모달 탭 1~3 은 나중에 만든다 ─────────────────────────────
+   열 때 네 탭을 다 만들어 넣던 것을, 보이는 운용 정보 탭만 먼저 넣고 나머지는
+   ① 그 탭을 처음 누를 때(`switchTab` — 버튼 · 숫자키 · 편집기 keepView 가 전부 여기로 온다) 또는
+   ② 첫 화면을 그린 뒤 한가할 때 하나씩 채운다 (아이콘을 미리 받아 두려고 — 누른 뒤에야 받으면 깜빡인다).
+   ⚠ 사도를 넘기면 `overlay._tabFill` 이 새 것으로 바뀐다. 옛 사도의 한가할 때 채우기는 거기서 멈춘다
+   ⚠ 편집기(`__editorMode`)는 처음부터 다 만들므로 `_tabFill` 이 비어 있다 */
+function fillDetailTab(idx) {
+    const fills = document.getElementById('modal-detail')?._tabFill;
+    const f = fills && fills[idx];
+    if (!f) return;
+    fills[idx] = null;
+    f();
+}
+function prefillDetailTabs(overlay, fills) {
+    const idle = window.requestIdleCallback || (cb => setTimeout(cb, 1));
+    const step = () => {
+        if (overlay._tabFill !== fills) return;
+        const i = fills.findIndex(Boolean);
+        if (i < 0) return;
+        fillDetailTab(i);
+        idle(step, { timeout: 1000 });
+    };
+    idle(step, { timeout: 1000 });
+}
+
 export function switchTab(idx) {
+    fillDetailTab(idx);
     const contents = document.querySelectorAll('#modal-detail .tab-content');
     const btns = document.querySelectorAll('#detail-segmented .tg-segmented-btn');
     const quickfilters = document.getElementById('detail-quickfilters');

@@ -29,7 +29,8 @@
         // 헤더 줄 안(로고와 오른쪽 버튼 사이)으로 옮긴다. 한 줄로 둘지 아래 줄로 내릴지는 CSS 가 폭을 보고 정한다.
         // ⚠ HTML 에서는 헤더 **밖**에 둔다 — 이 스크립트가 못 돌아도 탭 줄은 헤더 아래에 멀쩡히 남는다
         const hi = document.querySelector('.tg-header-inner');
-        if (hi && hi.lastElementChild) hi.insertBefore(nav, hi.lastElementChild);
+        // ⚠ 짜임은 `.has-sitenav` 로 건다 — `:has(> .tg-sitenav)` 는 DOM 을 고칠 때마다 페이지 전체를 다시 계산하게 했다 (base.css 주석)
+        if (hi && hi.lastElementChild) { hi.insertBefore(nav, hi.lastElementChild); hi.classList.add('has-sitenav'); }
         const row = nav.querySelector('.tg-sitenav-row'), pill = row.querySelector('.tg-sitenav-pill');
         const on = row.querySelector('.on');
         if (!on) return;

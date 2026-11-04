@@ -803,21 +803,24 @@ body:has(.tm-body) .tg-header-inner { max-width: 1300px; }
      `1fr auto 1fr` 이라 양옆이 같은 폭을 먹어 트레이가 정확히 가운데 선다
    좁으면  [로고 | 버튼] 아래 줄에 트레이 (트레이만 470px 쯤이라 한 줄에 안 들어간다)
    ⚠ 문턱이 페이지마다 다르다 — 가운데 고정이라 양옆 중 **넓은 쪽 × 2 + 트레이** 가 필요하다.
-     티어 메이커는 오른쪽 버튼이 셋 더 있어(약 400px) 훨씬 넓어야 한다 */
-.tg-header-inner:has(> .tg-sitenav) { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 16px; row-gap: 6px; }
+     티어 메이커는 오른쪽 버튼이 셋 더 있어(약 400px) 훨씬 넓어야 한다
+   ⚠⚠ `.has-sitenav` 는 sitenav.js 가 탭 줄을 옮기면서 붙인다. **`:has(> .tg-sitenav)` 로 되돌리지 말 것** —
+     그 규칙 하나가 있으면 문서 **어디에** 요소를 넣고 빼도 크롬이 페이지 전체 스타일을 다시 계산했다
+     (상세 모달을 넘길 때마다 스킬 가이드 3,800개 · 사도 추천 4,950개. 지우면 10개 안쪽). 2026-11-04 측정 */
+.tg-header-inner.has-sitenav { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 16px; row-gap: 6px; }
 .tg-header-inner > .tg-sitenav { grid-column: 1 / -1; grid-row: 2; background: none; border: 0; box-shadow: none; min-width: 0; }
 .tg-header-inner > .tg-sitenav .tg-sitenav-inner { max-width: none; padding: 0; }
-.tg-header-inner:has(> .tg-sitenav) > :last-child { justify-self: end; }
+.tg-header-inner.has-sitenav > :last-child { justify-self: end; }
 @media (min-width: 1024px) {
-    body:not(:has(.tm-body)) .tg-header-inner:has(> .tg-sitenav) { grid-template-columns: 1fr auto 1fr; }
+    body:not(:has(.tm-body)) .tg-header-inner.has-sitenav { grid-template-columns: 1fr auto 1fr; }
     body:not(:has(.tm-body)) .tg-header-inner > .tg-sitenav { grid-column: 2; grid-row: 1; }
 }
 @media (min-width: 1360px) {
-    body:has(.tm-body) .tg-header-inner:has(> .tg-sitenav) { grid-template-columns: 1fr auto 1fr; }
+    body:has(.tm-body) .tg-header-inner.has-sitenav { grid-template-columns: 1fr auto 1fr; }
     body:has(.tm-body) .tg-header-inner > .tg-sitenav { grid-column: 2; grid-row: 1; }
 }
 @media (max-width: 640px) {
-    body:has(.tm-body) .tg-header-inner:has(> .tg-sitenav) { grid-template-columns: 1fr; }
+    body:has(.tm-body) .tg-header-inner.has-sitenav { grid-template-columns: 1fr; }
     body:has(.tm-body) .tg-header-inner > .tm-header-right { justify-self: start; }
     body:has(.tm-body) .tg-header-inner > .tg-sitenav { grid-row: 3; }
 }
