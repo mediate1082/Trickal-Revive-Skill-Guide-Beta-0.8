@@ -296,6 +296,13 @@
     .tg-modal-nav.next { right: 8px; }
 }
 @media (max-width: 520px) { .tg-modal-nav { display: none; } }
+/* ⚠ 터치 기기 — 모달 뒤 흐림을 끈다 (리뷰 낮음 18). 전체 화면 backdrop-filter 는 뒤의 그리드 전체를
+   매 프레임 다시 흐리게 칠해 메모리가 작은 폰에서 무겁다 (base.css · cards.css 의 같은 미디어 쿼리와 같은 제보).
+   바탕(--overlay-bg)이 이미 검정 80% 라 흐림 없이도 뒤가 충분히 가라앉는다 — 더 짙게 하지 않았다.
+   상세 모달은 스킬 가이드·사도 추천이 같이 띄우므로 둘 다 싣는 이 파일에 둔다 */
+@media (hover: none) and (pointer: coarse) {
+    #modal-detail, .tg-modal-nav { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
 
 /* ── 디테일 헤더 ───────────────────────── */
 .tg-detail-header {

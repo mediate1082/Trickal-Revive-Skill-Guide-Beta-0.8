@@ -18,6 +18,10 @@
     animation: rainbowGradient 10s ease infinite;
     background-origin: border-box;
 }
+/* 화면 밖이면 멈춘다 — `data-reso-off` 는 sitenav.js 가 IntersectionObserver 로 단다 (세 페이지 공용).
+   ⚠ `background-position` 은 합성이 안 돼 안 보여도 매 프레임 스타일을 다시 계산한다 (리뷰 낮음 18) */
+.bg-resonance[data-reso-off] { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .bg-resonance { animation: none; } }
 
 /* 카드 안 성격·역할·배치 아이콘과 별의 그림자 (그리드 · 사도 추천 · 티어 메이커 카드 공용).
    ⚠ 예전엔 JS 가 인라인 style 로 넣어서 아래 터치 미디어 쿼리가 이길 수 없었다 (리뷰 심각 1).

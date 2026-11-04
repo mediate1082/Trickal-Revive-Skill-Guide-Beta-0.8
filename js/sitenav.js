@@ -156,3 +156,30 @@
         }, { timeout: 4000 }));
     });
 })();
+
+// ── 공명 카드 무지개 배경 — 화면 밖이면 멈추기 ──
+// `.bg-resonance`(cards.css)는 `background-position` 을 10초 주기로 끝없이 움직인다. 합성되지 않는 속성이라
+// **화면에 안 보여도** 매 프레임 스타일을 다시 계산한다 — 가만히 둔 3초에 200ms 넘게 (리뷰 낮음 18).
+// 화면 밖에 있는 동안 `data-reso-off` 를 달아 멈추고(cards.css), 들어오면 멈춘 자리에서 이어 간다.
+// ⚠ 세 페이지가 이 클래스를 쓴다 — 스킬 가이드 그리드 · 티어 메이커 · 사도 추천(카드·덱 타일).
+//   카드는 CSV 를 읽은 뒤·필터를 바꿀 때·탭을 처음 열 때 새로 생기므로 **생길 때마다** 지켜본다 (MutationObserver)
+// ⚠ transform 으로 옮기는 길은 안 골랐다 — 무지개를 깔 자리(::before/::after)를 엘다인 모서리 삼각형이
+//   이미 쓰고 있어, 요소를 하나 더 끼워야 하고 그러면 카드 짜임이 세 페이지에서 바뀐다
+(function () {
+    if (!('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(list => {
+        for (const e of list) if (e.target.isConnected) e.target.toggleAttribute('data-reso-off', !e.isIntersecting);
+    });
+    const each = (root, fn) => {
+        if (root.nodeType !== 1) return;
+        if (root.classList.contains('bg-resonance')) fn(root);
+        root.querySelectorAll('.bg-resonance').forEach(fn);
+    };
+    const watch = el => io.observe(el), drop = el => io.unobserve(el);
+    each(document.body, watch);
+    // ⚠ 지워진 카드(필터로 다시 그림)는 놓아준다. 화면 밖에서 지워지면 IO 가 아무 알림도 안 줘서
+    //   그대로 두면 떨어져 나간 카드가 통째로 붙잡혀 남는다
+    new MutationObserver(recs => {
+        for (const r of recs) { r.removedNodes.forEach(n => each(n, drop)); r.addedNodes.forEach(n => each(n, watch)); }
+    }).observe(document.body, { childList: true, subtree: true });
+})();
