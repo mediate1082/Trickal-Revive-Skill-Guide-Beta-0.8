@@ -213,7 +213,10 @@ function termify(html) {
 }
 function effectHTML(name, lv) {
     const r = EFF[name]; if (!r) return '<span class="ar-none">특별한 기능이 없지만 기본에 충실하다.</span>';
-    const vals = lvVals(r, lv).length ? lvVals(r, lv) : lvVals(r, 1);
+    /* ⚠ 그 레벨 값이 없으면 자리표는 `?` 로 남긴다. 예전엔 Lv.1 값으로 조용히 떨어져
+       Lv.12 에서도 Lv.1 숫자가 아무 표시 없이 나왔다.
+       자리표가 없는 고정 효과(`림의 낫` 등 7종)는 값을 안 읽으므로 무관하다 */
+    const vals = lvVals(r, lv);
     /* `4×{0}` 꼴은 곱한 값으로 (장난감 망원경) */
     const text = lines(r.effect_desc).map(l => esc(l)
         .replace(/(\d+(?:\.\d+)?)×\{(\d+)\}/g, (_, k, i) => vals[i] == null ? '?' : `\u0001${+(k * vals[i]).toFixed(2)}\u0002`)
@@ -290,6 +293,18 @@ function openModal(name) {
 function closeModal() { $('ar-dim').hidden = true; document.body.style.overflow = ''; lastFocus?.focus(); }
 $('ar-dim').onclick = e => { if (e.target.id === 'ar-dim') closeModal(); };
 document.addEventListener('keydown', e => {
+    /* Tab 은 모달 안에 가둔다 — 안 그러면 뒤 페이지(사도 모달 · 그리드)로 샌다 */
+    if (e.key === 'Tab' && !$('ar-dim').hidden) {
+        const list = [...$('ar-dim').querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])')]
+            .filter(el => el.getClientRects().length > 0);
+        e.stopImmediatePropagation();
+        if (!list.length) { e.preventDefault(); return; }
+        const first = list[0], last = list[list.length - 1], a = document.activeElement;
+        if (!$('ar-dim').contains(a)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+        else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
+        else if (e.shiftKey && a === first) { e.preventDefault(); last.focus(); }
+        return;
+    }
     if (e.key !== 'Escape') return;
     if (!$('ar-dim').hidden) { e.stopImmediatePropagation(); closeModal(); } else $('arSort')?._close?.();
 });

@@ -9,17 +9,6 @@ window.activeAsideFilters = {
    열 때 적용값을 복사하고, 고르기는 여기에만, `적용` 에서만 activeAsideFilters 로 옮긴다. 닫으면 버린다 */
 let pendingAsideFilters = { targets: [], effects: [] };
 const _copyAside = f => ({ targets: [...f.targets], effects: [...f.effects] });
-// [컬러 가이드]
-const COLORS = {
-    low: '#22C55E',      // 저학년 테마
-    high: '#16A34A',     // 고학년 테마 (PvE)
-    pvp: '#A361FF',      // 고학년 테마 (PvP)
-    normal: '#339af0',   // 일반공격 테마
-    sliderBg: '#F1F5F9', // 슬라이더 배경 (옅은 회색)
-    badge: '#333333',    // 레벨 뱃지 배경
-    inset: 'rgba(0, 0, 0, 0.08)', // 음각 박스 깊이감
-    textMain: '#020817'
-};
 
 /* ══════════════════════════════════════════════════════════════════════════
    용어 사전 — 설명문 꼬리의 "용어 : 설명" 블록을 잘라내고,
@@ -328,14 +317,6 @@ function hideTermTip() {
     window.addEventListener('resize', () => { if (_tipAnchor) hideTermTip(); });
 })();
 
-// [추가] 색상 판별 함수 (파일 어디서든 접근 가능하도록 밖으로 추출)
-const getGradeColor = (grade) => {
-    if (!grade || grade === 'X') return '#94a3b8';
-    if (grade.includes('10')) return '#22C55E';
-    if (grade.includes('-')) return '#EF4444';
-    return '#F59E0B';
-};
-
 // [추가] 뱃지 생성 함수 (파일 어디서든 접근 가능하도록 밖으로 추출)
 const makeGradeBadge = (grade) => {
     if (!grade || grade.trim() === "" || grade === 'X') return '';
@@ -428,7 +409,7 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
                 <div class="tg-skill-card-titles">
                     <span class="tg-skill-card-type-label">${typeLabel}</span>
                     <div class="tg-skill-card-name-row">
-                        <span class="tg-skill-card-name">${skillName}</span>
+                        <span class="tg-skill-card-name">${_escAttr(skillName)}</span>
                         ${gradeBadgeHTML}
                     </div>
                 </div>
@@ -471,13 +452,13 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
 
         return `
         <div class="tg-effect-item" data-kind="${isDebuff ? 'debuff' : 'buff'}"
-             data-cond="${conds[index] || ''}" data-target="${targets[index] || ''}">
+             data-cond="${_escAttr(conds[index] || '')}" data-target="${_escAttr(targets[index] || '')}">
             <div class="tg-effect-item-icon"><img src="${iconSrc}" onerror="this.onerror=null;this.src='./assets/icons/state/${defaultIcon}'"></div>
             <div class="tg-effect-item-body">
                 <div class="tg-effect-item-head">
-                    <strong class="tg-effect-item-name">${raw}</strong>
-                    ${conds[index] ? `<span class="tg-effect-item-chip" data-kind="cond">${conds[index]}</span>` : ''}
-                    ${targets[index] ? `<span class="tg-effect-item-chip" data-kind="target">${targets[index]}</span>` : ''}
+                    <strong class="tg-effect-item-name">${_escAttr(raw)}</strong>
+                    ${conds[index] ? `<span class="tg-effect-item-chip" data-kind="cond">${_escAttr(conds[index])}</span>` : ''}
+                    ${targets[index] ? `<span class="tg-effect-item-chip" data-kind="target">${_escAttr(targets[index])}</span>` : ''}
                 </div>
                 <div class="tg-effect-item-desc">${immDesc || (info ? info.description : "상세 정보가 없습니다.")}</div>
                 ${renderBattleItems(info)}
@@ -548,7 +529,7 @@ function immunityDescHTML(immCtx, raw, pureName, ctx) {
         const d = info || { name: t, kind: 'debuff', desc: '', icon: '' };
         return `<button type="button" class="tg-term" data-kind="${d.kind}"`
              + ` data-name="${_escAttr(d.name)}" data-desc="${_escAttr(d.desc)}"`
-             + ` data-icon="${_escAttr(d.icon)}" aria-label="${_escAttr(d.name)} 설명 보기">${t}</button>`;
+             + ` data-icon="${_escAttr(d.icon)}" aria-label="${_escAttr(d.name)} 설명 보기">${_escAttr(t)}</button>`;
     });
 
     return terms.join(', ') + '에 면역이 된다.';
@@ -582,8 +563,8 @@ function renderBattleItems(info) {
             <img class="tg-bi-ic" src="./assets/icons/active_items/${b.icon || b.item_name + '.webp'}"
                  onerror="this.style.display='none'">
             <div class="tg-bi-txt">
-                <span class="tg-bi-nm">${b.item_name}</span>
-                ${b.scope ? `<em class="tg-bi-sc" data-scope="${b.scope}">${b.scope}</em>` : ''}
+                <span class="tg-bi-nm">${_escAttr(b.item_name)}</span>
+                ${b.scope ? `<em class="tg-bi-sc" data-scope="${_escAttr(b.scope)}">${_escAttr(b.scope)}</em>` : ''}
                 <div class="tg-bi-ef">${(b.effect || '').replace(/\\n/g, '<br>').replace(/\n/g, '<br>')}</div>
             </div>
         </div>`).join('');
@@ -630,7 +611,7 @@ const renderAsideTabContent = (char, asideData) => {
                         </div>
                         <div class="tg-skill-card-titles">
                             <span class="tg-skill-card-type-label">어사이드 ★${i}</span>
-                            <span class="tg-skill-card-name">${name}</span>
+                            <span class="tg-skill-card-name">${_escAttr(name)}</span>
                         </div>
                     </div>
                 </div>
@@ -684,7 +665,7 @@ const HIGH_USE_FOOT = '※ PvE 콘텐츠 기준 · 줘팸터에서는 고학년�
 let _growthData = null;
 function loadGrowthData() {
     if (_growthData) return _growthData;
-    const v = window.APP_VERSION || '', cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
+    const v = window.APP_VERSION || '', cfg = { header: true, skipEmptyLines: true, transformHeader: h => h.trim() };
     const get = f => fetch(`./data/${f}.csv?v=${v}`).then(r => r.text()).then(t => Papa.parse(t, cfg).data);
     _growthData = Promise.all(['Recommend_Sections', 'Recommend_Chara', 'Recommend_Decks', 'Recommend_Deck_Members', 'artifact_DB', 'Artifact_Tags', 'Artifact_Tag_Rank'].map(get))
         .then(([secs, chara, decks, members, arts, tags, ranks]) => {
@@ -891,7 +872,7 @@ function renderAsideSkillBox(char, asideData) {
                           onerror="this.remove()">` : ''}
             <div class="tg-aside-skill-titles">
                 <span class="tg-aside-skill-label">어사이드 스킬</span>
-                <span class="tg-aside-skill-name">${asideData.aside_3_skill_name}</span>
+                <span class="tg-aside-skill-name">${_escAttr(asideData.aside_3_skill_name)}</span>
             </div>
         </div>
         ${desc ? `<div class="tg-aside-desc" data-src="aside_DB.csv|${char.name}|aside_3_skill_desc">${
@@ -1071,7 +1052,7 @@ export function openDetailModal(char, dataContext) {
     /* 육성 포인트 — 어사이드는 바로 그리고, 추천 콘텐츠 · 추천 아티팩트는 사도 추천 표가 있어야
        해서 `fillGrowthExtras` 가 나중에 채운다 (스킬 가이드 페이지는 그 표를 처음에 안 받는다) */
     function buildGrowthBody(c) {
-        const need = ASIDE_NEED[c.aside_need];
+        const need = ASIDE_NEED[(c.aside_need || '').trim()];
         const aside = (need || c.aside_note) ? `<div class="tg-usage-sub">
             <div class="tg-usage-head"><img src="./assets/icons/aside/aside_icons/어사이드_${c.name}_아이콘.webp" alt="" onerror="this.remove()"><b>어사이드</b>
                 ${need ? `<span class="tg-usage-pill ${need[1]}">A2 ${need[0]}</span>` : ''}</div>
@@ -1091,7 +1072,7 @@ export function openDetailModal(char, dataContext) {
     <div class="tg-recommend-box" data-grade="${gradeToAttr(char.high_grade)}">
         <div class="tg-recommend-box-title">강화 시 변경점</div>
         <div class="tg-recommend-box-body">${formatDescWithBullets(char.high_desc)}</div>
-    </div>${usageVerdictBox('고학년 운용', HIGH_USE[char.high_use], char.high_note, HIGH_USE_FOOT)}`;
+    </div>${usageVerdictBox('고학년 운용', HIGH_USE[(char.high_use || '').trim()], char.high_note, HIGH_USE_FOOT)}`;
 
     // [Tab 2 준비]
     const makeTicks = (max) => Array.from({length: max}, (_, i) => {
@@ -1182,7 +1163,7 @@ export function openDetailModal(char, dataContext) {
     const eldyneName = char.Eldyne?.toString().trim();
     const iconEldyne = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L13.5 10.5 L21 12 L13.5 13.5 L12 21 L10.5 13.5 L3 12 L10.5 10.5 Z"/></svg>`;
     const eldyneHTML = eldyneName
-        ? `<span class="tg-detail-eldyne" data-eldyne="${eldyneName}"><span class="tg-detail-eldyne-icon">${iconEldyne}</span>${eldyneName}</span>`
+        ? `<span class="tg-detail-eldyne" data-eldyne="${_escAttr(eldyneName)}"><span class="tg-detail-eldyne-icon">${iconEldyne}</span>${_escAttr(eldyneName)}</span>`
         : '';
 
     const attrIcons = [
@@ -1196,14 +1177,14 @@ export function openDetailModal(char, dataContext) {
     const attrsHTML = attrIcons.filter(a => String(a.label ?? '').trim()).map(a => `
         <span class="tg-detail-attr">
             <img class="tg-detail-attr-icon" src="${a.path}" onerror="this.style.display='none'" alt="">
-            <span>${a.label}</span>
+            <span>${_escAttr(a.label)}</span>
         </span>`).join('');
 
     /* 세부 역할 — 인게임 분류 칩과 같은 무테 칩, 색만 다르다 (게임이 정한 분류 ↔ 우리가 붙인 해석).
        앞의 `세부 역할` 표지는 뺐다 — 0.66rem 이라 안 읽혔고, 칩 색만으로 이미 갈린다 */
     const roles = (char.detail_role || '').split(',').map(s => s.trim()).filter(Boolean);
     const rolesHTML = roles.length
-        ? `<div class="tg-detail-roles" aria-label="세부 역할">${roles.map(t => `<span class="tg-detail-role">${t}</span>`).join('')}</div>`
+        ? `<div class="tg-detail-roles" aria-label="세부 역할">${roles.map(t => `<span class="tg-detail-role">${_escAttr(t)}</span>`).join('')}</div>`
         : '';
 
     const iconX = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>`;
@@ -1212,17 +1193,23 @@ export function openDetailModal(char, dataContext) {
 
     // 4. 모달에 HTML 주입
     const overlay = document.getElementById('modal-detail');
+    const wasOpen = !overlay.classList.contains('hidden');
+    /* 사도를 넘기면 안의 버튼이 통째로 새로 그려져 포커스가 body 로 떨어진다 —
+       ‹ › 버튼에 있었으면 새 버튼으로, 아니면 닫기 버튼으로 다시 넣는다 */
+    const navFocus = wasOpen && document.activeElement?.closest?.('#modal-detail .tg-modal-nav');
+    const refocusSel = navFocus ? (navFocus.classList.contains('prev') ? '.tg-modal-nav.prev' : '.tg-modal-nav.next') : null;
+    if (!wasOpen) rememberOpener(overlay);
     overlay.innerHTML = `
         <button class="tg-modal-nav prev" onclick="window.navigateApostle(-1)" aria-label="이전 사도">${iconChevL}</button>
         <button class="tg-modal-nav next" onclick="window.navigateApostle(1)" aria-label="다음 사도">${iconChevR}</button>
         <div class="tg-modal-card">
             <div class="tg-detail-header">
                 <div class="tg-detail-header-row">
-                    <img class="tg-detail-portrait" data-db="${char.name}" src="./assets/images/${char.name}.webp" onerror="this.onerror=null;this.removeAttribute('src')" alt="${char.name}">
+                    <img class="tg-detail-portrait" data-db="${_escAttr(char.name)}" src="./assets/images/${char.name}.webp" onerror="this.onerror=null;this.removeAttribute('src')" alt="${_escAttr(char.name)}">
                     <div class="tg-detail-meta">
-                        <span class="tg-detail-eyebrow">${char.title || 'APOSTLE DETAIL'}</span>
+                        <span class="tg-detail-eyebrow">${_escAttr(char.title || 'APOSTLE DETAIL')}</span>
                         <div class="tg-detail-name-row">
-                            <h2 class="tg-detail-name">${char.name}</h2>
+                            <h2 class="tg-detail-name">${_escAttr(char.name)}</h2>
                             <div class="tg-detail-tier-row">
                                 <span class="tg-detail-tier" data-tier="${tierDisplay}">${tierDisplay}</span>
                                 ${eldyneHTML}
@@ -1292,6 +1279,7 @@ export function openDetailModal(char, dataContext) {
     overlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open');
+    focusIntoModal(overlay, refocusSel);
 
     // 세그멘티드 인디케이터 초기 위치 + 사도 이동 슬라이드-인 애니메이션
     requestAnimationFrame(() => {
@@ -1345,13 +1333,17 @@ export function updateHighSkillLv(lv, name, highSkillDB) {
     const info = highSkillDB.find(s => s['chara_name']?.trim() === name.trim());
     if (!info) return;
     const isPvE = currentSkillMode === 'PvE';
-    const rawVal = info[`Lv.${lv}(${isPvE ? 'PvE' : 'PvP'})`];
-    if (rawVal) {
-        const statBox = document.getElementById('high-skill-stat-text');
-        const badge = document.getElementById('high-badge');
-        if (statBox) statBox.innerHTML = parseSkillLevelText(info['high_skill_stat_template'], rawVal);
-        if (badge) badge.innerText = `Lv.${lv}`;
-    }
+    const mode = isPvE ? 'PvE' : 'PvP';
+    const rawVal = info[`Lv.${lv}(${mode})`];
+    const statBox = document.getElementById('high-skill-stat-text');
+    const badge = document.getElementById('high-badge');
+    /* ⚠ 그 모드 값이 비었으면 **비었다고 밝힌다.** 예전엔 `if (rawVal)` 로 그냥 넘어가서
+       PvP 로 바꿔도 PvE 수치가 PvP 처럼 남고 뱃지까지 멈췄다 (키샤 — PvP 수치가 비어 있다).
+       PvP 버튼은 막지 않는다 — 쿨다운 등 그 모드의 다른 정보는 있을 수 있다 */
+    if (statBox) statBox.innerHTML = String(rawVal ?? '').trim()
+        ? parseSkillLevelText(info['high_skill_stat_template'], rawVal)
+        : `<span class="tg-skill-stat-missing">${mode} 수치가 아직 없습니다</span>`;
+    if (badge) badge.innerText = `Lv.${lv}`;
     const slider = document.getElementById('high-skill-slider');
     if (slider) {
         const max = parseInt(slider.max);
@@ -1425,9 +1417,12 @@ const ASIDE_EFFECTS = [
 // [2] 모달 열기
 window.openAsideFilter = () => {
     pendingAsideFilters = _copyAside(window.activeAsideFilters); // 현재 적용 상태를 pending으로 복사
-    document.getElementById('modal-aside-filter').classList.remove('hidden');
+    const modal = document.getElementById('modal-aside-filter');
+    rememberOpener(modal);
+    modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open');
+    focusIntoModal(modal);
     window.switchAsideFilterTab(0);
     updateSegmentedIndicator('aside-segmented');
     const scroll = document.getElementById('aside-filter-scroll');
@@ -1512,14 +1507,6 @@ function refreshAsideModalCount() {
             + pendingAsideFilters.effects.filter(v => !v.includes('무관')).length;
     const el = document.getElementById('modal-aside-count');
     if (el) { el.hidden = n === 0; if (n > 0) el.textContent = `${n}개`; }
-}
-
-// [공통] 필터 체크박스 아이템 렌더링 — 두 필터 모달이 공유
-export function renderFilterCheckbox(value, isChecked, onchangeAttr, prefixHTML = '') {
-    return `<label class="filter-label">
-        <input type="checkbox" value="${value}" ${isChecked ? 'checked' : ''} onchange="${onchangeAttr}">
-        ${prefixHTML}<span style="margin-left: 4px;">${value}</span>
-    </label>`;
 }
 
 // [4] 옵션 렌더링
@@ -1645,6 +1632,7 @@ window.closeDetailModal = () => {
         document.body.classList.remove('modal-open');
         document.querySelectorAll('.tg-quickfilter-chip').forEach(c => c.classList.remove('is-active'));
         document.querySelectorAll('.tg-effect-item.is-hidden').forEach(i => i.classList.remove('is-hidden'));
+        restoreFocus(overlay, window.currentApostleName);
     }, 200);
 };
 
@@ -1658,6 +1646,90 @@ window.closeDetailModal = () => {
      목표(`_navTarget`)만 한 칸씩 더 옮기고, 타이머가 끝날 때 **마지막 목표를 한 번만** 연다.
      예전엔 두 번째 입력도 아직 안 바뀐 `currentApostleName` 에서 계산해 같은 사도를 또 열었다.
    ⚠ 닫히는 중(`is-closing`)·아티팩트 모달(`#ar-dim`)이 위에 떠 있을 때는 이동을 안 받는다. */
+/* ── 모달 포커스 — 열면 안으로, 닫으면 연 자리로 (상세 모달 · 필터 모달 셋 · 도움말) ─────
+   키보드만 쓰는 사람이 모달을 열어도 포커스가 뒤 페이지(BODY)에 남아 있어
+   Tab 이 뒤의 카드를 돌았다. 아티팩트 모달은 artifact.js 가 따로 한다 (그쪽이 먼저 있었다).
+
+   ⚠ 편집기(`window.__editorMode`)에서는 아무것도 안 한다. 편집기는 입력할 때마다
+     모달을 다시 그리는데, 그때 닫기 버튼으로 포커스를 끌어오면 치던 칸에서 손이 떨어진다. */
+const _openers = new Map();   // 모달 id → 열기 전 포커스가 있던 요소
+
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+function focusables(root) {
+    return [...root.querySelectorAll(FOCUSABLE)].filter(el => el.getClientRects().length > 0);
+}
+
+export function rememberOpener(modal) {
+    if (!modal || window.__editorMode) return;
+    const a = document.activeElement;
+    if (a && a !== document.body && !modal.contains(a)) _openers.set(modal.id, a);
+    else _openers.delete(modal.id);
+}
+export function focusIntoModal(modal, sel) {
+    if (!modal || window.__editorMode) return;
+    if (modal.contains(document.activeElement)) return;
+    const t = (sel && modal.querySelector(sel)) || modal.querySelector('.tg-modal-close') || focusables(modal)[0];
+    t?.focus({ preventScroll: true });
+}
+/* 상세 모달은 `apostle` 을 넘긴다 — ←/→ 로 넘겼으면 연 카드가 아니라 **마지막으로 본 사도의 카드**로
+   돌아간다. 연 카드와 같은 묶음(사도 추천의 분류 · 탭)에서 먼저 찾고, 없으면 연 카드로 */
+export function restoreFocus(modal, apostle) {
+    if (!modal || window.__editorMode) return;
+    const opener = _openers.get(modal.id);
+    _openers.delete(modal.id);
+    let t = opener;
+    if (apostle && opener?.dataset?.apostle && opener.dataset.apostle !== apostle) {
+        const sel = `[data-apostle="${CSS.escape(apostle)}"]`;
+        const scopes = [opener.closest('.rc-sec'), opener.closest('.rc-panel'), document].filter(Boolean);
+        for (const sc of scopes) {
+            const hit = [...sc.querySelectorAll(sel)].find(el => !el.closest('[data-clone]') && el.getClientRects().length > 0);
+            if (hit) { t = hit; break; }
+        }
+    }
+    if (t && t.isConnected) t.focus();
+}
+window.tgRememberOpener = rememberOpener;
+window.tgFocusIntoModal = focusIntoModal;
+window.tgRestoreFocus = restoreFocus;
+
+/* 지금 맨 위에 떠 있는 모달 (아티팩트 모달은 빼고 — 그쪽은 artifact.js 가 받는다) */
+const MODAL_IDS = ['modal-info', 'modal-filter', 'modal-aside-filter', 'modal-attr-filter', 'modal-detail'];
+function topModal() {
+    for (const id of MODAL_IDS) {
+        const m = document.getElementById(id);
+        if (m && !m.classList.contains('hidden')) return m;
+    }
+    return null;
+}
+
+/* 숫자키 1~4 = 모달 탭 전환, Tab = 모달 안에 가두기.
+   예전엔 Tab 을 "다음 탭" 으로 가로채 닫기 버튼·슬라이더·용어 버튼에 영영 못 갔다 (main.js).
+   ←/→ 는 사도 이동이 쓰고 있어 탭 전환은 숫자키로 옮겼다.
+   ⚠ 글자를 치는 칸에서는 숫자를 가로채지 않는다 — 필터 검색창에 `2호` 를 칠 수 있어야 한다 */
+document.addEventListener('keydown', (e) => {
+    if (window.__editorMode || artifactOnTop()) return;
+    const m = topModal();
+    if (!m) return;
+    if (e.key === 'Tab') {
+        const list = focusables(m);
+        if (!list.length) { e.preventDefault(); return; }
+        const first = list[0], last = list[list.length - 1];
+        const a = document.activeElement;
+        if (!m.contains(a)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+        else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
+        else if (e.shiftKey && a === first) { e.preventDefault(); last.focus(); }
+        return;
+    }
+    if (e.ctrlKey || e.altKey || e.metaKey || !/^[1-9]$/.test(e.key)) return;
+    if (isTextField(e.target)) return;
+    if (m.id === 'modal-detail' && !detailActive()) return;
+    const btns = [...m.querySelectorAll('.tg-segmented .tg-segmented-btn')];
+    const btn = btns[+e.key - 1];
+    if (!btn) return;
+    e.preventDefault();
+    btn.click();
+});
+
 let _closeTimer = 0;
 let _navTimer = 0;
 let _navTarget = null;   // 넘기는 중일 때 지금까지 쌓인 목표 사도 이름
@@ -1714,7 +1786,7 @@ function isTextField(t) {
      `document` 이지만 이 모듈을 import 한 **뒤에** 단다)보다 먼저 돌아,
      처리한 키는 `stopImmediatePropagation` 으로 끊는다.
    ⚠ 아티팩트 모달이 떠 있으면 아무것도 안 한다 — Esc 는 artifact.js 가 받고, ←/→ 는 버린다.
-   Tab(탭 전환)은 여기서 다루지 않는다 — main.js 에 그대로 있다. */
+   숫자키(탭 전환)와 Tab(포커스 가두기)은 바로 아래 처리가 받는다. */
 document.addEventListener('keydown', (e) => {
     /* 편집기에서 이 모달은 편집 대상 시뮬레이터다 — 키는 편집기(서랍 Esc 등)가 가져간다 */
     if (window.__editorMode) return;
@@ -1796,6 +1868,7 @@ window.closeAsideFilter = () => {
         modal.classList.add('hidden');
         document.body.style.overflow = '';
         document.body.classList.remove('modal-open');
+        restoreFocus(modal);
     }
 };
 

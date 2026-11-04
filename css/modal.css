@@ -13,10 +13,6 @@
     background: var(--modal-card-bg); width: 92%; max-width: 500px; padding: 0; border-radius: 20px;
     max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; position: relative;
 }
-.modal-fixed-header {
-    padding: 20px 20px 0 20px; background: var(--modal-card-bg); z-index: 10; flex-shrink: 0;
-    border-bottom: 1px solid #eee; border-top-left-radius: 20px; border-top-right-radius: 20px;
-}
 #detail-body-scroll {
     flex: 1 1 auto; background: #f1f3f5; padding: 20px;
     overflow-y: auto; scrollbar-gutter: stable;
@@ -28,18 +24,6 @@
 #detail-body-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; border: 2px solid #f1f3f5; }
 #detail-body-scroll::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
 
-.modal-close-x {
-    position: absolute; top: 15px; right: 15px;
-    width: 32px; height: 32px; background: #f1f3f5; border: none; border-radius: 50%;
-    font-size: 22px; color: #666; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; z-index: 100; transition: all 0.2s;
-}
-.modal-close-x:hover { background: #e2e8f0; color: #000; }
-
-.modal-tabs { display: flex; position: relative !important; border-bottom: 2px solid #eee; margin-bottom: 20px; }
-.tab-btn { flex: 1; padding: 12px; border: none; background: none; cursor: pointer; font-weight: bold; color: #888; font-family: inherit; z-index: 5; transition: color 0.3s ease; }
-.tab-btn.active { color: var(--text-dark); border-bottom: none !important; }
-.tab-indicator { position: absolute; bottom: -2px; left: 0; width: 25%; height: 3px; background-color: var(--accent-green) !important; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: 10; display: block !important; }
 
 /* ════════════════════════════════════
    TG MODAL (부가 효과 & 어사이드 필터)
@@ -436,7 +420,6 @@
     display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
     padding: 2px 0 10px; border-bottom: 1px solid var(--border-soft); flex-shrink: 0;
 }
-.tg-quickfilters-label { font-size: 0.72rem; font-weight: 800; color: var(--text-muted); letter-spacing: 0.04em; }
 .tg-quickfilter-chip {
     appearance: none; display: inline-flex; align-items: center;
     padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--border-soft);
@@ -523,6 +506,8 @@
     border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow);
 }
 .tg-skill-stat-box b { color: var(--card-accent); font-size: 1.05rem; font-weight: 800; }
+/* 그 모드(PvP 등) 수치가 비었을 때 — `updateHighSkillLv` */
+.tg-skill-stat-missing { color: var(--text-muted); font-weight: 800; }
 
 /* ── PvE/PvP 모드 스위치 ─────────────── */
 .tg-mode-switch-mini {

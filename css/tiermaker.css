@@ -7,38 +7,12 @@
    ═══════════════════════════════════════════════════════ */
 
 /* 티어 메이커 내 버튼/인풋 폰트 일괄 적용 */
-.tg-tier-btn, .tm-hbtn, .tm-row-ctrl button,
+.tm-hbtn, .tm-row-ctrl button,
 .tm-add-tier-btn, .tm-popup-btn, .tm-popup-input,
 .tm-pool-search, .tm-lbl, .tm-pool-group-hdr,
 .tm-popup-title, .tm-pool-title {
     font-family: 'OneMobilePop', sans-serif;
 }
-
-/* ── 헤더 버튼 ── */
-.tg-tier-btn {
-    display: flex; align-items: center; justify-content: center; gap: 0;
-    padding: 0 9.5px; height: 36px; border-radius: 18px;
-    font-size: 0.82rem; font-weight: 600; cursor: pointer;
-    border: 1.5px solid var(--border-soft);
-    background: transparent; color: var(--text-muted);
-    overflow: hidden; white-space: nowrap;
-    transition: border-color 0.15s, color 0.15s, background 0.15s, padding 0.25s ease;
-}
-.tg-tier-btn:hover {
-    background: var(--accent-soft); border-color: var(--accent-green);
-    color: var(--text-dark); padding: 0 13px 0 9.5px;
-}
-/* a 태그로 사용할 때 기본 링크 스타일 제거 */
-a.tg-tier-btn { text-decoration: none; }
-
-.tm-btn-text {
-    max-width: 0; overflow: hidden;
-    opacity: 0; white-space: nowrap; margin-left: 0;
-    transition: max-width 0.28s ease, opacity 0.18s 0.06s ease, margin-left 0.28s ease;
-}
-.tg-tier-btn:hover .tm-btn-text { max-width: 80px; opacity: 1; margin-left: 5px; }
-[data-theme="dark"] .tg-tier-btn { border-color: #383838; color: #FAFAFA; }
-[data-theme="dark"] .tg-tier-btn:hover { background: #2e2e2e; border-color: #555; color: #FAFAFA; }
 
 /* ── 모달 헤더 ── */
 .tm-header {
@@ -49,11 +23,6 @@ a.tg-tier-btn { text-decoration: none; }
     border-bottom: 1.5px solid var(--border-soft);
     box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
-.tm-header-left {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 0.95rem; font-weight: 700; color: #2D3748;
-}
-[data-theme="dark"] .tm-header-left { color: #FAFAFA; }
 .tm-header-right { display: flex; align-items: center; gap: 8px; }
 
 .tm-hbtn {
@@ -73,11 +42,6 @@ a.tg-tier-btn { text-decoration: none; }
     border-color: var(--border-soft);
 }
 .tm-hbtn-reset:hover { background: #fff7ed; border-color: #fdba74; color: #ea580c; }
-.tm-hbtn-close {
-    background: transparent; color: var(--text-muted);
-    border-color: var(--border-soft);
-}
-.tm-hbtn-close:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
 
 [data-theme="dark"] .tm-hbtn-export {
     background: #1a2e1a; color: #86efac; border-color: #22c55e;
@@ -86,32 +50,6 @@ a.tg-tier-btn { text-decoration: none; }
     background: transparent; color: #909090; border-color: #383838;
 }
 [data-theme="dark"] .tm-hbtn-reset:hover { background: #2a1a0a; border-color: #f97316; color: #f97316; }
-[data-theme="dark"] .tm-hbtn-close {
-    background: transparent; color: #909090; border-color: #383838;
-}
-[data-theme="dark"] .tm-hbtn-close:hover { background: #3a1a1a; border-color: #f87171; color: #f87171; }
-
-/* 테마 토글 아이콘 CSS 제어 */
-.tm-ti-dark { display: none; }
-.tm-ti-light { display: block; }
-[data-theme="dark"] .tm-ti-dark  { display: block; }
-[data-theme="dark"] .tm-ti-light { display: none;  }
-.tm-hbtn-theme { width: 34px; padding: 0; justify-content: center; border-color: var(--border-soft); color: var(--text-muted); }
-.tm-hbtn-theme:hover { background: var(--accent-soft); border-color: var(--accent-green); color: var(--text-dark); }
-[data-theme="dark"] .tm-hbtn-theme { border-color: #383838; color: #FAFAFA; }
-[data-theme="dark"] .tm-hbtn-theme:hover { background: #2e2e2e; border-color: #555; }
-
-/* ── 티어 메이커 페이지 뒤로가기 버튼 ── */
-.tm-hbtn-back {
-    width: 30px; height: 30px; padding: 0; justify-content: center; border-radius: 8px;
-    background: none; border: 1px solid transparent;
-    color: var(--text-muted); text-decoration: none; cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-.tm-hbtn-back:hover {
-    background: var(--modal-card-bg); border-color: var(--border-soft);
-    color: var(--text-dark);
-}
 
 /* 드래그 중 + 추가 고스트 버튼 숨김 */
 body.tm-is-dragging .tm-add-slot { display: none; }
@@ -420,6 +358,10 @@ body.tm-is-dragging .tm-add-slot { display: none; }
     box-sizing: border-box;
 }
 .tm-add-psearch:focus { border-color: var(--accent-green); }
+/* 터치 기기에서 입력칸 포커스 때 iOS 가 화면을 키우지 않게 16px (base.css 의 같은 절 참조) */
+@media (pointer: coarse) {
+    .tm-pool-search, .tm-add-psearch, .tm-popup-input, .tm-lbl-input { font-size: 16px; }
+}
 [data-theme="dark"] .tm-add-psearch {
     background: #1a1a1a;
     color: #FAFAFA;

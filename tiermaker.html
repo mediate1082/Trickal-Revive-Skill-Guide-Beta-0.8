@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>티어 메이커 — 트릭컬 사도 가이드</title>
     <link rel="icon" href="assets/icons/common_icons/NerIcon.webp" type="image/webp">
     <!-- ⚠ `version.js` 에는 `?v=APP_VERSION` 을 못 쓴다 — APP_VERSION 을 **정의하는** 파일이다.
@@ -126,7 +126,7 @@
     const v = APP_VERSION;
     const res = await fetch('./data/DB.csv?v=' + v);
     const text = await res.text();
-    window._tmDB = Papa.parse(text, { header: true, skipEmptyLines: true, trimHeaders: true }).data;
+    window._tmDB = Papa.parse(text, { header: true, skipEmptyLines: true, transformHeader: h => h.trim() }).data;
     window.dispatchEvent(new Event('tm-db-loaded'));
 })();
 </script>

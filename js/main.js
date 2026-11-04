@@ -1,4 +1,4 @@
-const { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter, renderFilterCheckbox, updateSegmentedIndicator }
+const { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter, updateSegmentedIndicator }
     = await import('./ui.js?v=' + (window.APP_VERSION || ''));
 
 /* 테마 로직은 theme.js 로 분리됨 (window.toggleTheme) */
@@ -107,7 +107,7 @@ function makeStarHTML(rarity) {
     
     // 아이콘 크기 살짝 증대 (16px -> 19px) 및 쫀득하게 겹치기
     for (let i = 0; i < starCount; i++) {
-        stars += `<img src="${starSrc}" style="width: 19px; height: 19px; margin: 0 -3px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));">`;
+        stars += `<img class="tg-card-star" src="${starSrc}" style="width: 19px; height: 19px; margin: 0 -3px;">`;
     }
     // 별 영역 y축 위치 미세 조정 (margin-top)
     return `<div style="display: flex; justify-content: center; align-items: center; margin-top: -3px; height: 20px; z-index: 3; position: relative;">${stars}</div>`;
@@ -145,7 +145,7 @@ async function loadExternalData() {
             fetch(`./data/Usage_DB.csv?v=${v}`).then(res => res.text()),
         ]);
 
-        const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
+        const cfg = { header: true, skipEmptyLines: true, transformHeader: h => h.trim() };
         db = Papa.parse(res1, cfg).data;
         mergeUsage(db, Papa.parse(res14, cfg).data);
         debuffDB = Papa.parse(res2, cfg).data;
@@ -369,15 +369,20 @@ window.toggleAttrCategory = function (key) {
 window.openAttrFilter = function () {
     ATTR_CATS.forEach(c => pendingAttrs[c.key] = new Set(hiddenAttrs[c.key]));
     renderAttrFilter();
-    document.getElementById('modal-attr-filter').classList.remove('hidden');
+    const modal = document.getElementById('modal-attr-filter');
+    window.tgRememberOpener?.(modal);
+    modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open');
+    window.tgFocusIntoModal?.(modal);
     initScrollFade(document.getElementById('attr-filter-scroll'));
 };
 window.closeAttrFilter = function () {
-    document.getElementById('modal-attr-filter').classList.add('hidden');
+    const modal = document.getElementById('modal-attr-filter');
+    modal.classList.add('hidden');
     document.body.style.overflow = '';
     document.body.classList.remove('modal-open');
+    window.tgRestoreFocus?.(modal);
 };
 window.applyAttrFilter = function () {
     ATTR_CATS.forEach(c => hiddenAttrs[c.key] = new Set(pendingAttrs[c.key]));
@@ -517,7 +522,7 @@ function updateFilterTags() {
     function makeChip(text, tgClass, onRemove) {
         const chip = document.createElement('div');
         chip.className = 'tg-chip' + (tgClass ? ' ' + tgClass : '');
-        chip.innerHTML = `<span>${text}</span><span class="tg-x">✕</span>`;
+        chip.innerHTML = `<span>${escapeHtml(text)}</span><span class="tg-x">✕</span>`;   // 칩 글은 전부 평문 — 검색어가 그대로 HTML 이 되면 안 된다
         chip.querySelector('.tg-x').onclick = (e) => { e.stopPropagation(); onRemove(); };
         chips.push(chip);
     }
@@ -992,12 +997,6 @@ function refreshFilterList() {
         })
         .join('');
 }
-function getGradeColor(grade) {
-    if (!grade || grade === 'X' || grade === '?') return '#94a3b8';
-    if (grade.includes('10')) return '#22C55E'; // 기존 O (~Lv.10+)
-    if (grade.includes('-')) return '#EF4444';  // 기존 X (~Lv.7-)
-    return '#F59E0B';                           // 기존 △ (~Lv.7+)
-}
 
 async function displayCards(data, id, append = false) {
     const container = document.getElementById(id); 
@@ -1024,11 +1023,18 @@ async function displayCards(data, id, append = false) {
                     alt="엘다인" data-tooltip="이 별은 이 사도가 엘다인임을 의미합니다. 엘다인은 일반 사도들에 비해 강력한 성능을 가지고 있으며, 픽업과 모집권에서 등장 확률이 낮습니다.">`
             : '';
         
-        card.onclick = () => {
+        /* 키보드로도 연다 — 사도 추천의 `buildCard` 와 같은 꼴 (tabindex · role · Enter/Space) */
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `${char.name} 상세 정보`);
+        card.dataset.apostle = char.name;   // 모달을 닫을 때 마지막으로 본 사도의 카드로 포커스를 돌려준다 (ui.js restoreFocus)
+        const openCard = () => {
             if (typeof window.openDetailModal === 'function') {
                 window.openDetailModal(char, activeContext);
             }
         };
+        card.onclick = openCard;
+        card.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCard(); } };
 
         // 2. [상단 테두리 설정] 초상화 영역에만 성격 색상 테두리 부여
         const topStyle = `
@@ -1042,13 +1048,13 @@ async function displayCards(data, id, append = false) {
             <div class="${topBgClass}" style="${topStyle}">
                 <img src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img" loading="${_idx < EAGER_COUNT ? 'eager' : 'lazy'}" decoding="async"
                     style="width: 100%; height: 100%; object-fit: cover;"
-                    onerror="this.src='./assets/icons/chara_image/default.webp'">
+                    onerror="this.onerror=null;this.removeAttribute('src')">
                 
-                <img src="./assets/icons/personality/${char.personality}.webp" style="position: absolute; top: 6px; left: 6px; width: 28px; height: 28px; z-index: 2; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
+                <img class="tg-card-icon" src="./assets/icons/personality/${char.personality}.webp" style="position: absolute; top: 6px; left: 6px; width: 28px; height: 28px; z-index: 2;">
                 ${eldyneIcon}
                 <div style="position: absolute; bottom: 8px; left: 0; width: 100%; padding: 0 8px; display: flex; justify-content: space-between; align-items: center; z-index: 2;">
-                    <img src="./assets/icons/role/${char.role}.webp" style="width: 26px; height: 26px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
-                    <img src="./assets/icons/line/${char.line}.webp" style="width: 28px; height: 28px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">
+                    <img class="tg-card-icon" src="./assets/icons/role/${char.role}.webp" style="width: 26px; height: 26px;">
+                    <img class="tg-card-icon" src="./assets/icons/line/${char.line}.webp" style="width: 28px; height: 28px;">
                 </div>
 
                 <div style="position: absolute; bottom: 6px; width: 100%; z-index: 3;">
@@ -1059,7 +1065,7 @@ async function displayCards(data, id, append = false) {
             <div class="card-bottom" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80px; padding: 8px 6px; border-radius: 0 0 15px 15px;">
 
                 <div class="char-name" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 8px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    ${char.name}
+                    ${escapeHtml(char.name)}
                 </div>
                 
                 <div style="display: flex; align-items: center; width: 100%; gap: 4px; padding: 0 4px;">
@@ -1191,9 +1197,12 @@ function initScrollFade(el) {
 }
 function openFilterModal() {
     pendingStatees = new Set(selectedStatees); // 현재 적용 상태를 pending으로 복사
-    document.getElementById('modal-filter').classList.remove('hidden');
+    const modal = document.getElementById('modal-filter');
+    window.tgRememberOpener?.(modal);
+    modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open');
+    window.tgFocusIntoModal?.(modal);
     updateSegmentedIndicator('filter-segmented');
     refreshClearAllBtn();
     refreshModalCount();
@@ -1202,17 +1211,21 @@ function openFilterModal() {
 }
 function applyFilterModal() {
     selectedStatees = new Set(pendingStatees); // pending → 실제 적용
-    document.getElementById('modal-filter').classList.add('hidden');
+    const modal = document.getElementById('modal-filter');
+    modal.classList.add('hidden');
     document.body.style.overflow = '';
     document.body.classList.remove('modal-open');
+    window.tgRestoreFocus?.(modal);
     handleSortFilter();
     triggerGridRefresh();
 }
 function closeFilterModal() {
     // X 버튼 / 배경 클릭: pending 버리고 닫기 (필터 적용 안 함)
-    document.getElementById('modal-filter').classList.add('hidden');
+    const modal = document.getElementById('modal-filter');
+    modal.classList.add('hidden');
     document.body.style.overflow = '';
     document.body.classList.remove('modal-open');
+    window.tgRestoreFocus?.(modal);
 }
 /* 모달의 `초기화` · `모두 해제` — 고르는 중인 값(pending)과 화면만 비운다.
    그리드에 반영하는 건 `적용` 이다 (표시 필터의 resetAttrFilter 와 같음).
@@ -1243,9 +1256,12 @@ function openInfoModal() {
                 <span class="tg-help-gauge-text">${text}</span>
             </li>`).join('');
     }
-    document.getElementById('modal-info').classList.remove('hidden');
+    const modal = document.getElementById('modal-info');
+    window.tgRememberOpener?.(modal);
+    modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open');
+    window.tgFocusIntoModal?.(modal);
 }
 function closeModal(id) {
     // 1. 상세 정보 모달(modal-detail)을 닫을 때만 플래그 상태 리셋
@@ -1260,6 +1276,7 @@ function closeModal(id) {
     if (modal) {modal.classList.add('hidden');}
     document.body.style.overflow = '';
     document.body.classList.remove('modal-open');
+    window.tgRestoreFocus?.(modal);
 }
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
@@ -1355,31 +1372,8 @@ window.addEventListener('keydown', (e) => {
 
     /* ←/→ 사도 이동은 ui.js 가 받는다 (아티팩트 모달·닫히는 중 거름 포함) */
 
-    if (e.key === 'Tab') {
-        if (isDetailVisible) {
-            e.preventDefault();
-            const btns = document.querySelectorAll('#detail-segmented .tg-segmented-btn');
-            let currentIdx = Array.from(btns).findIndex(b => b.classList.contains('is-active'));
-            let nextIdx = (currentIdx + 1) % btns.length;
-            if (typeof window.switchTab === 'function') {
-                window.switchTab(nextIdx);
-            } else {
-                btns[nextIdx].click();
-            }
-        } else if (isFilterVisible) {
-            e.preventDefault();
-            const order = ['all', 'buff', 'debuff'];
-            const curIdx = order.indexOf(currentFilterTab);
-            const nextTab = order[(curIdx + 1) % order.length];
-            setFilterTab(nextTab);
-        } else if (isAsideVisible) {
-            e.preventDefault();
-            const asideTabs = document.querySelectorAll('#aside-segmented .tg-segmented-btn');
-            const asideCurIdx = Array.from(asideTabs).findIndex(b => b.classList.contains('is-active'));
-            const asideNextIdx = (asideCurIdx + 1) % asideTabs.length;
-            if (typeof window.switchAsideFilterTab === 'function') window.switchAsideFilterTab(asideNextIdx);
-        }
-    }
+    /* 탭 전환은 숫자키 1~4, Tab 은 모달 안 포커스 이동 — 둘 다 ui.js 가 받는다 (사도 추천과 공용).
+       예전엔 여기서 Tab 을 "다음 탭" 으로 가로채 모달 안의 버튼에 키보드로 갈 수 없었다 */
 });
 
 /* 모바일 스와이프로 사도 이동 — ui.js 로 옮겼다 (사도 추천과 공용) */

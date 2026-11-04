@@ -21,6 +21,13 @@ const TM_P_COLORS = {
     '공명': { bg: 'none',    border: '#FFFEFD' },
 };
 
+// 평문을 innerHTML 에 넣을 때 — main.js 의 `escapeHtml` 과 같은 꼴 (이 파일은 IIFE 라 그쪽을 못 가져온다).
+// 티어 이름·검색어는 사용자가 친 글이라 `<` 하나로 화면이 깨지거나 스크립트가 돈다
+function _tmEsc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 let _tiers = [];
 let _pool  = [];
 let _dragging   = null;
@@ -30,37 +37,6 @@ let _popupId    = null;
 let _pFilter    = '';
 let _addTierId  = null;
 let _addFilter  = '';
-
-// ── Open / Close ──────────────────────────────────────────────────────────────
-window.openTierMaker = function () {
-    const modal = document.getElementById('tm-modal');
-    if (!modal) return;
-    _tmInit();
-    _tmRender();
-    modal.classList.remove('tm-leaving');
-    modal.style.display = 'block';
-    requestAnimationFrame(() => modal.classList.add('tm-entering'));
-    document.body.style.overflow = 'hidden';
-};
-
-function _tmClose() {
-    const modal = document.getElementById('tm-modal');
-    if (!modal) return;
-    _tmClosePopupEl();
-    _tmCloseAddOverlay();
-    modal.classList.remove('tm-entering');
-    modal.classList.add('tm-leaving');
-    setTimeout(() => {
-        modal.style.display = 'none';
-        modal.classList.remove('tm-leaving');
-        document.body.style.overflow = '';
-        _popupId = null;
-        _pFilter = '';
-        const psearch = document.getElementById('tm-pool-search');
-        if (psearch) psearch.value = '';
-    }, 200);
-}
-window._tmClose = _tmClose;
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 function _tmInit() {
@@ -87,7 +63,7 @@ function _tmStarHTML(rarity) {
     const src = `./assets/icons/common_icons/${n >= 3 ? 'star3' : 'star2'}.webp`;
     let s = '';
     for (let i = 0; i < n; i++)
-        s += `<img draggable="false" src="${src}" style="width:13px;height:13px;margin:0 -2px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2));pointer-events:none">`;
+        s += `<img class="tg-card-star" draggable="false" src="${src}" style="width:13px;height:13px;margin:0 -2px;pointer-events:none">`;
     return `<div style="display:flex;justify-content:center;align-items:center;margin-top:-2px;height:14px;position:relative;z-index:3;pointer-events:none">${s}</div>`;
 }
 
@@ -108,20 +84,20 @@ function _tmCard(char) {
         <div class="${topCls}" style="${topSt};pointer-events:none">
             <img draggable="false" src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img"
                 style="width:100%;height:100%;object-fit:cover;pointer-events:none"
-                onerror="this.src='./assets/icons/chara_image/default.webp'">
-            <img draggable="false" src="./assets/icons/personality/${char.personality}.webp"
-                style="position:absolute;top:4px;left:4px;width:18px;height:18px;z-index:2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));pointer-events:none">
+                onerror="this.onerror=null;this.removeAttribute('src')">
+            <img class="tg-card-icon" draggable="false" src="./assets/icons/personality/${char.personality}.webp"
+                style="position:absolute;top:4px;left:4px;width:18px;height:18px;z-index:2;pointer-events:none">
             ${eldIcon}
             <div style="position:absolute;bottom:4px;left:0;width:100%;padding:0 5px;display:flex;justify-content:space-between;align-items:center;z-index:2;pointer-events:none">
-                <img draggable="false" src="./assets/icons/role/${char.role}.webp"
-                    style="width:17px;height:17px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));pointer-events:none">
-                <img draggable="false" src="./assets/icons/line/${char.line}.webp"
-                    style="width:17px;height:17px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));pointer-events:none">
+                <img class="tg-card-icon" draggable="false" src="./assets/icons/role/${char.role}.webp"
+                    style="width:17px;height:17px;pointer-events:none">
+                <img class="tg-card-icon" draggable="false" src="./assets/icons/line/${char.line}.webp"
+                    style="width:17px;height:17px;pointer-events:none">
             </div>
             <div style="position:absolute;bottom:4px;width:100%;z-index:3;pointer-events:none">${_tmStarHTML(char.star)}</div>
         </div>
         <div class="card-bottom tm-card-bottom" style="pointer-events:none">
-            <div class="tm-card-name">${char.name}</div>
+            <div class="tm-card-name">${_tmEsc(char.name)}</div>
         </div>
     </div>`;
 }
@@ -136,7 +112,7 @@ function _tmRender() {
         <div class="tm-row">
             <div class="tm-lbl" style="background:${t.color}" onclick="window._tmStartRename('${t.id}')">
                 <div class="tm-lbl-content">
-                    <span id="tm-ls-${t.id}">${t.name}</span>
+                    <span id="tm-ls-${t.id}">${_tmEsc(t.name)}</span>
                     <span class="tm-lbl-edit-hint">✎</span>
                 </div>
             </div>
@@ -177,7 +153,7 @@ function _tmRender() {
         </div>`;
     });
     document.getElementById('tm-pool').innerHTML = poolHTML ||
-        `<span class="tm-zone-empty">${_pFilter ? `"${_pFilter}" 없음` : '미배치 없음'}</span>`;
+        `<span class="tm-zone-empty">${_pFilter ? `"${_tmEsc(_pFilter)}" 없음` : '미배치 없음'}</span>`;
 }
 
 // ── Drag & Drop ───────────────────────────────────────────────────────────────
@@ -351,10 +327,10 @@ window._tmOpenPopup = function (tierId, btnEl) {
         popup.style.right = (window.innerWidth - bRect.right + 2) + 'px';
     }
     popup.innerHTML = `
-        <p class="tm-popup-title">티어 설정 — ${t.name}</p>
+        <p class="tm-popup-title">티어 설정 — ${_tmEsc(t.name)}</p>
         <div class="tm-popup-field">
             <span class="tm-popup-lbl">이름</span>
-            <input class="tm-popup-input" value="${t.name.replace(/"/g,'&quot;')}"
+            <input class="tm-popup-input" value="${_tmEsc(t.name)}"
                 onchange="window._tmSetName('${tierId}',this.value)"
                 onkeydown="if(event.key==='Enter')window._tmSetName('${tierId}',this.value)">
         </div>
@@ -672,20 +648,20 @@ function _tmCardPickable(char) {
         <div class="${isRes ? 'card-top bg-resonance' : 'card-top'}" style="${topSt};pointer-events:none">
             <img draggable="false" src="./assets/icons/chara_image/초상화_${char.name}.webp" class="char-img" loading="lazy" decoding="async"
                 style="width:100%;height:100%;object-fit:cover;pointer-events:none"
-                onerror="this.src='./assets/icons/chara_image/default.webp'">
-            <img draggable="false" src="./assets/icons/personality/${char.personality}.webp"
-                style="position:absolute;top:4px;left:4px;width:18px;height:18px;z-index:2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));pointer-events:none">
+                onerror="this.onerror=null;this.removeAttribute('src')">
+            <img class="tg-card-icon" draggable="false" src="./assets/icons/personality/${char.personality}.webp"
+                style="position:absolute;top:4px;left:4px;width:18px;height:18px;z-index:2;pointer-events:none">
             ${eldIcon}
             <div style="position:absolute;bottom:4px;left:0;width:100%;padding:0 5px;display:flex;justify-content:space-between;align-items:center;z-index:2;pointer-events:none">
-                <img draggable="false" src="./assets/icons/role/${char.role}.webp"
-                    style="width:17px;height:17px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));pointer-events:none">
-                <img draggable="false" src="./assets/icons/line/${char.line}.webp"
-                    style="width:17px;height:17px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));pointer-events:none">
+                <img class="tg-card-icon" draggable="false" src="./assets/icons/role/${char.role}.webp"
+                    style="width:17px;height:17px;pointer-events:none">
+                <img class="tg-card-icon" draggable="false" src="./assets/icons/line/${char.line}.webp"
+                    style="width:17px;height:17px;pointer-events:none">
             </div>
             <div style="position:absolute;bottom:4px;width:100%;z-index:3;pointer-events:none">${_tmStarHTML(char.star)}</div>
         </div>
         <div class="card-bottom tm-card-bottom" style="pointer-events:none">
-            <div class="tm-card-name">${char.name}</div>
+            <div class="tm-card-name">${_tmEsc(char.name)}</div>
         </div>
     </div>`;
 }
@@ -709,7 +685,7 @@ function _tmRenderAddBody() {
     });
     const body = document.getElementById('tm-add-pbody');
     if (body) body.innerHTML = html ||
-        `<span class="tm-zone-empty">${_addFilter ? `"${_addFilter}" 없음` : '미배치 없음'}</span>`;
+        `<span class="tm-zone-empty">${_addFilter ? `"${_tmEsc(_addFilter)}" 없음` : '미배치 없음'}</span>`;
 }
 
 function _tmCloseAddOverlay() {

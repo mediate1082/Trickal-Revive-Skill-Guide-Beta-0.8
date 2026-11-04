@@ -63,7 +63,6 @@
 .ar-stat b { color: var(--buff-text); font-variant-numeric: tabular-nums; }
 .ar-effect { font-size: 14.5px; line-height: 1.65; word-break: keep-all; margin: 0; }
 .ar-effect .v { color: var(--skill-high); font-weight: 800; font-variant-numeric: tabular-nums; }
-.ar-note { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
 
 .ar-body { padding: 16px 20px 22px; display: grid; gap: 18px; }
 .ar-lv { background: var(--stat-box-bg); box-shadow: var(--inset-shadow); border: 1px solid var(--border-soft); border-radius: 14px; padding: 12px 14px; }
@@ -75,8 +74,6 @@
 .ar-end.hi { left: auto; right: 0; }
 .ar-end[hidden] { display: none; }
 .ar-lv { padding-top: 16px !important; }
-/* 덱 칸은 '잘 어울리는 사도' 로 바꿀 때까지 숨긴다 */
-.ar-sec.ar-decksec { display: none; }
 .ar-lvmax { font-size: 12.5px; color: var(--text-muted); margin-top: 6px; word-break: keep-all; }
 .ar-lvmax b { color: var(--text-dark); }
 .ar-lv.locked input { opacity: .35; }
@@ -110,10 +107,6 @@
 :root[data-theme="dark"] .ar-step + .ar-step { border-color: #5a4f30; }
 .ar-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .ar-tag { font: inherit; font-size: 12px; font-weight: 800; color: #fff; border: 0; border-radius: 999px; padding: 4px 10px; background: var(--c); cursor: pointer; }
-.ar-decks { display: flex; flex-wrap: wrap; gap: 6px; }
-.ar-decks a { font-size: 13px; color: var(--rc-link); text-decoration: none; border: 1px solid var(--border-soft); border-radius: 8px; padding: 4px 9px 4px 4px; display: inline-flex; gap: 6px; align-items: center; }
-.ar-decks a img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
-.ar-decks a:hover { border-color: var(--rc-link); }
 .ar-none { font-size: 13px; color: var(--text-muted); }
 @media (max-width: 900px) { .ar-grid { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 560px) { .ar-grid { grid-template-columns: repeat(3, 1fr); gap: 16px 10px; } }

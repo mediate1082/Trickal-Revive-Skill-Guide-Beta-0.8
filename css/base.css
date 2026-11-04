@@ -176,7 +176,8 @@
     --text-body:                #A1A1AA;
 }
 
-/* 글 속 바깥 링크 색 (사도 추천 `linkify` · 아티팩트 모달 `.ar-decks a`).
+/* 글 속 바깥 링크 색 (사도 추천 `linkify`). 아티팩트 모달의 덱 링크(`.ar-decks a`)도 쓰려고 여기 뒀는데
+   그 칸은 사이트에서 지웠다 (시안 `tools/artifact/` 에만 있다). 다시 살릴 때를 위해 자리는 그대로 둔다.
    근거(대비 4.5:1 · 다크의 형광끼)는 recommend.css 의 「글 속 바깥 링크」 절 주석에 있다 */
 :root        { --rc-link: #0078BE; --rc-link-hot: #005C92; }
 [data-theme="dark"] { --rc-link: #6FD2FF; --rc-link-hot: #A5E4FF; }
@@ -337,6 +338,13 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 }
 .tg-search input::placeholder { color: var(--text-muted); font-weight: 500; }
 .tg-search input:focus { outline: none; border-color: var(--accent-green); box-shadow: 0 0 0 3px rgba(185,221,99,0.35); }
+/* iOS 는 글자가 16px 보다 작은 입력칸에 포커스가 가면 화면을 저절로 키운다.
+   그게 싫어서 viewport 에 `user-scalable=no` 를 걸어 두었는데, 그러면 두 손가락 확대까지 막힌다 (WCAG 1.4.4).
+   확대 막기를 풀고 **터치 기기의 입력칸만** 16px 로 올린다 — 마우스 화면 모양은 그대로다.
+   ⚠ `.tg-modal-search` 는 modal.css 소관이지만 같은 사정이라 한 곳에 모았다 (base 는 네 페이지가 다 싣는다) */
+@media (pointer: coarse) {
+    .tg-search input, .tg-modal-search input { font-size: 16px; }
+}
 
 #search-clear-btn {
     position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
@@ -388,10 +396,12 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
 }
 /* ⚠ 터치 기기 — 아이폰 SE(크롬=WebKit)에서 그리드를 내리다 페이지가 통째로 죽는 제보 (2026-11-03).
    메모리가 작은 기기에서 **그리드 위로 흐림 유리가 붙는 순간**(is-stuck)과 카드마다 걸린 drop-shadow
-   필터 수백 개가 합성 레이어를 크게 늘린다. 폰에서는 둘 다 끈다 — 생김새 차이는 거의 없다 */
+   필터 수백 개가 합성 레이어를 크게 늘린다. 폰에서는 둘 다 끈다 — 생김새 차이는 거의 없다.
+   ⚠ 카드의 성격·역할·배치 아이콘 · 별 · 엘다인 별은 cards.css 에서 끈다 (`.tg-card-icon` 등).
+   여기 두면 cards.css 가 뒤에 실려 같은 특정도로 이긴다 */
 @media (hover: none) and (pointer: coarse) {
     .tg-subheader.is-stuck .tg-nav { background: var(--nav-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
-    .char-card .icon, .eldyne-corner-icon { filter: none; }
+    .char-card .icon { filter: none; }
 }
 /* 모달이 열렸을 때 내비바를 위로 치우던 규칙은 제거했다 (v1.4.14).
    · 모달 오버레이가 z-index 2000, 내비바가 50 이라 어차피 완전히 덮인다

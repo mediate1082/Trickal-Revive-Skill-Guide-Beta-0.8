@@ -42,7 +42,7 @@ function makeStarHTML(rarity) {
     const src = `./assets/icons/common_icons/${n >= 3 ? 'star3' : 'star2'}.webp`;
     let s = '';
     for (let i = 0; i < n; i++)
-        s += `<img src="${src}" style="width:19px;height:19px;margin:0 -3px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2));">`;
+        s += `<img class="tg-card-star" src="${src}" style="width:19px;height:19px;margin:0 -3px;">`;
     return `<div style="display:flex;justify-content:center;align-items:center;margin-top:-3px;height:20px;z-index:3;position:relative;">${s}</div>`;
 }
 
@@ -95,9 +95,15 @@ function buildCard(char, rec, secKey) {
     card.tabIndex = 0;
     card.setAttribute('role', 'button');
     card.setAttribute('aria-label', `${char.name} 상세 정보`);
+    card.dataset.apostle = char.name;   // 모달을 닫을 때 마지막으로 본 사도의 카드로 포커스를 돌려준다 (ui.js restoreFocus)
     const open = () => window.openDetailModal(char);
-    card.onclick = open;
-    card.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } };
+    /* ⚠ 카드 안 링크(`reason` 의 `linkify`)는 카드 버튼과 따로 논다. 안 거르면 링크를 누를 때
+       모달까지 같이 뜨고, 키보드 Enter 는 `preventDefault` 에 막혀 링크가 아예 안 열린다 */
+    card.onclick = e => { if (!e.target.closest('a')) open(); };
+    card.onkeydown = e => {
+        if (e.target.closest('a')) return;
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+    };
 
     const meta = [char.personality, char.line, char.role].filter(Boolean).join(' · ');
 
@@ -110,16 +116,16 @@ function buildCard(char, rec, secKey) {
                      loading="lazy" decoding="async" alt=""
                      style="width:100%;height:100%;object-fit:cover;"
                      onerror="this.onerror=null;this.src='./assets/icons/chara_image/default.webp'">
-                <img src="./assets/icons/personality/${encodeURIComponent(char.personality || '')}.webp"
-                     style="position:absolute;top:6px;left:6px;width:28px;height:28px;z-index:2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));"
+                <img class="tg-card-icon" src="./assets/icons/personality/${encodeURIComponent(char.personality || '')}.webp"
+                     style="position:absolute;top:6px;left:6px;width:28px;height:28px;z-index:2;"
                      onerror="this.remove()">
                 ${eldyne ? `<img src="./assets/icons/common_icons/Ingame_Icon_HeroGrow_Hidden.webp"
                      class="eldyne-corner-icon" alt="엘다인" data-tooltip="이 별은 이 사도가 엘다인임을 의미합니다. 엘다인은 일반 사도들에 비해 강력한 성능을 가지고 있으며, 픽업과 모집권에서 등장 확률이 낮습니다.">` : ''}
                 <div style="position:absolute;bottom:8px;left:0;width:100%;padding:0 8px;display:flex;justify-content:space-between;align-items:center;z-index:2;">
-                    <img src="./assets/icons/role/${encodeURIComponent(char.role || '')}.webp"
-                         style="width:26px;height:26px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));" onerror="this.remove()">
-                    <img src="./assets/icons/line/${encodeURIComponent(char.line || '')}.webp"
-                         style="width:28px;height:28px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));" onerror="this.remove()">
+                    <img class="tg-card-icon" src="./assets/icons/role/${encodeURIComponent(char.role || '')}.webp"
+                         style="width:26px;height:26px;" onerror="this.remove()">
+                    <img class="tg-card-icon" src="./assets/icons/line/${encodeURIComponent(char.line || '')}.webp"
+                         style="width:28px;height:28px;" onerror="this.remove()">
                 </div>
                 <div style="position:absolute;bottom:6px;width:100%;z-index:3;">${makeStarHTML(char.star)}</div>
             </div>
@@ -1929,7 +1935,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
 
 (async function init() {
     const v = window.APP_VERSION || '';
-    const cfg = { header: true, skipEmptyLines: true, trimHeaders: true };
+    const cfg = { header: true, skipEmptyLines: true, transformHeader: h => h.trim() };
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
         const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT, immT,
