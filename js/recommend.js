@@ -934,9 +934,13 @@ function buildCrash2Panel(sec) {
            ⚠ `season` 은 숫자가 아니라 **자유 문구**다 (`베타 시즌 9`). 시즌 표기가
              콘텐츠마다 다르고 베타 꼬리표도 언젠가 떨어지므로 코드에 틀을 박지 않는다. */
         const season = (boss.season || '').trim();
-        t.innerHTML = `<img src="./assets/icons/boss/CommonIcon_MonsterWorldBoss_YC00_Mad.webp"
-                            alt="" onerror="this.remove()"
-                       ><b>대충돌 2.0${season ? ' ' + esc(season) : ''} — ${esc(boss.boss_name)}${
+        /* ⚠ 이 상자는 **대충돌 1.0(`crash`)도 쓴다** (2026-11-04). 콘텐츠 이름과 제목 아이콘을
+             분류 키로 가른다 — 2.0 은 흑화 영춘 월드 보스 아이콘, 그 밖은 보스 초상화 */
+        const is2 = sec.key.startsWith('crash2');
+        const tIcon = is2 ? './assets/icons/boss/CommonIcon_MonsterWorldBoss_YC00_Mad.webp'
+                          : (boss.portrait ? iconUrl(boss.portrait, 'dimension') : '');
+        t.innerHTML = `${tIcon ? `<img src="${tIcon}" alt="" onerror="this.remove()">` : ''}<b>${
+                            is2 ? '대충돌 2.0' : '차원 대충돌'}${season ? ' ' + esc(season) : ''} — ${esc(boss.boss_name)}${
                             boss.personality ? ` (${esc(boss.personality)})` : ''}</b>`;
         wrap.appendChild(t);
     }
@@ -949,7 +953,8 @@ function buildCrash2Panel(sec) {
     /* ── 머리 — 초상화 + 서술 줄들 ───────────────────────────
        ⚠ 서술은 `Crash2_Lines.csv` 의 `kind=note` 행 하나가 **줄 하나**다. `label` 이 있으면
          앞에 굵게 붙고 없으면 글만 나온다 — 시즌 소개처럼 이름 붙일 게 없는 줄이 있다. */
-    if (boss || sec.notes.length) {
+    /* ⚠ 초상화도 서술도 없으면 그리지 않는다 — 빈 흰 띠만 남는다 (대충돌 1.0 을 보스·규칙만으로 먼저 올렸을 때) */
+    if ((boss && boss.portrait) || sec.notes.length) {
         const head = document.createElement('div');
         head.className = 'rc-crash2-head';
         head.innerHTML = `
@@ -1737,7 +1742,8 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
        **사도를 한 명 넣으면 그대로 다시 나온다.**
        ⚠ 그래서 분류가 안 보인다고 지워진 게 아니다. 편집기 목록에는 그대로 있다. */
     groups.forEach(g => g.secs.forEach((sec, k) => {
-        if (sec.hide || (!sec.rows.length && !sec.decks.length)) g.secs.delete(k);
+        /* 보스 정보만 있어도 띄운다 — 시즌이 열리자마자 기믹부터 올리고 덱은 나중에 채우는 경우 */
+        if (sec.hide || (!sec.rows.length && !sec.decks.length && !sec.boss)) g.secs.delete(k);
     }));
     groups.forEach((g, k) => { if (!g.secs.size) groups.delete(k); });
 

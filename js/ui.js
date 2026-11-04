@@ -1053,8 +1053,12 @@ export function openDetailModal(char, dataContext) {
        해서 `fillGrowthExtras` 가 나중에 채운다 (스킬 가이드 페이지는 그 표를 처음에 안 받는다) */
     function buildGrowthBody(c) {
         const need = ASIDE_NEED[(c.aside_need || '').trim()];
+        /* ⚠ 어사이드가 없는 사도(`has_aside` = FALSE)는 아이콘을 **요청하지 않는다.** 판단 글이 있으면
+             상자는 그리는데(가비아 — "어사이드가 없는 사도입니다"), 아이콘 파일이 없어 매번 404 가 났다 */
+        const asideIcon = String(c.has_aside || '').trim().toUpperCase() === 'TRUE'
+            ? `<img src="./assets/icons/aside/aside_icons/어사이드_${c.name}_아이콘.webp" alt="" onerror="this.remove()">` : '';
         const aside = (need || c.aside_note) ? `<div class="tg-usage-sub">
-            <div class="tg-usage-head"><img src="./assets/icons/aside/aside_icons/어사이드_${c.name}_아이콘.webp" alt="" onerror="this.remove()"><b>어사이드</b>
+            <div class="tg-usage-head">${asideIcon}<b>어사이드</b>
                 ${need ? `<span class="tg-usage-pill ${need[1]}">A2 ${need[0]}</span>` : ''}</div>
             ${c.aside_note ? `<div class="tg-usage-box"${need ? ` data-st="${need[1]}"` : ''}>${c.aside_note}</div>` : ''}</div>` : '';
         return `${aside}<div class="tg-usage-extra" data-name="${c.name}"></div>`;
