@@ -16,6 +16,13 @@
     src: url('../assets/fonts/ONEMobilePOP.woff2') format('woff2');
     font-weight: normal; font-style: normal; font-display: swap;
 }
+/* ⚠⚠ **가짜 굵게를 끈다** (2026-11-05). 이 글꼴은 굵기가 하나(이미 굵은 한 벌)뿐이라, `font-weight: 700·800` 을
+     주면 브라우저가 외곽선을 부풀려 흉내 낸다 — 그 덧칠이 `틀`·`블`·`줄` 처럼 획이 촘촘한 글자의 속을 메워
+     덩어리로 만들었다 (상세 모달 스킬 이름이 특히 심했다). 상속되는 속성이라 여기 한 줄로 전부에 걸린다.
+   ⚠ 그래서 **이 글꼴에서는 `font-weight` 가 화면에 아무 차이를 안 낸다.** 고른 것·강조를 굵기로 가르지 말고
+     색·바탕으로 가를 것. 기존 `font-weight` 선언은 다른 글꼴로 떨어질 때를 위해 그대로 뒀다
+   ⚠ 티어 메이커의 PNG(캔버스)는 CSS 를 안 따른다 — 그쪽 `ctx.font` 에도 굵기를 적지 않는다 */
+html { font-synthesis-weight: none; }
 
 /* ── Design Tokens ─────────────────────── */
 :root {

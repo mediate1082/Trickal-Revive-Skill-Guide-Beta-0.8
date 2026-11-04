@@ -489,7 +489,8 @@ window._tmExport = async function () {
         _rrect(ctx, PAD / 2, baseY, LABEL_W - PAD, th - PAD, 10);
         ctx.fill();
         ctx.fillStyle = '#ffffff';
-        ctx.font = "bold 17px 'OneMobilePop', sans-serif";
+        // ⚠ 굵기를 적지 않는다 — 캔버스도 가짜 굵게를 덧칠해 글자가 뭉친다 (base.css 의 font-synthesis 절)
+        ctx.font = "17px 'OneMobilePop', sans-serif";
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(
@@ -609,7 +610,7 @@ window._tmExport = async function () {
 
             // ⑧ 이름 텍스트
             ctx.fillStyle = isDark ? '#e2e8f0' : '#1e293b';
-            ctx.font = "600 12px 'OneMobilePop', sans-serif";
+            ctx.font = "12px 'OneMobilePop', sans-serif";
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(
