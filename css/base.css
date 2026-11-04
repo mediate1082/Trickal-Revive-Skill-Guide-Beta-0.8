@@ -16,13 +16,15 @@
     src: url('../assets/fonts/ONEMobilePOP.woff2') format('woff2');
     font-weight: normal; font-style: normal; font-display: swap;
 }
-/* ⚠⚠ **가짜 굵게를 끈다** (2026-11-05). 이 글꼴은 굵기가 하나(이미 굵은 한 벌)뿐이라, `font-weight: 700·800` 을
-     주면 브라우저가 외곽선을 부풀려 흉내 낸다 — 그 덧칠이 `틀`·`블`·`줄` 처럼 획이 촘촘한 글자의 속을 메워
-     덩어리로 만들었다 (상세 모달 스킬 이름이 특히 심했다). 상속되는 속성이라 여기 한 줄로 전부에 걸린다.
-   ⚠ 그래서 **이 글꼴에서는 `font-weight` 가 화면에 아무 차이를 안 낸다.** 고른 것·강조를 굵기로 가르지 말고
-     색·바탕으로 가를 것. 기존 `font-weight` 선언은 다른 글꼴로 떨어질 때를 위해 그대로 뒀다
-   ⚠ 티어 메이커의 PNG(캔버스)는 CSS 를 안 따른다 — 그쪽 `ctx.font` 에도 굵기를 적지 않는다 */
-html { font-synthesis-weight: none; }
+/* ⚠ **칩에서만 가짜 굵게를 끈다** (2026-11-05). 글꼴이 굵기 한 벌뿐이라 `font-weight: 700·800` 이면 브라우저가
+     외곽선을 부풀려 흉내 내는데, 작은 칩에서는 그 덧칠이 `파티 보호막`·`서포터` 같은 글자의 속을 메워 덩어리가 됐다.
+   사이트 전체에서 꺼 봤다가 **전체가 얇아진 인상이 별로라 되돌렸다** — 제목·이름·버튼은 덧칠된 그대로 둔다.
+   여러 페이지의 칩을 한곳에 모아 둔다 (없는 페이지에서는 그냥 안 걸린다). 새 칩을 만들면 여기 더할 것 */
+.tg-chip, .tg-chip-attr, .tg-detail-tier, .tg-detail-attr, .tg-detail-role, .tg-detail-eldyne,
+.tg-usage-chip, .tg-usage-pill, .tg-effect-item-chip, .tg-at-chip, .tg-sp-chip, .tg-quickfilter-chip, .tg-grade-badge,
+.rc-chip, .rc-badge, .rc-dim-badge, .rc-equip-slot .s-tag, .ar-chip, .ar-tag {
+    font-synthesis-weight: none;
+}
 
 /* ── Design Tokens ─────────────────────── */
 :root {
