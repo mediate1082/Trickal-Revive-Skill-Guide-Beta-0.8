@@ -1290,6 +1290,43 @@ function layoutSlides(panel, instant) {
     stage.style.height = secs[i].offsetHeight + 'px';
 }
 
+/* 한가할 때 하기 — 첫 화면을 그리는 데 끼어들지 않게 */
+const rcIdle = window.requestIdleCallback
+    ? f => requestIdleCallback(f, { timeout: 1500 })
+    : f => setTimeout(f, 300);
+
+/* 패널의 분류 내용을 **처음 열 때** 만든다 (`render` 의 `panel._build`) */
+function ensureBuilt(panel) {
+    if (!panel || !panel._build) return;
+    const build = panel._build;
+    panel._build = null;
+    build();
+}
+
+/* 처음과 끝을 이어 붙인다. **양끝에 복제본을 하나씩** 둬서,
+   첫 분류 왼쪽에는 마지막이, 마지막 오른쪽에는 첫 분류가 비친다.
+   끝을 넘어가면 복제본까지 미끄러진 뒤 **전환을 끄고** 진짜 자리로 옮긴다 —
+   생김새가 같아서 갈아타는 순간이 안 보인다.
+   ⚠ `cloneNode` 는 **JS 로 붙인 이벤트를 복사하지 않는다.** 복제본을 눌렀을 때
+     그쪽으로 넘어가려면 손으로 다시 달아야 한다 (안 달면 먹통인 칸이 된다).
+   ⚠ 앞에 하나가 끼므로 칸 번호가 한 칸씩 밀린다 — 붙인 뒤 **순간이동으로** 자리를 다시 잡는다 */
+function addClones(panel, track) {
+    const reals = [...track.children];
+    if (reals.length < 2 || track.querySelector('[data-clone]')) return;
+    const last = reals[reals.length - 1].cloneNode(true);
+    const first = reals[0].cloneNode(true);
+    [[last, reals.length - 1, 'afterbegin'], [first, 0, 'beforeend']]
+        .forEach(([clone, to, where]) => {
+            clone.dataset.clone = to;
+            clone.addEventListener('click', ev => {
+                ev.preventDefault(); ev.stopPropagation();
+                showSlide(panel, to, true);
+            }, true);
+            track.insertAdjacentElement(where, clone);
+        });
+    if (!panel.hidden) layoutSlides(panel, true);
+}
+
 function showSlide(panel, i, push) {
     const n = (panel._secKeys || []).length;
     if (!n) return;
@@ -1299,6 +1336,10 @@ function showSlide(panel, i, push) {
     let via = null;
     if (looped && i < 0) { via = 0; i = n - 1; }
     else if (looped && i >= n) { via = n + 1; i = 0; }
+    /* 복제본이 아직 없으면(한가할 때 붙이기 전) 지금 붙인다 — 거쳐 갈 칸이 있어야 한다 */
+    if (via != null && panel._clone) panel._clone();
+    /* 갈 분류와 그 양옆이 아직 자리표면 지금 채운다 (`render` 의 `panel._ensure`) */
+    panel._ensure?.(Math.max(0, Math.min(i, n - 1)));
     panel._slide = Math.max(0, Math.min(i, n - 1));
     panel._via = via;
 
@@ -1535,6 +1576,7 @@ function activateTab(key, secKey) {
         return;
     }
     if (active) {
+        ensureBuilt(active);
         const i = secKey && active._secKeys ? active._secKeys.indexOf(secKey) : -1;
         /* ⚠ 숨어 있는 동안에는 폭이 0 이라 자리를 못 잰다. 보이게 된 **뒤에** 다시 잰다. */
         showSlide(active, i >= 0 ? i : (active._slide || 0), false);
@@ -1699,6 +1741,28 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
     }));
     groups.forEach((g, k) => { if (!g.secs.size) groups.delete(k); });
 
+    /* DB.csv 에 없는 이름 — 패널을 **열 때** 만들게 되면서 그때 모으면 안 연 탭의 오타가 안 뜬다.
+       그래서 여기서 먼저 한 번 훑는다 (`buildSection` · `buildDeck` 이 찾는 이름과 같은 범위:
+       배치 · 덱 편성 · 후보, 빈자리 `?` 는 뺀다) */
+    const swapByDeck = new Map();
+    (swapRows || []).forEach(r => {
+        const k = (r.deck_key || '').trim();
+        if (!swapByDeck.has(k)) swapByDeck.set(k, []);
+        swapByDeck.get(k).push(r);
+    });
+    const checkName = raw => {
+        const n = String(raw || '').trim();
+        if (n && !isFreeSlot(n) && !dbMap.get(n)) missing.push(n);
+    };
+    groups.forEach(g => g.secs.forEach(sec => {
+        sec.rows.forEach(r => checkName(r.chara_name));
+        sec.decks.forEach(d => {
+            const dk = (d.deck_key || '').trim();
+            (memByDeck.get(dk) || []).forEach(m => checkName(m.chara_name));
+            (swapByDeck.get(dk) || []).forEach(s => checkName(s.chara_name));
+        });
+    }));
+
     body.innerHTML = '';
     if (!groups.size) { body.innerHTML = '<div class="rc-loading">표시할 추천 데이터가 없습니다.</div>'; return; }
 
@@ -1758,7 +1822,6 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
             t.textContent = g.tip;
             panel.appendChild(t);
         }
-        const flat = [];
         const secList = [...g.secs.values()];
         panel._secKeys = secList.map(sec => sec.key);
         panel._slide = 0;
@@ -1797,17 +1860,6 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
         /* 끝에 닿았는지에 따라 어느 쪽을 흐리게 할지 정한다 (`fadeEdges`) */
         tabs.addEventListener('scroll', () => fadeEdges(tabs), { passive: true });
         secList.forEach((sec, i) => {
-            const el = buildSection(sec, dbMap, missing, flat, swapRows, memberRows);
-            /* 비껴 있는 분류를 눌러도 그쪽으로 간다 — 흐릿한 것도 눌린다는 걸 알려준다.
-               ⚠ 캡처 단계에서 가로채야 카드의 상세 모달이 먼저 열리지 않는다. */
-            el.addEventListener('click', ev => {
-                if (!el.classList.contains('is-away')) return;
-                ev.preventDefault(); ev.stopPropagation();
-                showSlide(panel, i, true);
-            }, true);
-            track.appendChild(el);
-            stageWatch.observe(el);
-
             /* 점은 분류 버튼과 **기능이 겹친다.** 스크린리더에는 버튼만 읽히게 두고
                (`aria-hidden`), 점은 눈과 마우스를 위한 것으로 남긴다. */
             const dot = document.createElement('span');
@@ -1825,33 +1877,72 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
             tabs.appendChild(b);
         });
 
-        /* 처음과 끝을 이어 붙인다. **양끝에 복제본을 하나씩** 둬서,
-           첫 분류 왼쪽에는 마지막이, 마지막 오른쪽에는 첫 분류가 비친다.
-           끝을 넘어가면 복제본까지 미끄러진 뒤 **전환을 끄고** 진짜 자리로 옮긴다 —
-           생김새가 같아서 갈아타는 순간이 안 보인다.
-           ⚠ `cloneNode` 는 **JS 로 붙인 이벤트를 복사하지 않는다.** 복제본을 눌렀을 때
-             그쪽으로 넘어가려면 손으로 다시 달아야 한다 (안 달면 먹통인 칸이 된다).
-           ⚠ 하나뿐이면 이을 것이 없다. */
-        if (secList.length > 1) {
-            const reals = [...track.children];
-            const last = reals[reals.length - 1].cloneNode(true);
-            const first = reals[0].cloneNode(true);
-            [[last, reals.length - 1, 'afterbegin'], [first, 0, 'beforeend']]
-                .forEach(([clone, to, where]) => {
-                    clone.dataset.clone = to;
-                    clone.addEventListener('click', ev => {
-                        ev.preventDefault(); ev.stopPropagation();
-                        showSlide(panel, to, true);
-                    }, true);
-                    track.insertAdjacentElement(where, clone);
-                });
-        }
-
-        /* ⚠ **이름으로 한 번씩만** 남긴다 (처음 나온 자리 순서). 같은 사도가 편성판·메모·
-             후보·분류 카드에 여러 번 나오는데, `navigateApostle` 이 `findIndex` 로 **첫 자리**를
-             찾으므로 겹치면 ← → 가 앞쪽으로 되돌아가 고리에 갇혔다 —
-             콘텐츠 탭에서 62명 중 19명밖에 못 돌았다. */
-        window._rcFlat[key] = [...new Map(flat.map(c => [c.name, c])).values()];
+        /* ⚠⚠ **분류 내용은 탭을 처음 열 때 만든다** (`ensureBuilt`). 예전엔 어느 탭으로 들어가든
+             모든 탭·모든 분류를 한꺼번에 만들어, 홈만 열어도 요소 9천 개 · 이미지 3천 장이었다.
+             CPU 를 4배 느리게 걸면 한 번에 1.6~1.7초씩 화면이 멈췄다 (2026-11-04 라이브 측정).
+             탭 버튼 · 분류 버튼 · 점은 지금 만든다 — 분류 줄과 해시 이동이 그것만 쓴다. */
+        /* ⚠ 탭 **안에서도** 한꺼번에 만들지 않는다. 콘텐츠 탭은 분류 7개에 이미지 2,300장이라
+             탭만 늦게 만들어도 열 때 0.9초씩 멈췄다. 처음엔 **자리표**(`is-pending`)만 깔고,
+             보이는 분류(가운데 + 양옆 비침)를 먼저, 나머지는 한가할 때 하나씩 채운다 */
+        panel._build = () => {
+            const n = secList.length;
+            const secFlat = [];
+            const onAway = (el, i) => el.addEventListener('click', ev => {
+                /* 비껴 있는 분류를 눌러도 그쪽으로 간다 — 흐릿한 것도 눌린다는 걸 알려준다.
+                   ⚠ 캡처 단계에서 가로채야 카드의 상세 모달이 먼저 열리지 않는다. */
+                if (!el.classList.contains('is-away')) return;
+                ev.preventDefault(); ev.stopPropagation();
+                showSlide(panel, i, true);
+            }, true);
+            const els = secList.map((sec, i) => {
+                const ph = document.createElement('section');
+                ph.className = 'rc-sec is-pending';
+                onAway(ph, i);
+                track.appendChild(ph);
+                return ph;
+            });
+            const make = i => {
+                if (!els[i].classList.contains('is-pending')) return;
+                const flat = [];
+                const el = buildSection(secList[i], dbMap, [], flat, swapRows, memberRows);
+                onAway(el, i);
+                el.classList.toggle('is-away', els[i].classList.contains('is-away'));
+                els[i].replaceWith(el);
+                els[i] = el;
+                stageWatch.observe(el);
+                secFlat[i] = flat;
+                /* ⚠ **이름으로 한 번씩만** 남긴다 (처음 나온 자리 순서). 같은 사도가 편성판·메모·
+                     후보·분류 카드에 여러 번 나오는데, `navigateApostle` 이 `findIndex` 로 **첫 자리**를
+                     찾으므로 겹치면 ← → 가 앞쪽으로 되돌아가 고리에 갇혔다 —
+                     콘텐츠 탭에서 62명 중 19명밖에 못 돌았다.
+                   ⚠ 분류가 채워질 때마다 **분류 순서대로** 다시 엮는다 — 늦게 채운 분류가 뒤에 붙으면 순서가 섞인다 */
+                window._rcFlat[key] = [...new Map(secFlat.flat().filter(Boolean).map(c => [c.name, c])).values()];
+                if (!panel.hidden) window.currentDisplayedList = window._rcFlat[key];
+            };
+            /* 지금 보이는 분류와 양옆 (슬라이드의 비침 · 처음과 끝이 이어지므로 감싸서).
+               ⚠ 1열에서는 **그 앞 분류까지 전부** 채운다. 분류로 바로 내려간 뒤에 앞쪽 자리표가
+                 진짜로 바뀌면 높이가 달라져 목표가 밀려난다 (폰에서 650px 아래로 밀렸다) */
+            panel._ensure = i => {
+                if (effView() === 'list') {
+                    for (let k = 0; k <= Math.min(n - 1, i + 2); k++) make(k);
+                    return;
+                }
+                [i - 1, i, i + 1].forEach(k => make(((k % n) + n) % n));
+            };
+            /* 나머지는 한가할 때 하나씩 — 한 번에 하나라 사이사이 스크롤이 끼어들 수 있다 */
+            const rest = () => {
+                const k = els.findIndex(el => el.classList.contains('is-pending'));
+                if (k < 0) { panel._clone?.(); return; }
+                make(k);
+                rcIdle(rest);
+            };
+            if (n > 1) {
+                /* 복제본은 진짜 분류가 **다 채워진 뒤** 붙인다 — 지금 탭 요소의 30% 가 복제본이었다.
+                   그 전에 끝을 넘으면 `showSlide` 가 먼저 붙인다 (처음·끝 분류부터 채우고) */
+                panel._clone = () => { panel._clone = null; make(0); make(n - 1); addClones(panel, track); };
+            }
+            rcIdle(rest);
+        };
         body.appendChild(panel);
     });
 

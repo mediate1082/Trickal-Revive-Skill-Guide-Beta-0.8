@@ -305,6 +305,19 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 /* ⚠ `min-width: 0` 이 없으면 안쪽 내용의 최소 폭이 `flex-basis` 를 밀어 올린다.
      그러면 실제 폭과 JS 가 계산한 폭이 어긋나 가운데 정렬이 빗나간다. */
 .rc-stage .rc-sec { flex: 0 0 var(--rc-slide-w, 100%); min-width: 0; }
+/* 화면 밖 분류는 그리지 않는다 — 슬라이드에서 양옆 비침 너머, 1열에서 화면 아래 분류들.
+   CPU 4배 측정에서 스타일·레이아웃이 절반쯤으로 준다 (2026-11-04).
+   ⚠ 아직 안 그린 분류의 높이는 어림값(900px)이다. 무대 높이(`layoutSlides`)는 가운데 분류를 재는데,
+     가운데로 오기 전에 옆에 비치며 한 번 그려지므로 보통 진짜 높이가 잡혀 있다.
+     분류 버튼으로 멀리 건너뛰면 한 프레임 어림값이 나왔다가 `stageWatch` 가 바로 고친다
+   ⚠ `auto` 가 붙어 있어 한 번 그린 뒤로는 그 크기를 기억한다 (1열 스크롤바가 덜 튄다) */
+.rc-track > .rc-sec { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+/* ⚠ **접힌 분류는 뺀다.** 폰 1열은 분류가 접힌 채 목차처럼 늘어서는데, 화면 밖 것이 어림값 900px 을
+     쓰면 목차 사이가 휑하게 벌어진다. 접히면 몸통이 `display: none` 이라 원래 가볍다 */
+.rc-track > .rc-sec.is-folded { content-visibility: visible; }
+/* 아직 안 채운 분류의 자리표 (`render` 의 `panel._build`). 한가할 때 하나씩 진짜로 바뀐다.
+   ⚠ 최소 높이는 **슬라이드에서만** — 1열에서 600px 자리표가 줄줄이 서면 목차가 통째로 밀린다 */
+.rc-panel:not(.is-list) .rc-sec.is-pending { min-height: 600px; }
 .rc-sec.is-away {
     filter: blur(3px) saturate(.65);
     opacity: .5;

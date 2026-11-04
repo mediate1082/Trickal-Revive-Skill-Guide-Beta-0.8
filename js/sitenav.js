@@ -125,11 +125,26 @@
         'Artifact_Stats', 'Artifact_Effects', 'Artifact_Attach', 'Artifact_Tags', 'Artifact_Tag_Rank',
         'Recommend_Sections', 'Recommend_Chara', 'Recommend_Chips', 'Recommend_Decks', 'Recommend_Deck_Members',
         'Recommend_Deck_Swaps', 'Crash2_Boss', 'Crash2_Boss_Skills', 'Crash2_Lines', 'Crash2_Shards', 'Crash2_Deck_Shards'];
+    /* ⚠ 이 페이지가 **이미 요청한** CSV 는 미리 받지 않는다. 예전엔 목록을 통째로 다시 받아
+         스킬 가이드에서 13개가 거의 동시에 두 번씩 나갔다 — 앞 요청이 아직 받는 중이라 캐시가 안 맞았다.
+         `performance` 기록은 **다 받은 것만** 올라와 받는 중인 요청을 못 본다. 그래서 `fetch` 를
+         지켜보며 이름만 적는다 (요청 자체는 그대로 넘긴다).
+       ⚠ 이 파일은 네 페이지 모두 **페이지 스크립트보다 먼저** 싣는다 — 그래야 첫 요청부터 보인다 */
+    const asked = new Set();
+    const fetch0 = window.fetch;
+    window.fetch = function (input, init) {
+        try {
+            const m = String(input && input.url || input).match(/data\/([^/?]+)\.csv/);
+            if (m) asked.add(decodeURIComponent(m[1]));
+        } catch (e) {}
+        return fetch0.apply(this, arguments);
+    };
     const conn = navigator.connection;
     if (conn && (conn.saveData || /2g/.test(conn.effectiveType || ''))) return;   // 데이터 절약 모드·느린 망은 건너뛴다
     const idle = window.requestIdleCallback || (f => setTimeout(f, 1500));
     addEventListener('load', () => idle(() => {
         const ver = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '';
-        CSV.forEach(n => fetch('data/' + n + '.csv?v=' + ver, { priority: 'low' }).catch(() => {}));
+        CSV.filter(n => !asked.has(n))
+            .forEach(n => fetch('data/' + n + '.csv?v=' + ver, { priority: 'low' }).catch(() => {}));
     }, { timeout: 4000 }));
 })();
