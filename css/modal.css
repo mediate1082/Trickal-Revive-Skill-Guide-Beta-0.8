@@ -639,6 +639,8 @@
 .tg-grade-badge[data-grade*="10"] { background: var(--grade-10); }
 .tg-grade-badge[data-grade*="-"]  { background: var(--grade-7m); }
 .tg-grade-badge[data-grade*="7+"] { background: var(--grade-7p); }
+/* 다크의 등급색은 밝은 형광이라 흰 글자가 안 읽혔다 (`~ Lv. 10+` 1.7:1, 작업 M 10번) — 어두운 글자로 뒤집는다 */
+[data-theme="dark"] .tg-grade-badge { color: #17181A; }
 
 /* ── Recommend Boxes ───────────────────── */
 .tg-recommend-box {

@@ -99,6 +99,8 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     background: var(--accent-green-strong); border-color: var(--accent-green-strong);
     color: #fff; font-weight: 800;
 }
+/* 다크의 연두(#84C046) 위 흰 글자는 2.2:1 이었다 (작업 M 10번) — 어두운 글자로 뒤집는다 */
+[data-theme="dark"] .rc-tab.on { color: #17200C; }
 /* 대분류 아이콘 — 인게임 리소스라 비율이 제각각이다. 높이로 맞추고 폭은 따라가게 둔다 */
 .rc-tab-icon { height: 26px; width: auto; max-width: 36px; object-fit: contain; flex: none; }
 /* 보기 방식은 탭 줄 오른쪽 끝. 탭 줄이 sticky 라 스크롤해도 따라다닌다 */
@@ -985,6 +987,9 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     border-radius: 8px 8px 2px 2px;
     font-size: .72rem; font-weight: 800; color: #FFFFFF;
     letter-spacing: -.01em; white-space: nowrap;
+    /* 서포터 주황(#F5A623) 위 흰 글자가 2.0:1 이라 옅게 그림자를 깐다 (작업 M 10번).
+       색은 역할색과 같아야 해서 못 바꾸고, 탭마다 글자색이 갈리면 한 묶음으로 안 보인다 */
+    text-shadow: 0 1px 1.5px rgba(0, 0, 0, .35);
     /* 접힌 자국 — 이 한 줄이 "붙인 물건" 이라는 신호다 */
     box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .16);
 }

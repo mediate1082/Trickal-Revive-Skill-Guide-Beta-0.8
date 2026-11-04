@@ -129,7 +129,7 @@ async function loadExternalData() {
     try {
         const v = window.APP_VERSION || '';
         // info.txt 는 도움말 모달이 HTML 로 옮겨가면서 폐기됨 (v1.4.13)
-        const [res1, res2, res3, res4, res6, res7, res8, res9, res10, res11, res12, res13, res14] = await Promise.all([
+        const [res1, res2, res3, res4, res6, res7, res8, res9, res10, res11, res12, res13, res14, res15] = await Promise.all([
             fetch(`./data/DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_desc_DB.csv?v=${v}`).then(res => res.text()),
@@ -143,6 +143,8 @@ async function loadExternalData() {
             fetch(`./data/battle_item_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/Immunity_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/Usage_DB.csv?v=${v}`).then(res => res.text()),
+            // 별명 표는 없어도 검색만 본명으로 돌아가면 된다 — 실패해도 페이지를 세우지 않는다
+            fetch(`./data/alias_DB.csv?v=${v}`).then(res => res.ok ? res.text() : '').catch(() => ''),
         ]);
 
         const cfg = { header: true, skipEmptyLines: true, transformHeader: h => h.trim() };
@@ -159,6 +161,7 @@ async function loadExternalData() {
         spDB = Papa.parse(res11, cfg).data;
         battleItemDB = Papa.parse(res12, cfg).data;
         immunityDB = Papa.parse(res13, cfg).data;
+        if (res15) aliasMap = buildAliasMap(Papa.parse(res15, cfg).data, '사도');
 
         allStateDB = [...buffDescDB, ...debuffDescDB];
         window._battleItemDB = battleItemDB;
@@ -724,6 +727,28 @@ function _matchesKorQuery(name, query, rawQuery = query) {
     return _korSearchMatch(name, query);
 }
 
+/* 별명 검색 — `alias_DB.csv` (공략·채팅의 약칭 → 정식명). 정식명 → 별명 목록으로 들고 있는다.
+   ⚠ 별명은 **앞에서부터만** 맞춘다 (두 글자 이상). 가운데 일치·초성까지 받으면 `마` 한 글자에
+     `마이볼`(죠안)·`마멋`(마요) 이 딸려 나와 본명 검색이 시끄러워진다.
+   영타는 받는다 (`dkdlqhf` → 마이볼) — 별명이 짧아 한/영 전환을 잊기 쉽다 */
+let aliasMap = new Map();
+function buildAliasMap(rows, type) {
+    const m = new Map();
+    rows.forEach(r => {
+        if ((r.type || '').trim() !== type) return;
+        const list = (r.alias || '').split(',').map(a => a.trim().toLowerCase()).filter(Boolean);
+        if (list.length) m.set((r.name || '').trim(), list);
+    });
+    return m;
+}
+function _matchesAlias(name, query, rawQuery = query) {
+    const list = aliasMap.get(name);
+    if (!list || query.length < 2) return false;
+    const keys = [query];
+    if (/^[a-zA-Z0-9\s]+$/.test(rawQuery)) keys.push(_engToKor(rawQuery));
+    return list.some(a => keys.some(k => a.startsWith(k)));
+}
+
 function handleSortFilter() {
     const rawQuery = document.getElementById('search-input').value.trim();
     const query = rawQuery.toLowerCase();
@@ -732,7 +757,7 @@ function handleSortFilter() {
     const excludeSelf = document.getElementById('exclude-self-toggle')?.checked || false;
 
     let filtered = db.filter(char => {
-        const nameMatch = _matchesKorQuery(char.name || "", query, rawQuery);
+        const nameMatch = _matchesKorQuery(char.name || "", query, rawQuery) || _matchesAlias(char.name, query, rawQuery);
         if (!nameMatch) return false;
 
         if (!passesAttrFilter(char)) return false;

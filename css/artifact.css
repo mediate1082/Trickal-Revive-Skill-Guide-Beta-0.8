@@ -55,7 +55,10 @@
 .ar-x { position: absolute; right: 12px; top: 12px; font: inherit; font-size: 20px; width: 34px; height: 34px; border-radius: 50%; border: 0; background: transparent; color: var(--text-muted); cursor: pointer; }
 .ar-x:hover { background: var(--border-soft); }
 .ar-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-right: 34px; }
-.ar-title h2 { margin: 0; font-size: 21px; word-break: keep-all; }
+/* ⚠ 글꼴(ONEMobilePOP)은 굵기가 하나뿐이라 bold 를 주면 브라우저가 **가짜 굵게**를 덧칠한다.
+     큰 글씨에서는 획이 촘촘한 글자(`틀`·`블`·`볼`)의 속이 메워져 덩어리가 된다 (작업 M 9번, `30KG 케틀벨`).
+     원래 굵은 글꼴이라 덧칠을 빼도 제목으로 충분히 읽힌다 */
+.ar-title h2 { margin: 0; font-size: 21px; word-break: keep-all; font-synthesis-weight: none; }
 .ar-grade { font-size: 12px; font-weight: 800; color: #fff; border-radius: 6px; padding: 2px 8px; background: var(--g); }
 .ar-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0 8px; }
 .ar-stat { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; }

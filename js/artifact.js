@@ -45,6 +45,20 @@ const READY = Promise.all(['artifact_DB.csv', 'Artifact_Stats.csv', 'Artifact_Ef
     if (h) openModal(h);
 }).catch(err => { if (PAGE) $('ar-grid').innerHTML = `<p class="ar-empty">데이터를 불러오지 못했어요 (${esc(err.message)})</p>`; });
 
+/* 별명 검색 — `alias_DB.csv` 의 아티팩트 행 (`파랑새` → 블랑셰의 유리 파랑새).
+   목록 페이지에서만 받는다 — 이 파일은 다른 페이지에서도 모달용으로 실린다.
+   ⚠ 앞에서부터만, 두 글자 이상 (스킬 가이드 `_matchesAlias` 와 같은 규칙) */
+const ALIAS = new Map();
+if (PAGE) load('alias_DB.csv').then(rows => {
+    rows.forEach(r => {
+        if ((r.type || '').trim() !== '아티팩트') return;
+        const list = String(r.alias || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+        if (list.length) ALIAS.set((r.name || '').trim(), list);
+    });
+    if (F.q) render();
+}).catch(() => {});
+const aliasHit = (name, q) => q.length >= 2 && (ALIAS.get(name) || []).some(s => s.startsWith(q.toLowerCase()));
+
 /* 기본 스탯: "라벨 : {0}%" 줄 → {label, idx, unit}. 비용 줄은 스탯이 아니다 */
 function statLines(name) {
     const r = STATS[name]; if (!r) return [];
@@ -161,7 +175,7 @@ function syncChips() {
 const tagsOf = a => String(a.tags || '').split(',').map(s => s.trim()).filter(Boolean);
 function match(a) {
     const tg = tagsOf(a);
-    if (F.q && !a.name.includes(F.q)) return false;
+    if (F.q && !a.name.includes(F.q) && !aliasHit(a.name, F.q)) return false;
     if (F.group && !tg.some(t => TAGS.find(x => x.tag_key === t)?.tag_group === F.group)) return false;
     if (F.tags.size && ![...F.tags].every(t => tg.includes(t))) return false;
     if (F.grades.size && !F.grades.has(a.grade)) return false;
