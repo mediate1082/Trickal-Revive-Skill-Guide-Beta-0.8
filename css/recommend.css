@@ -516,6 +516,8 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
          글자가 두 배쯤 넓은 한글에 그대로 쓰면 줄이 너무 일찍 끊긴다. */
     max-width: none;
     font-size: .85rem; line-height: 1.65; color: var(--rc-reason);
+    /* CSV 칸 안의 줄바꿈을 그대로 살린다 — 없으면 줄을 나눠 적은 설명이 한 문단으로 붙는다 (2026-11-04) */
+    white-space: pre-line;
     /* ⚠ 한글은 기본값이 **음절 단위로 끊긴다** — 없으면 `로니를` 이 `로` / `니를` 로
          갈라진다. 이 페이지의 다른 본문(`.rc-alt-note` 등)은 전부 이걸 쓰고 있다. */
     word-break: keep-all;
