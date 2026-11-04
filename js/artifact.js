@@ -16,7 +16,7 @@ const SORTS = [{ value: 'grade', label: '등급순' }, { value: 'name', label: '
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const load = f => fetch('data/' + f + '?v=' + APP_VERSION).then(r => r.text())
     .then(t => Papa.parse(t.replace(/^﻿/, ''), { header: true, skipEmptyLines: true }).data);
-/* 템플릿은 글자 `\n` 으로, Lv.N 값은 실제 줄바꿈으로 가른다 (CLAUDE.md) */
+/* 템플릿은 글자 `\n` 으로, Lv.N 값은 실제 줄바꿈으로 가른다 (DATA.md) */
 const lines = s => String(s ?? '').split('\\n');
 const lvVals = (row, lv) => String(row?.['Lv.' + lv] ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
 const lastLv = row => { let n = 0; for (let i = 1; i <= 12; i++) if (lvVals(row, i).length) n = i; return n; };
