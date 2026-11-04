@@ -1052,6 +1052,15 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-equip-slot > .s-icon { inset: 16%; width: 68%; height: 68%; }
 /* 자유 칸 — 덱 빈자리와 같은 그림. 프레임보다 작게 넣어 '비어 있지만 뜻이 있다' 로 읽히게 */
 .rc-equip-slot > .s-free { inset: 24%; width: 52%; height: 52%; opacity: .5; }
+/* `{태그}` 칸 — 그 태그의 아티팩트 아무거나. 선택 기준 칩과 같은 색 (`Artifact_Tags.tag_color`, 흰 글자 대비 범위 안) */
+.rc-equip-slot.is-tag {
+    display: grid; place-items: center; border-radius: 50%;
+    background: var(--tag, #7A8466); box-shadow: inset 0 0 0 2px rgba(255,255,255,.55);
+}
+.rc-equip-slot .s-tag {
+    color: #fff; font-weight: 800; font-size: 7.6cqw; line-height: 1.05;
+    text-align: center; word-break: keep-all; padding: 0 2cqw;
+}
 /* 표에 없는 이름 — 조용히 비우지 않는다. 오타를 못 잡는다 */
 .rc-equip-slot.is-unknown {
     display: grid; place-items: center; border-radius: 50%;

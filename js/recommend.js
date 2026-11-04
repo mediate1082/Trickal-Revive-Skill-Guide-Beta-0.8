@@ -303,6 +303,9 @@ const ARTIFACTS = new Map();
 /* 아무 아티팩트나 괜찮다는 표시. 덱 빈자리의 `자유` 와 **같은 말**을 쓴다 —
    사용자가 한 번만 배우면 되도록. */
 const FREE_ART = '자유';
+/* `{태그}` — **그 태그의 아티팩트 아무거나** (`Artifact_Tags` 의 `tag_key`). 운용 정보의 선택 기준(`art_note`)과 같은 꼴.
+   대충돌처럼 아티팩트가 무작위로 나오는 콘텐츠에서 "마법딜 하나" 같은 방향만 적을 때 쓴다 (2026-11-04) */
+const ART_TAGS = new Map();   // tag_key → { label, color }
 const GRADE_FRAME = {
     '':     './assets/icons/common_icons/Ingame_ArtifactBase_Empty.webp',
     '일반': './assets/icons/common_icons/Ingame_ArtifactBase_Rarity_1.webp',
@@ -602,6 +605,13 @@ function buildEquipCard(char, info, slots = 3) {
                카드 자체도 눌리는(사도 모달) 자리라 전파를 끊는다 */
             /* ⚠ 핸들러는 아래 문서 위임으로 단다 — 슬라이드 복제본(cloneNode)은 onclick 을 못 물려받는다 */
             sl.classList.add('is-link'); sl.tabIndex = 0; sl.setAttribute('role', 'button'); sl.dataset.art = nm;
+        } else if (/^\{.+\}$/.test(nm || '') && ART_TAGS.has(nm.slice(1, -1).trim())) {
+            /* `{태그}` — 그 태그의 아티팩트 아무거나. 태그 색 동그라미에 이름을 얹는다 (선택 기준 칩과 같은 색) */
+            const tg = ART_TAGS.get(nm.slice(1, -1).trim());
+            sl.classList.add('is-tag');
+            if (tg.color) sl.style.setProperty('--tag', tg.color);
+            sl.innerHTML = `<span class="s-tag">${esc(tg.label)}</span>`;
+            sl.dataset.tooltip = `${tg.label} 아티팩트 아무거나`;
         } else if (nm === FREE_ART) {
             /* `자유` — **아무거나 껴도 되는 칸**이다. 빈 칸과 눈으로 갈라야 한다.
                비워 두면 "아직 안 적었나" 로 읽힌다 (어사이드 `무관` 과 같은 이유).
@@ -2036,7 +2046,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
         const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT, immT,
-               bossT, bossPartT, lineT, shardT, deckShardT, usageT] =
+               bossT, bossPartT, lineT, shardT, deckShardT, usageT, artTagT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
                 'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv', 'Recommend_Deck_Members.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
@@ -2044,7 +2054,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
                 'low_skill_DB.csv', 'aside_DB.csv', 'sp_DB.csv', 'battle_item_DB.csv',
                 'artifact_DB.csv', 'Immunity_DB.csv',
                 'Crash2_Boss.csv', 'Crash2_Boss_Skills.csv', 'Crash2_Lines.csv',
-                'Crash2_Shards.csv', 'Crash2_Deck_Shards.csv', 'Usage_DB.csv'].map(get));
+                'Crash2_Shards.csv', 'Crash2_Deck_Shards.csv', 'Usage_DB.csv', 'Artifact_Tags.csv'].map(get));
         const P = t => Papa.parse(t, cfg).data;
 
         const db = P(dbT);
@@ -2074,6 +2084,10 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
             if (n) ARTIFACTS.set(n, { icon_no: (r.icon_no || '').trim(),
                                       grade: (r.grade || '').trim(),
                                       attach: (r.attach || '').trim() });
+        });
+        P(artTagT).forEach(r => {
+            const k = (r.tag_key || '').trim();
+            if (k) ART_TAGS.set(k, { label: (r.tag_label || '').trim() || k, color: (r.tag_color || '').trim() });
         });
 
         /* `Crash2_Boss_Skills.csv` 한 장에 **기믹 카드와 보스 상태가 같이** 들어 있다
