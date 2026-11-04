@@ -316,6 +316,7 @@ window._tmOpenPopup = function (tierId, btnEl) {
     const popup = document.getElementById('tm-popup');
     const modal = document.getElementById('tm-modal');
     const bRect = btnEl.getBoundingClientRect();
+    popup.style.left = '';
     if (modal) {
         const mRect = modal.getBoundingClientRect();
         popup.style.position = '';
@@ -347,6 +348,15 @@ window._tmOpenPopup = function (tierId, btnEl) {
         <button class="tm-popup-btn" onclick="window._tmClearTier('${tierId}')">전체 미배치로 이동</button>
         <button class="tm-popup-btn tm-popup-btn-danger" onclick="window._tmDeleteTier('${tierId}')">티어 삭제</button>`;
     popup.style.display = 'block';
+    /* 창은 ⚙ 오른쪽 끝에 맞춰 왼쪽으로 펼쳐진다 — 폰처럼 좁으면 왼쪽이 화면 밖으로 나가
+       `티어 설정`·`이름` 첫 글자가 잘렸다 (작업 M 4번). 그때는 왼쪽 끝에 붙여 오른쪽으로 펼친다.
+       ⚠ `right` 만 줄여서는 안 된다 — 창 폭이 남은 자리만큼 늘어나 왼쪽 끝이 그대로 0 에 남는다 */
+    const over = 8 - popup.getBoundingClientRect().left;
+    if (over > 0) {
+        const parentLeft = popup.style.position === 'fixed' ? 0 : popup.offsetParent.getBoundingClientRect().left;
+        popup.style.right = 'auto';
+        popup.style.left = (8 - parentLeft) + 'px';
+    }
 };
 
 function _tmClosePopupEl() {

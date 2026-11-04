@@ -798,7 +798,7 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    ⚠ 물방울(긴 꼬리)은 높이의 35% 를 꼬리가 먹어 얼굴이 작아진다 — 짧은 꼬리를 쓴다. */
 .rc-pin {
     position: absolute; width: 13cqw;
-    /* ⚠ 꼬리는 `.p-head::after` 로 **요소 박스 밖까지** 삐져나간다 (top:92% + 높이).
+    /* ⚠ 꼬리는 `.rc-pin::before` 로 **요소 박스 밖까지** 삐져나간다 (top:92% + 높이).
          그래서 요소 bottom 을 발판 중심에 맞추면 꼬리 끝이 19px 쯤 더 내려간다.
          그만큼 **위로** 올려야 꼬리 끝이 발판에 꽂힌다 — 부호를 반대로 썼다가 떠 보였다. */
     transform: translate(-50%, calc(-100% - 3cqw));
@@ -820,11 +820,22 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     /* 띠가 색을 갖게 되면서 핀이 묻힌다 — 흰 테두리 한 겹으로 띄운다 */
     box-shadow: 0 0 0 2px rgba(255, 255, 255, .92);
 }
-/* 꼬리 — 머리 아래 작은 삼각 */
-.rc-pin .p-head::after {
-    content: ''; position: absolute; left: 50%; top: 92%;
+/* 꼬리 — 머리 아래 작은 삼각. 핀의 `::before` 다 (핀 높이 = 머리 높이라 `top`·`width` % 가 머리 기준과 같다).
+   ⚠ 머리(z 1) **위**(z 2)에 둔다. 밑에 깔면 머리의 흰 테두리가 꼬리를 가로질러 구슬과 받침으로 갈라 보인다 —
+     위에 두면 꼬리가 그 자리의 흰 선을 덮고, 테두리는 아래 `::after` 와 이어져 핀 전체를 한 번 두른다 */
+.rc-pin::before {
+    content: ''; position: absolute; left: 50%; top: 92%; z-index: 2;
     width: 40%; aspect-ratio: 1 / .78; transform: translateX(-50%);
     background: var(--pin, #8A8F9A);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+/* 꼬리의 흰 테두리 — 머리의 `box-shadow` 2px 와 이어져 핀 전체를 한 실루엣으로 두른다.
+   `clip-path` 는 그림자·테두리까지 잘라 내므로 꼬리에 직접 못 준다. 같은 기울기의 흰 삼각을 한 겹 뒤에 깐다.
+   변이 바깥으로 2px 나오려면 폭은 양쪽 2px/cos(32.7°) ≈ 2.38px 씩 → +4.76px (높이는 비율이 같아 따라온다) */
+.rc-pin::after {
+    content: ''; position: absolute; left: 50%; top: 92%; z-index: -1;
+    width: calc(40% + 4.76px); aspect-ratio: 1 / .78; transform: translateX(-50%);
+    background: rgba(255, 255, 255, .92);
     clip-path: polygon(0 0, 100% 0, 50% 100%);
 }
 .rc-pin .p-face { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
@@ -867,9 +878,24 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 /* ⚠ 머리를 리본 위로 올린다. 안 그러면 라벨이 얼굴을 덮는다 */
 .rc-pin .p-head { z-index: 1; }
 
-.rc-pin[data-role="딜러"]   { --pin: #E85050; }
-.rc-pin[data-role="서포터"] { --pin: #F5A623; }
-.rc-pin[data-role="탱커"]   { --pin: #4A7BD5; }
+/* 핀 색 = 성격색 (메인 카드 초상화 바탕과 같은 값). 역할은 오른쪽 아래 뱃지가 알린다 */
+.rc-pin[data-personality="순수"] { --pin: #66C17C; }
+.rc-pin[data-personality="냉정"] { --pin: #85BAEC; }
+.rc-pin[data-personality="광기"] { --pin: #EE839D; }
+.rc-pin[data-personality="우울"] { --pin: #C784ED; }
+.rc-pin[data-personality="활발"] { --pin: #ECDC85; }
+.rc-pin[data-personality="공명"] { --pin: conic-gradient(#FFB3B3, #FFF7A8, #B3F5B3, #B3F0FF, #B9B9FF, #FFB3F2, #FFB3B3);
+}
+/* 공명 꼬리 — 머리와 **같은 무지개 한 장**을 꼬리 자리로 비춰 본다.
+   ⚠ 꼬리는 따로 칠하는 조각(`::before`)이라 그라디언트를 그냥 물려받으면 꼬리 안에서 무지개가 한 바퀴
+     더 돌아 이음매가 생긴다. 그래서 그림의 크기·자리를 **머리 기준**으로 맞춘다 (핀 폭 W = 13cqw).
+     꼬리는 핀 안 (0.3W, 0.92W) 에 있으므로 그만큼 거꾸로 민다. 꼬리가 머리 원 **밖**까지 내려가므로
+     그림을 3W 로 키우고(중심은 그대로 — 원뿔 그라디언트는 중심에서 본 방향만 따진다) W 를 더 민다.
+   ⚠⚠ 핀 폭(`.rc-pin` 의 13cqw)이나 꼬리 자리(`left`·`top`·`width`)를 바꾸면 이 숫자도 같이 바꿀 것 */
+.rc-pin[data-personality="공명"]::before {
+    background-size: 39cqw 39cqw;
+    background-position: -16.9cqw -24.96cqw;
+}
 .rc-pin.is-free { --pin: #B9BEC8; cursor: default; }
 .rc-pin.is-free .p-face { object-fit: contain; padding: 14%; box-sizing: border-box; }
 

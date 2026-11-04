@@ -362,6 +362,7 @@ function buildPin(char, info) {
     const pin = document.createElement('div');
     pin.className = 'rc-pin' + (fixed ? ' is-fixed' : '');
     pin.dataset.role = role;
+    if (char.personality) pin.dataset.personality = char.personality;
     pin.tabIndex = 0;
     pin.setAttribute('role', 'button');
     pin.setAttribute('aria-label', `${char.name} 상세 정보`);

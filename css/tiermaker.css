@@ -208,7 +208,7 @@ body.tm-is-dragging .tm-add-slot { display: none; }
     background: var(--modal-card-bg, #fff);
     border: 1.5px solid var(--border-soft);
     border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.14);
-    padding: 12px 14px; min-width: 220px;
+    padding: 12px 14px; min-width: 220px; max-width: calc(100vw - 16px); box-sizing: border-box;
 }
 [data-theme="dark"] .tm-popup { background: #252525; border-color: #383838; }
 .tm-popup-title {
@@ -361,6 +361,11 @@ body.tm-is-dragging .tm-add-slot { display: none; }
 /* 터치 기기에서 입력칸 포커스 때 iOS 가 화면을 키우지 않게 16px (base.css 의 같은 절 참조) */
 @media (pointer: coarse) {
     .tm-pool-search, .tm-add-psearch, .tm-popup-input, .tm-lbl-input { font-size: 16px; }
+    /* ⚙ ▲ ▼ 가 26px 에 3px 간격이라 손가락으로는 옆 것을 누르기 쉬웠다 (작업 M 11번).
+       줄 최소 높이(90px)보다 조금 커지지만 터치 기기에서만이다 */
+    .tm-row-ctrl { gap: 6px; }
+    .tm-row-ctrl button { width: 32px; height: 32px; }
+    .tm-sw { width: 28px; height: 28px; }
 }
 [data-theme="dark"] .tm-add-psearch {
     background: #1a1a1a;

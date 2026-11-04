@@ -739,6 +739,16 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     .tg-sitenav-tab { padding: 6px 11px 6px 8px; font-size: .82rem; gap: 5px; }
     .tg-sitenav-tab img { width: 18px; height: 18px; }
 }
+/* 폰 폭 — 아이콘을 접어 네 탭이 360px 에도 다 들어가게 한다. 아이콘째로는 354px 이 필요해
+   폰 대부분에서 넘쳤고, 지금 페이지 쪽으로 밀린 채 첫 탭이 `킬 가이드` 처럼 잘려 보였다 (작업 M 8번).
+   여백만 조여서는 30px 남짓밖에 안 줄어 모자랐다. 지금 페이지는 알약 색이 알린다
+   ⚠ 어느 페이지에서나 **같은 폭**이어야 한다 — 트레이가 페이지 전환 이름(`site-tray`)을 달고 있어
+     지금 탭만 아이콘을 남기면 폭이 페이지마다 달라져 전환 때 크기가 움직인다 */
+@media (max-width: 400px) {
+    .tg-sitenav-row { gap: 2px; }
+    .tg-sitenav-tab { padding: 6px 8px; }
+    .tg-sitenav-tab img { display: none; }
+}
 
 /* 탭 줄 폭은 그 페이지 헤더와 같이 간다 — 로고 아래에 첫 탭이 서야 한다 */
 .tg-sitenav-inner { max-width: var(--page-width); }
