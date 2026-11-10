@@ -2054,3 +2054,50 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-home-now { font-style: normal; font-size: 11px; font-weight: 800; color: #fff; background: #E8862A; border-radius: 999px; padding: 1px 7px; }
 @media (max-width: 720px) { .rc-home-grid { grid-template-columns: 1fr; } }
 
+
+/* ══ 스펠 카드 (`buildSpellCard`) — 덱 편성판 아래 「스펠」 줄 ══
+   인게임 카드 꼴. 크기는 `cqw` 라 카드 폭만 정하면 안이 같이 줄고 늘어난다.
+   틀은 **CSS 로 그린다** (2026-11-10) — 층: 바깥 테두리(--rim) → 등급색 띠(--band) → 바탕(CardBase) → 그림
+     → 이름판(--rim 바탕 + 둥근 실선 --line + 속 #F6FBEE). 색 셋은 인게임 틀(`Ingame_CardBorder_Grade_n`)에서 뽑았다.
+   ⚠ 예전엔 그 틀 이미지(91×128)를 `border-image` 9조각으로 0.3 배 줄여 썼는데 곡선에 **계단 현상**이 생겨 걷었다
+   ⚠⚠ 카드(`.rc-spell`) **자신**의 `border-radius` 에 `cqw` 를 쓰지 말 것 — 자기 자신은 컨테이너 기준이 아니라
+     바깥(화면) 폭으로 풀려 모서리가 부푼다. 그래서 바깥 테두리를 안쪽 요소(`.rc-spell-rim`)로 뒀다
+   ⚠ 글로우(등급색 빛)는 넣지 않는다 — 인게임 프리셋 화면의 "고른 카드" 강조라 여기선 뜻이 없다 */
+/* 6장씩 — 인게임 프리셋(6×2)과 같은 줄 수. `auto-fill` 로 두면 넓은 화면에서 9 + 3 처럼 꼬리가 남는다 */
+/* 음각 상자로 한 번 묶어 가운데에 둔다 — 덱 폭(1800 페이지)이 넓어 왼쪽에 붙이면 오른쪽이 통째로 빈다.
+   음각 색·그림자는 `.rc-alt-text` 와 같은 토큰 (COMPONENTS.md 2절).
+   그 위에 **인게임 프리셋 화면처럼 검은 반투명 막**(`::before`)을 한 겹 깐다 — 층 순서는 상자 → 막 → 카드.
+   카드의 흰 테두리가 흰 음각 바탕에 묻혀 윤곽이 안 보였다.
+   ⚠ 카드에 바깥 그림자를 주는 것도 해 봤는데 어색해서 걷었다 */
+.rc-spell-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px 10px; max-width: 780px;
+    margin: 4px auto 0; padding: 16px 18px 14px; border-radius: 16px;
+    position: relative; isolation: isolate;
+    background: var(--rc-card-bg); border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow); }
+.rc-spell-grid::before { content: ''; position: absolute; inset: 4px; z-index: -1; border-radius: 12px;
+    background: rgba(22, 26, 38, .72); pointer-events: none; }
+@media (max-width: 700px) { .rc-spell-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .rc-spell-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; padding: 12px 10px 10px; } }
+.rc-spell { position: relative; width: 100%; aspect-ratio: 226 / 256; container-type: inline-size; font-family: 'OneMobilePop', sans-serif; }
+.rc-spell[data-grade="일반"] { --rim: #F7F8F1; --band: #B0B0B0; --line: #E2E2E0; }
+.rc-spell[data-grade="고급"] { --rim: #E7FFDF; --band: #65DF83; --line: #CEEDC9; }
+.rc-spell[data-grade="희귀"] { --rim: #ECFAFA; --band: #64A9EB; --line: #C7DCEA; }
+.rc-spell[data-grade="전설"] { --rim: #FCF6FF; --band: #B373F6; --line: #D5C5E3; }
+.rc-spell-rim  { position: absolute; inset: 0; border-radius: 11cqw; background: var(--rim); }
+.rc-spell-band { position: absolute; inset: 1.4cqw 1.4cqw 27%; border-radius: 9.6cqw 9.6cqw 0 0; background: var(--band); }
+.rc-spell-base { position: absolute; inset: 3cqw 3cqw 27%; border-radius: 8cqw 8cqw 0 0; background: var(--base) center / cover no-repeat; }
+/* 그림은 바탕보다 한 겹 안쪽 — 사이로 등급색 바탕이 보여 띠가 인게임만큼 두꺼워진다 */
+.rc-spell-art  { position: absolute; inset: 5.4cqw 5cqw 27%; border-radius: 6cqw 6cqw 0 0; background: var(--art) 50% 40% / cover no-repeat; }
+.rc-spell-plate { position: absolute; left: 0; right: 0; bottom: 0; height: 28%; border-radius: 0 0 11cqw 11cqw; background: var(--rim); }
+.rc-spell-plate::before { content: ''; position: absolute; inset: 1.6cqw 2.2cqw 2.2cqw; border-radius: 3cqw 3cqw 8.4cqw 8.4cqw;
+    border: .8cqw solid var(--line); background: #F6FBEE; }
+.rc-spell-name { position: absolute; left: 6cqw; right: 6cqw; bottom: 0; height: 28%; box-sizing: border-box; padding-top: 2cqw; z-index: 1;
+    display: flex; align-items: center; justify-content: center; white-space: nowrap; word-break: keep-all;
+    font-size: 11.5cqw; letter-spacing: -.02em; color: #1d1d1d; -webkit-text-stroke: .25cqw #1d1d1d; }
+.rc-spell-name[data-long] { font-size: 9.5cqw; }
+/* 고깔모자 — 챙이 이름판 윗선에 걸친다 */
+.rc-spell-hat { position: absolute; left: 50%; bottom: 21%; width: 25cqw; translate: -50% 0; z-index: 2; }
+/* 장수 — 카드 더미 아이콘 + 보라 원. 원이 카드 오른쪽 밖으로 조금 나온다 */
+.rc-spell-cnt { position: absolute; right: -5cqw; bottom: 25%; width: 26cqw; z-index: 2; }
+.rc-spell-cnt img { position: absolute; left: 50%; bottom: 19cqw; width: 21cqw; translate: -40% 0; }
+.rc-spell-cnt b { display: grid; place-items: center; width: 26cqw; aspect-ratio: 1; border-radius: 50%;
+    background: #7f5cf0; box-shadow: inset 0 0 0 1.2cqw #a48cf6; color: #fff; font-weight: 400; font-size: 11.5cqw; letter-spacing: -.03em; }

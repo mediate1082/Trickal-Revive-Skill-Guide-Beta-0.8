@@ -713,6 +713,10 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
             ${sub ? `<p class="rc-deck-sub">${linkify(sub)}</p>` : ''}
         </header>
         <div class="rc-deck-tiles"></div>
+        <section class="rc-deck-block is-spells" hidden>
+            <h5 class="rc-deck-eyebrow">스펠</h5>
+            <div class="rc-spell-grid"></div>
+        </section>
         <section class="rc-deck-block is-equip" hidden>
             <h5 class="rc-deck-eyebrow">아티팩트</h5>
             <div class="rc-equip-row"></div>
@@ -785,6 +789,14 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
             if (t) tiles.appendChild(t);
         });
     }
+
+    /* 스펠 줄 — 적힌 순서 그대로 (인게임 프리셋처럼 등급 높은 순으로 적는다) */
+    const spellGrid = box.querySelector('.rc-spell-grid');
+    (DECK_SPELLS.get(deckKey) || []).forEach(({ name, count, note }) => {
+        const c = buildSpellCard(name, count, note);
+        if (c) spellGrid.appendChild(c);
+    });
+    if (spellGrid.children.length) box.querySelector('.is-spells').hidden = false;
 
     /* 후보 한 줄 = [타일][이름][언제 쓰는지].
        ⚠ 얼굴만 늘어놓으면 "뭘 보고 고르라는 건지" 가 빠진다 — 고르는 기준이 핵심이다. */
@@ -896,6 +908,34 @@ const SHARD_ART = new Map();
    ⚠ 이름으로 잇는다 (`artifact` 열과 같은 관례). 파편 이름이 `되XX 수 X어` 처럼
      깨져 보여도 **인게임 이름이 그렇다** — 고치지 말 것. */
 const DECK_SHARDS = new Map();
+
+/* ══ 스펠 카드 (`spell_DB.csv` · `Recommend_Deck_Spells.csv`) ══
+   심해 대격돌의 스펠 — 모든 사도에게 걸리는 카드. 덱 편성판 아래 「스펠」 줄에 인게임 카드 꼴로 깐다.
+   카드 한 장 = 바깥 테두리 + 등급색 띠 + 바탕(`CardBase`) + 그림 + 이름판 + 고깔모자 + 장수(2장 이상) + 이름.
+   틀(테두리·띠·이름판)은 CSS 가 등급색으로 그린다 (`.rc-spell[data-grade]`) — 이미지 틀은 곡선에 계단 현상이 생겨 걷었다.
+   ⚠ 코스트는 아직 데이터가 없어 안 그린다. 대격돌은 "코스트 무관 20장 고르기" 라 당장은 필요 없다. */
+const SPELLS = new Map();        // name → { no, grade }
+const DECK_SPELLS = new Map();   // deck_key → [{ name, count, note }]
+const SPELL_GRADE_N = { 일반: 1, 고급: 2, 희귀: 3, 전설: 4 };
+function buildSpellCard(name, count, note) {
+    const s = SPELLS.get(name);
+    if (!s) return null;
+    const n = SPELL_GRADE_N[s.grade] || 1;
+    /* ⚠ `url()` 을 사용자 속성으로 넘기면 스타일시트(css/) 기준으로 풀린다 — 절대 주소로 넘긴다 */
+    const abs = p => new URL(p, document.baseURI).href;
+    const el = document.createElement('div');
+    el.className = 'rc-spell';
+    el.dataset.grade = s.grade;
+    el.style.cssText = `--base:url('${abs(`assets/icons/spell_card/Ingame_CardBase_Grade_${n}.webp`)}');`
+        + `--art:url('${abs(`assets/icons/spells/SpellCardIcon_${s.no}.webp`)}')`;
+    if (note) el.dataset.tooltip = `${name}\n${note}`;
+    el.innerHTML = `<div class="rc-spell-rim"></div><div class="rc-spell-band"></div><div class="rc-spell-base"></div><div class="rc-spell-art"></div><div class="rc-spell-plate"></div>
+        <img class="rc-spell-hat" src="assets/icons/spell_card/Ingame_CardIcon_Spell.webp" alt="">
+        ${count > 1 ? `<span class="rc-spell-cnt"><img src="assets/icons/spell_card/Ingame_Spell_Icon_2.webp" alt=""><b>×${count}</b></span>` : ''}
+        <span class="rc-spell-name"${name.length >= 9 ? ' data-long' : ''}>${esc(name)}</span>`;
+    el.setAttribute('aria-label', count > 1 ? `${name} ${count}장` : name);
+    return el;
+}
 
 /* 설명문 표기 → 태그.
      [[용어]]  보스 고유 용어 — 상태 표에 있으면 아이콘·말풍선이 따라온다
@@ -2061,7 +2101,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
         const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT, immT,
-               bossT, bossPartT, lineT, shardT, deckShardT, usageT, artTagT] =
+               bossT, bossPartT, lineT, shardT, deckShardT, usageT, artTagT, spellT, deckSpellT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
                 'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv', 'Recommend_Deck_Members.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
@@ -2069,7 +2109,8 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
                 'low_skill_DB.csv', 'aside_DB.csv', 'sp_DB.csv', 'battle_item_DB.csv',
                 'artifact_DB.csv', 'Immunity_DB.csv',
                 'Crash2_Boss.csv', 'Crash2_Boss_Skills.csv', 'Crash2_Lines.csv',
-                'Crash2_Shards.csv', 'Crash2_Deck_Shards.csv', 'Usage_DB.csv', 'Artifact_Tags.csv'].map(get));
+                'Crash2_Shards.csv', 'Crash2_Deck_Shards.csv', 'Usage_DB.csv', 'Artifact_Tags.csv',
+                'spell_DB.csv', 'Recommend_Deck_Spells.csv'].map(get));
         const P = t => Papa.parse(t, cfg).data;
 
         const db = P(dbT);
@@ -2137,6 +2178,16 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
             if (!k || !(r.shard_name || '').trim()) return;
             if (!DECK_SHARDS.has(k)) DECK_SHARDS.set(k, []);
             DECK_SHARDS.get(k).push(r);
+        });
+        P(spellT).forEach(r => {
+            const n = (r.name || '').trim();
+            if (n) SPELLS.set(n, { no: (r.no || '').trim(), grade: (r.grade || '').trim() });
+        });
+        P(deckSpellT).forEach(r => {
+            const k = (r.deck_key || '').trim(), n = (r.spell_name || '').trim();
+            if (!k || !n) return;
+            if (!DECK_SPELLS.has(k)) DECK_SPELLS.set(k, []);
+            DECK_SPELLS.get(k).push({ name: n, count: parseInt(r.count, 10) || 1, note: (r.note || '').trim() });
         });
 
         const dbMap = new Map(db.filter(r => r.name).map(r => [r.name.trim(), r]));
