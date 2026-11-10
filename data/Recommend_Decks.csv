@@ -1,6 +1,9 @@
 ﻿sec_key,deck_key,deck_name,deck_sub,high_auto,equip,board_bg,personality,free_label
 pvp,pvp_main,국민 조합,"26년 10월 현재 줘팸터에서 거의 고정으로 쓰이는 범용 조합입니다. 치명적인 상대 사도를 카운터 치면서 동시에 카운터를 피하도록 짠 구성입니다. 우이(기억)이 시저와 로니를 막고, 스패럿이 상대 탱커를 잡고, 레비(졸업)이 그 스패럿을 피합니다. 저점이 매우 높은 대신 고점은 낮은, 정직한 덱입니다.",O,,Arena_Stone,,
 pvp,pvp_counter,카운터 덱 - 유지력 중심,국민 조합을 돌파하기 위한 카운터 덱입니다. 아일라 저학년 발동 시점까지 버텨야 하기 때문에 아라그니아가 필수입니다. 체력 보드 2관 클리어가 권장되어 요구스펙이 높습니다.,O,,Arena_Stone,,
+deepsea_boss,ds_boss_hand,손컨 — 모모·디아나(왕년) 덱,"손컨으로 기록 고점을 노리는 조합입니다. 오리카 시즌말 기준 가장 높은 기록이 나옵니다.
+택틱 참고 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3924670
+피버 · 리뉴아 타이밍 참고 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3924877",,,Deepsea_Cave,,
 deepsea_boss,ds_boss_momo,오토 — 모모 덱,"풀오토로 편하게 치는 조합입니다. 기록 고점은 모모·디아나(왕년)를 쓰는 손컨 조합이 더 높습니다.
 풀오토로 진행하고, 전투 중 일시정지 → 설정에서 고학년 봉인 표시가 붙은 사도(모모·우로스·에르핀(왕도)·벨라)의 고학년을 끄세요. 
 설정에서 '데미지 텍스트'와 '전투 이펙트 강도'를 끄면 프레임 한도에 따른 딜 손해가 줄어듭니다.
