@@ -18,7 +18,7 @@
     <script>document.write('<script src="js/theme.js?v=' + APP_VERSION + '"><\/script>');</script>
     <script>
         /* 페이지마다 필요한 CSS 만 싣는다 — 순서가 곧 캐스케이드 순서다 (CLAUDE.md 「CSS 파일」) */
-        ['base', 'cards', 'modal', 'artifact', 'recommend'].forEach(function (f) {
+        ['base', 'cards', 'modal', 'artifact', 'recommend', 'frontier'].forEach(function (f) {
             document.write('<link rel="stylesheet" href="css/' + f + '.css?v=' + APP_VERSION + '">');
         });
     </script>

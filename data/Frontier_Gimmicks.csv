@@ -1,0 +1,25 @@
+﻿sec_key,kind,phase,order,name,badge,who,media,text
+frontier,boss,,,초죽음,,,,
+frontier,label,,,coreHead,,,,핵심 패턴
+frontier,label,,,coreSub,,,,별도 대처 필요
+frontier,label,,,restHead,,,,일반 패턴
+frontier,label,,,restSub,,,,별도 대처 불필요
+frontier,label,,,empty,,,,대처 — 공략 보강 예정
+frontier,tree,,,세계수의 기운,,,,HP [[70% 이상]]을 1초 넘게 유지한 아군 수에 비례해 게이지가 찹니다. 게이지가 가득 찰 때마다 꽃이 하나씩 부서집니다.
+frontier,step,,1,,,,,보스 [[받는 피해량 증가 +25%]] (9초)
+frontier,step,,2,,,,,보스 [[받는 피해량 증가 +50%]] (9초)
+frontier,step,,2,,,,,아군 SP 50 회복
+frontier,step,,3,,,,,보스 **9초 행동불가**
+frontier,step,,3,,,,,보스 [[받는 피해량 증가 +75%]]
+frontier,step,,3,,,,,아군 SP 100 회복 · 고학년 쿨타임 감소
+frontier,step,,3,,,,,보스 [[SP 0]]
+frontier,halt,,,행동불가,9초,,,세계수의 기운으로 마지막 꽃을 부수면 보스가 9초 동안 [[행동불가]] 상태가 됩니다. 또한 시전 중에 무적이 되는 SP 스킬을 차단할 수 있습니다.
+frontier,halt,,,행동불가,9초,,,1초마다 [[300%]] 틱 피해 · 7.5초마다 [[회복 제한]] 2중첩
+frontier,halt_media,1,,,,,exdeath/p1_groggy,
+frontier,halt_media,2,,,,,exdeath/p2_groggy,
+frontier,state_note,,,,,,,아래 효과는 **전투 시작과 동시에** 걸리며 **해제할 수 없습니다.** (영원한 숙면은 2페이즈 진입 시)
+frontier,state,"1,2",1,수확자,,보스,,
+frontier,state,"1,2",2,죽음의 품,,보스,,
+frontier,state,"1,2",3,시들어버린 기운,,아군,,
+frontier,state,2,4,영원한 숙면,,아군,,2페이즈 진입기(낫 휘두르기)로 아군 전체에 부여하는 상시 효과입니다. 죽음의 공격에 피격된 아군의 남은 체력이 [[10% 이하]]라면 즉시 처치됩니다.
+frontier,state,2,4,영원한 숙면,,아군,,막거나 해제할 수 없습니다. 2페이즈에서는 힐이 밀리지 않도록 신경써야 합니다.

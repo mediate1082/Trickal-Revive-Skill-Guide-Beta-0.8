@@ -1,0 +1,201 @@
+/* ══ 엘리아스 프론티어 · 보스 패턴 섹션 (`js/frontier.js`) ══════════════
+   사도 추천 페이지와 편집기(`tools/frontier/frontier-preview.html`)가 **같이** 싣는다.
+   클래스 접두사는 `fp-` — 사도 추천의 `rc-` 와 섞이지 않게. 자세한 건 `FRONTIER.md`. */
+
+/* ── 섹션 상자 ── */
+.fp-section { background: var(--modal-body-bg); border: 1px solid var(--border-soft); border-radius: 18px; padding: 20px; color: var(--text-heading); }
+
+/* 머리 — 보스 이름 · 페이즈 탭 (왼쪽) · 보기 방식 (오른쪽) */
+.fp-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+.fp-title { font-size: 1.35rem; font-weight: 800; margin: 0; }
+.fp-tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px;
+    background: var(--segmented-bg); box-shadow: var(--inset-shadow); border: 1px solid var(--border-soft); }
+.fp-tab { font: inherit; font-size: .9rem; font-weight: 800; border: 0; background: none; color: var(--text-body);
+    padding: 7px 14px; border-radius: 9px; cursor: pointer; }
+.fp-tab[aria-selected="true"] { background: var(--modal-card-bg); color: var(--text-heading); box-shadow: 0 1px 3px var(--shadow-soft); }
+.fp-tab:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+
+/* 보기 방식 — `.rc-viewsw` 와 같은 꼴 */
+.fp-viewsw { margin-left: auto; display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--grid-bg); border: 1.5px solid var(--border-soft); }
+.fp-view-btn { padding: 7px 15px; border-radius: 999px; border: none; cursor: pointer; font: inherit; font-size: .9rem; font-weight: 800;
+    background: transparent; color: var(--text-body); transition: background .15s ease, color .15s ease; }
+.fp-view-btn[aria-pressed="true"] { background: var(--modal-card-bg); color: var(--text-heading); }
+.fp-view-btn:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+
+/* 페이즈 안 소제목 — 기믹 / 핵심 패턴 / 일반 패턴 */
+.fp-h { font-size: 1rem; font-weight: 800; margin: 22px 0 10px; display: flex; align-items: center; gap: 10px; }
+.fp-h::after { content: ''; flex: 1; height: 1px; background: var(--border-soft); }
+.fp-panel > .fp-h:first-child { margin-top: 4px; }
+.fp-h small { font-size: .8rem; font-weight: 700; color: var(--text-body); margin-left: -4px; }
+.fp-fold { order: 1; font: inherit; font-size: .82rem; font-weight: 800; padding: 5px 12px; border-radius: 999px; cursor: pointer;
+    background: var(--modal-card-bg); color: var(--text-heading); border: 1.5px solid var(--border-soft); display: inline-flex; align-items: center; gap: 5px; }
+.fp-fold::after { content: ''; width: 6px; height: 6px; border: solid currentColor; border-width: 0 2px 2px 0;
+    transform: translateY(-2px) rotate(45deg); transition: transform .15s ease; }
+.fp-fold[aria-expanded="true"]::after { transform: translateY(1px) rotate(-135deg); }
+.fp-fold:hover { border-color: var(--accent-green-strong); }
+.fp-fold:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+
+/* ── 패턴 카드 ── */
+.fp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.fp-grid[hidden] { display: none; }
+.fp-card { background: var(--modal-card-bg); border: 1px solid var(--border-soft); border-radius: 16px;
+    box-shadow: 0 2px 8px var(--shadow-soft); overflow: hidden; display: flex; flex-direction: column; }
+
+.fp-stage { position: relative; aspect-ratio: 4 / 3; background: var(--stat-box-bg); box-shadow: var(--inset-shadow); border-bottom: 1px solid var(--border-soft); }
+.fp-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.fp-stage .fp-load { position: absolute; inset: 0; display: grid; place-items: center; font-size: .72rem; color: var(--text-body); }
+.fp-kind { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: .72rem; font-weight: 800; padding: 2px 8px; border-radius: 999px;
+    background: var(--modal-card-bg); color: var(--c); border: 1px solid var(--c); font-synthesis-weight: none; }
+.fp-swap { position: absolute; bottom: 8px; right: 8px; z-index: 2; display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px;
+    background: var(--modal-card-bg); border: 1px solid var(--border-soft); }
+.fp-swap button { font: inherit; font-size: .72rem; font-weight: 800; border: 0; background: none; color: var(--text-body); padding: 3px 8px; border-radius: 7px; cursor: pointer; }
+.fp-swap button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text-heading); }
+
+/* 크게 보기 — 오른쪽 위. 사방 화살표 (돋보기는 상세 설명과 겹친다) */
+.fp-zoom { position: absolute; top: 8px; right: 8px; z-index: 2; width: 28px; height: 28px; display: grid; place-items: center;
+    border-radius: 8px; border: 1px solid var(--border-soft); background: var(--modal-card-bg); color: var(--text-body);
+    cursor: pointer; opacity: .85; transition: opacity .15s, color .15s; }
+.fp-zoom:hover, .fp-zoom:focus-visible { opacity: 1; color: var(--text-heading); }
+.fp-zoom:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+.fp-zoom svg { width: 15px; height: 15px; }
+
+.fp-lb { position: fixed; inset: 0; z-index: 3000; display: grid; place-items: center; padding: 24px;
+    background: rgba(10, 10, 12, .72); backdrop-filter: blur(3px); animation: fp-lb-in .18s ease-out; }
+.fp-lb[hidden] { display: none; }
+html.fp-lb-open { overflow: hidden; }
+.fp-lb-box { position: relative; width: min(960px, 100%); background: var(--modal-card-bg); border-radius: 18px;
+    border: 1px solid var(--border-soft); box-shadow: 0 12px 40px rgba(0,0,0,.35); overflow: hidden; }
+.fp-lb-stage { aspect-ratio: 4 / 3; max-height: calc(100vh - 140px); width: 100%; background: var(--stat-box-bg); box-shadow: var(--inset-shadow); }
+.fp-lb-stage video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.fp-lb-cap { padding: 10px 16px; font-size: .9rem; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--text-heading); }
+.fp-lb-cap span { font-size: .75rem; font-weight: 400; color: var(--text-body); }
+.fp-lb-close { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--border-soft);
+    background: var(--modal-card-bg); color: var(--text-heading); font-size: 1.1rem; line-height: 1; cursor: pointer; }
+.fp-lb-close:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+@keyframes fp-lb-in { from { opacity: 0; } }
+
+.fp-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.fp-name { font-size: 1.1rem; font-weight: 800; margin: 0; }
+.fp-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+/* 칩 셋 — 아이콘 + 색 계열로 구분. 라벨 글자는 빼고 값만 둔다 (아이콘이 라벨) */
+.fp-chip { display: inline-flex; align-items: center; gap: 4px; font-size: .76rem; font-weight: 800; padding: 2px 8px 2px 6px; border-radius: 7px;
+    background: var(--pale); border: 1px solid var(--soft); color: var(--txt); font-synthesis-weight: none; font-variant-numeric: tabular-nums; }
+.fp-chip b { color: inherit; }
+.fp-chip svg { width: 13px; height: 13px; flex: none; }
+.fp-chip[data-k="first"]  { --pale: var(--neutral-pale); --soft: var(--neutral-soft); --txt: var(--neutral-text); }
+.fp-chip[data-k="cycle"]  { --pale: var(--buff-pale);    --soft: var(--buff-soft);    --txt: var(--buff-text); }
+.fp-chip[data-k="target"] { --pale: var(--debuff-pale);  --soft: var(--debuff-soft);  --txt: var(--debuff-text); }
+.fp-desc { font-size: .88rem; line-height: 1.6; color: var(--text-body); margin: 0; word-break: keep-all; }
+.fp-desc b { color: var(--text-heading); }
+
+/* 설명문 표기 — [[보스 용어]] 강조 · ((사도가 거는 효과)) 하늘색 칩 */
+.fp-section em, .fp-lb em { font-style: normal; color: var(--term-accent); font-weight: 800; }
+.fp-section em.fp-term { border-bottom: 1px dotted currentColor; cursor: help; }
+.fp-section em.fp-term:focus-visible { outline: 2px solid var(--term-accent); outline-offset: 1px; border-radius: 2px; }
+.fp-section em.cc { color: var(--buff-text); background: var(--buff-pale); border-bottom: 2px solid var(--buff-soft);
+    border-radius: 3px; padding: 0 3px; font-synthesis-weight: none; }
+.fp-section em.cc.fp-term { border-bottom-style: solid; }
+/* 대처 상자도 하늘색이라 칩이 묻힌다 — 상자 안에서는 바탕을 카드색으로 */
+.fp-counter em.cc { background: var(--modal-card-bg); border-bottom-color: var(--buff); }
+
+/* 피해 / 부가 효과 — 라벨 열 + 값 열 */
+.fp-rows { margin: 0; display: grid; gap: 6px; }
+.fp-row { display: grid; grid-template-columns: 4.6em 1fr; gap: 8px; align-items: baseline; }
+.fp-row dt { font-size: .78rem; font-weight: 800; color: var(--text-body); white-space: nowrap; }
+.fp-row dd { margin: 0; font-size: .88rem; line-height: 1.55; color: var(--text-body); word-break: keep-all; }
+.fp-row dd b { color: var(--text-heading); }
+.fp-effs { display: flex; flex-wrap: wrap; gap: 4px; }
+.fp-eff { display: inline-flex; align-items: center; gap: 3px; font-size: .8rem; padding: 1px 7px; border-radius: 6px;
+    background: var(--stat-box-bg); border: 1px solid var(--border-soft); color: var(--text-heading); line-height: 1.6; font-synthesis-weight: none; }
+.fp-eff img { width: 18px; height: 18px; flex: none; }
+.fp-counter { margin-top: auto; font-size: .86rem; line-height: 1.55; word-break: keep-all; padding: 8px 10px; border-radius: 10px;
+    background: var(--buff-pale); color: var(--buff-text); border: 1px solid var(--buff-soft); }
+.fp-counter strong { display: block; font-size: .78rem; margin-bottom: 2px; }
+.fp-counter.is-empty { background: var(--stat-box-bg); color: var(--text-body); border-style: dashed; border-color: var(--border-soft); }
+
+/* ── 1열 — 영상 왼쪽 · 글 오른쪽 ── */
+.fp-grid.is-list { grid-template-columns: 1fr; gap: 12px; }
+.fp-grid.is-list .fp-card { flex-direction: row; }
+.fp-grid.is-list .fp-stage { flex: none; width: 300px; border-bottom: 0; border-right: 1px solid var(--border-soft); }
+.fp-grid.is-list .fp-body { padding: 16px 18px; gap: 10px; }
+.fp-grid.is-list .fp-name { font-size: 1.2rem; }
+.fp-grid.is-list .fp-desc, .fp-grid.is-list .fp-row dd { font-size: .92rem; }
+
+/* ── 기믹 ── */
+.fp-gim { display: grid; gap: 14px; }
+.fp-gim-card { background: var(--modal-card-bg); border: 1px solid var(--border-soft); border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px var(--shadow-soft); }
+.fp-gim-card h4 { margin: 0 0 6px; font-size: 1.1rem; }
+.fp-gim-card p { margin: 0 0 12px; font-size: .9rem; line-height: 1.6; color: var(--text-body); word-break: keep-all; }
+.fp-gim-card p:last-child { margin-bottom: 0; }
+.fp-gim-sub { font-size: .78rem; font-weight: 800; padding: 1px 7px; margin-left: 4px; border-radius: 999px; vertical-align: 2px;
+    background: var(--neutral-pale); color: var(--neutral-text); border: 1px solid var(--neutral-soft); font-synthesis-weight: none; }
+.fp-gim-media { display: grid; grid-template-columns: 200px 1fr; gap: 14px; align-items: center; }
+.fp-gim-media .fp-stage { border-radius: 12px; border: 1px solid var(--border-soft); }
+
+/* 세계수의 기운 — 꽃 1·2·3 */
+.fp-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.fp-step { background: var(--stat-box-bg); box-shadow: var(--inset-shadow); border: 1px solid var(--border-soft); border-radius: 12px; padding: 10px 12px;
+    transition: border-color .2s ease, box-shadow .2s ease; }
+.fp-step strong { display: block; font-size: .88rem; margin-bottom: 4px; }
+.fp-step ul { margin: 0; padding-left: 16px; font-size: .84rem; line-height: 1.6; color: var(--text-body); word-break: keep-all; }
+.fp-step.is-final { border-color: var(--accent-green-strong); }
+.fp-step.is-now { border-color: var(--term-accent); box-shadow: var(--inset-shadow), 0 0 0 1px var(--term-accent); }
+
+/* 세계수의 기운 UI — 인게임 부품을 원본 px 기준으로 놓고 --s 로 줄인다.
+   ⚠ 부품 테두리가 흰색이라 밝은 바탕에서는 묻힌다 — 게임처럼 어두운 판 위에 얹는다 (다크 모드도 같은 판) */
+.fp-tree-head { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; margin-bottom: 12px; }
+.fp-tree-head p { margin-bottom: 6px; }
+.fp-tree { --s: .7; position: relative; width: calc(440px * var(--s)); height: calc(240px * var(--s));
+    padding: 10px; box-sizing: content-box; border-radius: 12px;
+    background: radial-gradient(120% 120% at 30% 20%, #4a3a32, #1d1a19); box-shadow: var(--inset-shadow); }
+.fp-tree img { position: absolute; display: block; pointer-events: none; user-select: none; }
+.fp-tree .bg   { left: calc(10px + 52px * var(--s)); top: calc(10px + 28px * var(--s)); width: calc(380px * var(--s)); }
+.fp-tree .fill { left: calc(10px + 70px * var(--s)); top: calc(10px + 46px * var(--s)); width: calc(335px * var(--s));
+    clip-path: inset(0 calc((1 - var(--fill)) * 100%) 0 0); transition: clip-path var(--fill-ms, 0ms) linear; }
+.fp-tree .tree { left: 10px; top: calc(10px + 14px * var(--s)); width: calc(89px * var(--s)); }
+.fp-tree .slots { position: absolute; left: calc(10px + 40px * var(--s)); top: calc(10px + 112px * var(--s)); display: flex; gap: calc(14px * var(--s)); }
+.fp-tree-slot { position: relative; width: calc(127px * var(--s)); height: calc(123px * var(--s)); }
+.fp-tree-slot img { left: 0; top: 0; width: 100%; transition: opacity .3s ease; }
+.fp-tree-slot .flower { width: 52%; left: 24%; top: 22%; }
+.fp-tree-slot .off, .fp-tree-slot .flash { width: calc(144 / 127 * 100%); left: -7%; top: -5%; opacity: 0; }
+.fp-tree-slot.is-off .on, .fp-tree-slot.is-off .flower { opacity: 0; }
+.fp-tree-slot.is-off .off { opacity: 1; }
+.fp-tree-slot.is-burst .off { animation: fp-break .5s ease-out; }
+.fp-tree-slot.is-burst .flash { animation: fp-flash-w .5s ease-out; }
+@keyframes fp-break { 0% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@keyframes fp-flash-w { 0% { opacity: 1; transform: scale(.9); } 100% { opacity: 0; transform: scale(1.3); } }
+
+/* 상시 효과 — 보스 버프 · 아군에 걸리는 것. 이 페이즈에 없는 것은 흐리게 */
+.fp-states-note { margin: 4px 0 -4px; font-size: .86rem; color: var(--text-body); word-break: keep-all; }
+.fp-states-note b { color: var(--text-heading); }
+.fp-states { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.fp-state { position: relative; padding: 14px 16px; }
+.fp-state-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.fp-state-head img { width: 30px; height: 30px; flex: none; }
+.fp-state-head h4 { margin: 0; font-size: 1.05rem; }
+.fp-state-who { margin-left: auto; font-size: .74rem; font-weight: 800; padding: 1px 8px; border-radius: 999px; font-synthesis-weight: none;
+    background: var(--neutral-pale); color: var(--neutral-text); border: 1px solid var(--neutral-soft); }
+.fp-state-who[data-who="아군"] { background: var(--debuff-pale); color: var(--debuff-text); border-color: var(--debuff-soft); }
+.fp-state-desc { padding: 8px 10px; border-radius: 10px; background: var(--stat-box-bg); box-shadow: var(--inset-shadow); border: 1px solid var(--border-soft); }
+.fp-state.is-off { background: var(--stat-box-bg); box-shadow: var(--inset-shadow); border-style: dashed; }
+.fp-state.is-off > :not(.fp-state-off) { opacity: .42; filter: grayscale(1); }
+.fp-state-off { position: absolute; top: -9px; right: 12px; font-size: .74rem; font-weight: 800; padding: 1px 9px; border-radius: 999px;
+    background: var(--modal-card-bg); color: var(--text-heading); border: 1px solid var(--border-soft); font-synthesis-weight: none; }
+
+@media (max-width: 720px) {
+    .fp-section { padding: 14px; }
+    /* 좁으면 그리드도 1열이라 전환이 의미 없다 — 버튼을 숨기고 세로 카드로 고정 */
+    .fp-viewsw { display: none; }
+    .fp-grid.is-list .fp-card { flex-direction: column; }
+    .fp-grid.is-list .fp-stage { width: auto; border-right: 0; border-bottom: 1px solid var(--border-soft); }
+    .fp-tabs { margin-left: 0; width: 100%; } .fp-tab { flex: 1; padding: 7px 6px; }
+    .fp-steps, .fp-tree-head, .fp-gim-media { grid-template-columns: 1fr; }
+    .fp-tree { justify-self: center; --s: .56; }
+    /* ⚠ 격자 칸이 게이지 폭(내용 최소 폭)에 끌려 화면 밖으로 넘쳤다 — 칸이 줄어들 수 있게 */
+    .fp-gim > *, .fp-tree-head > *, .fp-gim-media > * { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .fp-lb { animation: none; }
+    .fp-tree-slot.is-burst .off, .fp-tree-slot.is-burst .flash { animation: none; }
+    .fp-tree .fill { transition: none; }
+}

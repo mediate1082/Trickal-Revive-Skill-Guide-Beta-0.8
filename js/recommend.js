@@ -8,6 +8,8 @@
 /* ui.js 는 상세 모달 전용. closeDetailModal·toggleSkillMode 등은 import 시 자동 등록됩니다. */
 const { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter, deckTagBoxes }
     = await import('./ui.js?v=' + (window.APP_VERSION || ''));
+/* 프론티어 보스 패턴 섹션 — 편집기(`tools/frontier/`)와 같이 쓰는 모듈 (`FRONTIER.md`) */
+const { buildFrontier, frontierFrom } = await import('./frontier.js?v=' + (window.APP_VERSION || ''));
 
 const PERSONALITY_COLORS = {
     '순수': { bg: '#66C17C', border: '#93F4A7' },
@@ -1198,6 +1200,8 @@ function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
        "누구와 어떤 규칙으로 싸우는가" 가 "무엇을 데려가는가" 보다 앞이다. */
     if (sec.boss || sec.rules.length || sec.shards.length || sec.notes.length)
         body.appendChild(buildCrash2Panel(sec));
+    /* 프론티어 보스 패턴도 같은 자리 — 덱보다 먼저 */
+    if (sec.frontier) body.appendChild(buildFrontier(sec.frontier.D, { states: sec.frontier.states }));
 
     /* 덱이 있으면 역할 묶음보다 **먼저** 그린다. */
     if (sec.decks && sec.decks.length) {
@@ -1676,7 +1680,7 @@ function activateTab(key, secKey) {
 
    ⚠ 탭·분류가 나오는 순서는 **`Recommend_Sections.csv` 의 행 순서** 그대로다. */
 function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
-                bossRows, bossSkillRows, ruleRows, shardRows, noteRows) {
+                bossRows, bossSkillRows, ruleRows, shardRows, noteRows, frontierRows) {
     const body = document.getElementById('rc-body');
     const missing = [];
 
@@ -1713,6 +1717,8 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
                       now: (d.sec_now || '').trim(),
                       rows: [], decks: [],
                       boss: null, bossSkills: [], rules: [], shards: [], notes: [] };
+        /* 프론티어 보스 패턴 — 이 분류 키로 된 패턴 행이 있으면 붙는다 (없으면 null) */
+        if (frontierRows) sec.frontier = frontierFrom(sk, frontierRows.p, frontierRows.g, frontierRows.s, frontierRows.all);
         groups.get(gk).secs.set(sk, sec);
         secByKey.set(sk, sec);
     });
@@ -1808,7 +1814,7 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
        ⚠ 그래서 분류가 안 보인다고 지워진 게 아니다. 편집기 목록에는 그대로 있다. */
     groups.forEach(g => g.secs.forEach((sec, k) => {
         /* 보스 정보만 있어도 띄운다 — 시즌이 열리자마자 기믹부터 올리고 덱은 나중에 채우는 경우 */
-        if (sec.hide || (!sec.rows.length && !sec.decks.length && !sec.boss)) g.secs.delete(k);
+        if (sec.hide || (!sec.rows.length && !sec.decks.length && !sec.boss && !sec.frontier)) g.secs.delete(k);
     }));
     groups.forEach((g, k) => { if (!g.secs.size) groups.delete(k); });
 
@@ -2101,7 +2107,8 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
         const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT, immT,
-               bossT, bossPartT, lineT, shardT, deckShardT, usageT, artTagT, spellT, deckSpellT] =
+               bossT, bossPartT, lineT, shardT, deckShardT, usageT, artTagT, spellT, deckSpellT,
+               frPatT, frGimT, frStT] =
             await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
                 'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv', 'Recommend_Deck_Members.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
@@ -2110,7 +2117,8 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
                 'artifact_DB.csv', 'Immunity_DB.csv',
                 'Crash2_Boss.csv', 'Crash2_Boss_Skills.csv', 'Crash2_Lines.csv',
                 'Crash2_Shards.csv', 'Crash2_Deck_Shards.csv', 'Usage_DB.csv', 'Artifact_Tags.csv',
-                'spell_DB.csv', 'Recommend_Deck_Spells.csv'].map(get));
+                'spell_DB.csv', 'Recommend_Deck_Spells.csv',
+                'Frontier_Patterns.csv', 'Frontier_Gimmicks.csv', 'Frontier_States.csv'].map(get));
         const P = t => Papa.parse(t, cfg).data;
 
         const db = P(dbT);
@@ -2191,8 +2199,10 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
         });
 
         const dbMap = new Map(db.filter(r => r.name).map(r => [r.name.trim(), r]));
+        /* 프론티어 — 표 세 장은 분류마다 `frontierFrom` 이 묶는다. 상태 말풍선에 사이트 상태 표도 쓴다 */
+        const frontierRows = { p: P(frPatT), g: P(frGimT), s: P(frStT), all: allStateDB };
         render(P(secT), P(rec), dbMap, P(chipT), P(deckT), P(swapT), P(memT),
-               P(bossT), bossSkillRows, ruleRows, shardRows, noteRows);
+               P(bossT), bossSkillRows, ruleRows, shardRows, noteRows, frontierRows);
     } catch (e) {
         document.getElementById('rc-body').innerHTML =
             `<div class="rc-warn">데이터를 불러오지 못했습니다: ${esc(e.message)}</div>`;

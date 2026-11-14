@@ -126,7 +126,7 @@
         'Artifact_Stats', 'Artifact_Effects', 'Artifact_Attach', 'Artifact_Tags', 'Artifact_Tag_Rank',
         'Recommend_Sections', 'Recommend_Chara', 'Recommend_Chips', 'Recommend_Decks', 'Recommend_Deck_Members',
         'Recommend_Deck_Swaps', 'Crash2_Boss', 'Crash2_Boss_Skills', 'Crash2_Lines', 'Crash2_Shards', 'Crash2_Deck_Shards', 'alias_DB',
-        'spell_DB', 'Recommend_Deck_Spells'];
+        'spell_DB', 'Recommend_Deck_Spells', 'Frontier_Patterns', 'Frontier_Gimmicks', 'Frontier_States'];
     /* ⚠ 이 페이지가 **이미 요청한** CSV 는 미리 받지 않는다. 예전엔 목록을 통째로 다시 받아
          스킬 가이드에서 13개가 거의 동시에 두 번씩 나갔다 — 앞 요청이 아직 받는 중이라 캐시가 안 맞았다.
          `performance` 기록은 **다 받은 것만** 올라와 받는 중인 요청을 못 본다. 그래서 `fetch` 를
