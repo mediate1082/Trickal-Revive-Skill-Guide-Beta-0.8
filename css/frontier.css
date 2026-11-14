@@ -194,6 +194,10 @@ html.fp-lb-open { overflow: hidden; }
     /* ⚠ 격자 칸이 게이지 폭(내용 최소 폭)에 끌려 화면 밖으로 넘쳤다 — 칸이 줄어들 수 있게 */
     .fp-gim > *, .fp-tree-head > *, .fp-gim-media > * { min-width: 0; }
 }
+/* 폰 — 카드 안쪽이 260px 남짓이라 게이지 판(.56 배율에서 266px)이 넘쳤다 */
+@media (max-width: 420px) {
+    .fp-tree { --s: .5; }
+}
 @media (prefers-reduced-motion: reduce) {
     .fp-lb { animation: none; }
     .fp-tree-slot.is-burst .off, .fp-tree-slot.is-burst .flash { animation: none; }
