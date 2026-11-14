@@ -185,8 +185,17 @@ export function buildFrontier(D, opt = {}) {
         const t = e.match(/\[\[(.+?)\]\]/)?.[1], st = t && states.get(t);
         return `<span class="fp-eff">${st?.icon ? `<img src="${esc(st.icon)}" alt="">` : ''}${ed(path)}</span>`;
     };
+    /* 대처 글의 ((용어)) — 사도가 거는 효과. 사이트가 `opt.ccPicker` 를 주면 그 효과를 가진 사도를 묶어 보여 준다
+       (편집기는 사도 표가 없어 안 준다 — 버튼도 안 생긴다) */
+    const ccTerms = s => [...new Set([...String(s || '').matchAll(/\(\((.+?)\)\)/g)].map(m => m[1].trim()))];
+    const ccBtn = p => {
+        const t = ccTerms(p.counter);
+        if (!t.length || !opt.ccPicker || EDIT()) return '';
+        return `<button type="button" class="fp-cc-btn" data-cc="${esc(t.join('|'))}">${
+            ICON.target}<span>${esc(t.join(' · '))} 사도 보기</span></button>`;
+    };
     const counterBox = (p, P) => {
-        if (p.counter || EDIT()) return `<div class="fp-counter">${D.labels.counterHead || EDIT() ? ed('labels.counterHead', 'strong') : ''}${ed(P + '.counter')}</div>`;
+        if (p.counter || EDIT()) return `<div class="fp-counter">${D.labels.counterHead || EDIT() ? ed('labels.counterHead', 'strong') : ''}${ed(P + '.counter')}${ccBtn(p)}</div>`;
         return p.spec ? '' : `<div class="fp-counter is-empty">${ed('labels.empty')}</div>`;   // 일반 패턴은 대처 칸 없이
     };
 
@@ -335,6 +344,13 @@ export function buildFrontier(D, opt = {}) {
     }
     panel.addEventListener('click', e => {
         const b = e.target.closest('.fp-fold'); if (b) setFold(b.getAttribute('aria-expanded') !== 'true');
+        /* 사도 보기 — 버튼이든 대처 글 속 하늘색 칩이든. 칩이면 그 효과 묶음으로 바로 내려간다 */
+        if (!opt.ccPicker || EDIT()) return;
+        const box = e.target.closest('.fp-counter'); if (!box) return;
+        const btn = box.querySelector('.fp-cc-btn'); if (!btn) return;
+        const chip = e.target.closest('em.cc');
+        if (!chip && !e.target.closest('.fp-cc-btn')) return;
+        opt.ccPicker(btn.dataset.cc.split('|'), chip ? chip.textContent.trim() : null, btn);
     });
     root.querySelector('.fp-tabs').addEventListener('click', e => {
         const b = e.target.closest('.fp-tab'); if (!b || b.getAttribute('aria-selected') === 'true') return;

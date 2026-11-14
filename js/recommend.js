@@ -1157,6 +1157,82 @@ function buildShard(s) {
     return el;
 }
 
+/* ══ 프론티어 대처 → 「이 효과를 가진 사도」 창 ═════════════════════
+   대처 글의 ((침묵)) 같은 효과마다 그 효과를 거는 사도를 덱 타일로 묶는다.
+   고르는 기준은 스킬 가이드 **부가 효과 필터와 같다** (`main.js` 의 `checkTagMatch` 1~4차 —
+   조건 글 검사와 제어 면역(5차)은 여기서 쓸 일이 없어 뺐다).
+   ⚠ 필터 규칙을 고치면 여기도 볼 것 — 두 곳의 결과가 다르면 "스킬 가이드에선 나오는데" 가 된다
+   ⚠ `buff_DB` 까지 본다. `SP 회복 감소` 처럼 디버프라도 사도가 **적에게 거는** 효과는 debuff 쪽이지만,
+     이름 꼬리 매칭이 버프 이름에 걸릴 수 있어 둘 다 본다 (필터와 같은 범위) */
+const FR_EFFECT = { debuff: [], buff: [], states: [], db: new Map() };
+const FR_SLOTS = { debuff: ['low_debuff', 'high_debuff', 'normal_debuff', 'power_debuff', 'aside_passive'],
+                   buff:   ['low_buff', 'high_buff', 'normal_buff', 'power_buff', 'aside_passive'] };
+function effectMatches(name, kw) {
+    const pure = name.split('(')[0].trim();
+    if (pure === kw) return true;
+    if (pure.endsWith(' ' + kw) && !pure.startsWith('받는 ')) return true;
+    const info = FR_EFFECT.states.find(d => (d.state_name || '').trim() === pure);
+    return !!(info && (info.tag || '').split(',').map(t => t.trim()).includes(kw));
+}
+function apostlesWith(kw) {
+    const hit = new Set();
+    for (const kind of ['debuff', 'buff']) {
+        for (const row of FR_EFFECT[kind]) {
+            const n = (row.name || '').trim(); if (!n || hit.has(n)) continue;
+            const ok = FR_SLOTS[kind].some(k => row[k] && row[k] !== 'X'
+                && row[k].split(',').some(e => e.trim() && effectMatches(e.trim(), kw)));
+            if (ok) hit.add(n);
+        }
+    }
+    return [...hit].map(n => FR_EFFECT.db.get(n)).filter(Boolean)
+        .sort((a, b) => (parseInt(a.release, 10) || 1e9) - (parseInt(b.release, 10) || 1e9));
+}
+let frModal = null, frOpener = null;
+function openEffectPicker(terms, focus, opener) {
+    if (!frModal) {
+        frModal = document.createElement('div');
+        frModal.className = 'fp-ccm'; frModal.hidden = true;
+        frModal.setAttribute('role', 'dialog'); frModal.setAttribute('aria-modal', 'true');
+        /* 머리(제목·안내문)는 뒀다가 뺐다 — 묶음 제목이 곧 효과 이름이라 같은 말이 두 번이었다 */
+        frModal.innerHTML = `<div class="fp-ccm-box">
+            <button type="button" class="fp-ccm-close" aria-label="닫기">✕</button><div class="fp-ccm-body"></div></div>`;
+        document.body.appendChild(frModal);
+        const close = () => {
+            frModal.hidden = true; document.documentElement.classList.remove('fp-ccm-open');
+            frOpener?.focus();
+        };
+        frModal.addEventListener('click', e => { if (e.target === frModal || e.target.closest('.fp-ccm-close')) close(); });
+        document.addEventListener('keydown', e => {
+            /* 상세 모달이 위에 떠 있으면 그쪽 Esc 다 */
+            if (frModal.hidden || e.key !== 'Escape' || document.querySelector('#modal-detail:not(.hidden)')) return;
+            close();
+        });
+    }
+    frOpener = opener;
+    frModal.setAttribute('aria-label', terms.join(' · ') + ' 사도');
+    const body = frModal.querySelector('.fp-ccm-body');
+    body.textContent = '';
+    terms.forEach(t => {
+        const list = apostlesWith(t);
+        const st = FR_EFFECT.states.find(d => (d.state_name || '').trim() === t);
+        const sec = document.createElement('section');
+        sec.className = 'fp-ccm-sec' + (t === focus ? ' is-focus' : '');
+        sec.innerHTML = `<h4>${st && st.icon_file ? `<img src="assets/icons/state/${esc(st.icon_file)}" alt="" onerror="this.remove()">` : ''}${
+            esc(t)}<small>${list.length}명</small></h4>`;
+        if (list.length) {
+            const g = document.createElement('div'); g.className = 'fp-ccm-tiles';
+            list.forEach(ch => g.appendChild(buildDeckTile(ch, {}, true)));
+            sec.appendChild(g);
+        } else sec.insertAdjacentHTML('beforeend', '<p class="fp-ccm-none">이 효과를 가진 사도가 아직 표에 없습니다.</p>');
+        body.appendChild(sec);
+    });
+    frModal.hidden = false;
+    document.documentElement.classList.add('fp-ccm-open');
+    body.scrollTop = 0;
+    if (focus) body.querySelector('.fp-ccm-sec.is-focus')?.scrollIntoView({ block: 'start' });
+    frModal.querySelector('.fp-ccm-close').focus();
+}
+
 function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
     const sEl = document.createElement('section');
     sEl.className = 'rc-sec';
@@ -1201,7 +1277,7 @@ function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
     if (sec.boss || sec.rules.length || sec.shards.length || sec.notes.length)
         body.appendChild(buildCrash2Panel(sec));
     /* 프론티어 보스 패턴도 같은 자리 — 덱보다 먼저 */
-    if (sec.frontier) body.appendChild(buildFrontier(sec.frontier.D, { states: sec.frontier.states }));
+    if (sec.frontier) body.appendChild(buildFrontier(sec.frontier.D, { states: sec.frontier.states, ccPicker: openEffectPicker }));
 
     /* 덱이 있으면 역할 묶음보다 **먼저** 그린다. */
     if (sec.decks && sec.decks.length) {
@@ -2134,8 +2210,10 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
            (스킬 가이드 쪽은 `main.js` 가 같은 이름으로 심는다) */
         window._immunityDB = P(immT);
 
+        const debuffRows = P(debuffT), buffRows = P(buffT);
+        FR_EFFECT.debuff = debuffRows; FR_EFFECT.buff = buffRows; FR_EFFECT.states = allStateDB;
         wireDetailModal({
-            debuffDB: P(debuffT), buffDB: P(buffT),
+            debuffDB: debuffRows, buffDB: buffRows,
             lowSkillDB: P(lowT), highSkillDB: P(highT),
             allStateDB, debuffDescDB,
             normalAtkDB: P(normalT), asideDB: P(asideT),
@@ -2199,6 +2277,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
         });
 
         const dbMap = new Map(db.filter(r => r.name).map(r => [r.name.trim(), r]));
+        FR_EFFECT.db = dbMap;
         /* 프론티어 — 표 세 장은 분류마다 `frontierFrom` 이 묶는다. 상태 말풍선에 사이트 상태 표도 쓴다 */
         const frontierRows = { p: P(frPatT), g: P(frGimT), s: P(frStT), all: allStateDB };
         render(P(secT), P(rec), dbMap, P(chipT), P(deckT), P(swapT), P(memT),

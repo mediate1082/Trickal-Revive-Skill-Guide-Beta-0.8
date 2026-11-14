@@ -113,6 +113,37 @@ html.fp-lb-open { overflow: hidden; }
 .fp-counter strong { display: block; font-size: .78rem; margin-bottom: 2px; }
 .fp-counter.is-empty { background: var(--stat-box-bg); color: var(--text-body); border-style: dashed; border-color: var(--border-soft); }
 
+/* 대처 → 해당 사도 보기 (사도 추천 페이지만. `ccPicker` 를 줄 때) */
+/* ⚠ 글 바로 뒤에 붙으면 문장 끝에 매달려 보인다 — 늘 다음 줄로 */
+.fp-cc-btn { display: flex; width: fit-content; align-items: center; gap: 6px; margin-top: 8px; padding: 5px 12px; border-radius: 999px; cursor: pointer;
+    font: inherit; font-size: .8rem; font-weight: 800; color: var(--buff-text); background: var(--modal-card-bg);
+    border: 1.5px solid var(--buff-soft); font-synthesis-weight: none; transition: border-color .15s, background .15s; }
+.fp-cc-btn:hover { border-color: var(--buff); }
+.fp-cc-btn:focus-visible { outline: 2px solid var(--buff); outline-offset: 2px; }
+.fp-cc-btn svg { width: 14px; height: 14px; flex: none; }
+.fp-counter em.cc { cursor: pointer; }
+.fp-counter:not(:has(.fp-cc-btn)) em.cc { cursor: inherit; }
+
+/* 사도 보기 창 — 상세 모달(z 2000) 아래에 둔다. 타일을 누르면 상세 모달이 위로 뜨고, 닫으면 이 창으로 돌아온다 */
+.fp-ccm { position: fixed; inset: 0; z-index: 1900; display: grid; place-items: center; padding: 20px;
+    background: var(--overlay-bg, rgba(10, 10, 12, .55)); animation: fp-lb-in .18s ease-out; }
+.fp-ccm[hidden] { display: none; }
+html.fp-ccm-open { overflow: hidden; }
+.fp-ccm-box { position: relative; width: min(720px, 100%); max-height: min(80vh, 760px); display: flex; flex-direction: column;
+    background: var(--modal-card-bg); border: 1px solid var(--border-soft); border-radius: 18px; box-shadow: 0 12px 40px rgba(0,0,0,.3); overflow: hidden; }
+.fp-ccm-close { position: absolute; top: 12px; right: 12px; z-index: 1; width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--border-soft);
+    background: var(--modal-card-bg); color: var(--text-heading); font-size: 1.1rem; line-height: 1; cursor: pointer; }
+.fp-ccm-close:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+.fp-ccm-body { overflow-y: auto; padding: 18px 20px 20px; display: grid; gap: 16px; background: var(--modal-body-bg); }
+.fp-ccm-sec { scroll-margin-top: 10px; }
+.fp-ccm-sec h4 { display: flex; align-items: center; gap: 7px; margin: 0 0 10px; font-size: .95rem; color: var(--text-heading); }
+.fp-ccm-sec h4 img { width: 22px; height: 22px; }
+.fp-ccm-sec h4 small { font-size: .75rem; font-weight: 700; color: var(--text-body); }
+.fp-ccm-sec.is-focus h4 { color: var(--buff-text); }
+.fp-ccm-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; }
+.fp-ccm-tiles > * { max-width: none; min-width: 0; }
+.fp-ccm-none { margin: 0; font-size: .82rem; color: var(--text-body); }
+
 /* ── 1열 — 영상 왼쪽 · 글 오른쪽 ── */
 .fp-grid.is-list { grid-template-columns: 1fr; gap: 12px; }
 .fp-grid.is-list .fp-card { flex-direction: row; }
