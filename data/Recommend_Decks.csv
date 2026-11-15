@@ -1,40 +1,48 @@
-﻿sec_key,deck_key,deck_name,deck_sub,high_auto,equip,board_bg,personality,free_label
-pvp,pvp_main,국민 조합,"26년 10월 현재 줘팸터에서 거의 고정으로 쓰이는 범용 조합입니다. 치명적인 상대 사도를 카운터 치면서 동시에 카운터를 피하도록 짠 구성입니다. 우이(기억)이 시저와 로니를 막고, 스패럿이 상대 탱커를 잡고, 레비(졸업)이 그 스패럿을 피합니다. 저점이 매우 높은 대신 고점은 낮은, 정직한 덱입니다.",O,,Arena_Stone,,
-pvp,pvp_counter,카운터 덱 - 유지력 중심,국민 조합을 돌파하기 위한 카운터 덱입니다. 아일라 저학년 발동 시점까지 버텨야 하기 때문에 아라그니아가 필수입니다. 체력 보드 2관 클리어가 권장되어 요구스펙이 높습니다.,O,,Arena_Stone,,
+﻿sec_key,deck_key,deck_name,deck_sub,high_auto,equip,board_bg,personality,free_label,authority,preset
+pvp,pvp_main,국민 조합,"26년 10월 현재 줘팸터에서 거의 고정으로 쓰이는 범용 조합입니다. 치명적인 상대 사도를 카운터 치면서 동시에 카운터를 피하도록 짠 구성입니다. 우이(기억)이 시저와 로니를 막고, 스패럿이 상대 탱커를 잡고, 레비(졸업)이 그 스패럿을 피합니다. 저점이 매우 높은 대신 고점은 낮은, 정직한 덱입니다.",O,,Arena_Stone,,,,
+pvp,pvp_counter,카운터 덱 - 유지력 중심,국민 조합을 돌파하기 위한 카운터 덱입니다. 아일라 저학년 발동 시점까지 버텨야 하기 때문에 아라그니아가 필수입니다. 체력 보드 2관 클리어가 권장되어 요구스펙이 높습니다.,O,,Arena_Stone,,,,
 deepsea_boss,ds_boss_hand,손컨 — 모모·디아나(왕년) 덱,"손컨으로 기록 고점을 노리는 조합입니다. 오리카 시즌말 기준 가장 높은 기록이 나옵니다.
 모모는 가운데가 위쪽보다 아주 조금 낫지만 차이는 미미한 편입니다.
 택틱 참고 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3924670
 피버 · 리뉴아 타이밍 참고 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3924877
-모모 배치 비교 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3925442",,,Deepsea_Cave,,
+모모 배치 비교 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3925442",,,Deepsea_Cave,,,,
 deepsea_boss,ds_boss_momo,오토 — 모모 덱,"풀오토로 편하게 치는 조합입니다. 기록 고점은 모모·디아나(왕년)를 쓰는 손컨 조합이 더 높습니다.
 풀오토로 진행하고, 전투 중 일시정지 → 설정에서 고학년 봉인 표시가 붙은 사도(모모·우로스·에르핀(왕도)·벨라)의 고학년을 끄세요. 
 설정에서 '데미지 텍스트'와 '전투 이펙트 강도'를 끄면 프레임 한도에 따른 딜 손해가 줄어듭니다.
-참조 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3801273",,,Deepsea_Cave,,
+참조 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3801273",,,Deepsea_Cave,,,,
 deepsea_boss,ds_boss_ui,오토 — 우이(기억) 덱,"풀오토로 편하게 치는 조합입니다. 기록 고점은 모모·디아나(왕년)를 쓰는 손컨 조합이 더 높습니다.
 풀오토로 진행하고, 전투 중 일시정지 → 설정에서 고학년 봉인 표시가 붙은 사도(우로스·에르핀(왕도)·벨라)의 고학년을 끄세요. 
 설정에서 '데미지 텍스트'와 '전투 이펙트 강도'를 끄면 프레임 한도에 따른 딜 손해가 줄어듭니다.
 우이(기억)이 어사이드 ★2 이상이 아니면 모모 덱을 쓰세요. 
 스펠은 모모의 평타 관련 스펠을 빼고 마법 딜량을 올리는 카드로 바꿉니다.
-참조 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3801273",,,Deepsea_Cave,,
-deepsea,ds_echo,공명,"공명 성격은 다른 해역 사용 여부와 상관 없이 덱 당 최대 2명까지 편성 가능합니다. 성격덱에 투입할 각 성격 사도가 부족할수록, 후반 해역일수록 가치가 큽니다.",,,Deepsea_Cave,공명,해역별 성격
-deepsea,deepsea_2,광기,광기 해역 추천픽입니다. ,,O,Deepsea_Cave,광기,
-deepsea,deepsea_3,냉정,냉정 해역 추천픽입니다. 디아나(왕년)은 전열에서 고학년 발동까지 못 버티면 다른 픽으로 교체해주세요. 이드는 웬만하면 어사이드 ★2 필수입니다.,,O,Deepsea_Cave,냉정,
-deepsea,deepsea_4,순수,순수 해역 추천픽입니다.,,O,Deepsea_Cave,순수,
-deepsea,deepsea_5,우울,우울 해역 추천픽입니다.,,O,Deepsea_Cave,우울,
-deepsea,deepsea_6,활발,활발 해역 추천픽입니다. ,,O,Deepsea_Cave,활발,
+참조 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3801273",,,Deepsea_Cave,,,,
+deepsea,ds_echo,공명,"공명 성격은 다른 해역 사용 여부와 상관 없이 덱 당 최대 2명까지 편성 가능합니다. 성격덱에 투입할 각 성격 사도가 부족할수록, 후반 해역일수록 가치가 큽니다.",,,Deepsea_Cave,공명,해역별 성격,,
+deepsea,deepsea_2,광기,광기 해역 추천픽입니다. ,,O,Deepsea_Cave,광기,,,
+deepsea,deepsea_3,냉정,냉정 해역 추천픽입니다. 디아나(왕년)은 전열에서 고학년 발동까지 못 버티면 다른 픽으로 교체해주세요. 이드는 웬만하면 어사이드 ★2 필수입니다.,,O,Deepsea_Cave,냉정,,,
+deepsea,deepsea_4,순수,순수 해역 추천픽입니다.,,O,Deepsea_Cave,순수,,,
+deepsea,deepsea_5,우울,우울 해역 추천픽입니다.,,O,Deepsea_Cave,우울,,,
+deepsea,deepsea_6,활발,활발 해역 추천픽입니다. ,,O,Deepsea_Cave,활발,,,
 crash2_shady,crash2_shady_1,저스펙 - 체력 보드 부족용,"체력 보드가 부족할 때 어떻게든 최고 단계까지 비벼보는 덱입니다. SP 회복이 중요해서 우이 파편이 아니라 니펠 파편 위주로 분배합니다.
-자세한 내용은 https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3848757 참조 바랍니다.",,ㅇ,BG_Mad,,
+자세한 내용은 https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3848757 참조 바랍니다.",,ㅇ,BG_Mad,,,,
 crash2_shady,crash2_shady_2,중스펙 — 모모 중심 택틱,"체력보드 1000%± 에서 사용되는 공략입니다. 루드 파편을 1~2 정도 투자, 나머지는 우이 파편에 투자합니다. 가장 공격력이 높은 대상에게 가는 죠안의 '분산'을 모모가 먹도록 템세팅을 통해 공격력을 조정합니다.
 
-참조 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3848560",,O,BG_Mad,,
+참조 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3848560",,O,BG_Mad,,,,
 crash2_shady,crash2_shady_3,고스펙 — 모모 중심 택틱,"중스펙 조합보다 체력 보드가 높아 딜에 투자할 여유가 있을 때 쓰는 조합입니다. 우이 파편 8개에 투자하고, '앵그리 영춘(발 구르기)' 패턴을 못버티고 터지는 사도에게는 감투, 단도, 풍선 갑옷 등 생존용 아티팩트를 분배합니다. 
 
-참조 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3847748",,ㅇ,BG_Mad,,
+참조 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3847748",,ㅇ,BG_Mad,,,,
 crash,crash_1,상위권 — 딜로 찍어 누르기,"릴1리는 패턴이 단순해서 스펙이 충분하면 기믹을 무시하고 딜로 밀어붙일 수 있습니다.
 육성이 덜 됐다면 같은 짜임에서 버티는 쪽(탱커·힐)을 보강해 주세요.
 아티팩트는 에르핀(왕도)에게 마법딜을 몰아주고, 중열의 비비(신성)·코페에게 대리 인장과 만년필, 네르에게 애착아티팩트 스킬을 받을 수 있도록 깃발을 먼저 챙겨 주세요.
-네르(전열)의 고학년 스킬을 먼저 사용한 다음에 딜러들 고학년 스킬을 사용합니다.",,ㅇ,BG_Mad,,
+네르(전열)의 고학년 스킬을 먼저 사용한 다음에 딜러들 고학년 스킬을 사용합니다.",,ㅇ,BG_Mad,,,,
 crash,crash_2,중위권 — 롤렛 쿨감 빌드,"공격력 보드 1400 정도에서 27구역 29~33초를 노리는 빌드입니다.
 롤렛의 저학년이 리뉴아나 비비(신성)의 고학년 쿨다운을 줄여 주기를 기도하는 게 핵심입니다. 비비(신성)는 저학년이 캔슬되지 않게 조심하면서 쓰고, 나머지는 고학년 쿨다운이 돌자마자 씁니다.
 아티팩트 필수는 리뉴아의 대리 인장 · 만년필, 비비(신성)의 대리 인장, 에르핀(왕도)의 에르핀의 지팡이 · 파랑새 둘, 디아나(왕년)의 용광검입니다 — 하나라도 비면 다시 시작하는 편이 낫습니다.
-출처: https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3898830",,ㅇ,BG_Mad,,
+출처: https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3898830",,ㅇ,BG_Mad,,,,
+frontier,frontier_core,고정 사도,"어떤 세팅이든 빠지지 않는 범용 요원 7명입니다.
+남은 두 자리는 투력 및 육성 상황에 맞춰 채웁니다.",,,Frontier_Death,,,단체 건강검진,
+frontier,frontier_test,마그맛 1 오토덱,"황금 크레파스 1,500대 스펙에서 마그맛 1을 오토로 클리어 가능한 덱입니다.
+참조 : https://gall.dcinside.com/mgallery/board/view/?id=rollthechess&no=3937610",,Y,Frontier_Death,,,단체 건강검진,WfEoRyXTDPNN5aSuOSzs9V
+frontier,frontier_2,상위권 범용덱,"마그맛2 2페이즈 두 번째 가시 소환까지 버티면서 최대한 딜 넣기를 목표로 합니다.
+롤렛 · 폴랑처럼 특정 역할에 특화된 사도 없이 짠 범용 편성의 상위권 세팅입니다. 공략과 랭커 덱을 바탕으로, 파랑새는 왕르핀에게 둬서 4분 풀딜 안되는 경우 최대딜을 지향합니다.
+오토덱(위)에서 생존이 되는 만큼 생존 · 보조 아티팩트를 딜 아티팩트로 바꿉니다.
+4분 생존이 가능하면 우이의 엘다인 램프 하나를 제이드의 비싼 만년필로 바꿔 주세요.",,Y,Frontier_Death,,,단체 건강검진,

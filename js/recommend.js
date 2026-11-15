@@ -9,7 +9,7 @@
 const { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter, deckTagBoxes }
     = await import('./ui.js?v=' + (window.APP_VERSION || ''));
 /* 프론티어 보스 패턴 섹션 — 편집기(`tools/frontier/`)와 같이 쓰는 모듈 (`FRONTIER.md`) */
-const { buildFrontier, frontierFrom } = await import('./frontier.js?v=' + (window.APP_VERSION || ''));
+const { buildFrontier, frontierFrom, buildAuthority, authorityButton, authorityPlain } = await import('./frontier.js?v=' + (window.APP_VERSION || ''));
 
 const PERSONALITY_COLORS = {
     '순수': { bg: '#66C17C', border: '#93F4A7' },
@@ -686,6 +686,33 @@ function groupMembers(rows, deckKey) {
         .filter(m => m.name);
 }
 
+/* 카드 구매 프리셋 코드 (`Recommend_Decks.preset`, 2026-11-12 인게임 추가) —
+   덱 설정 → 카드 구매 프리셋 → 가져오기 에 붙여 넣으면 아티팩트·스펠·교주의 응원·권능이 한 번에 들어온다.
+   ⚠ 설명문(`deck_sub`)에 섞어 적지 않는다 — 긁어서 복사하다 앞뒤 글자가 딸려 간다. 클릭 한 번에 복사되게 따로 둔다 */
+function presetBox(code) {
+    return `<div class="rc-preset">
+        <span class="rc-preset-label">프리셋 코드</span>
+        <code class="rc-preset-code">${esc(code)}</code>
+        <button type="button" class="rc-preset-copy" data-code="${esc(code)}">복사</button>
+        <span class="rc-preset-hint">덱 설정 → 카드 구매 프리셋 → 가져오기</span>
+    </div>`;
+}
+document.addEventListener('click', async e => {
+    const b = e.target.closest('.rc-preset-copy'); if (!b) return;
+    let ok = false;
+    try { await navigator.clipboard.writeText(b.dataset.code); ok = true; }
+    catch {
+        /* http 로컬·구형 브라우저 — 코드를 선택해 두면 사용자가 Ctrl+C 로 끝낸다 */
+        const code = b.parentElement.querySelector('.rc-preset-code');
+        const r = document.createRange(); r.selectNodeContents(code);
+        const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        try { ok = document.execCommand('copy'); } catch { }
+    }
+    b.textContent = ok ? '복사됨' : '선택됨 — Ctrl+C';
+    b.classList.toggle('is-done', ok);
+    clearTimeout(b._t); b._t = setTimeout(() => { b.textContent = '복사'; b.classList.remove('is-done'); }, 1600);
+});
+
 function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
     const box = document.createElement('article');
     box.className = 'rc-deck';
@@ -701,6 +728,7 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
     const autoHigh = !!(deck.high_auto || '').trim();
     const freeLabel = (deck.free_label || '').trim();
     const sub = (deck.deck_sub || '').trim();
+    const preset = (deck.preset || '').trim();   // 인게임 「카드 구매 프리셋」 → 가져오기 에 넣는 코드
     const deckKey = (deck.deck_key || '').trim();
     const swaps = groupSwaps(swapRows, deckKey);
     const members = groupMembers(memberRows, deckKey);
@@ -713,8 +741,13 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
         <header class="rc-deck-head">
             <h4 class="rc-deck-name">${esc((deck.deck_name || '').trim() || '이름 없는 덱')}</h4>
             ${sub ? `<p class="rc-deck-sub">${linkify(sub)}</p>` : ''}
+            ${preset ? presetBox(preset) : ''}
         </header>
         <div class="rc-deck-tiles"></div>
+        <section class="rc-deck-block is-authority" hidden>
+            <h5 class="rc-deck-eyebrow">교주의 권능</h5>
+            <div class="rc-authority"></div>
+        </section>
         <section class="rc-deck-block is-spells" hidden>
             <h5 class="rc-deck-eyebrow">스펠</h5>
             <div class="rc-spell-grid"></div>
@@ -792,6 +825,24 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
         });
     }
 
+    /* 교주의 권능 — 덱마다 하나 (`Recommend_Decks.authority`, 이름). 설명은 말풍선 — 위 권능 상자에 전문이 있다
+       ⚠ 없는 이름이면 빨간 `?` 로 낸다 (조용히 비우지 않는다 — 아티팩트 열과 같은 관례). `db_check` 도 본다 */
+    const auName = (deck.authority || '').trim();
+    if (auName) {
+        const a = AUTHORITY.get(auName);
+        const html = a
+            ? `<span class="fa-deck" tabindex="0" data-tooltip="${esc(a.name + '\n' + authorityPlain(a))}">${authorityButton(a)}<b>${esc(a.name)}</b></span>`
+            : `<span class="fa-deck is-missing"><b style="color:var(--debuff-text)">? ${esc(auName)}</b></span>`;
+        /* 편성판이 있으면 판 **안 오른쪽 아래** 빈 자리에 얹는다 (한 줄을 통째로 쓰면 휑했다).
+           판이 없는 덱(좌표 없음)만 아래 「교주의 권능」 줄로 내린다 */
+        const wrapEl = tiles.querySelector('.rc-board-wrap');
+        if (wrapEl) wrapEl.insertAdjacentHTML('beforeend', html.replace('class="fa-deck', 'class="fa-deck is-onboard'));
+        else {
+            box.querySelector('.rc-authority').innerHTML = html;
+            box.querySelector('.is-authority').hidden = false;
+        }
+    }
+
     /* 스펠 줄 — 적힌 순서 그대로 (인게임 프리셋처럼 등급 높은 순으로 적는다) */
     const spellGrid = box.querySelector('.rc-spell-grid');
     (DECK_SPELLS.get(deckKey) || []).forEach(({ name, count, note }) => {
@@ -847,31 +898,39 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
        값을 넣은 덱에서만 보이므로, 비워 두면 화면에 아무 영향이 없다. */
     if ((deck.equip || '').trim()) {
         const erow = box.querySelector('.rc-equip-row');
-        const byRole = new Map();
+        /* 편성판이 있는 덱은 **열(후·중·전)로** 묶는다 — 인게임 카드 구매 프리셋 화면이 그렇게 나눠 보여 줘서
+           (2026-11-15), 프리셋 화면과 나란히 놓고 대조하기 쉽다. 열 안에서는 상·중·하 순.
+           판이 없는 덱(좌표 없음)은 예전처럼 역할로 묶는다 */
+        const LINES = ['후열', '중열', '전열'], ROWS = ['상', '중', '하'];
+        const byLine = placed && members.every(m => isFreeSlot(m.name) || (m.col && m.row));
+        const groups = new Map();
         members.forEach(m => {
             if (isFreeSlot(m.name)) return;
             const ch = dbMap.get(m.name);
             if (!ch) return;
-            const role = (ch.role || '기타').trim();
-            if (!byRole.has(role)) byRole.set(role, []);
-            byRole.get(role).push([ch, m]);
+            const key = byLine ? m.col : (ch.role || '기타').trim();
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push([ch, m]);
         });
-        const order = [...byRole.keys()].sort((a, b) => {
-            const ia = ROLE_ORDER.indexOf(a), ib = ROLE_ORDER.indexOf(b);
+        const ORDER = byLine ? LINES : ROLE_ORDER;
+        const order = [...groups.keys()].sort((a, b) => {
+            const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
             return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
         });
-        order.forEach(role => {
+        order.forEach(key => {
             const g = document.createElement('section');
             g.className = 'rc-equip-group';
-            g.dataset.role = role;
+            g.dataset[byLine ? 'line' : 'role'] = key;
             /* 탭은 **박스 바깥 위**에 붙는다 — 안으로 파고들면 첫 아티팩트 카드와 싸운다.
                아래 2px 만 박스를 물어 "붙어 있다" 를 만든다 (떼면 떠 보인다). */
             g.innerHTML = `<span class="rc-equip-tab">
-                    <img src="${iconUrl(role, 'role')}" alt="" onerror="this.remove()">
-                    ${esc(role)}
+                    <img src="${iconUrl(key, byLine ? 'line' : 'role')}" alt="" onerror="this.remove()">
+                    ${esc(key)}
                 </span><div class="rc-equip-cards"></div>`;
             const wrap = g.querySelector('.rc-equip-cards');
-            byRole.get(role).forEach(([ch, m]) => wrap.appendChild(buildEquipCard(ch, m)));
+            const list = groups.get(key);
+            if (byLine) list.sort((x, y) => ROWS.indexOf(x[1].row) - ROWS.indexOf(y[1].row));
+            list.forEach(([ch, m]) => wrap.appendChild(buildEquipCard(ch, m)));
             erow.appendChild(g);
         });
         if (erow.children.length) box.querySelector('.is-equip').hidden = false;
@@ -934,7 +993,8 @@ function buildSpellCard(name, count, note) {
     el.innerHTML = `<div class="rc-spell-rim"></div><div class="rc-spell-band"></div><div class="rc-spell-base"></div><div class="rc-spell-art"></div><div class="rc-spell-plate"></div>
         <img class="rc-spell-hat" src="assets/icons/spell_card/Ingame_CardIcon_Spell.webp" alt="">
         ${count > 1 ? `<span class="rc-spell-cnt"><img src="assets/icons/spell_card/Ingame_Spell_Icon_2.webp" alt=""><b>×${count}</b></span>` : ''}
-        <span class="rc-spell-name"${name.length >= 9 ? ' data-long' : ''}>${esc(name)}</span>`;
+        <span class="rc-spell-name"${name.length >= 9 ? ' data-long' : ''}>${esc(name)}</span>
+        ${s.cost ? `<span class="fa-cost rc-spell-cost"><i class="base"></i><i class="wheel"></i><i class="rim"></i><b>${esc(s.cost)}</b></span>` : ''}`;
     el.setAttribute('aria-label', count > 1 ? `${name} ${count}장` : name);
     return el;
 }
@@ -1165,6 +1225,8 @@ function buildShard(s) {
    ⚠ `buff_DB` 까지 본다. `SP 회복 감소` 처럼 디버프라도 사도가 **적에게 거는** 효과는 debuff 쪽이지만,
      이름 꼬리 매칭이 버프 이름에 걸릴 수 있어 둘 다 본다 (필터와 같은 범위) */
 const FR_EFFECT = { debuff: [], buff: [], states: [], db: new Map() };
+/* 교주의 권능 — 이름 → { name, icon, cost, cd, text } (`render` 가 프론티어 분류에서 채운다) */
+const AUTHORITY = new Map();
 const FR_SLOTS = { debuff: ['low_debuff', 'high_debuff', 'normal_debuff', 'power_debuff', 'aside_passive'],
                    buff:   ['low_buff', 'high_buff', 'normal_buff', 'power_buff', 'aside_passive'] };
 function effectMatches(name, kw) {
@@ -1277,7 +1339,12 @@ function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
     if (sec.boss || sec.rules.length || sec.shards.length || sec.notes.length)
         body.appendChild(buildCrash2Panel(sec));
     /* 프론티어 보스 패턴도 같은 자리 — 덱보다 먼저 */
-    if (sec.frontier) body.appendChild(buildFrontier(sec.frontier.D, { states: sec.frontier.states, ccPicker: openEffectPicker }));
+    if (sec.frontier) {
+        body.appendChild(buildFrontier(sec.frontier.D, { states: sec.frontier.states, ccPicker: openEffectPicker }));
+        /* 교주의 권능 — 페이즈와 무관해 패턴 상자 밖, 덱보다 먼저 */
+        const au = buildAuthority(sec.frontier.D, { states: sec.frontier.states });
+        if (au) body.appendChild(au);
+    }
 
     /* 덱이 있으면 역할 묶음보다 **먼저** 그린다. */
     if (sec.decks && sec.decks.length) {
@@ -1795,6 +1862,8 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
                       boss: null, bossSkills: [], rules: [], shards: [], notes: [] };
         /* 프론티어 보스 패턴 — 이 분류 키로 된 패턴 행이 있으면 붙는다 (없으면 null) */
         if (frontierRows) sec.frontier = frontierFrom(sk, frontierRows.p, frontierRows.g, frontierRows.s, frontierRows.all);
+        /* 덱의 `authority` 열이 이름으로 찾는다 (분류를 가리지 않는다 — 권능 이름은 시즌 안에서 겹치지 않는다) */
+        (sec.frontier?.D.authority || []).forEach(a => AUTHORITY.set(a.name, a));
         groups.get(gk).secs.set(sk, sec);
         secByKey.set(sk, sec);
     });
@@ -2267,7 +2336,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
         });
         P(spellT).forEach(r => {
             const n = (r.name || '').trim();
-            if (n) SPELLS.set(n, { no: (r.no || '').trim(), grade: (r.grade || '').trim() });
+            if (n) SPELLS.set(n, { no: (r.no || '').trim(), grade: (r.grade || '').trim(), cost: (r.cost || '').trim() });
         });
         P(deckSpellT).forEach(r => {
             const k = (r.deck_key || '').trim(), n = (r.spell_name || '').trim();

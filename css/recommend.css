@@ -525,6 +525,32 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     word-break: keep-all;
 }
 
+/* 카드 구매 프리셋 코드 — 설명 아래 한 줄. 음각 홈에 코드를 앉히고 오른쪽에 복사 버튼.
+   ⚠ 코드는 **고정폭**으로 낸다 — `l`·`I`·`1` · `O`·`0` 이 섞인 22자라 둥근 본문 글꼴로는 눈으로 옮겨 적기 어렵다.
+   안내(`가져오기` 경로)는 좁으면 아래 줄로 떨어진다 */
+.rc-preset {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+    margin-top: 10px;
+}
+.rc-preset-label { font-size: .78rem; font-weight: 700; color: var(--rc-meta); letter-spacing: .02em; }
+.rc-preset-code {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'D2Coding', monospace;
+    font-size: .88rem; letter-spacing: .04em; color: var(--rc-name);
+    padding: 5px 10px; border-radius: 8px;
+    background: var(--stat-box-bg); box-shadow: var(--inset-shadow); border: 1px solid var(--border-soft);
+    user-select: all; overflow-wrap: anywhere;
+}
+.rc-preset-copy {
+    font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer;
+    padding: 5px 14px; border-radius: 999px;
+    color: var(--text-dark); background: var(--accent-soft); border: 1px solid var(--accent-green);
+    transition: background .15s, border-color .15s;
+}
+.rc-preset-copy:hover { background: var(--accent-green); }
+.rc-preset-copy:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
+.rc-preset-copy.is-done { background: var(--accent-green); border-color: var(--accent-green-strong); }
+.rc-preset-hint { font-size: .75rem; color: var(--rc-meta); word-break: keep-all; }
+
 /* 라벨은 타일 **위**에 머리글로 올린다. 옆에 두면 묶음이 안 보이고 라벨만 떠다닌다 */
 /* `추천 조합` 머리글은 두지 않는다 — 덱 이름이 이미 그 역할을 한다.
    ⚠ 가로 점선과 세로 선을 같이 쓰면 분할이 과하다. 가로선은 빼고 여백으로 가른다. */
@@ -999,6 +1025,10 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-equip-group[data-role="서포터"] > .rc-equip-tab { background: #F5A623; }
 .rc-equip-group[data-role="탱커"]   > .rc-equip-tab { background: #4A7BD5; }
 .rc-equip-group[data-role="기타"]   > .rc-equip-tab { background: #8A8F9A; }
+/* 편성판 덱은 열로 묶는다 — 인게임 카드 구매 프리셋 화면의 띠 색 (후 파랑 · 중 초록 · 전 빨강) */
+.rc-equip-group[data-line="후열"] > .rc-equip-tab { background: #3F86D9; }
+.rc-equip-group[data-line="중열"] > .rc-equip-tab { background: #5AA83A; }
+.rc-equip-group[data-line="전열"] > .rc-equip-tab { background: #E0555A; }
 
 /* ── 아티팩트 슬롯 카드 ────────────────────────────────────
    위쪽은 `.rc-dtile` 그대로(초상화·이름표·고학년 표지), 아래에 슬롯만 붙인다.
@@ -2095,6 +2125,10 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     font-size: 11.5cqw; letter-spacing: -.02em; color: #1d1d1d; -webkit-text-stroke: .25cqw #1d1d1d; }
 .rc-spell-name[data-long] { font-size: 9.5cqw; }
 /* 고깔모자 — 챙이 이름판 윗선에 걸친다 */
+/* 코스트 — 교주의 권능 비용 배지(`.fa-cost`, frontier.css)를 그대로 쓴다. 1레벨 기준값 (`spell_DB.cost`)
+   ⚠ `.fa-cost` 는 `--s` 배율로 크기를 정한다 — 카드는 cqw 로 덮어쓴다 */
+.rc-spell .rc-spell-cost { top: -9cqw; width: 30cqw; z-index: 3; }
+.rc-spell .rc-spell-cost b { font-size: 13cqw; -webkit-text-stroke-width: 1.4cqw; }
 .rc-spell-hat { position: absolute; left: 50%; bottom: 21%; width: 25cqw; translate: -50% 0; z-index: 2; }
 /* 장수 — 카드 더미 아이콘 + 보라 원. 원이 카드 오른쪽 밖으로 조금 나온다 */
 .rc-spell-cnt { position: absolute; right: -5cqw; bottom: 25%; width: 26cqw; z-index: 2; }

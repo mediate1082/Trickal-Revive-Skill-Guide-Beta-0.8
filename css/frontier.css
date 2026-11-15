@@ -22,6 +22,12 @@
 .fp-view-btn[aria-pressed="true"] { background: var(--modal-card-bg); color: var(--text-heading); }
 .fp-view-btn:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 2px; }
 
+/* 전체 접기 — 머리 줄 오른쪽 끝 (보기 방식 스위치 오른쪽). 접으면 머리 줄만 남는다 */
+.fp-allfold { order: 0; }
+.fp-panel[hidden] { display: none; }
+.fp-section.is-folded .fp-head { margin-bottom: 0; }
+.fp-section.is-folded .fp-viewsw { visibility: hidden; }
+
 /* 페이즈 안 소제목 — 기믹 / 핵심 패턴 / 일반 패턴 */
 .fp-h { font-size: 1rem; font-weight: 800; margin: 22px 0 10px; display: flex; align-items: center; gap: 10px; }
 .fp-h::after { content: ''; flex: 1; height: 1px; background: var(--border-soft); }
@@ -213,8 +219,71 @@ html.fp-ccm-open { overflow: hidden; }
 .fp-state-off { position: absolute; top: -9px; right: 12px; font-size: .74rem; font-weight: 800; padding: 1px 9px; border-radius: 999px;
     background: var(--modal-card-bg); color: var(--text-heading); border: 1px solid var(--border-soft); font-synthesis-weight: none; }
 
+/* ══ 교주의 권능 (`buildAuthority`) ══════════════════════════════
+   인게임 정보 팝업 색 — 크림 바탕 · 연두 안쪽 · 노란 띠. 다크 모드는 사이트 카드색 위에 같은 노랑 */
+.fa { --fa-card: #fbfdf0; --fa-inner: #eef4dc; --fa-line: #dfe7c6; --fa-text: #3d4130; --fa-yellow: #f3d84a; margin-top: 18px; }
+:root[data-theme="dark"] .fa { --fa-card: var(--modal-card-bg); --fa-inner: var(--stat-box-bg); --fa-line: var(--border-soft); --fa-text: var(--text-body); --fa-band: rgba(243, 216, 74, .32); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fa { --fa-card: var(--modal-card-bg); --fa-inner: var(--stat-box-bg); --fa-line: var(--border-soft); --fa-text: var(--text-body); --fa-band: rgba(243, 216, 74, .32); } }
+.fa-head { margin-bottom: 4px; }
+.fa-head .fp-allfold { margin-left: auto; }   /* 보기 스위치가 없으니 스스로 오른쪽 끝으로 */
+.fa-list[hidden] { display: none; }
+.fa-list { display: grid; gap: 14px; }
+.fa-item { display: grid; grid-template-columns: 132px 1fr; gap: 18px; align-items: center; padding-top: 10px; }
+
+/* 사용 버튼 — 원본 px 기준, --s 로 줄인다. ⚠ 그림자 부품 대신 CSS 그림자 (돋보기 자리 그림자가 남아서) */
+.fa-btn { --s: .66; position: relative; display: block; flex: none; width: calc(200px * var(--s)); height: calc(212px * var(--s));
+    filter: drop-shadow(0 calc(7px * var(--s)) 0 rgba(0, 0, 0, .28)); }
+.fa-btn > * { position: absolute; display: block; pointer-events: none; user-select: none; }
+.fa-btn .ic { left: calc(16px * var(--s)); top: calc(10px * var(--s)); width: calc(168px * var(--s)); height: calc(168px * var(--s)); object-fit: cover;
+    -webkit-mask: url('../assets/icons/frontier/Ingame_Authority_Mask.webp') center / 100% 100% no-repeat;
+            mask: url('../assets/icons/frontier/Ingame_Authority_Mask.webp') center / 100% 100% no-repeat; }
+.fa-btn .bd { left: calc(6px * var(--s)); top: 0; width: calc(188px * var(--s)); }
+.fa-btn .fl { left: calc(42px * var(--s)); top: calc(160px * var(--s)); width: calc(116px * var(--s)); }
+/* 비용 배지 — 마스크 세 장에 색을 칠한다 (바탕 · 바람개비 · 톱니 테두리) */
+.fa-cost { position: absolute; left: 50%; top: calc(-18px * var(--s)); width: calc(52px * var(--s) + 6px); aspect-ratio: 1;
+    transform: translateX(-50%); z-index: 2; filter: drop-shadow(0 0 1px #1f3f7a) drop-shadow(0 1px 0 #1f3f7a); }
+.fa-cost i { position: absolute; inset: 0; -webkit-mask: var(--m) center / 100% 100% no-repeat; mask: var(--m) center / 100% 100% no-repeat; }
+.fa-cost .base  { --m: url('../assets/icons/frontier/SoloEndIngame_Cost_6.webp'); background: radial-gradient(circle at 50% 40%, #9fd2ff, #4f93ec 70%, #3a76d0); }
+.fa-cost .wheel { --m: url('../assets/icons/frontier/SoloEndIngame_Cost_3.webp'); background: rgba(255, 255, 255, .28); inset: 14%; }
+.fa-cost .rim   { --m: url('../assets/icons/frontier/SoloEndIngame_Cost_1.webp'); background: linear-gradient(#f2f9ff, #b9dcff); }
+.fa-cost b { position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(22px * var(--s) + 4px); font-weight: 800;
+    color: #26262a; letter-spacing: -.02em; -webkit-text-stroke: 2.5px #fff; paint-order: stroke fill; font-synthesis-weight: none; line-height: 1; }
+
+/* 해설 상자 — 인게임 정보 팝업을 CSS 로 */
+.fa-card { background: var(--fa-card); border: 1px solid var(--fa-line); border-radius: 20px; padding: 16px 18px; box-shadow: 0 2px 8px var(--shadow-soft); }
+.fa-title { display: inline-block; position: relative; margin: 0 0 10px; padding: 0 6px; font-size: 1.15rem; font-weight: 800; color: var(--text-heading); }
+.fa-title::before { content: ''; position: absolute; left: 0; right: 0; bottom: 2px; height: 48%; border-radius: 6px; background: var(--fa-band, var(--fa-yellow)); }
+.fa-title > * { position: relative; }
+.fa-desc { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--fa-inner); color: var(--fa-text); font-size: .9rem; line-height: 1.7; word-break: keep-all; }
+.fa-desc b { color: var(--text-heading); }
+.fa-cd { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; font-size: .8rem; font-weight: 800; color: var(--text-body);
+    padding: 2px 10px 2px 8px; border-radius: 999px; background: var(--fa-inner); border: 1px solid var(--fa-line); font-synthesis-weight: none; }
+.fa-cd svg { width: 13px; height: 13px; }
+
+/* 덱 편성의 「교주의 권능」 줄 — 버튼을 작게 + 이름 · 재사용 */
+.fa-deck { display: inline-flex; align-items: center; gap: 10px; padding: 4px 14px 4px 4px; border-radius: 999px; cursor: help;
+    background: var(--stat-box-bg); border: 1px solid var(--border-soft); box-shadow: var(--inset-shadow); }
+.fa-deck .fa-btn { --s: .3; }
+.fa-deck .fa-cost { display: none; }
+.fa-deck b { font-size: .92rem; color: var(--text-heading); }
+.fa-deck small { font-size: .74rem; font-weight: 700; color: var(--text-body); }
+
+/* 편성판 안 — 오른쪽 아래 빈 자리 (`.rc-board-wrap` 이 기준) */
+.fa-deck.is-onboard { position: absolute; right: 2.2%; bottom: 4%; z-index: 6; padding: 3px 12px 3px 3px;
+    background: color-mix(in srgb, var(--modal-card-bg) 88%, transparent); box-shadow: 0 2px 8px rgba(0, 0, 0, .25); backdrop-filter: blur(2px); }
+.fa-deck.is-onboard b { font-size: .84rem; }
+.fa-deck.is-onboard small { font-size: .7rem; }
+/* 좁은 화면 — 판이 460px 로 버티며 옆으로 밀려 글자까지 얹으면 핀을 가린다. 버튼만 남기고 이름은 말풍선으로 */
+@media (max-width: 720px) {
+    .fa-deck.is-onboard { padding: 2px; right: 1.5%; bottom: 3%; }
+    .fa-deck.is-onboard .fa-btn { --s: .24; }
+    .fa-deck.is-onboard b, .fa-deck.is-onboard small { display: none; }
+}
+
 @media (max-width: 720px) {
     .fp-section { padding: 14px; }
+    .fa-item { grid-template-columns: 1fr; justify-items: center; gap: 8px; }
+    .fa-card { width: 100%; box-sizing: border-box; }
     /* 좁으면 그리드도 1열이라 전환이 의미 없다 — 버튼을 숨기고 세로 카드로 고정 */
     .fp-viewsw { display: none; }
     .fp-grid.is-list .fp-card { flex-direction: column; }

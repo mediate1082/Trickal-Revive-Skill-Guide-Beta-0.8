@@ -122,6 +122,8 @@ export function buildFrontier(D, opt = {}) {
                 <button type="button" class="fp-view-btn" data-view="grid">그리드</button>
                 <button type="button" class="fp-view-btn" data-view="list">1열</button>
             </div>
+            <!-- 기믹 · 패턴을 통째로 접는다 (페이즈 탭과 머리 줄은 남는다). 펼친 채로 시작 -->
+            <button type="button" class="fp-fold fp-allfold" aria-expanded="true">접기</button>
         </div>
         <div class="fp-panel"></div>`;
     const panel = root.querySelector('.fp-panel');
@@ -133,6 +135,12 @@ export function buildFrontier(D, opt = {}) {
         root.querySelectorAll('.fp-view-btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
         panel.querySelectorAll('.fp-grid').forEach(g => g.classList.toggle('is-list', view === 'list'));
     };
+    const allFold = root.querySelector('.fp-allfold');
+    allFold.addEventListener('click', () => {
+        const open = allFold.getAttribute('aria-expanded') !== 'true';
+        allFold.setAttribute('aria-expanded', String(open)); allFold.textContent = open ? '접기' : '펼치기';
+        panel.hidden = !open; root.classList.toggle('is-folded', !open);
+    });
     root.querySelector('.fp-viewsw').addEventListener('click', e => {
         const b = e.target.closest('.fp-view-btn'); if (!b || b.dataset.view === view) return;
         view = b.dataset.view;
@@ -370,6 +378,56 @@ export function buildFrontier(D, opt = {}) {
      열을 바꾸면 **둘 다** 고칠 것.
    allStates — 사이트 상태 표(`buff_desc_DB` + `debuff_desc_DB`). 쓰라림 · 기절 · 침묵 같은 **사도 쪽 상태**의
      말풍선도 같이 단다. 보스 고유 상태(`Frontier_States`)가 이름이 겹치면 이긴다. */
+/* ══ 교주의 권능 ═════════════════════════════════════════════════
+   시즌마다 바뀌는 셋 중 하나를 골라 쓰는 액티브. **페이즈와 무관**해 패턴 상자(페이즈 탭) 밖에 따로 선다.
+   ⚠ 사용 버튼은 인게임 부품을 겹친다 — 테두리 · 마스크(아이콘 자르기) · 잎. 원본(188px)보다 작게만 써서 계단이 없다.
+     그림자 부품(`Ingame_Authority_Shadow`)은 **돋보기 자리까지** 그려져 있어 안 쓴다 (돋보기를 뺐다) — CSS 그림자로 대신
+   ⚠ 비용 배지는 `SoloEndIngame_Cost_6 · _3 · _1` 을 **마스크로만** 쓰고 색은 CSS 가 칠한다 (인게임도 그렇게 한다)
+   ⚠ 해설 상자의 인게임 틀(`GimmickInfo_*`)은 늘리면 계단이 생겨 CSS 로 그렸다 */
+const CLOCK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6V8l2.3 1.5"/></svg>';
+/* 버튼 하나 — 덱 표시도 같은 걸 줄여 쓴다 (`--s`) */
+export function authorityButton(a, base = '') {
+    const I = n => `${base}assets/icons/frontier/${n}.webp`;
+    return `<span class="fa-btn" role="img" aria-label="${esc(a.name)}">
+        <img class="ic" src="${I('AuthorityIcon_' + a.icon)}" alt="">
+        <img class="bd" src="${I('Ingame_Authority_Border')}" alt="">
+        <img class="fl" src="${I('Ingame_Authority_Flower')}" alt="">
+        ${a.cost ? `<span class="fa-cost"><i class="base"></i><i class="wheel"></i><i class="rim"></i><b>${esc(a.cost)}</b></span>` : ''}</span>`;
+}
+/* 말풍선용 평문 — `<br>` 은 줄바꿈, `**` 는 뗀다 */
+export const authorityPlain = a => String(a.text || '').replace(/<br\s*\/?>/gi, '\n').replace(/\*\*/g, '');
+export function buildAuthority(D, opt = {}) {
+    const list = D.authority || [];
+    if (!list.length && !(opt.edit && opt.edit())) return null;
+    const fmt = makeFmt(opt.states || new Map());
+    const ed = opt.ed || ((path, tag = 'span', cls = '') => {
+        const v = path.split('.').reduce((o, k) => o?.[k], D);
+        return `<${tag}${cls ? ` class="${cls}"` : ''}>${v ? fmt(v) : ''}</${tag}>`;
+    });
+    const root = document.createElement('section');
+    root.className = 'fp-section fa';
+    root.innerHTML = `<div class="fp-head fa-head"><h3 class="fp-title">교주의 권능</h3>
+            <button type="button" class="fp-fold fp-allfold" aria-expanded="true">접기</button></div>
+        <div class="fa-list">${list.map((a, i) => `
+            <article class="fa-item">
+                ${authorityButton(a, opt.base || '')}
+                <div class="fa-card">
+                    <h4 class="fa-title">${ed(`authority.${i}.name`)}</h4>
+                    ${ed(`authority.${i}.text`, 'p', 'fa-desc')}
+                    ${a.cd ? `<span class="fa-cd">${CLOCK}재사용 대기시간 ${esc(a.cd)}초</span>` : ''}
+                </div>
+            </article>`).join('')}</div>`;
+    /* 기믹·패턴 상자와 같은 접기 — 접으면 머리 줄만 남는다 */
+    const fold = root.querySelector('.fp-allfold'), body = root.querySelector('.fa-list');
+    fold.addEventListener('click', () => {
+        const open = fold.getAttribute('aria-expanded') !== 'true';
+        fold.setAttribute('aria-expanded', String(open)); fold.textContent = open ? '접기' : '펼치기';
+        body.hidden = !open; root.classList.toggle('is-folded', !open);
+    });
+    opt.onShow?.(root);
+    return root;
+}
+
 export function frontierFrom(secKey, pRows, gRows, sRows, allStates, base = '') {
     const T = v => String(v ?? '').trim();
     const states = new Map();
@@ -385,7 +443,7 @@ export function frontierFrom(secKey, pRows, gRows, sRows, allStates, base = '') 
     const D = { boss: { name: '', badge: '' }, labels: {},
         gimmick: { tree: { title: '', desc: '', steps: [[], [], []] },
                    groggy: { title: '', badge: '', lines: [], media: {} }, statesNote: '', states: [] },
-        patterns: [] };
+        patterns: [], authority: [] };
     ps.sort((a, b) => (+a.phase - +b.phase) || ((parseInt(a.order) || 0) - (parseInt(b.order) || 0)));
     ps.forEach(r => {
         const p = { phase: +T(r.phase), kind: T(r.kind), name: T(r.name), media: T(r.media) };
@@ -408,6 +466,7 @@ export function frontierFrom(secKey, pRows, gRows, sRows, allStates, base = '') 
             case 'halt': G.groggy.title = T(r.name); G.groggy.badge = T(r.badge); if (T(r.text)) G.groggy.lines.push(T(r.text)); break;
             case 'halt_media': G.groggy.media[T(r.phase)] = T(r.media); break;
             case 'state_note': G.statesNote = T(r.text); break;
+            case 'authority': D.authority.push({ name: T(r.name), icon: T(r.icon), cost: T(r.cost), cd: T(r.cd), text: T(r.text) }); break;
             case 'state': {
                 const o = T(r.order);
                 let st = byOrder.get(o);
