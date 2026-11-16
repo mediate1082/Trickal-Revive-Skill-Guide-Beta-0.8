@@ -1030,6 +1030,48 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-equip-group[data-line="중열"] > .rc-equip-tab { background: #5AA83A; }
 .rc-equip-group[data-line="전열"] > .rc-equip-tab { background: #E0555A; }
 
+/* 열 묶음은 **편성판처럼 세로로** 선다 (2026-11-16 피드백) — 후·중·전 열이 왼쪽부터 나란히,
+   열 안에서는 상·중·하가 위에서 아래로. 카드는 JS 가 `grid-row` 로 제 칸에 꽂는다.
+   `subgrid` 로 세 묶음이 **행을 함께 쓴다** — 빈 칸이 있어도 옆 열의 같은 줄과 높이가 맞는다.
+   ⚠ 줄바꿈하지 않는다. 폰에서는 편성판처럼 가로로 민다 */
+.rc-equip-row.is-lines {
+    display: grid; grid-auto-flow: column; grid-auto-columns: max-content;
+    grid-template-rows: repeat(3, auto);        /* 상 · 중 · 하 */
+    justify-content: center; gap: 0 12px;
+    overflow-x: auto; padding-bottom: 4px;
+}
+.rc-equip-row.is-lines > .rc-equip-group {
+    grid-row: 1 / span 3;
+    display: grid; grid-template-rows: subgrid;
+}
+.rc-equip-row.is-lines .rc-equip-cards {
+    grid-row: 1 / span 3; display: grid; grid-template-rows: subgrid;
+    gap: 10px; justify-items: center;
+}
+/* 열 묶음의 탭은 **왼쪽 위에 세로로** 붙인다 (2026-11-16) — 묶음이 세로로 길어 위에 가로 탭을 얹으면
+   탭 높이(30px)만큼 줄이 또 길어진다. 옆으로 빼면 그 자리가 묶음 사이 틈으로 들어간다.
+   아래 2px 대신 **오른쪽 2px** 이 박스를 문다 — 가로 탭과 같은 "붙인 물건" 문법 */
+.rc-equip-row.is-lines > .rc-equip-group { margin: 0 0 0 26px; padding: 8px 10px; }
+.rc-equip-row.is-lines .rc-equip-tab {
+    left: -26px; top: 12px; width: 28px; height: auto;
+    padding: 9px 2px 9px 0;
+    writing-mode: vertical-rl; letter-spacing: .08em;
+    border-radius: 8px 2px 2px 8px;
+    box-shadow: inset -3px 0 0 rgba(0, 0, 0, .16);
+}
+.rc-equip-row.is-lines .rc-equip-tab img { margin-bottom: 2px; }
+
+/* 세로로 셋씩 쌓이면 줄이 길어져 **초상화를 4:3 으로 눌렀다** (2026-11-16 시안). 위 편성판에 같은 얼굴이
+   이미 크게 있으니 여기서는 알아볼 만큼이면 된다. 잘라내는 몫은 **전부 아래(몸)에서** 뺀다 —
+   ⚠ 위를 조금이라도 깎으면(`30%` 로 해 봤다) 얼굴이 올라가 위 가운데 고학년 모자 뱃지에 눈이 가린다 */
+.rc-equip-row.is-lines .rc-equip .card-top { aspect-ratio: 4 / 3; }
+.rc-equip-row.is-lines .rc-equip .char-img { object-position: 50% 0; }
+@media (max-width: 560px) {
+    .rc-equip-row.is-lines { justify-content: start; }
+    .rc-equip-row.is-lines > .rc-equip-group { flex: none; }
+    .rc-equip-row.is-lines .rc-equip-cards .rc-equip { width: 132px; min-width: 0; }
+}
+
 /* ── 아티팩트 슬롯 카드 ────────────────────────────────────
    위쪽은 `.rc-dtile` 그대로(초상화·이름표·고학년 표지), 아래에 슬롯만 붙인다.
    ⚠ 색 변수는 `.rc-card`·`.rc-deck` 의 지역 변수다 — 아티팩트 줄이 그 밖에 놓이면
@@ -1239,6 +1281,14 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     display: grid; gap: 14px 26px;
     grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
 }
+/* 후보 묶음 소제목 (`Recommend_Deck_Swaps.group`, 2026-11-16) — 격자 한 줄을 통째로 쓴다.
+   위 `빈자리 후보` 눈썹줄보다 **한 단계 아래**라 선을 긋지 않고 글자만 둔다 (선이 겹치면 층이 안 갈린다) */
+.rc-swap-group {
+    grid-column: 1 / -1; margin: 0 0 -4px;
+    font-size: .8rem; font-weight: 800; letter-spacing: .02em;
+    color: color-mix(in srgb, var(--rc-name) 72%, transparent);
+}
+.rc-swap-group:not(:first-child) { margin-top: 8px; }
 /* ⚠ `stretch` 다. 이름표가 붙어 타일이 박스보다 높으므로, 가운데 정렬로 두면
      박스가 허공에 뜨고 아래가 휘윻해진다 — 홈이 칸을 다 채워야 음각으로 읽힌다 */
 .rc-alt { display: flex; align-items: stretch; gap: 10px; min-width: 0; }
@@ -1329,7 +1379,10 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
    안쪽 장식은 `cqw` 라 폭만 정해주면 알아서 따라온다.
    ⚠ 이름표는 본진과 **같은 `.card-bottom`** 이다. 폭을 더 줄이면 `에르핀(왕도)` 같은
      변종 이름이 두 줄로 접혀 칸마다 높이가 달라진다 — 78px 이 하한이다 */
-.is-swaps .rc-dtile { flex: none; width: 96px; min-width: 0; max-width: none; }
+.is-swaps .rc-dtile,
+/* 배치 메모도 후보 줄과 같은 꼴이라 같은 폭이다. ⚠ 빼먹으면 기본 `.rc-dtile`(`flex: 1 1 0`)을 따라
+   **메모 글이 짧은 사도만 타일이 152px 까지 부푼다** (`오토덱과 같음` — 2026-11-16) */
+.rc-notes-body .rc-dtile { flex: none; width: 96px; min-width: 0; max-width: none; }
 
 /* 빈 자리 — 인게임 '조합 숨김' 칸과 같은 꼴. 평평한 회색에 물음표 하나다.
    ⚠ 색을 고정값으로 박지 않는다. 다크에서 밝은 회색 덩어리가 되면 빈 자리가

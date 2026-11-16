@@ -655,7 +655,8 @@ function groupSwaps(rows, deckKey) {
         let from = (r.from || '').trim();
         if (!from || isFreeSlot(from)) from = '?';
         if (!out.has(from)) out.set(from, []);
-        out.get(from).push({ name, note: (r.note || '').trim() });
+        /* `group` — 후보를 채용 목적별로 묶는 이름 (2026-11-16, 프론티어 고정 사도). 비면 묶지 않는다 */
+        out.get(from).push({ name, note: (r.note || '').trim(), group: (r.group || '').trim() });
     });
     return out;
 }
@@ -778,9 +779,9 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
          (그 줄은 못 그리는데 숫자만 남는다). */
     const resolved = new Map();
     swaps.forEach((list, from) => {
-        resolved.set(from, list.map(({ name, note }) => {
+        resolved.set(from, list.map(({ name, note, group }) => {
             const ch = pick(name);
-            return ch ? { ch, note } : null;
+            return ch ? { ch, note, group } : null;
         }).filter(Boolean));
     });
     const freeCount = (resolved.get('?') || []).length;
@@ -876,7 +877,19 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
                6칸을 다 채웠으면 "미보유/미육성이면 이걸로 바꿔라" 는 대체픽이다.
                ⚠ 빈자리가 없는데 `빈자리 후보` 라고 쓰면 읽는 사람이 빈칸을 찾는다. */
             label = label || (hasFree ? '빈자리 후보' : '대체 후보');
-            list.forEach(({ ch, note }) => wrap.appendChild(row(ch, note)));
+            /* `group` 이 있으면 **처음 나온 순서대로** 묶고 소제목을 단다. 소제목은 격자 한 줄을 통째로 쓴다.
+               ⚠ 묶음이 빈 후보는 맨 뒤에 소제목 없이 붙는다 — 한 덱에서 일부만 묶어도 사라지지 않게 */
+            const byG = new Map();
+            list.forEach(x => { if (!byG.has(x.group)) byG.set(x.group, []); byG.get(x.group).push(x); });
+            [...byG.keys()].sort((a, b) => !a - !b).forEach(g => {
+                if (g) {
+                    const h = document.createElement('h6');
+                    h.className = 'rc-swap-group';
+                    h.textContent = g;
+                    wrap.appendChild(h);
+                }
+                byG.get(g).forEach(({ ch, note }) => wrap.appendChild(row(ch, note)));
+            });
         } else {
             const chFrom = dbMap.get(from);
             if (!chFrom) return;
@@ -930,9 +943,16 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
             const wrap = g.querySelector('.rc-equip-cards');
             const list = groups.get(key);
             if (byLine) list.sort((x, y) => ROWS.indexOf(x[1].row) - ROWS.indexOf(y[1].row));
-            list.forEach(([ch, m]) => wrap.appendChild(buildEquipCard(ch, m)));
+            list.forEach(([ch, m]) => {
+                const c = buildEquipCard(ch, m);
+                /* 열 묶음은 **세로로** 쌓고 상·중·하 칸에 꽂는다 (2026-11-16 피드백 — 편성판에 보이는 대로).
+                   빈 칸은 비워 둬 옆 열과 높이가 맞는다 (`subgrid`) */
+                if (byLine) c.style.gridRow = ROWS.indexOf(m.row) + 1;
+                wrap.appendChild(c);
+            });
             erow.appendChild(g);
         });
+        erow.classList.toggle('is-lines', byLine);
         if (erow.children.length) box.querySelector('.is-equip').hidden = false;
 
         /* 아티팩트 칸에 `{태그}` 가 있으면 그 태그들의 아티팩트를 아래 칸에 펼친다 (`ui.js` 의 `deckTagBoxes`).
