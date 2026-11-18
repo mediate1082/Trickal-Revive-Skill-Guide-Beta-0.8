@@ -19,7 +19,7 @@
     <script>
         /* 페이지마다 필요한 CSS 만 싣는다 — 순서가 곧 캐스케이드 순서다 (CLAUDE.md 「CSS 파일」).
            ⚠ 시즌 콘텐츠(crash2 · spell · frontier)는 여기 없다 — 그 분류를 그릴 때 recommend.js 가 붙인다 (`loadCss`) */
-        ['base', 'cards', 'modal', 'artifact', 'recommend', 'bodyfont'].forEach(function (f) {
+        ['base', 'cards', 'modal', 'artifact', 'recommend'].forEach(function (f) {
             document.write('<link rel="stylesheet" href="css/' + f + '.css?v=' + APP_VERSION + '">');
         });
     </script>
