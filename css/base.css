@@ -576,6 +576,23 @@ html:has(.modal-overlay:not(.hidden), .tg-modal-overlay:not(.hidden)) { overflow
     .tg-nav-search { flex: 1 1 100%; width: 100%; min-width: 0; order: 99; }
     .tg-btn { font-size: 0.78rem; padding: 7px 12px; }
 }
+/* 폰에서는 필터 버튼 이름을 줄인다 (`tg-lbl-long` / `tg-lbl-short`, index.html) — 2026-11-18.
+   필터 상자가 세 줄(버튼 · 넘친 어사이드 버튼 · 검색)이라 따라다닐 때 폰 화면을 크게 가렸다 → 버튼을 한 줄로.
+   ⚠ 버튼 폭 합이 상자 폭과 딱 맞으면 오른쪽 끝 버튼이 테두리에 붙어 튀어나와 보인다 (시안 A 에서 겪음) —
+     이름 줄임 + 두 버튼의 줄무늬 아이콘 빼기 + 드롭다운 여백 줄이기로 여유를 남긴다.
+   ⚠ 줄바꿈 금지(`nowrap`)는 걸지 않는다 — 더 좁은 화면에서는 자연스럽게 두 줄로 접히게 둔다 */
+.tg-lbl-short { display: none; }
+@media (max-width: 420px) {
+    .tg-lbl-long { display: none; }
+    .tg-lbl-short { display: inline; }
+    .tg-nav-left .tg-btn:has(.tg-lbl-short) .tg-btn-icon { display: none; }
+    .tg-dropdown-btn { padding: 6px 9px 6px 11px; gap: 5px; min-width: 0; }   /* 96px 최소 폭이 줄임을 막았다 — 폰에서는 글자 폭대로 */
+    .tg-nav-left { gap: 4px; }
+    .tg-nav-left .tg-btn-circle { width: 32px; height: 32px; }
+    .tg-nav-left .tg-btn:has(.tg-lbl-short) { padding: 6px 9px; gap: 3px; }
+    .tg-nav-left .tg-btn-iconly { padding: 0 8px; }
+    .tg-nav-left .tg-btn-badge { margin-left: 0; }   /* 필터를 켜 배지가 붙어도 360px 에서 한 줄에 들게 */
+}
 @media (max-width: 420px) {
     .tg-header-inner { padding: 8px 12px; }
     .tg-title { font-size: 1.3rem; }
