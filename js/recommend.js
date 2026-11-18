@@ -8,8 +8,9 @@
 /* ui.js 는 상세 모달 전용. closeDetailModal·toggleSkillMode 등은 import 시 자동 등록됩니다. */
 const { openDetailModal, switchTab, updateLowSkillLv, updateHighSkillLv, toggleQuickFilter, deckTagBoxes }
     = await import('./ui.js?v=' + (window.APP_VERSION || ''));
-/* 프론티어 보스 패턴 섹션 — 편집기(`tools/frontier/`)와 같이 쓰는 모듈 (`FRONTIER.md`) */
-const { buildFrontier, frontierFrom, buildAuthority, authorityButton, authorityPlain } = await import('./frontier.js?v=' + (window.APP_VERSION || ''));
+/* 프론티어 보스 패턴 섹션 — 편집기(`tools/frontier/`)와 같이 쓰는 모듈 (`FRONTIER.md`).
+   ⚠ 미리 싣지 않는다 — 살아 있는 프론티어 분류가 있을 때만 `loadMod('frontier')` 가 채운다 (아래 「시즌 콘텐츠 모듈」) */
+let buildFrontier, frontierFrom, buildAuthority, authorityButton, authorityPlain;
 
 const PERSONALITY_COLORS = {
     '순수': { bg: '#66C17C', border: '#93F4A7' },
@@ -389,28 +390,6 @@ function buildPin(char, info) {
     return pin;
 }
 
-/* 덱 편성판 **오른쪽**에 서는 파편 레벨 스트립.
-   ⚠ 정보 섹션의 큰 파편 카드를 가져다 쓰지 않는다 — 325:375 라 세로로 길어 편성판
-     옆에 세 장을 세우면 보드보다 높아진다. 인게임 아이콘이 **256 정사각**이라
-     그걸 그대로 틀에 넣는다.
-   ⚠ 틀 색은 보스 기믹 아이콘과 **같은 값**(`--rc-boss-ico-*`)이다. 둘 다 "인게임
-     아이콘을 우리 틀에 끼운 것" 이라 같은 꼴이어야 한다.
-   ⚠⚠ **스크롤 껍데기(`.rc-board-scroll`) 안에 넣지 말 것.** 최소 폭 460px 을 같이
-     물려받아 폰에서 스트립까지 옆으로 밀린다. 형제로 두고 줄(`.rc-board-row`)로 묶는다. */
-function buildDeckShards(rows) {
-    const el = document.createElement('div');
-    el.className = 'rc-deck-shards';
-    el.innerHTML = rows.map(r => {
-        const art = SHARD_ART.get((r.shard_name || '').trim());
-        const lv = Math.max(0, Math.min(8, parseInt(r.level) || 0));
-        return `<div class="rc-deck-shard" data-tooltip="${esc(r.shard_name)}&#10;Lv.${lv}">
-            ${art ? `<img src="${iconUrl(art, 'dimension')}" alt=""
-                          onerror="this.remove()">` : ''}
-            <b>Lv.${lv}</b>
-        </div>`;
-    }).join('');
-    return el;
-}
 
 function buildBoard(members, pick, freeCount, freeLabel, noGrade, bg, shardRows) {
     /* 보드는 **제 상자 안에** 가둔다. 핀이 발판 위로 한참 솟기 때문에(머리 + 고학년 표지)
@@ -505,7 +484,7 @@ function buildBoard(members, pick, freeCount, freeLabel, noGrade, bg, shardRows)
         const line = document.createElement('div');
         line.className = 'rc-board-row';
         line.appendChild(scroll);
-        line.appendChild(buildDeckShards(shardRows));
+        if (MOD.crash2) line.appendChild(MOD.crash2.buildDeckShards(shardRows));
         zone.appendChild(line);
     } else {
         zone.appendChild(scroll);
@@ -830,7 +809,7 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
        ⚠ 없는 이름이면 빨간 `?` 로 낸다 (조용히 비우지 않는다 — 아티팩트 열과 같은 관례). `db_check` 도 본다 */
     const auName = (deck.authority || '').trim();
     if (auName) {
-        const a = AUTHORITY.get(auName);
+        const a = authorityButton ? AUTHORITY.get(auName) : null;
         const html = a
             ? `<span class="fa-deck" tabindex="0" data-tooltip="${esc(a.name + '\n' + authorityPlain(a))}">${authorityButton(a)}<b>${esc(a.name)}</b></span>`
             : `<span class="fa-deck is-missing"><b style="color:var(--debuff-text)">? ${esc(auName)}</b></span>`;
@@ -847,7 +826,7 @@ function buildDeck(deck, dbMap, missing, flat, swapRows, memberRows) {
     /* 스펠 줄 — 적힌 순서 그대로 (인게임 프리셋처럼 등급 높은 순으로 적는다) */
     const spellGrid = box.querySelector('.rc-spell-grid');
     (DECK_SPELLS.get(deckKey) || []).forEach(({ name, count, note }) => {
-        const c = buildSpellCard(name, count, note);
+        const c = MOD.spell ? MOD.spell.buildSpellCard(name, count, note) : null;
         if (c) spellGrid.appendChild(c);
     });
     if (spellGrid.children.length) box.querySelector('.is-spells').hidden = false;
@@ -997,244 +976,81 @@ const DECK_SHARDS = new Map();
    ⚠ 코스트는 아직 데이터가 없어 안 그린다. 대격돌은 "코스트 무관 20장 고르기" 라 당장은 필요 없다. */
 const SPELLS = new Map();        // name → { no, grade }
 const DECK_SPELLS = new Map();   // deck_key → [{ name, count, note }]
-const SPELL_GRADE_N = { 일반: 1, 고급: 2, 희귀: 3, 전설: 4 };
-function buildSpellCard(name, count, note) {
-    const s = SPELLS.get(name);
-    if (!s) return null;
-    const n = SPELL_GRADE_N[s.grade] || 1;
-    /* ⚠ `url()` 을 사용자 속성으로 넘기면 스타일시트(css/) 기준으로 풀린다 — 절대 주소로 넘긴다 */
-    const abs = p => new URL(p, document.baseURI).href;
-    const el = document.createElement('div');
-    el.className = 'rc-spell';
-    el.dataset.grade = s.grade;
-    el.style.cssText = `--base:url('${abs(`assets/icons/spell_card/Ingame_CardBase_Grade_${n}.webp`)}');`
-        + `--art:url('${abs(`assets/icons/spells/SpellCardIcon_${s.no}.webp`)}')`;
-    if (note) el.dataset.tooltip = `${name}\n${note}`;
-    el.innerHTML = `<div class="rc-spell-rim"></div><div class="rc-spell-band"></div><div class="rc-spell-base"></div><div class="rc-spell-art"></div><div class="rc-spell-plate"></div>
-        <img class="rc-spell-hat" src="assets/icons/spell_card/Ingame_CardIcon_Spell.webp" alt="">
-        ${count > 1 ? `<span class="rc-spell-cnt"><img src="assets/icons/spell_card/Ingame_Spell_Icon_2.webp" alt=""><b>×${count}</b></span>` : ''}
-        <span class="rc-spell-name"${name.length >= 9 ? ' data-long' : ''}>${esc(name)}</span>
-        ${s.cost ? `<span class="fa-cost rc-spell-cost"><i class="base"></i><i class="wheel"></i><i class="rim"></i><b>${esc(s.cost)}</b></span>` : ''}`;
-    el.setAttribute('aria-label', count > 1 ? `${name} ${count}장` : name);
-    return el;
+
+/* ══ 시즌 콘텐츠 모듈 — 그 분류를 **처음 그릴 때** 불러온다 ═══════════════════
+   대충돌 2.0 · 스펠 · 프론티어는 시즌마다 바뀌고 쌓인다. 코드를 이 파일에 계속 붙이면
+   그 분류를 안 보는 사람도 매번 다 받는다 — 그래서 JS·CSS 를 따로 두고 필요할 때 붙인다.
+     - 분류 하나가 무엇을 쓰는지는 `secMods` 가 데이터로 정한다 (보스·파편이 있으면 crash2 …)
+     - 패널을 처음 열 때(`activateTab`) 그 패널의 분류들이 쓰는 것만 받는다
+     - ⚠ 프론티어만 예외로 **그리기 전에** 받는다. 분류를 묶는 `frontierFrom` 이 render 에서 돈다 (init 참조)
+     - 숨긴 분류(`sec_hide`)는 그리지 않으므로 **그 코드도 안 받는다** — 지난 시즌을 접으면 무게가 빠진다
+   ⚠⚠ CSS 는 `CSS_ORDER` 순서로 끼운다. 늦게 붙어도 캐스케이드가 예전(한 파일 안 순서)과 같아야 한다
+   ⚠ 새 시즌 콘텐츠를 만들면 — `MODS` 에 더하고, `secMods` 에 조건을, `css/style.css` 에 @import 를 */
+const MODS = {
+    crash2:   { js: 'crash2.js',   css: ['crash2'] },
+    /* 코스트 배지가 교주의 권능 배지(`.fa-cost`, frontier.css)를 그대로 쓴다 */
+    spell:    { js: 'spell.js',    css: ['spell', 'frontier'] },
+    frontier: { js: 'frontier.js', css: ['frontier'] },
+};
+const CSS_ORDER = ['recommend', 'crash2', 'spell', 'frontier'];
+const MOD = {};          // 이름 → 불러온 모듈
+const modLoading = {};   // 이름 → Promise
+const modCss = {};       // CSS 이름 → Promise (spell 과 frontier 가 frontier.css 를 같이 쓴다)
+function loadCss(name) {
+    if (modCss[name]) return modCss[name];
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `css/${name}.css?v=${window.APP_VERSION || ''}`;
+    link.dataset.modCss = name;
+    /* ⚠ 실패해도 막지 않는다 — 글은 나오고 꼴만 빠진다 */
+    modCss[name] = new Promise(res => { link.onload = link.onerror = res; });
+    /* 뒤에 와야 할 것 중 이미 붙은 게 있으면 그 앞에, 없으면 앞에 와야 할 것 중 가장 가까운 것 뒤에 */
+    const at = CSS_ORDER.indexOf(name);
+    const sel = n => n === 'recommend' ? 'link[href*="css/recommend.css"]' : `link[data-mod-css="${n}"]`;
+    const next = CSS_ORDER.slice(at + 1).map(n => document.querySelector(sel(n))).find(Boolean);
+    if (next) next.before(link);
+    else {
+        const prev = CSS_ORDER.slice(0, at).reverse().map(n => document.querySelector(sel(n))).find(Boolean);
+        if (prev) prev.after(link); else document.head.appendChild(link);
+    }
+    return modCss[name];
 }
-
-/* 설명문 표기 → 태그.
-     [[용어]]  보스 고유 용어 — 상태 표에 있으면 아이콘·말풍선이 따라온다
-     ((용어))  **사도가 거는 CC** — 편성에 반영할 것
-
-   ⚠ 둘을 한 표시로 묶지 않는다. 읽는 사람이 찾는 건 "내가 무엇을 넣어야 하나" 이고
-     그건 CC 쪽뿐이다. 밑줄 친 것만 세면 "기절 둘" 이 바로 잡힌다.
-   ⚠ 본문 글줄에는 **글자만** 둔다. 읽는 글 사이에 그림이 섞이면 글이 끊긴다 —
-     그림은 "이게 무엇인가" 를 보여주는 말풍선 쪽 일이다 (`data-tooltip-icon`).
-   ⚠ 표에 없는 용어(스킬 이름 상호참조)는 색만 입히고 넘어간다 — 설명을 지어내지 않는다. */
-function bossMark(text) {
-    return esc(text)
-        .replace(/\[\[(.+?)\]\]/g, (_, n) => {
-            const st = BOSS_STATES.get(n);
-            if (!st) return `<em>${n}</em>`;
-            if (!st.desc) {
-                return `<em>${n}<span class="rc-crash2-sico"><img
-                            src="${iconUrl(st.icon, 'dimension')}" alt=""
-                            onerror="this.parentNode.remove()"></span></em>`;
-            }
-            const ics = [iconUrl(st.icon, 'dimension')]
-                .concat(st.with ? [iconUrl(st.with, 'dimension')] : []).join(', ');
-            return `<em data-tooltip="${esc(n)}&#10;${esc(st.desc)}"
-                        data-tooltip-icon="${ics}" tabindex="0">${n}</em>`;
-        })
-        .replace(/\(\((.+?)\)\)/g, '<em class="cc">$1</em>');
+const MOD_SETUP = {
+    crash2: () => ({ esc, iconUrl, bossStates: BOSS_STATES, shardArt: SHARD_ART }),
+    spell: () => ({ esc, spells: SPELLS }),
+};
+function loadMod(name) {
+    if (!modLoading[name]) {
+        const m = MODS[name];
+        modLoading[name] = Promise.all([
+            import(`./${m.js}?v=${window.APP_VERSION || ''}`),
+            ...m.css.map(loadCss),
+        ]).then(([mod]) => {
+            if (MOD_SETUP[name]) mod.setup(MOD_SETUP[name]());
+            if (name === 'frontier') ({ buildFrontier, frontierFrom, buildAuthority, authorityButton, authorityPlain } = mod);
+            MOD[name] = mod;
+            return mod;
+        });
+    }
+    return modLoading[name];
 }
-
-/* ══ 대충돌 2.0 · 정보 섹션 (`buildCrash2Panel`) ═══════════════════
-   보스 기믹 · 시즌 규칙 · 이면의 파편 · 메타를 **한 상자**로 묶는다. 분류의 맨 위,
-   덱보다 먼저 온다 — "누구와 어떤 규칙으로 싸우는가" 가 "무엇을 데려가는가" 보다 앞이다.
-
-       ┌ 흑화 영춘 — 광기 ┐              ← 제목 알약 (상자 위에 걸친 탭)
-       ┌────────┬──────────────────┐
-       │ 초상화  │ 시즌 소개 / 기믹 수행 / 메타 │   ← 머리
-       └────────┴──────────────────┘
-       ── 보스 기믹 ───────────   ← 행마다 같은 무게의 머리글
-         [카드] [카드] [카드]
-       ┌ 시즌 규칙 (흰 카드) ──┐
-       └──────────────────┘
-       ── 이면의 파편 ─────────   (어두운 상자)
-         [파편] [파편] [파편]
-
-   ⚠⚠ **2단으로 나란히 놓지 않는다.** 한 번 기믹 ↔ 규칙·파편을 좌우로 놨다가 되돌렸다 —
-     파편 카드는 그림 비율(325:375)이 높이의 바닥을 깔고 기믹 카드는 글 길이만큼만
-     자라, 두 단의 자연 높이가 두 배쯤 벌어져 한쪽 아래가 길게 빈다.
-     세로로 쌓으면 뒤엣것이 하위 항목처럼 읽히는데, **가르는 건 자리가 아니라 라벨**이다.
-   ⚠ 어느 한 덩이가 없어도 그려진다 — 보스만, 파편만 있는 분류가 있을 수 있다. */
-function buildCrash2Panel(sec) {
-    const wrap = document.createElement('section');
-    wrap.className = 'rc-crash2-wrap';
-    const boss = sec.boss;
-
-    /* ── 제목 탭 ─────────────────────────────────────────────
-       ⚠ 상자 **바깥 위**에 두고 아래만 살짝 문다 (아티팩트 묶음의 포스트잇 탭과 같은 꼴).
-         안에 넣으면 머리의 초상화·서술과 한 덩어리로 보여 "무엇의 제목인가" 가 흐려진다. */
-    if (boss) {
-        const t = document.createElement('div');
-        t.className = 'rc-crash2-title';
-        /* `대충돌 2.0 베타 시즌 9 — 흑화 영춘 (광기)`.
-           ⚠ `season` 은 숫자가 아니라 **자유 문구**다 (`베타 시즌 9`). 시즌 표기가
-             콘텐츠마다 다르고 베타 꼬리표도 언젠가 떨어지므로 코드에 틀을 박지 않는다. */
-        const season = (boss.season || '').trim();
-        /* ⚠ 이 상자는 **대충돌 1.0(`crash`)도 쓴다** (2026-11-04). 콘텐츠 이름과 제목 아이콘을
-             분류 키로 가른다 — 2.0 은 흑화 영춘 월드 보스 아이콘, 그 밖은 보스 초상화 */
-        const is2 = sec.key.startsWith('crash2');
-        const tIcon = is2 ? './assets/icons/boss/CommonIcon_MonsterWorldBoss_YC00_Mad.webp'
-                          : (boss.portrait ? iconUrl(boss.portrait, 'dimension') : '');
-        t.innerHTML = `${tIcon ? `<img src="${tIcon}" alt="" onerror="this.remove()">` : ''}<b>${
-                            is2 ? '대충돌 2.0' : '차원 대충돌'}${season ? ' ' + esc(season) : ''} — ${esc(boss.boss_name)}${
-                            boss.personality ? ` (${esc(boss.personality)})` : ''}</b>`;
-        wrap.appendChild(t);
-    }
-
-    const box = document.createElement('div');
-    box.className = 'rc-crash2';
-    if (boss && boss.personality) box.dataset.personality = boss.personality;
-    wrap.appendChild(box);
-
-    /* ── 머리 — 초상화 + 서술 줄들 ───────────────────────────
-       ⚠ 서술은 `Crash2_Lines.csv` 의 `kind=note` 행 하나가 **줄 하나**다. `label` 이 있으면
-         앞에 굵게 붙고 없으면 글만 나온다 — 시즌 소개처럼 이름 붙일 게 없는 줄이 있다. */
-    /* ⚠ 초상화도 서술도 없으면 그리지 않는다 — 빈 흰 띠만 남는다 (대충돌 1.0 을 보스·규칙만으로 먼저 올렸을 때) */
-    if ((boss && boss.portrait) || sec.notes.length) {
-        const head = document.createElement('div');
-        head.className = 'rc-crash2-head';
-        head.innerHTML = `
-            ${boss && boss.portrait ? `<div class="rc-boss-portrait">
-                <img src="${iconUrl(boss.portrait, 'dimension')}" alt=""
-                     onerror="this.remove()"></div>` : ''}
-            <div class="rc-crash2-notes">${sec.notes.map(n => `
-                <p>${(n.label || '').trim()
-                    ? `<b>${esc(n.label.trim())}</b>` : ''}${bossMark(n.text || '')}</p>`).join('')}
-            </div>`;
-        box.appendChild(head);
-    }
-
-    /* ── 세 행 — 기믹 · 시즌 규칙 · 이면의 파편 ─────────────
-       ⚠⚠ **2단으로 나란히 놓지 않는다.** 파편 카드는 그림 비율(325:375)이 높이의 바닥을
-         깔지만 기믹 카드는 글 길이만큼만 자란다 — 두 단의 자연 높이가 두 배쯤 벌어져
-         한쪽 아래가 길게 빈다. 조정으로 못 메운다 (인게임 문구라 글 길이가 정해져 있다).
-         폭을 반씩 나누는 탓에 기믹 글이 서너 단어마다 끊기는 손해도 있었다.
-       ⚠ 대신 **세 행에 같은 무게의 머리**를 단다. 세로로 쌓으면 뒤엣것이 앞엣것의 하위
-         항목처럼 읽히는데, 가르는 건 자리가 아니라 라벨이다 (후보 칸 머리글과 같은 꼴). */
-    const row = (label, kind) => {
-        const r = document.createElement('div');
-        r.className = 'rc-crash2-row' + (kind ? ' ' + kind : '');
-        if (label) r.innerHTML = `<div class="rc-crash2-rowhead"><b>${label}</b></div>`;
-        box.appendChild(r);
-        return r;
-    };
-
-    if (sec.bossSkills.length) {
-        row('보스 기믹').insertAdjacentHTML('beforeend',
-            `<div class="rc-boss-skills">${sec.bossSkills.map(bossSkillCard).join('')}</div>`);
-    }
-    /* ⚠ 시즌 규칙 행은 **머리 라벨을 안 단다.** 인게임 블롭 그림에 이미 `시즌 규칙` 이
-         적혀 있어, 라벨까지 붙이면 같은 말이 두 번이다. 그림이 곧 이 행의 머리다. */
-    if (sec.rules.length) row('', 'is-card').appendChild(buildRuleBox(sec.rules));
-    if (sec.shards.length) {
-        const r = row('이면의 파편', 'is-dim');
-        const line = document.createElement('div');
-        line.className = 'rc-shards';
-        sec.shards.forEach(sh => line.appendChild(buildShard(sh)));
-        r.appendChild(line);
-    }
-
-    return wrap;
+/* 아직 안 받은 게 있으면 Promise, 다 있으면 null — 다 있을 때는 **동기로** 그대로 간다 (예전과 같은 흐름) */
+function loadMods(names) {
+    const todo = [...names].filter(n => !MOD[n]);
+    return todo.length ? Promise.all(todo.map(loadMod)) : null;
 }
-
-/* 기믹 카드 한 장. 꼬리 줄은 그 본문이 실제로 가리킨 상태 중 **설명이 있는 것**만 낸다. */
-function bossSkillCard(s) {
-    const seen = [];
-    ((s.desc || '').match(/\[\[(.+?)\]\]/g) || []).forEach(m => {
-        const n = m.slice(2, -2), st = BOSS_STATES.get(n);
-        if (st && st.desc && !seen.includes(n)) seen.push(n);
+/* 분류 하나가 쓰는 모듈 — 데이터로 정한다 */
+function secMods(sec) {
+    const k = new Set();
+    if (sec.boss || sec.rules.length || sec.shards.length || sec.notes.length) k.add('crash2');
+    if (sec.frontier) k.add('frontier');
+    (sec.decks || []).forEach(d => {
+        const key = (d.deck_key || '').trim();
+        if (DECK_SHARDS.has(key)) k.add('crash2');
+        if (DECK_SPELLS.has(key)) k.add('spell');
+        if ((d.authority || '').trim()) k.add('frontier');
     });
-    const gl = seen.map(n => `<i><b>${esc(n)}</b> — ${esc(BOSS_STATES.get(n).desc)}</i>`).join('');
-    return `<div class="rc-boss-skill">
-        <span class="rc-boss-ico"><img src="${iconUrl(s.icon, 'dimension')}"
-              alt="" onerror="this.parentNode.remove()"></span>
-        <b>${esc(s.name)}</b>
-        <p>${bossMark(s.desc || '')}</p>
-        ${gl ? `<div class="rc-boss-gloss">${gl}</div>` : ''}
-    </div>`;
-}
-
-/* 시즌 규칙 상자. 인게임은 메인 로비의 **블롭 버튼**을 누르면 팝업으로 보여준다 —
-   여기서는 누를 데가 없으니 그 버튼 그림을 상자 머리로 쓰고 내용을 바로 편다. */
-function buildRuleBox(rules) {
-    const box = document.createElement('div');
-    box.className = 'rc-rulebox';
-    box.innerHTML = `
-        <div class="rc-rule-head">
-            <img src="${iconUrl('DimensionalClash_MainLobby_SeasonRule_BG', 'dimension')}"
-                 alt="" onerror="this.remove()">
-            <b>시즌 규칙</b>
-        </div>
-        <div class="rc-rule-list">${rules.map(r => `
-            <div class="rc-rule">
-                <img src="${iconUrl((r.kind || '').trim() === 'rule_neg'
-                                    ? 'SeasonRuleIcon_Negative' : 'SeasonRuleIcon_Positive',
-                                    'dimension')}" alt="" onerror="this.remove()">
-                <span>${esc(r.text)}</span>
-            </div>`).join('')}</div>`;
-    return box;
-}
-
-
-/* 레벨 → 테두리 색. 인게임에서 뽑은 값이다. */
-const SHARD_TIERS = [
-    { max: 0, col: '#868C94' }, { max: 2, col: '#FFF5EE' },
-    { max: 4, col: '#D1B48C' }, { max: 6, col: '#FF8E61' }, { max: 8, col: '#FF6245' },
-];
-const shardColor = lv => (SHARD_TIERS.find(t => lv <= t.max) || SHARD_TIERS[4]).col;
-/* 레벨이 오를수록 글로우를 세게 — 인게임도 7–8 에서 확 밝아진다 */
-const shardGlow = lv => (0.25 + lv * 0.09).toFixed(2);
-
-const shardFill = (tpl, vals) => String(tpl).replace(/\{(\d+)\}/g, (_, i) => vals[+i] ?? '?');
-
-function buildShard(s) {
-    const el = document.createElement('div');
-    el.className = 'rc-shard';
-    const lv = Math.max(0, Math.min(8, parseInt(s.rec_level) || 0));
-    /* ⚠ Lv.0 은 아직 안 얻은 상태지만 인게임이 **Lv.1 수치를 미리 보여준다** —
-         그래서 0 과 1 이 같은 줄을 쓴다. */
-    const vals = String(s['Lv.' + Math.max(lv, 1)] || '').split(',').map(v => v.trim());
-
-    el.style.setProperty('--col', shardColor(lv));
-    el.style.setProperty('--glow', shardGlow(lv));
-    el.innerHTML = `
-        <div class="rc-shard-card">
-            <div class="rc-shard-glow"></div>
-            <div class="rc-shard-art"></div>
-            <div class="rc-shard-border"></div>
-            <i class="rc-shard-deco d1"></i><i class="rc-shard-deco d2"></i>
-            <i class="rc-shard-deco d3"></i><i class="rc-shard-deco d4"></i>
-            <span class="rc-shard-lv">Lv.${lv}</span>
-        </div>
-        <div class="rc-shard-title">
-            <img src="${iconUrl('Dimension_BuffSlot_TitleDeco_01', 'dimension')}"
-                 alt="" onerror="this.remove()">
-            <b>${esc(s.shard_name)}</b>
-            <img class="t2" src="${iconUrl('Dimension_BuffSlot_TitleDeco_02', 'dimension')}"
-                 alt="" onerror="this.remove()">
-        </div>
-        <div class="rc-shard-fx">${esc(shardFill(s.effect || '', vals))}${
-            (s.sub || '').trim()
-                ? `<span class="rc-shard-sub">${shardFill(s.sub, vals).split(' · ')
-                      .map(t => `<i>${esc(t)}</i>`).join('')}</span>`
-                : ''}</div>`;
-
-    const art = el.querySelector('.rc-shard-art');
-    // ⚠ 사용자 속성 속 url() 은 **그 var() 를 쓰는 스타일시트(css/) 기준**으로 풀린다 — 절대 주소로 넘긴다
-    art.style.setProperty('--art', `url('${new URL(iconUrl(s.art, 'dimension'), document.baseURI).href}')`);
-    if ((s.art_pos || '').trim()) art.style.setProperty('--art-pos', s.art_pos.trim());
-    return el;
+    return k;
 }
 
 /* ══ 프론티어 대처 → 「이 효과를 가진 사도」 창 ═════════════════════
@@ -1356,10 +1172,10 @@ function buildSection(sec, dbMap, missing, flat, swapRows, memberRows) {
 
     /* 대충돌 2.0 정보 섹션은 덱보다 **먼저** 온다 —
        "누구와 어떤 규칙으로 싸우는가" 가 "무엇을 데려가는가" 보다 앞이다. */
-    if (sec.boss || sec.rules.length || sec.shards.length || sec.notes.length)
-        body.appendChild(buildCrash2Panel(sec));
+    if (MOD.crash2 && (sec.boss || sec.rules.length || sec.shards.length || sec.notes.length))
+        body.appendChild(MOD.crash2.buildCrash2Panel(sec));
     /* 프론티어 보스 패턴도 같은 자리 — 덱보다 먼저 */
-    if (sec.frontier) {
+    if (sec.frontier && buildFrontier) {
         body.appendChild(buildFrontier(sec.frontier.D, { states: sec.frontier.states, ccPicker: openEffectPicker }));
         /* 교주의 권능 — 페이즈와 무관해 패턴 상자 밖, 덱보다 먼저 */
         const au = buildAuthority(sec.frontier.D, { states: sec.frontier.states });
@@ -1812,6 +1628,14 @@ function activateTab(key, secKey) {
         window.currentDisplayedList = [];
         return;
     }
+    /* 시즌 콘텐츠 모듈 — 이 패널이 쓰는 걸 아직 안 받았으면 받은 **뒤에** 짓는다.
+       ⚠ 받는 사이 다른 탭으로 옮겼으면 그만둔다 (그 탭이 이미 제 일을 했다).
+       다 받아 둔 뒤로는 `loadMods` 가 null 이라 예전처럼 **동기로** 간다 */
+    const wait = active && active._build ? loadMods(active._mods || []) : null;
+    if (wait) {
+        wait.then(() => { if (!active.hidden) activateTab(key, secKey); });
+        return;
+    }
     if (active) {
         ensureBuilt(active);
         const i = secKey && active._secKeys ? active._secKeys.indexOf(secKey) : -1;
@@ -1881,7 +1705,7 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
                       rows: [], decks: [],
                       boss: null, bossSkills: [], rules: [], shards: [], notes: [] };
         /* 프론티어 보스 패턴 — 이 분류 키로 된 패턴 행이 있으면 붙는다 (없으면 null) */
-        if (frontierRows) sec.frontier = frontierFrom(sk, frontierRows.p, frontierRows.g, frontierRows.s, frontierRows.all);
+        if (frontierRows && frontierFrom) sec.frontier = frontierFrom(sk, frontierRows.p, frontierRows.g, frontierRows.s, frontierRows.all);
         /* 덱의 `authority` 열이 이름으로 찾는다 (분류를 가리지 않는다 — 권능 이름은 시즌 안에서 겹치지 않는다) */
         (sec.frontier?.D.authority || []).forEach(a => AUTHORITY.set(a.name, a));
         groups.get(gk).secs.set(sk, sec);
@@ -2066,6 +1890,8 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
         }
         const secList = [...g.secs.values()];
         panel._secKeys = secList.map(sec => sec.key);
+        /* 이 패널의 분류들이 쓰는 시즌 콘텐츠 모듈 — 처음 열 때 받는다 (`activateTab`) */
+        panel._mods = new Set(secList.flatMap(sec => [...secMods(sec)]));
         panel._slide = 0;
 
         /* 분류 고르기 줄 + 보기 방식 */
@@ -2271,10 +2097,8 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
     const cfg = { header: true, skipEmptyLines: true, transformHeader: h => h.trim() };
     const get = f => fetch(`./data/${f}?v=${v}`).then(r => r.text());
     try {
-        const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT, immT,
-               bossT, bossPartT, lineT, shardT, deckShardT, usageT, artTagT, spellT, deckSpellT,
-               frPatT, frGimT, frStT] =
-            await Promise.all(['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
+        /* ⚠ CSV 는 **한 번에** 요청한다 (CLAUDE.md 「다음 페이지 미리 받기」) */
+        const files = ['Recommend_Sections.csv', 'Recommend_Chara.csv', 'Recommend_Chips.csv',
                 'Recommend_Decks.csv', 'Recommend_Deck_Swaps.csv', 'Recommend_Deck_Members.csv',
                 'DB.csv', 'debuff_DB.csv', 'debuff_desc_DB.csv',
                 'high_skill_DB.csv', 'buff_DB.csv', 'buff_desc_DB.csv', 'normal_Atk_DB.csv',
@@ -2283,7 +2107,26 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
                 'Crash2_Boss.csv', 'Crash2_Boss_Skills.csv', 'Crash2_Lines.csv',
                 'Crash2_Shards.csv', 'Crash2_Deck_Shards.csv', 'Usage_DB.csv', 'Artifact_Tags.csv',
                 'spell_DB.csv', 'Recommend_Deck_Spells.csv',
-                'Frontier_Patterns.csv', 'Frontier_Gimmicks.csv', 'Frontier_States.csv'].map(get));
+                'Frontier_Patterns.csv', 'Frontier_Gimmicks.csv', 'Frontier_States.csv'];
+        const reqs = files.map(get);
+        /* 살아 있는(`sec_hide` 가 빈) 프론티어 분류가 있으면 **나머지 CSV 를 받는 동안** 모듈도 받기 시작한다.
+           ⚠ 숨긴 시즌만 남으면 frontier.js · frontier.css 를 아예 안 받는다 */
+        const frWait = Promise.all(['Recommend_Sections.csv', 'Frontier_Patterns.csv', 'Frontier_Gimmicks.csv']
+                .map(f => reqs[files.indexOf(f)]))
+            .then(([sec, pat, gim]) => {
+                const live = new Set(Papa.parse(sec, cfg).data
+                    .filter(r => !(r.sec_hide || '').trim()).map(r => (r.sec_key || '').trim()));
+                const used = [...Papa.parse(pat, cfg).data, ...Papa.parse(gim, cfg).data]
+                    .some(r => live.has((r.sec_key || '').trim()));
+                return used ? loadMod('frontier') : null;
+            })
+            .catch(() => null);
+        const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT, immT,
+               bossT, bossPartT, lineT, shardT, deckShardT, usageT, artTagT, spellT, deckSpellT,
+               frPatT, frGimT, frStT] =
+            await Promise.all(reqs);
+        /* 프론티어 모듈을 다 받을 때까지 기다린다 — render 의 `frontierFrom` 이 쓴다 */
+        await frWait;
         const P = t => Papa.parse(t, cfg).data;
 
         const db = P(dbT);
