@@ -275,15 +275,15 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-card {
     --rc-card-bg: #FFFFFF;   /* 배경 */
     --rc-name:    #333333;   /* 이름 · 제목 */
-    --rc-sub:     #94998A;   /* 이명 (서브) */
-    --rc-meta:    #999F8E;   /* 성격 · 배치 · 역할 */
+    --rc-sub:     #7E8475;   /* 이명 (서브) — 2026-11-18 한 톤 진하게 (칩이 옅어지면서 묻혔다) */
+    --rc-meta:    #858B79;   /* 성격 · 배치 · 역할 */
     --rc-reason:  #555555;   /* 추천 이유 */
 }
 [data-theme="dark"] .rc-card {
     --rc-card-bg: #202024;
     --rc-name:    #FAFAFA;
-    --rc-sub:     #9C9C95;
-    --rc-meta:    #8D9280;
+    --rc-sub:     #AEAEA6;
+    --rc-meta:    #A0A592;
     --rc-reason:  #A1A1AA;
 }
 /* ⚠ 위 다섯은 **`.rc-card` 의 지역 변수다.** 덱 상자(`.rc-deck`)는 카드 밖이라
@@ -292,15 +292,15 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-deck {
     --rc-card-bg: #FFFFFF;
     --rc-name:    #333333;
-    --rc-sub:     #94998A;
-    --rc-meta:    #999F8E;
+    --rc-sub:     #7E8475;
+    --rc-meta:    #858B79;
     --rc-reason:  #555555;
 }
 [data-theme="dark"] .rc-deck {
     --rc-card-bg: #202024;
     --rc-name:    #FAFAFA;
-    --rc-sub:     #9C9C95;
-    --rc-meta:    #8D9280;
+    --rc-sub:     #AEAEA6;
+    --rc-meta:    #A0A592;
     --rc-reason:  #A1A1AA;
 }
 
@@ -1451,8 +1451,10 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
      묶이면 그 차이만큼 **초상화 아래가 빈다.** 한 줄일 때는 안 보이다가 두 줄부터 생긴다.
      그래서 여기서는 정사각을 풀고 늘어나게 둔다 — 안쪽 이미지는 `object-fit: cover` 라
      잘려 나갈 뿐 찌그러지지 않는다. */
-/* 위 덩어리. 초상화가 높이를 정하고 이름·분류는 가운데 선다 */
-.rc-card-row { display: flex; gap: 14px; align-items: center; }
+/* 위 덩어리. 초상화가 높이를 정하고 이름·분류는 **위에 붙는다** (2026-11-18).
+   ⚠ 예전엔 가운데(`center`)였다 — 칩이 몇 줄로 접히느냐에 따라 글 칸 높이가 달라져, 칩이 적은 카드(모모 · 스키아)만
+     이름이 한 칸 아래에 섰다. 위로 붙이면 같은 줄 카드끼리 이름 높이가 맞는다 */
+.rc-card-row { display: flex; gap: 14px; align-items: flex-start; }
 .rc-tile { position: relative; flex: 0 0 120px; width: 120px; }
 .rc-card:hover .rc-tile { transform: none; }
 /* ⚠ **`.rc-card` 안으로 좁혀 둔다.** 이 카드는 이름이 타일 **옆**에 있어 이름표가 없으므로
