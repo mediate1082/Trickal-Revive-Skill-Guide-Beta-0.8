@@ -361,13 +361,16 @@
 .tg-detail-eldyne[data-eldyne="별바라기"]       { --eldyne-color: #3B82F6; }
 .tg-detail-eldyne[data-eldyne="영원의 메아리"] { --eldyne-color: #0EA5A4; }
 .tg-detail-eldyne[data-eldyne="약속의 메아리"] { --eldyne-color: #F97316; }
+/* 인게임 속성 줄 (성격 · 역할 · 배치 · 공격) — **칩이 아니라 아이콘 + 글자** 한 줄 (2026-11-18).
+   예전엔 바탕 칩이라 바로 아래 세부 역할 칩과 같은 꼴이었고, 「서포터」가 두 줄에 다 나오면 무엇이 속성이고 무엇이 태그인지 안 갈렸다.
+   ⚠ 사이에 구분점(·)을 두지 않는다 — 폰에서 줄이 접히면 점이 다음 줄 맨 앞으로 넘어갔다. 아이콘이 구분 구실을 한다 (시안 `tools/modal-head-trial/`) */
 .tg-detail-attrs {
-    display: flex; gap: 6px; flex-wrap: wrap;
-    font-size: 0.78rem; color: var(--text-muted); font-weight: 700;
+    display: flex; gap: 4px 14px; flex-wrap: wrap;
+    font-size: 0.8rem; color: var(--text-body); font-weight: 700;
 }
 .tg-detail-attr {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 2px 9px 2px 6px; background: var(--attr-pill-bg); border-radius: 7px;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 0;
 }
 .tg-detail-attr-icon { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
 
@@ -943,13 +946,13 @@
 /* ═══ 운용 정보 탭 (ui.js — Usage_DB.csv) ═══
    저학년 · 고학년 · 육성 포인트 · 종합 평가. 시안은 tools/overall/overall-preview.html */
 
-/* 세부 역할 — 머리의 인게임 분류 칩(.tg-detail-attr)과 같은 무테 칩, **색만** 다르다
-   (연두 채움 · 아이콘 없음). 위 줄은 게임이 정한 분류, 이 줄은 우리가 붙인 해석이다 */
+/* 세부 역할 — **옅은 연두 알약 칩** (2026-11-18). 위 속성 줄(게임이 정한 분류, 아이콘 줄)과 꼴로 갈린다 — 이 줄은 우리가 붙인 해석이다.
+   ⚠ 「#태그」 글자만 두는 안도 봤지만 사이트 다른 데 없는 표기고, 눌러서 찾는 기능도 없어 칩으로 남겼다 */
 .tg-detail-roles { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .tg-detail-roles > small { font-size: .66rem; font-weight: 800; color: var(--text-muted); letter-spacing: .04em; margin-right: 2px; }
-.tg-detail-role { padding: 2px 9px; border-radius: 7px; background: #EAF6C8; color: #4D6B1E; font-size: .78rem; font-weight: 700; }
-/* ⚠ 글자를 `--accent-green-strong`(#8FB93E) 로 두면 연두 바탕 위 대비가 2.0:1 이라 안 읽힌다. 올리브(5.4:1) */
-[data-theme="dark"] .tg-detail-role { background: #2A331C; color: #B9DD63; }
+.tg-detail-role { padding: 2px 9px; border-radius: 999px; background: color-mix(in srgb, #8FB93E 13%, var(--modal-card-bg, #fff)); color: #55702A; font-size: .74rem; font-weight: 700; }
+/* ⚠ 글자를 `--accent-green-strong`(#8FB93E) 로 두면 연두 바탕 위 대비가 2.0:1 이라 안 읽힌다. 올리브 */
+[data-theme="dark"] .tg-detail-role { background: color-mix(in srgb, #8FB93E 20%, #1E1E21); color: #B9DD63; }
 
 /* 판단 + 이유 음각 상자. 왼쪽 색띠는 .tg-recommend-box 와 같은 꼴 (4px) */
 .tg-usage-box { position: relative; overflow: hidden; background: var(--stat-box-bg); box-shadow: var(--inset-shadow);
