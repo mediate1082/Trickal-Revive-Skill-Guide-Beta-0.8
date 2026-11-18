@@ -1675,3 +1675,35 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
 .rc-home-sec.is-stale:hover { opacity: .75; }
 .rc-home-now { font-style: normal; font-size: 11px; font-weight: 800; color: #fff; background: #E8862A; border-radius: 999px; padding: 1px 7px; }
 @media (max-width: 720px) { .rc-home-grid { grid-template-columns: 1fr; } }
+
+/* ══ 칸 · 작은 줄 · 홈 지난 시즌 (2026-11-18, 시즌 분리 — recommend.js 「칸」 절) ══════ */
+/* 「지난 시즌」 칸 — 시계 아이콘. 다른 칸보다 한 톤 옅게 (지금 도는 판이 아니다) */
+.rc-subtab-svg { flex: none; }
+.rc-subtab.is-past:not(.on) { opacity: .75; }
+/* 작은 줄 — 큰 분류 줄을 작고 옅게 한 벌. 점 아래, 같은 유리 안
+   ⚠ 칸에 분류가 둘 이상일 때만 나온다 (`renderEps`) — 그래서 칸에 따라 위쪽 줄 높이가 달라진다 (X 안) */
+.rc-eps {
+    display: flex; align-items: center; gap: 2px; padding: 3px;
+    max-width: 100%; overflow-x: auto; scrollbar-width: none;
+    border-radius: 999px; background: var(--modal-body-bg); border: 1px solid var(--border-soft);
+}
+.rc-eps::-webkit-scrollbar { display: none; }
+.rc-eps[hidden] { display: none; }
+.rc-eps-label { flex: none; font-size: 11.5px; font-weight: 800; color: var(--text-muted); padding: 0 6px 0 10px; }
+.rc-ep {
+    flex: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    height: 30px; padding: 0 12px; border: 0; border-radius: 999px; cursor: pointer;
+    font: inherit; font-size: 12.5px; font-weight: 800; color: var(--text-muted); background: none;
+    transition: color .15s ease, background .15s ease;
+}
+.rc-ep img { width: 18px; height: 18px; object-fit: contain; }
+.rc-ep:hover { color: var(--text-heading); }
+.rc-ep.on { background: var(--modal-card-bg); color: var(--text-heading); box-shadow: 0 1px 4px var(--shadow-soft); }
+.rc-ep em { font-style: normal; font-size: 10px; font-weight: 800; color: #fff; background: var(--accent-green-strong); border-radius: 999px; padding: 1px 6px; }
+.rc-ep:focus-visible { outline: 2px solid var(--accent-green-strong); outline-offset: 1px; }
+/* 홈 「지난 시즌」 상자 — 카드 그리드 아래 한 줄. 점선 · 낮은 바탕으로 "지금 판이 아니다" 를 말한다 */
+.rc-home-past { background: var(--modal-body-bg); border: 1px dashed var(--border-soft); border-radius: 18px; padding: 14px 16px 16px; }
+.rc-home-past .rc-home-h { display: flex; align-items: center; gap: 6px; }
+.rc-home-past .rc-home-h em { font-style: normal; font-size: 12px; background: var(--border-soft); border-radius: 999px; padding: 1px 8px; }
+.rc-home-past-ico { flex: none; width: 16px; height: 16px; }
+.rc-home-past .rc-home-tip { margin-top: 0; }

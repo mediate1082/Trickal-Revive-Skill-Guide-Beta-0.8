@@ -22,7 +22,7 @@
    여러 페이지의 칩을 한곳에 모아 둔다 (없는 페이지에서는 그냥 안 걸린다). 새 칩을 만들면 여기 더할 것 */
 .tg-chip, .tg-chip-attr, .tg-detail-tier, .tg-detail-attr, .tg-detail-role, .tg-detail-eldyne,
 .tg-usage-chip, .tg-usage-pill, .tg-effect-item-chip, .tg-at-chip, .tg-sp-chip, .tg-quickfilter-chip, .tg-grade-badge,
-.rc-chip, .rc-badge, .rc-dim-badge, .rc-equip-slot .s-tag, .ar-chip, .ar-tag {
+.rc-chip, .rc-badge, .rc-dim-badge, .rc-equip-slot .s-tag, .ar-chip, .ar-tag, .rc-ep {
     font-synthesis-weight: none;
 }
 

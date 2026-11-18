@@ -1380,6 +1380,78 @@ function addClones(panel, track) {
     if (!panel.hidden) layoutSlides(panel, true);
 }
 
+/* ══ 칸 — 분류 줄의 한 칸 (2026-11-18, 시즌 분리) ═══════════════════════════
+   분류 줄은 분류 하나에 버튼 하나였는데, 시즌 콘텐츠가 쌓이면서 **칸**으로 묶는다.
+     - `sec_series` 가 같은 분류들 = 한 콘텐츠의 회차. 큰 분류 줄에는 시리즈 이름으로 **한 칸**,
+       회차는 그 아래 작은 줄(`.rc-eps`)에서 고른다. 칸이 기억하는 회차(`cur`)는 처음엔 지난 것이 아닌 첫 회차
+     - 시리즈가 없는 **지난 분류(`sec_stale`)** 는 맨 끝 「지난 시즌」 한 칸으로 모인다 (작은 줄에서 고른다)
+     - 나머지는 예전처럼 한 분류 = 한 칸
+   ⚠ 트랙(슬라이드)은 그대로 **분류 하나 = 한 장**이다. 칸은 분류 줄 · 점 · 화살표만 바꾼다 —
+     그래서 덱 · 보스 · `#탭/분류` 링크가 전부 그대로 돈다. 같은 칸의 분류가 트랙에 붙어 서도록 순서만 바꾼다
+   ⚠ 1열(폰)에는 분류 줄이 없다 — 칸과 무관하게 분류가 순서대로 선다 (지난 시즌은 맨 끝, 호박색 띠) */
+const PAST_SLOT = '__past';
+function makeSlots(list) {
+    const slots = [], byKey = new Map();
+    const add = (k, sec, label, icon) => {
+        let s = byKey.get(k);
+        if (!s) { s = { key: k, label, icon, secs: [] }; byKey.set(k, s); slots.push(s); }
+        s.secs.push(sec);
+    };
+    list.forEach(sec => {
+        if (sec.series) add('s:' + sec.series, sec, sec.series, sec.icon);
+        else if (sec.stale) add(PAST_SLOT, sec, '지난 시즌', '');
+        else add('k:' + sec.key, sec, sec.label, sec.icon);
+    });
+    const pi = slots.findIndex(s => s.key === PAST_SLOT);
+    if (pi >= 0) slots.push(slots.splice(pi, 1)[0]);
+    const order = [];
+    slots.forEach(s => {
+        s.past = s.key === PAST_SLOT;
+        s.idx = s.secs.map((_, j) => order.length + j);
+        order.push(...s.secs);
+        const live = s.secs.findIndex(x => !x.stale);
+        s.cur = s.idx[Math.max(0, live)];
+    });
+    return { order, slots };
+}
+/* 지금 분류가 몇 번째 칸인가 */
+const slotIx = panel => panel._slotOf ? (panel._slotOf[panel._slide || 0] ?? 0) : (panel._slide || 0);
+
+/* 화살표 · ←/→ — 칸 단위로 넘긴다 (가는 칸이 기억하는 회차로).
+   끝을 넘어 이어질 때 가는 자리가 트랙 양끝이면 복제본을 거쳐 미끄러지게 −1 / n 으로 준다 */
+function stepSlot(panel, dir) {
+    const slots = panel._slots, n = (panel._secKeys || []).length;
+    if (!slots || !slots.length) return showSlide(panel, (panel._slide || 0) + dir, true);
+    const m = slots.length, t = slotIx(panel) + dir;
+    const target = slots[((t % m) + m) % m].cur;
+    if (t < 0 && target === n - 1) return showSlide(panel, -1, true);
+    if (t >= m && target === 0) return showSlide(panel, n, true);
+    showSlide(panel, target, true);
+}
+
+/* 작은 줄 — 지금 칸에 분류가 둘 이상일 때만 (회차 · 지난 시즌).
+   ⚠ 따라다니는 위쪽 줄(`.rc-navgroup`) 안이라 칸에 따라 줄 높이가 달라진다 (X 안, 2026-11-18 사용자 선택).
+     문제가 되면 분류 상자 맨 위로 옮긴다 (Y 안 — 시안 `tools/season/시안/`) */
+function renderEps(panel) {
+    const box = panel._sub && panel._sub.querySelector('.rc-eps');
+    if (!box) return;
+    const slot = panel._slots && panel._slots[slotIx(panel)];
+    if (!slot || slot.secs.length < 2) { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+    box.setAttribute('aria-label', slot.past ? '지난 시즌' : slot.label + ' 회차');
+    box.innerHTML = `<span class="rc-eps-label">${slot.past ? '끝난 콘텐츠' : '회차'}</span>`
+        + slot.secs.map((sec, j) => {
+            const i = slot.idx[j], on = i === panel._slide;
+            const img = slot.past && sec.icon
+                ? `<img src="${iconUrl(sec.icon, 'content')}" alt="" onerror="this.remove()">` : '';
+            return `<button type="button" class="rc-ep${on ? ' on' : ''}" role="tab" aria-selected="${on}" data-i="${i}">${img}${
+                esc(sec.ep || sec.label)}${!slot.past && !sec.stale ? '<em>지금</em>' : ''}</button>`;
+        }).join('');
+    box.querySelectorAll('.rc-ep').forEach(b => { b.onclick = () => showSlide(panel, +b.dataset.i, true); });
+    const on = box.querySelector('.rc-ep.on');
+    if (on) box.scrollLeft = Math.max(0, on.offsetLeft - (box.clientWidth - on.offsetWidth) / 2);
+}
+
 function showSlide(panel, i, push) {
     const n = (panel._secKeys || []).length;
     if (!n) return;
@@ -1404,14 +1476,19 @@ function showSlide(panel, i, push) {
     /* ⚠ 분류 줄은 **패널 밖**(상자 안)에 있다. `panel.querySelectorAll` 로는 못 찾는다 —
          그래서 한동안 `.on` 표시와 화살표 비활성이 조용히 안 걸렸다. */
     const sub = panel._sub || panel;
+    /* 분류 줄은 **칸** 단위다 — 칸이 이 회차를 기억한다 (다음에 그 칸을 누르면 여기로) */
+    const si = slotIx(panel);
+    if (panel._slots && panel._slots[si]) panel._slots[si].cur = panel._slide;
     sub.querySelectorAll('.rc-subtab').forEach((b, k) => {
-        const on = k === panel._slide;
+        const on = k === si;
         b.classList.toggle('on', on);
         b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
+    renderEps(panel);
     placeInd(panel);
-    /* 이어져 있으니 화살표는 끝에서도 죽지 않는다 (분류가 하나일 때만 끈다) */
-    sub.querySelectorAll('.rc-arrow').forEach(b => { b.disabled = n < 2; });
+    /* 이어져 있으니 화살표는 끝에서도 죽지 않는다 (칸이 하나일 때만 끈다) */
+    const m = panel._slots ? panel._slots.length : n;
+    sub.querySelectorAll('.rc-arrow').forEach(b => { b.disabled = m < 2; });
     layoutSlides(panel);
     if (push) writeHash(panel);
 }
@@ -1442,7 +1519,7 @@ function placeInd(panel, instant) {
     const tabs = panel._sub && panel._sub.querySelector('.rc-subtrack');
     if (!tabs) return;
     const ind = tabs.querySelector('.rc-subtab-ind');
-    const btn = tabs.querySelectorAll('.rc-subtab')[panel._slide || 0];
+    const btn = tabs.querySelectorAll('.rc-subtab')[slotIx(panel)];
     if (!ind) return;
     if (!btn || !btn.offsetWidth) { ind.style.opacity = '0'; return; }
     if (instant) ind.style.transition = 'none';
@@ -1464,7 +1541,7 @@ function placeInd(panel, instant) {
     /* 지금 점은 **채우지 않고 늘린다.** 점이 작아서 색만으로 구분하면 어두운 화면이나
        색각 이상에서 안 읽힌다 — 모양이 달라야 한다 (분류 트레이의 흰 알약과 같은 원리). */
     const dots = panel._sub.querySelectorAll('.rc-dot');
-    dots.forEach((d, k) => d.classList.toggle('on', k === (panel._slide || 0)));
+    dots.forEach((d, k) => d.classList.toggle('on', k === slotIx(panel)));
 
     fadeEdges(tabs);
 }
@@ -1527,7 +1604,7 @@ document.addEventListener('keydown', e => {
     const panel = document.querySelector('.rc-panel:not([hidden])');
     if (!panel) return;
     e.preventDefault();
-    showSlide(panel, (panel._slide || 0) + (e.key === 'ArrowRight' ? 1 : -1), true);
+    stepSlot(panel, e.key === 'ArrowRight' ? 1 : -1);
 });
 
 /* 대분류 = 탭. 선택 상태는 URL 해시에 담아 링크로 공유할 수 있게 한다. */
@@ -1578,6 +1655,7 @@ function buildHome(groups, bar, body) {
 
     const grid = document.createElement('div');
     grid.className = 'rc-home-grid';
+    const past = [];
     groups.forEach((g, gk) => {
         const card = document.createElement('article');
         card.className = 'rc-home-card';
@@ -1588,11 +1666,30 @@ function buildHome(groups, bar, body) {
         card.querySelector('.rc-home-head').onclick = () => go(gk);
         const secs = document.createElement('div');
         secs.className = 'rc-home-secs';
-        g.secs.forEach(sec => secs.appendChild(secBtn(gk, sec, false)));
+        /* 칸마다 하나 — 시리즈는 시리즈 이름으로 그 칸이 기억하는 회차에 간다.
+           지난 시즌 칸은 카드에서 빼서 아래 「지난 시즌」 상자로 (A 안, 2026-11-18) */
+        (g.slots || [...g.secs.values()].map(sec => ({ secs: [sec], cur: 0 }))).forEach(slot => {
+            if (slot.past) { slot.secs.forEach(sec => past.push([gk, sec])); return; }
+            const sec = slot.secs.length > 1
+                ? { ...[...g.secs.values()][slot.cur], label: slot.label } : slot.secs[0];
+            secs.appendChild(secBtn(gk, sec, false));
+        });
         card.appendChild(secs);
         grid.appendChild(card);
     });
     home.appendChild(grid);
+    /* 지난 시즌 — 끝난 시즌의 추천 · 덱. 숨기지 않고 모아 둔다 (다음 메타 전까지 육성 참고) */
+    if (past.length) {
+        const box = document.createElement('section');
+        box.className = 'rc-home-past';
+        box.innerHTML = `<h2 class="rc-home-h"><svg class="rc-home-past-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>지난 시즌 <em>${past.length}</em></h2>
+            <p class="rc-home-tip">끝난 시즌의 추천과 덱입니다. 다음 시즌이 열리기 전까지 육성 방향을 고르는 참고로 보세요.</p>`;
+        const row = document.createElement('div');
+        row.className = 'rc-home-secs';
+        past.forEach(([gk, sec]) => { const b = secBtn(gk, sec, false); b.classList.remove('is-stale'); row.appendChild(b); });
+        box.appendChild(row);
+        home.appendChild(box);
+    }
     body.appendChild(home);
 }
 
@@ -1702,6 +1799,8 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
                       hide: (d.sec_hide || '').trim(), stale: (d.sec_stale || '').trim(),
                       /* `sec_now` — 홈에서 '지금 볼 것' 으로 띄운다. 값이 곧 뱃지 글자다 (`이번 시즌` 등) */
                       now: (d.sec_now || '').trim(),
+                      /* `sec_series` · `sec_ep` — 같은 콘텐츠의 회차 묶기 (위 「칸」 절) */
+                      series: (d.sec_series || '').trim(), ep: (d.sec_ep || '').trim(),
                       rows: [], decks: [],
                       boss: null, bossSkills: [], rules: [], shards: [], notes: [] };
         /* 프론티어 보스 패턴 — 이 분류 키로 된 패턴 행이 있으면 붙는다 (없으면 null) */
@@ -1806,6 +1905,12 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
         if (sec.hide || (!sec.rows.length && !sec.decks.length && !sec.boss && !sec.frontier)) g.secs.delete(k);
     }));
     groups.forEach((g, k) => { if (!g.secs.size) groups.delete(k); });
+    /* 칸으로 묶고, 같은 칸의 분류가 붙어 서게 순서를 바꾼다 (홈도 이 순서를 쓴다) */
+    groups.forEach(g => {
+        const { order, slots } = makeSlots([...g.secs.values()]);
+        g.secs = new Map(order.map(sec => [sec.key, sec]));
+        g.slots = slots;
+    });
 
     /* DB.csv 에 없는 이름 — 패널을 **열 때** 만들게 되면서 그때 모으면 안 연 탭의 오타가 안 뜬다.
        그래서 여기서 먼저 한 번 훑는다 (`buildSection` · `buildDeck` 이 찾는 이름과 같은 범위:
@@ -1909,6 +2014,7 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
                 <button class="rc-arrow" data-dir="1" aria-label="다음 분류"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
               </div>
               <div class="rc-dots" aria-hidden="true" hidden></div>
+              <div class="rc-eps" role="tablist" hidden></div>
             </div>`;
         panel._sub = sub;   /* 상자 아래칸으로 옮겨 붙인다 (`activateTab`) */
 
@@ -1920,28 +2026,32 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
         panel.appendChild(stage);
 
         sub.querySelectorAll('.rc-arrow').forEach(b => {
-            b.onclick = () => showSlide(panel, (panel._slide || 0) + Number(b.dataset.dir), true);
+            b.onclick = () => stepSlot(panel, Number(b.dataset.dir));
         });
 
         const tabs = sub.querySelector('.rc-subtrack');
         indWatch.observe(tabs);
         /* 끝에 닿았는지에 따라 어느 쪽을 흐리게 할지 정한다 (`fadeEdges`) */
         tabs.addEventListener('scroll', () => fadeEdges(tabs), { passive: true });
-        secList.forEach((sec, i) => {
+        /* 칸 — 분류 줄 · 점은 칸마다 하나 (위 「칸」 절). 누르면 그 칸이 기억하는 회차로 */
+        panel._slots = g.slots;
+        panel._slotOf = [];
+        g.slots.forEach((slot, k) => slot.idx.forEach(i => { panel._slotOf[i] = k; }));
+        g.slots.forEach(slot => {
             /* 점은 분류 버튼과 **기능이 겹친다.** 스크린리더에는 버튼만 읽히게 두고
                (`aria-hidden`), 점은 눈과 마우스를 위한 것으로 남긴다. */
             const dot = document.createElement('span');
             dot.className = 'rc-dot';
-            dot.onclick = () => showSlide(panel, i, true);
+            dot.onclick = () => showSlide(panel, slot.cur, true);
             sub.querySelector('.rc-dots').appendChild(dot);
 
             const b = document.createElement('button');
-            b.className = 'rc-subtab';
+            b.className = 'rc-subtab' + (slot.past ? ' is-past' : '');
             b.setAttribute('role', 'tab');
-            b.innerHTML = (sec.icon
-                ? `<img src="${iconUrl(sec.icon, 'content')}" alt="" onerror="this.remove()">` : '')
-                + esc(sec.label);
-            b.onclick = () => showSlide(panel, i, true);
+            b.innerHTML = (slot.past ? '<svg class="rc-subtab-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
+                : slot.icon ? `<img src="${iconUrl(slot.icon, 'content')}" alt="" onerror="this.remove()">` : '')
+                + esc(slot.label);
+            b.onclick = () => showSlide(panel, slot.cur, true);
             tabs.appendChild(b);
         });
 
