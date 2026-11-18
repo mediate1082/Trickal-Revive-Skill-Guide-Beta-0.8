@@ -303,3 +303,12 @@ html.fp-ccm-open { overflow: hidden; }
     .fp-tree-slot.is-burst .off, .fp-tree-slot.is-burst .flash { animation: none; }
     .fp-tree .fill { transition: none; }
 }
+
+/* ── 긴 글 숨통 (2026-11-18) ── 줄 간격 1.8 · 자간 +0.01em. POP 은 획이 두꺼워 세 줄 넘는 글이 뭉쳐 보였다.
+   본문 글꼴을 바꿔 보다 되돌리고(CLAUDE.md 「글꼴은 POP 하나로」) 이 값으로 정했다 — 시안 `tools/fonts-trial/POP비교_*`.
+   ⚠ 같은 묶음이 파일마다 하나씩 있다 (guide · modal · artifact · recommend · crash2 · frontier). 값을 바꾸면 다 같이.
+   ⚠ 이 파일 **맨 끝**이라야 같은 파일 안의 원래 규칙을 이긴다 */
+.fp-desc, .fp-row dd, .fp-gim-card p, .fp-state-desc, .fp-states-note, .fp-counter, .fa-desc {
+    line-height: 1.8;
+    letter-spacing: .01em;
+}
