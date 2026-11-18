@@ -1482,17 +1482,26 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     letter-spacing: .02em;
 }
 
-/* 콘텐츠 칩 — 이 사도가 **다른 어느 칸에도** 추천되는지 */
+/* 콘텐츠 칩 — 이 사도가 **다른 어느 칸에도** 추천되는지
+   ⚠ **옅은 바탕 + 같은 색 진한 글씨**다 (2026-11-18). 예전엔 꽉 찬 색에 흰 글씨였는데, 한 카드에 6~7개가 붙으면
+     무지개처럼 사도 이름보다 먼저 눈에 들어왔다. 색(콘텐츠 구분)은 남기고 시끄러움만 줄였다 — 시안 `tools/chips-trial/`.
+     바탕은 그 색 15% (다크 22%), 글씨는 그 색을 검정(다크는 흰색)으로 당긴 것이라 칩 색만 정하면 둘 다 따라온다
+   ⚠ 끝난 콘텐츠 칩도 **똑같이** 그린다 — 흐리게 하는 안은 사용자가 고르지 않았다 */
 .rc-chip {
     display: inline-flex; align-items: center; gap: 4px;
     padding: 3px 9px; border-radius: 999px;
     font-size: .74rem; font-weight: 800; line-height: 1.35;
-    color: #fff; white-space: nowrap;
-    background: var(--rc-chip, #8FB93E);
+    white-space: nowrap;
+    color: color-mix(in srgb, var(--rc-chip, #8FB93E) 72%, #000);
+    background: color-mix(in srgb, var(--rc-chip, #8FB93E) 15%, var(--modal-card-bg, #fff));
+}
+[data-theme="dark"] .rc-chip {
+    color: color-mix(in srgb, var(--rc-chip, #8FB93E) 70%, #fff);
+    background: color-mix(in srgb, var(--rc-chip, #8FB93E) 22%, #1E1E21);
 }
 .rc-chip img { width: 14px; height: 14px; object-fit: contain; }
-/* 칩 목록에 없는 키. 조용히 빠지면 오타를 못 잡는다 */
-.rc-chip.is-unknown { background: var(--grade-7m-text, #C0392B); }
+/* 칩 목록에 없는 키. 조용히 빠지면 오타를 못 잡는다 — 이것만 꽉 찬 빨강으로 튀게 둔다 */
+.rc-chip.is-unknown, [data-theme="dark"] .rc-chip.is-unknown { color: #fff; background: var(--grade-7m-text, #C0392B); }
 
 /* 강추 별. 아이콘이 **흰색 단색**이라 `mask` 로 물들인다 —
    `filter` 로 임의의 색을 내려면 hue-rotate 를 짜맞춰야 하고 값이 안 맞는다.
