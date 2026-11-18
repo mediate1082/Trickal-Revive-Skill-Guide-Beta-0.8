@@ -1382,13 +1382,16 @@ function addClones(panel, track) {
 
 /* ══ 칸 — 분류 줄의 한 칸 (2026-11-18, 시즌 분리) ═══════════════════════════
    분류 줄은 분류 하나에 버튼 하나였는데, 시즌 콘텐츠가 쌓이면서 **칸**으로 묶는다.
-     - `sec_series` 가 같은 분류들 = 한 콘텐츠의 회차. 큰 분류 줄에는 시리즈 이름으로 **한 칸**,
-       회차는 그 아래 작은 줄(`.rc-eps`)에서 고른다. 칸이 기억하는 회차(`cur`)는 처음엔 지난 것이 아닌 첫 회차
-     - 시리즈가 없는 **지난 분류(`sec_stale`)** 는 맨 끝 「지난 시즌」 한 칸으로 모인다 (작은 줄에서 고른다)
-     - 나머지는 예전처럼 한 분류 = 한 칸
+     - `sec_series` 가 같은 분류들 = **한 콘텐츠의 시즌들** (프론티어 · 차원 대충돌 · 차원 대충돌 2.0).
+       큰 분류 줄에는 시리즈 이름으로 **한 칸**, 시즌은 그 아래 작은 줄(`.rc-eps`)에서 고른다.
+       칸이 기억하는 시즌(`cur`)은 처음엔 지난 것이 아닌 첫 분류. ⚠ **새 시즌을 시리즈의 맨 앞 행**에 둔다 —
+       시즌 이름(`sec_ep`)을 비우면 지난 것이 아닌 것은 「현 시즌」, 지난 것은 행 순서대로 「지난 시즌 1 · 2 …」
+     - ⚠ 시리즈가 있으면 **지난 것만 남아도 제 칸을 지킨다** — 차원 대충돌은 1.0 과 2.0 이 번갈아 열린다 (2026-11-18 사용자)
+     - 시리즈가 없는 **지난 분류(`sec_stale`)** = 다음 시즌이 언제일지 모르는 콘텐츠 → 맨 끝 「종료 콘텐츠」 한 칸 (고래 대난투 · 심해)
+     - 나머지(상시 콘텐츠)는 예전처럼 한 분류 = 한 칸
    ⚠ 트랙(슬라이드)은 그대로 **분류 하나 = 한 장**이다. 칸은 분류 줄 · 점 · 화살표만 바꾼다 —
      그래서 덱 · 보스 · `#탭/분류` 링크가 전부 그대로 돈다. 같은 칸의 분류가 트랙에 붙어 서도록 순서만 바꾼다
-   ⚠ 1열(폰)에는 분류 줄이 없다 — 칸과 무관하게 분류가 순서대로 선다 (지난 시즌은 맨 끝, 호박색 띠) */
+   ⚠ 1열(폰)에는 분류 줄이 없다 — 칸과 무관하게 분류가 순서대로 선다 (종료 콘텐츠는 맨 끝, 호박색 띠) */
 const PAST_SLOT = '__past';
 function makeSlots(list) {
     const slots = [], byKey = new Map();
@@ -1399,7 +1402,7 @@ function makeSlots(list) {
     };
     list.forEach(sec => {
         if (sec.series) add('s:' + sec.series, sec, sec.series, sec.icon);
-        else if (sec.stale) add(PAST_SLOT, sec, '지난 시즌', '');
+        else if (sec.stale) add(PAST_SLOT, sec, '종료 콘텐츠', '');
         else add('k:' + sec.key, sec, sec.label, sec.icon);
     });
     const pi = slots.findIndex(s => s.key === PAST_SLOT);
@@ -1410,6 +1413,9 @@ function makeSlots(list) {
         s.idx = s.secs.map((_, j) => order.length + j);
         order.push(...s.secs);
         const live = s.secs.findIndex(x => !x.stale);
+        /* 시즌 이름 — `sec_ep` 가 비면 「현 시즌」 / 「지난 시즌 n」 (지난 것을 행 순서대로 센다) */
+        let k = 0;
+        s.names = s.secs.map(x => x.ep || (s.past ? x.label : x.stale ? '지난 시즌 ' + (++k) : '현 시즌'));
         s.cur = s.idx[Math.max(0, live)];
     });
     return { order, slots };
@@ -1429,7 +1435,7 @@ function stepSlot(panel, dir) {
     showSlide(panel, target, true);
 }
 
-/* 작은 줄 — 지금 칸에 분류가 둘 이상일 때만 (회차 · 지난 시즌).
+/* 작은 줄 — 지금 칸에 분류가 둘 이상일 때만 (시즌 · 종료 콘텐츠).
    ⚠ 따라다니는 위쪽 줄(`.rc-navgroup`) 안이라 칸에 따라 줄 높이가 달라진다 (X 안, 2026-11-18 사용자 선택).
      문제가 되면 분류 상자 맨 위로 옮긴다 (Y 안 — 시안 `tools/season/시안/`) */
 function renderEps(panel) {
@@ -1438,14 +1444,14 @@ function renderEps(panel) {
     const slot = panel._slots && panel._slots[slotIx(panel)];
     if (!slot || slot.secs.length < 2) { box.hidden = true; box.innerHTML = ''; return; }
     box.hidden = false;
-    box.setAttribute('aria-label', slot.past ? '지난 시즌' : slot.label + ' 회차');
-    box.innerHTML = `<span class="rc-eps-label">${slot.past ? '끝난 콘텐츠' : '회차'}</span>`
+    box.setAttribute('aria-label', slot.past ? '종료 콘텐츠' : slot.label + ' 시즌');
+    box.innerHTML = `<span class="rc-eps-label">${slot.past ? '콘텐츠' : '시즌'}</span>`
         + slot.secs.map((sec, j) => {
             const i = slot.idx[j], on = i === panel._slide;
             const img = slot.past && sec.icon
                 ? `<img src="${iconUrl(sec.icon, 'content')}" alt="" onerror="this.remove()">` : '';
             return `<button type="button" class="rc-ep${on ? ' on' : ''}" role="tab" aria-selected="${on}" data-i="${i}">${img}${
-                esc(sec.ep || sec.label)}${!slot.past && !sec.stale ? '<em>지금</em>' : ''}</button>`;
+                esc(slot.names[j])}${!slot.past && !sec.stale && sec.ep ? '<em>지금</em>' : ''}</button>`;
         }).join('');
     box.querySelectorAll('.rc-ep').forEach(b => { b.onclick = () => showSlide(panel, +b.dataset.i, true); });
     const on = box.querySelector('.rc-ep.on');
@@ -1667,10 +1673,10 @@ function buildHome(groups, bar, body) {
         const secs = document.createElement('div');
         secs.className = 'rc-home-secs';
         /* 칸마다 하나 — 시리즈는 시리즈 이름으로 그 칸이 기억하는 회차에 간다.
-           지난 시즌 칸은 카드에서 빼서 아래 「지난 시즌」 상자로 (A 안, 2026-11-18) */
+           종료 콘텐츠 칸은 카드에서 빼서 아래 「종료 콘텐츠」 상자로 (A 안, 2026-11-18) */
         (g.slots || [...g.secs.values()].map(sec => ({ secs: [sec], cur: 0 }))).forEach(slot => {
             if (slot.past) { slot.secs.forEach(sec => past.push([gk, sec])); return; }
-            const sec = slot.secs.length > 1
+            const sec = slot.key && slot.key.startsWith('s:')
                 ? { ...[...g.secs.values()][slot.cur], label: slot.label } : slot.secs[0];
             secs.appendChild(secBtn(gk, sec, false));
         });
@@ -1678,12 +1684,12 @@ function buildHome(groups, bar, body) {
         grid.appendChild(card);
     });
     home.appendChild(grid);
-    /* 지난 시즌 — 끝난 시즌의 추천 · 덱. 숨기지 않고 모아 둔다 (다음 메타 전까지 육성 참고) */
+    /* 종료 콘텐츠 — 다음 시즌이 언제일지 모르는 콘텐츠의 마지막 추천 · 덱. 숨기지 않고 모아 둔다 */
     if (past.length) {
         const box = document.createElement('section');
         box.className = 'rc-home-past';
-        box.innerHTML = `<h2 class="rc-home-h"><svg class="rc-home-past-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>지난 시즌 <em>${past.length}</em></h2>
-            <p class="rc-home-tip">끝난 시즌의 추천과 덱입니다. 다음 시즌이 열리기 전까지 육성 방향을 고르는 참고로 보세요.</p>`;
+        box.innerHTML = `<h2 class="rc-home-h"><svg class="rc-home-past-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9"/><path d="M10 13h4"/></svg>종료 콘텐츠 <em>${past.length}</em></h2>
+            <p class="rc-home-tip">다음 시즌이 언제 열릴지 모르는 콘텐츠입니다. 마지막 시즌의 추천과 덱을 남겨 두었습니다.</p>`;
         const row = document.createElement('div');
         row.className = 'rc-home-secs';
         past.forEach(([gk, sec]) => { const b = secBtn(gk, sec, false); b.classList.remove('is-stale'); row.appendChild(b); });
@@ -2048,7 +2054,7 @@ function render(secDefs, recs, dbMap, chipDefs, deckDefs, swapRows, memberRows,
             const b = document.createElement('button');
             b.className = 'rc-subtab' + (slot.past ? ' is-past' : '');
             b.setAttribute('role', 'tab');
-            b.innerHTML = (slot.past ? '<svg class="rc-subtab-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
+            b.innerHTML = (slot.past ? '<svg class="rc-subtab-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9"/><path d="M10 13h4"/></svg>'
                 : slot.icon ? `<img src="${iconUrl(slot.icon, 'content')}" alt="" onerror="this.remove()">` : '')
                 + esc(slot.label);
             b.onclick = () => showSlide(panel, slot.cur, true);
