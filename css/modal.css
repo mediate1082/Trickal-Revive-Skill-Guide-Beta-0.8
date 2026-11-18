@@ -1096,3 +1096,16 @@
     line-height: 1.8;
     letter-spacing: .01em;
 }
+
+/* ══ 선택됨 통일 (2026-11-18) ══ 되돌리려면 이 묶음을 지운다 (커밋 하나로 따로 들어갔다 — 작업노트 참조)
+   규칙 — 「어디를 볼지」 고르는 길잡이: 맨 위 두 층(사이트 탭 · 사도 추천 대분류 탭)은 옅은 연두 알약,
+          그 아래 전환(분류 줄 · 모달 탭 · 보기 · AND/OR …)은 움푹한 트레이 위 흰 알약.
+          「켜고 끄는」 필터: 연두 채움 + ✓. 색에 뜻이 있는 것(효과 체크 칩 · 표시 필터 · 아티팩트 세부 칩)은 그대로
+   갤러리 `tools/selected-trial/` */
+/* ④ AND / OR — 둘 중 하나 고르는 전환이라 다른 전환들처럼 흰 알약 (예전엔 OR 연두 · AND 파랑 채움) */
+.tg-mode-glider, #mode-and:checked ~ .tg-mode-glider { background: var(--modal-card-bg); box-shadow: 0 1px 4px var(--shadow-soft); }
+.tg-mode-switch input:checked + label, .tg-mode-switch #mode-and:checked + label { color: var(--text-heading); }
+.tg-mode-switch:hover .tg-mode-glider, .tg-mode-switch:hover #mode-and:checked ~ .tg-mode-glider { box-shadow: 0 2px 8px var(--shadow-soft); }
+/* ⑨ 빠른 필터 — 켜고 끄는 필터라 연두 채움 + ✓ (예전엔 진한 올리브 바탕에 연두 글씨) */
+.tg-quickfilter-chip.is-active { background: var(--accent-green); border-color: var(--accent-green-strong); color: #2D3A12; }
+[data-theme="dark"] .tg-quickfilter-chip.is-active { color: #102006; }

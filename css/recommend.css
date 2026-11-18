@@ -1725,3 +1725,15 @@ body:has(.rc-main) .tg-header-inner { max-width: min(1800px, 100% - 24px); }
     line-height: 1.8;
     letter-spacing: .01em;
 }
+
+/* ══ 선택됨 통일 (2026-11-18) ══ 되돌리려면 이 묶음을 지운다 (커밋 하나로 따로 들어갔다 — 작업노트 참조)
+   규칙 — 「어디를 볼지」 고르는 길잡이: 맨 위 두 층(사이트 탭 · 사도 추천 대분류 탭)은 옅은 연두 알약,
+          그 아래 전환(분류 줄 · 모달 탭 · 보기 · AND/OR …)은 움푹한 트레이 위 흰 알약.
+          「켜고 끄는」 필터: 연두 채움 + ✓. 색에 뜻이 있는 것(효과 체크 칩 · 표시 필터 · 아티팩트 세부 칩)은 그대로
+   갤러리 `tools/selected-trial/` */
+/* ⑩ 대분류 탭 — 진한 라임 채움이 화면에서 제일 시끄러웠다 (다크에서 특히). 사이트 탭과 같은 옅은 알약으로 */
+.rc-tab.on {
+    background: var(--accent-soft); border-color: var(--accent-green-strong);
+    color: var(--text-dark); font-weight: 800;
+}
+[data-theme="dark"] .rc-tab.on { color: #B9DD63; }
