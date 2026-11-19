@@ -729,10 +729,21 @@ function artTagKit(D) {
     return { tagsOf, GROUP, known, has, nm, gr, used, order, chip, slot, row };
 }
 
-function artTagBox(raw, who, D) {
+/* 공격 타입이 안 맞는 아티팩트 거르기 — 물리 사도에게 `마법딜` 태그 아티팩트를, 마법 사도에게 `물리딜` 태그 아티팩트를 안 보인다.
+   `스킬딜` · `공속` 처럼 타입을 안 가리는 줄에 남의 타입 딜템이 섞여 나오던 것 (아이리스 스킬딜 줄의 옥빛 마법서 등).
+   - 두 타입 태그를 다 단 것(마도 공학 배터리)은 남긴다 — 자기 타입 태그도 있으니까
+   - ⚠ 글에 **반대 타입 태그를 직접 적은 줄**(`{마법딜}` 을 물리 사도에) 은 거르지 않는다. 적은 사람이 일부러 넣은 것이다
+   - 사도 추천 덱의 태그 칸(`deckTagBoxes`)은 덱 단위라 그대로 둔다 */
+const ART_ATK_TAG = { 물리: '물리딜', 마법: '마법딜' };
+function artTagBox(raw, who, D, atk) {
     const keys = [...new Set([...raw.matchAll(/\{([^}]+)\}/g)].map(m => m[1].trim()))];
     if (!keys.length) return `<div class="tg-usage-box">${raw}</div>`;
-    const { known, has, nm, gr, order, chip, slot, row } = artTagKit(D);
+    const kit = artTagKit(D);
+    const { known, nm, gr, order, chip, slot, row } = kit;
+    const mine = ART_ATK_TAG[(atk || '').trim()];
+    const other = mine && Object.values(ART_ATK_TAG).find(t => t !== mine);
+    const offType = a => other && !keys.includes(other) && kit.has(a, other) && !kit.has(a, mine);
+    const has = (a, k) => !offType(a) && kit.has(a, k);
 
     const parts = [];
     const own = keys.includes('애착') ? D.arts.find(a => (a.attach || '').trim() === who) : null;
@@ -832,7 +843,7 @@ async function fillGrowthExtras(c) {
                     <div><b>${escA(a)}</b><small>${ds.length ? ds.length + '개 덱' : (r ? r.grade : '?')}${r && (r.attach || '').trim() ? ' · 애착' : ''}</small></div></div>`;
             };
             html += `<div class="tg-usage-sub"><div class="tg-usage-title">추천 아티팩트${list.length ? '<i>누르면 상세</i>' : ''}</div>
-                ${artNote ? artTagBox(artNote, c.name, D) : ''}
+                ${artNote ? artTagBox(artNote, c.name, D, c.atk_type) : ''}
                 ${list.length ? `<div class="tg-usage-arts">${Array.from({ length: list.length <= 3 ? 3 : 6 }, (_, i) => cell(i)).join('')}</div>` : ''}</div>`;
         }
     }
