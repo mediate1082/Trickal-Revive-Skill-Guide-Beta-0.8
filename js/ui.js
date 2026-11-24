@@ -424,6 +424,25 @@ function renderEffectCard(type, skillInfo, buffString, condString, targetString,
         </div>
     </div>`;
 }
+/* 해금 조건 — 그게 있어야 **생기는** 효과. 발동 조건(`개전 시` · `HP 50% 미만`)과 성격이 달라 칩에서 떼어 박스로 보인다.
+ * 데이터 표기는 `A2 이상+…` · `애착 아티팩트+…` (해금이 맨 앞, `+` 로 잇는다 — db_check 가 다른 꼴을 잡는다) */
+const UNLOCK = {
+    a2:     { word: 'A2 이상',       label: 'A2',  tip: '어사이드 A2(★2) 이상에서 생기는 효과' },
+    attach: { word: '애착 아티팩트', label: '애착', tip: '애착 아티팩트를 장착하면 생기는 효과' },
+};
+function splitUnlock(cond) {
+    const parts = String(cond || '').split('+').map(s => s.trim()).filter(Boolean);
+    let unlock = '';
+    const rest = parts.map(p => {
+        /* `애착 아티팩트 Lv.3 이상` — 아티팩트 레벨이 붙은 꼴 (셀리네). 탭은 「애착」, 칩에 `Lv.3 이상` 이 남는다 */
+        const k = !unlock && Object.keys(UNLOCK).find(k => p === UNLOCK[k].word || p.startsWith(UNLOCK[k].word + ' Lv.'));
+        if (!k) return p;
+        unlock = k;
+        return p.slice(UNLOCK[k].word.length).trim();
+    }).filter(Boolean);
+    return { unlock, rest: rest.join('+') };
+}
+
 // 상태이상 개별 아이템 음각 박스
 function renderEffectItems(effectString, condString, targetString, allStateDB, debuffDescDB, immCtx = null) {
     if (!effectString || effectString === 'X') return '';
@@ -452,14 +471,19 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
             ? `./assets/icons/state/${info.icon_file}`
             : `./assets/icons/state/${defaultIcon}`;
 
+        /* 해금 조건(A2 이상 · 애착 아티팩트)은 칩이 아니라 **박스 꾸밈**으로 (2026-11-25, 시안 tools/effect-box-trial/ 최종안).
+           남은 발동 조건만 칩으로. `data-cond` 는 원문 그대로 둔다 — 빠른 필터 · 수치 띠가 그걸 읽는다 */
+        const { unlock, rest: condRest } = splitUnlock(conds[index] || '');
+
         return `
-        <div class="tg-effect-item" data-kind="${isDebuff ? 'debuff' : 'buff'}"
+        <div class="tg-effect-item${unlock ? ' is-unlock' : ''}" data-kind="${isDebuff ? 'debuff' : 'buff'}"${unlock ? ` data-unlock="${unlock}"` : ''}
              data-cond="${_escAttr(conds[index] || '')}" data-target="${_escAttr(targets[index] || '')}">
+            ${unlock ? `<span class="tg-effect-unlock" data-tooltip="${UNLOCK[unlock].tip}">${UNLOCK[unlock].label}</span>` : ''}
             <div class="tg-effect-item-icon"><img src="${iconSrc}" onerror="this.onerror=null;this.src='./assets/icons/state/${defaultIcon}'"></div>
             <div class="tg-effect-item-body">
                 <div class="tg-effect-item-head">
                     <strong class="tg-effect-item-name">${_escAttr(raw)}</strong>
-                    ${conds[index] ? `<span class="tg-effect-item-chip" data-kind="cond">${_escAttr(conds[index])}</span>` : ''}
+                    ${condRest ? `<span class="tg-effect-item-chip" data-kind="cond">${_escAttr(condRest)}</span>` : ''}
                     ${targets[index] ? `<span class="tg-effect-item-chip" data-kind="target">${_escAttr(targets[index])}</span>` : ''}
                 </div>
                 <div class="tg-effect-item-desc">${immDesc || (info ? info.description : "상세 정보가 없습니다.")}</div>
@@ -474,7 +498,7 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
  *  - 수치는 `effect-values.js` 가 효과 이름으로 스킬 표 자리표에서 찾는다. 못 찾으면 띠를 안 그린다
  *  - Lv.10 고정. PvP 는 PvE 와 다를 때만 ⚔ 와 함께. 쿨은 고학년만 (스킬 정보 탭과 같은 자명종)
  *  - 지속 아이콘은 그림 파일 없이 SVG 파이 — 글자색(currentColor)을 따라 다크에서도 보인다
- *  - 출처(어사이드 ★2 · 애착 아티팩트)는 적지 않는다. 조건 칩이 이미 말해 준다 */
+ *  - 출처(어사이드 ★2 · 애착 아티팩트)는 적지 않는다. 박스 꾸밈(`.is-unlock`)이 이미 말해 준다 */
 let _statsFolded = false;   // 「상세 정보 접기」 (toggleEffectStats)
 try { _statsFolded = localStorage.getItem('tgEffectStatsFolded') === '1'; } catch { }
 const _PVP_ICON = './assets/icons/content/PvP2.webp';
@@ -855,7 +879,8 @@ async function fillGrowthExtras(c) {
         const got = new Map();
         D.members.filter(m => (m.chara_name || '').trim() === c.name && (m.artifact || '').trim()).forEach(m => {
             const d = D.DECK.get((m.deck_key || '').trim());
-            m.artifact.split(',').map(s => s.trim()).filter(Boolean)
+            /* 한 덱에 같은 칸이 여럿이어도(잉클 `{마법딜}` ×3) 덱은 하나로 센다 */
+            new Set(m.artifact.split(',').map(s => s.trim()).filter(Boolean))
                 .forEach(a => (got.get(a) || got.set(a, []).get(a)).push(d ? d.deck_name : m.deck_key));
         });
         const list = [...got.entries()].sort((a, b) => (a[0] === FREE_ART) - (b[0] === FREE_ART) || b[1].length - a[1].length).slice(0, 6);
@@ -866,6 +891,13 @@ async function fillGrowthExtras(c) {
                 const e = list[i];
                 if (!e) return `<div class="tg-usage-art is-empty"><div class="tg-usage-slot"><img class="base-empty" src="${base}Empty.webp" alt=""></div></div>`;
                 const [a, ds] = e, tip = ds.length ? ` data-tooltip="${escA(ds.join('\n'))}"` : '';
+                /* `{태그}` — 그 태그의 아티팩트 아무거나 (덱 편성 칸, 대충돌 등). 프레임은 빈 칸, 이름은 태그 칩 (2026-11-25, 사용자 결정, 코페 `{마법딜}` 이 글자로 샜다) */
+                const tk = /^\{(.+)\}$/.exec(a), tg = tk && D.TAG.get(tk[1].trim());
+                if (tg) {
+                    const lb = (tg.tag_label || tk[1]).trim();
+                    return `<div class="tg-usage-art" data-tooltip="${escA(lb + ' 아티팩트 아무거나' + (ds.length ? '\n' + ds.join('\n') : ''))}"><div class="tg-usage-slot"><img class="base-empty" src="./assets/icons/common_icons/Ingame_ArtifactBase_Empty.webp" alt=""></div>
+                        <div><b><span class="tg-at-chip" style="--c:${escA(tg.tag_color || '#7A8466')}">${escA(lb)}</span></b><small>아무거나${ds.length ? ' · ' + ds.length + '개 덱' : ''}</small></div></div>`;
+                }
                 if (a === FREE_ART) return `<div class="tg-usage-art"${tip || ' data-tooltip="아무 아티팩트나 괜찮습니다"'}><div class="tg-usage-slot"><img class="base-empty" src="${base}Empty.webp" alt=""><img class="ico" src="./assets/icons/common_icons/PVP_HidingIcon.webp" alt=""></div><div><b>자유</b><small>아무거나</small></div></div>`;
                 const r = D.ART.get(a);
                 const frame = r ? ((r.attach || '').trim() ? 'Rarity_SignatureCard' : 'Rarity_' + ART_FRAME[(r.grade || '').trim()]) : '';

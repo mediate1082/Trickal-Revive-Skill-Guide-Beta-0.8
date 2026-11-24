@@ -630,6 +630,27 @@
 .tg-effect-item-chip[data-kind="cond"]   { background: #fff3e0; color: #e65100; }
 .tg-effect-item-chip[data-kind="target"] { background: #DCFCE7; color: #166534; }
 .tg-effect-item-desc { font-size: 0.85rem; color: var(--text-body); line-height: 1.5; word-break: keep-all; }
+/* 해금 효과 박스 (ui.js `splitUnlock`, 2026-11-25 — 시안 tools/effect-box-trial/ 최종안)
+   A2 이상 · 애착 아티팩트는 발동 조건이 아니라 **그게 있어야 생기는** 효과라 칩에서 떼어 박스로 보인다.
+   - 바탕은 채도를 깎은 색조, 오른쪽 위 탭이 「A2」 · 「애착」 이라고 말한다
+   - ⚠ 칩 색(조건 살구 · 대상 초록)은 사이트 초창기부터의 문법이라 안 바꾼다. 대신 색조 바탕 위에서 경계가 서게
+     칩에 **제 글자색** 테두리를 두른다 (흰 테두리는 크림 바탕에 묻혔다)
+   - 애착 노랑은 조건 칩 살구빛과 반대쪽(레몬)으로, 탭은 애착 칸 머리와 같은 마름모 무늬
+   - A2 보라는 사이트 어사이드 색(`--aside-accent`) 계열 */
+.tg-effect-item.is-unlock { --ux-c: #8B5CF6; --ux-bg: #F9F6FE; --ux-line: #DCD0F3;
+                            background: var(--ux-bg); border-color: var(--ux-line); }
+.tg-effect-item.is-unlock[data-unlock="attach"] { --ux-c: #E9C23A; --ux-bg: #FDFAEC; --ux-line: #E5D7A3; }
+:root[data-theme="dark"] .tg-effect-item.is-unlock                         { --ux-bg: #2A2734; --ux-line: #463D5E; }
+:root[data-theme="dark"] .tg-effect-item.is-unlock[data-unlock="attach"] { --ux-bg: #2E2C22; --ux-line: #5A5030; }
+.tg-effect-item.is-unlock .tg-effect-item-head { gap: 6px 8px; padding-right: 46px; }
+.tg-effect-item.is-unlock .tg-effect-item-chip { box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 40%, transparent); }
+:root[data-theme="dark"] .tg-effect-item.is-unlock .tg-effect-item-chip { box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 50%, transparent); }
+.tg-effect-item.is-unlock .tg-effect-stat { background: color-mix(in srgb, var(--ux-c) 10%, var(--modal-card-bg)); }
+.tg-effect-unlock { position: absolute; top: 0; right: 0; z-index: 1; padding: 2px 9px 3px 8px; border-bottom-left-radius: 10px;
+                    background: var(--ux-c); color: #fff; font-size: .68rem; font-weight: 800; line-height: 1.35; letter-spacing: .02em; cursor: help; }
+.tg-effect-item[data-unlock="attach"] .tg-effect-unlock {
+    color: #4A3A10; box-shadow: inset 0 0 0 1px #E2B92F;
+    background: conic-gradient(from 45deg, #FADF66 25%, #F5D14A 0 50%, #FADF66 0 75%, #F5D14A 0) 50% 0 / 26px 100%; }
 
 /* 애착 아티팩트 스킬 칸 (ui.js attachBlock, 2026-11-24) — 스킬 정보 탭의 해당 스킬 카드 안
    아티팩트 모달의 애착 칸(artifact.css `.ar-attach`, 인게임 「…의 애착 아티팩트」)을 카드 안에 맞춰 줄인 꼴 (시안 tools/attach-skill-trial/ B안).
@@ -638,7 +659,9 @@
 .tg-attach { --y: #F7D54A; --yl: #FFF7D6; margin-top: 14px; border-radius: 14px; overflow: hidden;
              background: var(--yl); border: 2px solid #fff; box-shadow: 0 0 0 1px #EAD27A; }
 .tg-attach-h { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer;
-               background: repeating-linear-gradient(45deg, #F9DC5C 0 10px, #F5D14A 10px 20px); }
+               /* 인게임 애착 창 머리의 마름모(아가일) 무늬 — 네 삼각형을 번갈아 칠한 conic 타일이 이어 붙으며 마름모가 된다 (2026-11-25).
+                  타일 높이 = 머리 높이(100%) 라 밝은 마름모 한 줄이 가운데 선다 (인게임처럼). 촘촘하게 깔면 어색했다 */
+               background: conic-gradient(from 45deg, #FADF66 25%, #F5D14A 0 50%, #FADF66 0 75%, #F5D14A 0) 50% 0 / 64px 100%; }
 .tg-attach[data-open="true"] .tg-attach-h { border-bottom: 2px solid #E9C23A; }
 .tg-attach-art { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; min-width: 0;
                  padding: 3px 12px 3px 4px; border-radius: 11px; background: #FFF4B8; border: 2px solid #fff;

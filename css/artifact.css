@@ -83,7 +83,7 @@
 .ar-sec h3 { font-size: 13px; color: var(--text-muted); margin: 0 0 8px; }
 /* 애착 — 인게임 '…의 애착 아티팩트' 팝업 */
 .ar-attach { --y: #F7D54A; --yl: #FFF7D6; border-radius: 18px; overflow: hidden; background: var(--yl); border: 3px solid #fff; box-shadow: 0 0 0 1px #EAD27A; }
-.ar-attach-h { padding: 12px; text-align: center; background: repeating-linear-gradient(45deg, #F9DC5C 0 12px, #F5D14A 12px 24px); border-bottom: 3px solid #E9C23A; }
+.ar-attach-h { padding: 12px; text-align: center; background: conic-gradient(from 45deg, #FADF66 25%, #F5D14A 0 50%, #FADF66 0 75%, #F5D14A 0) 50% 0 / 96px 100%; /* 인게임 마름모(아가일) 무늬 — 마름모 하나 높이 = 머리 높이. modal.css `.tg-attach-h` 와 같게 */ border-bottom: 3px solid #E9C23A; }
 .ar-attach-title { display: inline-block; padding: 6px 28px; border-radius: 14px; background: #FFF4B8; border: 2px solid #fff; font-weight: 800; font-size: 15px; color: #3a3320; box-shadow: 0 2px 0 #E2B92F; }
 .ar-attach-note { margin: 12px 14px 4px; padding: 6px 10px; border-radius: 999px; background: #F3DCA8; color: #9A7A3F; font-size: 12px; text-align: center; word-break: keep-all; }
 .ar-attach-steps { padding: 6px 14px 14px; }

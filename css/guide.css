@@ -4,6 +4,11 @@
    ⚠ modal.css **뒤에** 싣는다 — 표시 필터가 필터 모달(.filter-label 등) 위에 덧칠한다
 ═══════════════════════════════════════════ */
 
+/* 바탕을 그리드 색으로 — 푸터가 바닥에 붙으면서(base.css `.tg-footer`) 카드가 적을 때 그리드 아래가
+   --bg-main 으로 드러나 한 톤 밝은 띠가 생겼다 (2026-11-25). 헤더 · 조작 영역 · 칩 · 그리드가 이미 전부 --grid-bg 다.
+   ⚠ `body:has(.tg-grid-wrap)` 로 base.css 에 두지 말 것 — 「기타 메모」 의 :has() 성능 함정 */
+body { background: var(--grid-bg); }
+
 /* ── 도움말 모달 (#modal-info) ──────────────────────────
    범례 + 주의 + 기능 안내. 등급 샘플은 main.js 가 makeSkillGauge() 로 채운다. */
 .tg-help-sec { margin-bottom: 26px; }
@@ -86,6 +91,9 @@
     white-space: nowrap;
 }
 .tg-help-tips dd { margin: 0; font-size: 0.92rem; line-height: 1.62; color: var(--text-muted); }
+/* 범례의 해금 탭 — 부가 효과 칸 귀퉁이 `.tg-effect-unlock` 과 같은 꼴 (modal.css) */
+.tg-help-unlock { display: inline-block; padding: 0 7px; border-radius: 6px; font-size: .74rem; font-weight: 800; line-height: 1.5; color: #fff; background: #8B5CF6; vertical-align: 1px; font-synthesis-weight: none; }
+.tg-help-unlock.is-attach { color: #4A3A10; box-shadow: inset 0 0 0 1px #E2B92F; background: conic-gradient(from 45deg, #FADF66 25%, #F5D14A 0 50%, #FADF66 0 75%, #F5D14A 0) 50% 0 / 22px 100%; }
 
 @media (max-width: 480px) {
     /* 좁은 화면에서는 용어를 위에, 설명을 아래로. 글자도 한 단계 낮춘다 */

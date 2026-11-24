@@ -369,9 +369,9 @@ export function effectNumbers(ctx, name, slot, effRaw, cond = '', target = '') {
         const art = (ctx.artifactDB || []).find(a => split(a.attach).includes(name));
         const row = art && (ctx.attachDB || []).find(x => (x.name || '').trim() === (art.name || '').trim());
         if (!row) return { miss: true, cd, src: 'attach', notes: ['애착 아티팩트 표에 없음'], lines: [] };
-        /* 조건이 `3레벨` 이면 Lv.3 능력치 문장에서 — 셀리네 `고학년 스킬 재사용 대기시간이 10초 감소한다` (2026-11-25).
+        /* 조건이 `애착 아티팩트 Lv.3 이상` 이면 Lv.3 능력치 문장에서 — 셀리네 `고학년 스킬 재사용 대기시간이 10초 감소한다` (2026-11-25).
            문장을 `고학년 스킬 재사용 대기시간 감소 : 10초` 꼴로 푼다 */
-        const src = /3레벨/.test(cond)
+        const src = /Lv\.\s*3|3레벨/.test(cond)     // `애착 아티팩트 Lv.3 이상` (2026-11-25 표기)
             ? String(row.lv3_desc || '').split(/\.\s*/).map(t => /^(?:\S+의\s+)?(.+?)[이가]\s+(-?\d[\d.]*\s*(?:%|초)?)\s*(?:로\s*)?(증가|감소)/.exec(t.trim()))
                 .filter(Boolean).map(m => `${m[1]} ${m[3]} : ${m[2]}`)
             : attachStat(row, EFFECT_LV).lines;
