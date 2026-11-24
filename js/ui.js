@@ -1,5 +1,5 @@
 /* 부가 효과 수치(계수 · 지속 · 쿨) — 스킬 가이드 · 사도 추천 · 검수 페이지 공용 규칙. ?v= 를 달려고 동적으로 싣는다 */
-const { effectNumbers, EFFECT_LV } = await import('./effect-values.js?v=' + (window.APP_VERSION || ''));
+const { effectNumbers, EFFECT_LV, attachStat } = await import('./effect-values.js?v=' + (window.APP_VERSION || ''));
 let currentSkillMode = 'PvE'; // PvE로 고정
 let currentApostle = null;
 let currentDataContext = null;
@@ -899,7 +899,14 @@ const openUsageArt = el => {
     loadArtJs().then(() => window.openArtifactModal(name))
         .catch(() => { location.href = './artifact.html#' + encodeURIComponent(name); });
 };
-document.addEventListener('click', e => { const el = e.target.closest('.tg-usage-art.is-link, .tg-at-link'); if (el) openUsageArt(el); });
+document.addEventListener('click', e => { const el = e.target.closest('.tg-usage-art.is-link, .tg-at-link, .tg-attach-art'); if (el) openUsageArt(el); });
+/* 애착 칸 펼치기 — 머리 띠 아무 데나 눌러도 (아티팩트 이름 버튼만 빼고) */
+document.addEventListener('click', e => {
+    const h = e.target.closest('.tg-attach-h'); if (!h || e.target.closest('.tg-attach-art')) return;
+    const box = h.closest('.tg-attach'), open = box.dataset.open !== 'true';
+    box.dataset.open = open; const b = h.querySelector('.tg-attach-tog');
+    b.textContent = open ? '접기' : '펼치기'; b.setAttribute('aria-expanded', open);
+});
 document.addEventListener('click', e => {
     const b = e.target.closest('.tg-at-more'); if (!b) return;
     const open = b.closest('.tg-at-icons').classList.toggle('is-open');
@@ -1146,6 +1153,43 @@ export function openDetailModal(char, dataContext) {
         return `<div class="tg-lv-tick${(lv === 7 || lv === 10) ? ' is-major' : ''}"></div>`;
     }).join('');
 
+    /* 애착 아티팩트 스킬 칸 — 그 스킬 카드 안, 수치 상자 아래 (2026-11-24, 시안 tools/attach-skill-trial/ B안)
+     *  - 꼴은 아티팩트 모달의 애착 칸(`.ar-attach`, 인게임 「…의 애착 아티팩트」)을 카드 안에 맞춰 줄인 것. 스타일은 modal.css `.tg-attach*`
+     *  - 머리는 아티팩트 이름 버튼(누르면 아티팩트 모달, `openUsageArt`) + 펼치기. **기본은 접힘** (사용자 결정)
+     *  - Lv.3 능력치도 넣는다 — SP 회복량처럼 패시브에 가까운 게 있어서 (사용자 결정). 그 줄은 고정 값
+ *  - 애착 스킬 수치는 **위 스킬 슬라이더를 따라간다** (`attachStat`, 사용자 결정). 스킬 줄 옆 칩이 지금 레벨 —
+ *    단계 표시 「Lv.1」은 아티팩트 레벨이라 헷갈리지 않게. 일반 공격 애착은 레벨이 없어 「고정 값」
+     *  - 어느 카드인지는 `Artifact_Attach.skill_type` (low · high · normal). normal 은 스킬 이름이 `기본 공격` 이면 기본 공격 칸, 아니면 강화 공격 칸 */
+    const attachArt = (currentDataContext?.artifactDB || []).find(a => (a.attach || '').split(',').map(s => s.trim()).includes(char.name));
+    const attachRow = attachArt && (currentDataContext?.attachDB || []).find(x => (x.name || '').trim() === (attachArt.name || '').trim());
+    const attachWhere = !attachRow ? '' : (attachRow.skill_type || '').trim() === 'normal'
+        ? (/기본/.test(attachRow.skill_name || '') ? 'basic' : 'power') : (attachRow.skill_type || '').trim();
+    curAttach = attachRow ? { row: attachRow, where: attachWhere } : null;
+    const attachBlock = where => {
+        if (where !== attachWhere) return '';
+        const chk = './assets/icons/common_icons/애착 아티팩트_체크_true.webp';
+        const st = attachStat(attachRow, 1);
+        const kv = attachKV(st.lines);
+        const lv3 = _escAttr(attachRow.lv3_desc || '').replace(/(\d+(?:\.\d+)?%?)/g, '<b>$1</b>');
+        return `
+            <div class="tg-attach" data-open="false">
+                <div class="tg-attach-h">
+                    <button type="button" class="tg-attach-art" data-art="${_escAttr(attachArt.name)}" aria-label="${_escAttr(attachArt.name)} 아티팩트 정보 열기">
+                        <img src="./assets/icons/artifacts/ArtifactIcon_${_escAttr(attachArt.icon_no)}.webp" alt="" onerror="this.style.visibility='hidden'">
+                        <span>${_escAttr(attachArt.name)}</span><small><i class="tg-attach-art-lbl">애착 아티팩트 </i>›</small></button>
+                    <button type="button" class="tg-attach-tog" aria-expanded="false">펼치기</button>
+                </div>
+                <div class="tg-attach-steps">
+                    <div class="tg-attach-step" data-step="1"><div class="tg-attach-lv"><img src="${chk}" alt=""><b>Lv.1</b></div>
+                        <div class="tg-attach-body"><div class="tg-attach-skill">애착 아티팩트 스킬 : <em>${_escAttr(attachRow.skill_name)}</em>${st.fixed
+                                ? '<span class="tg-attach-lvchip is-fixed">고정 값</span>' : `<span class="tg-attach-lvchip" data-attach-lv>Lv.${st.lv}</span>`}</div>
+                            <div>${renderDesc(attachRow.skill_desc, currentDataContext)}</div><div class="tg-attach-kv" data-attach-kv>${kv}</div></div></div>
+                    ${lv3 ? `<div class="tg-attach-step" data-step="3"><div class="tg-attach-lv"><img src="${chk}" alt=""><b>Lv.3</b></div>
+                        <div class="tg-attach-body"><div>${lv3}</div></div></div>` : ''}
+                </div>
+            </div>`;
+    };
+
     /* ⚠ 탭 1~3 은 **필요할 때 만든다** (아래 `fillDetailTab`). 그래서 이 셋은 함수로 들고 있다 */
     const buildTab2 = () => {
     let lowDetail = "";
@@ -1159,7 +1203,7 @@ export function openDetailModal(char, dataContext) {
                 <input type="range" min="1" max="${maxL}" value="1" id="low-skill-slider" oninput="window.updateLowSkillLv(this.value, '${char.name}')">
                 <div class="tg-lv-ticks">${makeTicks(maxL)}</div>
                 <div class="tg-lv-slider-marks"><span>Lv.1</span><span>Lv.${maxL}</span></div>
-            </div>`;
+            </div>${attachBlock('low')}`;
     }
     let highDetail = "";
     if (skillData) {
@@ -1173,14 +1217,14 @@ export function openDetailModal(char, dataContext) {
                 <input type="range" min="1" max="${maxH}" value="1" id="high-skill-slider" oninput="window.updateHighSkillLv(this.value, '${char.name}')">
                 <div class="tg-lv-ticks">${makeTicks(maxH)}</div>
                 <div class="tg-lv-slider-marks"><span>Lv.1</span><span>Lv.${maxH}</span></div>
-            </div>`;
+            </div>${attachBlock('high')}`;
     }
     let normalAtkHTML = "";
     if (normalAtkData) {
         const normalContent = `
             <div class="tg-normal-section">
                 <div class="tg-skill-desc" data-src="normal_Atk_DB.csv|${char.name}|basic_atk_desc">${renderDesc(normalAtkData.basic_atk_desc, currentDataContext)}</div>
-                <div class="tg-skill-stat-box" data-src="normal_Atk_DB.csv|${char.name}|basic_stat_template">${parseSkillLevelText(normalAtkData.basic_stat_template, normalAtkData.basic_atk_value)}</div>
+                <div class="tg-skill-stat-box" data-src="normal_Atk_DB.csv|${char.name}|basic_stat_template">${parseSkillLevelText(normalAtkData.basic_stat_template, normalAtkData.basic_atk_value)}</div>${attachBlock('basic')}
             </div>
             ${(normalAtkData.enhance_atk_desc && normalAtkData.enhance_atk_desc !== 'X') ? `
             <div class="tg-skill-card-divider"></div>
@@ -1190,8 +1234,17 @@ export function openDetailModal(char, dataContext) {
                     <div class="tg-normal-sub-name">강화 공격</div>
                 </div>
                 <div class="tg-skill-desc" data-src="normal_Atk_DB.csv|${char.name}|enhance_atk_desc">${renderDesc(normalAtkData.enhance_atk_desc, currentDataContext)}</div>
-                <div class="tg-skill-stat-box" data-src="normal_Atk_DB.csv|${char.name}|enhance_stat_template">${parseSkillLevelText(normalAtkData.enhance_stat_template, normalAtkData.enhance_atk_value)}</div>
+                <div class="tg-skill-stat-box" data-src="normal_Atk_DB.csv|${char.name}|enhance_stat_template">${parseSkillLevelText(normalAtkData.enhance_stat_template, normalAtkData.enhance_atk_value)}</div>${attachBlock('power')}
+            </div>` : attachWhere === 'power' ? `
+            <div class="tg-skill-card-divider"></div>
+            <div class="tg-normal-section">
+                <div class="tg-normal-sub-head">
+                    <div class="tg-normal-sub-type">일반 공격</div>
+                    <div class="tg-normal-sub-name">강화 공격</div>
+                </div>
+                ${attachBlock('power')}
             </div>` : ''}`;
+            /* ↑ 로네 · 루드는 강화 공격이 **애착 아티팩트로만** 생긴다 — 스킬 표에 강화 공격이 없어도 애착 칸을 둘 자리를 만든다 */
         normalAtkHTML = renderEffectCard('normal', { low_skill_name: "기본 공격" }, null, null, null, dataContext, normalContent, false);
     }
     return `
@@ -1408,6 +1461,22 @@ export function openDetailModal(char, dataContext) {
     });
 }
 
+/* 애착 스킬 칸 — 지금 연 사도의 것 (`openDetailModal` 이 채운다). 슬라이더가 움직이면 `updateAttachLv` 가 값을 갈아 끼운다 */
+let curAttach = null;
+const attachKV = lines => lines.map(l => {
+    const i = l.indexOf(':');
+    return i < 0 ? `<div>${_escAttr(l)}</div>` : `<div>${_escAttr(l.slice(0, i).trim())} : <b>${_escAttr(l.slice(i + 1).trim())}</b></div>`;
+}).join('');
+function updateAttachLv(where, lv, pvp = false) {
+    if (!curAttach || curAttach.where !== where) return;
+    const box = document.querySelector(`#tab-2 .tg-skill-card[data-type="${where}"] [data-attach-kv]`);
+    if (!box) return;
+    const st = attachStat(curAttach.row, lv, pvp);
+    box.innerHTML = attachKV(st.lines);
+    const chip = box.closest('.tg-attach-body')?.querySelector('[data-attach-lv]');
+    if (chip) chip.textContent = `Lv.${st.lv}`;
+}
+
 export function updateLowSkillLv(lv, name, lowSkillDB) {
     const info = lowSkillDB.find(s => s['chara_name']?.trim() === name.trim());
     if (!info) return;
@@ -1416,6 +1485,7 @@ export function updateLowSkillLv(lv, name, lowSkillDB) {
     const badge = document.getElementById('low-badge');
     if (statBox) statBox.innerHTML = parseSkillLevelText(info['low_skill_stat_template'], rawVal);
     if (badge) badge.innerText = `Lv.${lv}`;
+    updateAttachLv('low', lv);
     const slider = document.getElementById('low-skill-slider');
     if (slider) {
         const max = parseInt(slider.max);
@@ -1439,6 +1509,7 @@ export function updateHighSkillLv(lv, name, highSkillDB) {
         ? parseSkillLevelText(info['high_skill_stat_template'], rawVal)
         : `<span class="tg-skill-stat-missing">${mode} 수치가 아직 없습니다</span>`;
     if (badge) badge.innerText = `Lv.${lv}`;
+    updateAttachLv('high', lv, !isPvE);
     const slider = document.getElementById('high-skill-slider');
     if (slider) {
         const max = parseInt(slider.max);

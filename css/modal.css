@@ -631,6 +631,63 @@
 .tg-effect-item-chip[data-kind="target"] { background: #DCFCE7; color: #166534; }
 .tg-effect-item-desc { font-size: 0.85rem; color: var(--text-body); line-height: 1.5; word-break: keep-all; }
 
+/* 애착 아티팩트 스킬 칸 (ui.js attachBlock, 2026-11-24) — 스킬 정보 탭의 해당 스킬 카드 안
+   아티팩트 모달의 애착 칸(artifact.css `.ar-attach`, 인게임 「…의 애착 아티팩트」)을 카드 안에 맞춰 줄인 꼴 (시안 tools/attach-skill-trial/ B안).
+   ⚠ `.ar-*` 를 그대로 쓰지 않고 따로 둔다 — 스킬 가이드는 artifact.css 가 modal.css **뒤**에 실려 덧칠이 뒤집힌다. 색 값은 그쪽과 같게 맞출 것
+   기본은 접힘(`data-open="false"`) — 머리 띠를 누르면 펼친다 */
+.tg-attach { --y: #F7D54A; --yl: #FFF7D6; margin-top: 14px; border-radius: 14px; overflow: hidden;
+             background: var(--yl); border: 2px solid #fff; box-shadow: 0 0 0 1px #EAD27A; }
+.tg-attach-h { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer;
+               background: repeating-linear-gradient(45deg, #F9DC5C 0 10px, #F5D14A 10px 20px); }
+.tg-attach[data-open="true"] .tg-attach-h { border-bottom: 2px solid #E9C23A; }
+.tg-attach-art { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; min-width: 0;
+                 padding: 3px 12px 3px 4px; border-radius: 11px; background: #FFF4B8; border: 2px solid #fff;
+                 font-weight: 800; font-size: 13.5px; color: #3a3320; box-shadow: 0 2px 0 #E2B92F; }
+.tg-attach-art img { width: 28px; height: 28px; flex-shrink: 0; border-radius: 7px; background: #FFFBEA; border: 1.5px solid #E9C23A; object-fit: contain; }
+.tg-attach-art span { min-width: 0; }
+.tg-attach-art small { font-size: 11px; font-weight: 800; color: #9A7A3F; white-space: nowrap; }
+.tg-attach-art-lbl { font-style: normal; }
+.tg-attach-art:hover { filter: brightness(1.03); }
+.tg-attach-art:focus-visible, .tg-attach-tog:focus-visible { outline: 2px solid #E59A0B; outline-offset: 2px; }
+.tg-attach-tog { margin-left: auto; flex-shrink: 0; font: inherit; font-size: 12px; font-weight: 800; color: #7A6420; cursor: pointer;
+                 background: #FFF4B8; border: 1.5px solid #fff; border-radius: 999px; padding: 3px 11px; box-shadow: 0 1px 0 #E2B92F; }
+.tg-attach-tog::after { content: ' ▾'; } .tg-attach[data-open="true"] .tg-attach-tog::after { content: ' ▴'; }
+.tg-attach-steps { padding: 2px 12px 8px; }
+.tg-attach[data-open="false"] .tg-attach-steps { display: none; }
+.tg-attach-step { display: grid; grid-template-columns: 82px 1fr; gap: 10px; padding: 9px 0; position: relative; }
+.tg-attach-step + .tg-attach-step { border-top: 1px solid #EBDDB0; }
+.tg-attach-step[data-step="1"]:not(:last-child)::before { content: ''; position: absolute; left: 11px; top: 38px; bottom: -14px; border-left: 3px dotted #8B7A3A; }
+.tg-attach-lv { display: flex; align-items: center; height: 24px; border-radius: 0 999px 999px 0;
+                background: linear-gradient(to right, transparent 28px, var(--y) 28px) no-repeat 0 60% / 100% 60%; }
+.tg-attach-lv img { width: 24px; height: 24px; position: relative; z-index: 1; }
+.tg-attach-lv b { font-size: 14px; color: #2d2a20; margin-left: 6px; }
+.tg-attach-body { font-size: 13px; line-height: 1.6; color: #2d2a20; word-break: keep-all; display: grid; gap: 2px; }
+.tg-attach-body b { color: #6FAE1C; }
+.tg-attach-skill { font-weight: 800; } .tg-attach-skill em { font-style: normal; color: #E59A0B; }
+.tg-attach-kv { display: grid; }
+/* 애착 스킬 줄 옆 레벨 칩 — 위 스킬 슬라이더의 레벨. 일반 공격 애착은 레벨이 없어 「고정 값」 */
+.tg-attach-lvchip { display: inline-block; margin-left: 6px; vertical-align: 1px; font-size: 11px; font-weight: 800; line-height: 1.5;
+                    color: #7A6420; background: #FFF4B8; border: 1px solid #EAD27A; border-radius: 999px; padding: 0 7px; font-variant-numeric: tabular-nums; }
+.tg-attach-lvchip.is-fixed { color: #9A7A3F; background: transparent; border-style: dashed; }
+:root[data-theme="dark"] .tg-attach { --yl: #3A3422; box-shadow: 0 0 0 1px #6b5a20; border-color: #4a4230; }
+/* ⚠ `.tg-attach-lv b`(Lv.1)는 노란 띠 위라 다크에서도 어두운 글자 그대로 둔다 */
+:root[data-theme="dark"] .tg-attach-body { color: #F1E9CF; }
+:root[data-theme="dark"] .tg-attach-lvchip { color: #F1E9CF; background: #4a4230; border-color: #6b5a20; }
+:root[data-theme="dark"] .tg-attach-lvchip.is-fixed { color: #D9C27A; background: transparent; }
+:root[data-theme="dark"] .tg-attach-step + .tg-attach-step { border-color: #5a4f30; }
+:root[data-theme="dark"] .tg-attach-art { background: #4a4230; border-color: #5a4f30; color: #F1E9CF; box-shadow: 0 2px 0 #6b5a20; }
+:root[data-theme="dark"] .tg-attach-art small { color: #D9C27A; }
+:root[data-theme="dark"] .tg-attach-tog { background: #4a4230; border-color: #5a4f30; color: #F1E9CF; box-shadow: 0 1px 0 #6b5a20; }
+/* 폰 — 단계 칸을 위아래로 쌓는다 (옆에 두면 82px 칸 때문에 글이 한두 글자씩 끊긴다) */
+@media (max-width: 520px) {
+  .tg-attach-step { grid-template-columns: 1fr; gap: 4px; }
+  .tg-attach-step[data-step="1"]::before { display: none; }
+  .tg-attach-lv { width: 96px; }
+  /* 폭이 모자라면 「애착 아티팩트」 글자를 빼고 `›` 만 남긴다 — 이름이 먼저다. 그래도 길면 이름 말줄임 */
+  .tg-attach-art-lbl { display: none; }
+  .tg-attach-art span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
 /* 부가 효과 수치 띠 (ui.js renderEffectStats, 2026-11-21) — 음각 박스 안에 한 톤 내린 칸 */
 .tg-effect-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .tg-effect-stat {

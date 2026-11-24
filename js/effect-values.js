@@ -10,8 +10,8 @@
      power  normal_Atk_DB   enhance_stat_template     / enhance_atk_value
      aside  aside_DB        aside2_stat_template      / aside2_stat_value
    - 스킬 표에서 못 찾으면 **어사이드 ★2 표**에서 한 번 더 찾는다 — ★2 가 스킬에 효과를 더하는 경우 (롤렛 저학년의 공격력 감소)
-   - 조건에 `애착` 이 있으면 **애착 아티팩트 표**(`Artifact_Attach.stat_template`)에서 찾는다.
-     ⚠ 그 표는 자리표가 아니라 값이 박혀 있다 (`기절 지속시간 : 3초`)
+   - 조건에 `애착` 이 있으면 **애착 아티팩트 표**(`Artifact_Attach.stat_template`)에서 찾는다 — 아래 `attachStat` 로 Lv.10 을 채운 것.
+     일반 공격 애착은 레벨이 없어 값이 박혀 있다 (`기절 지속시간 : 3초`)
    - 레벨은 **Lv.10 고정**이다. 강화를 10 이상 권하는 게 바로 계수가 핵심인 경우라서 (사용자 결정)
 
    ── 어떻게 짝짓나 ──
@@ -61,6 +61,24 @@ export function templateSlots(tpl) {
         const r = /\{\d+\}\s*(?:%|초)?\s*~\s*\{(\d+)\}\s*(%|초)?/.exec(line);
         return { label, idx: +m[1], idx2: r ? +r[1] : undefined, unit: m[2] || (r && r[2]) || '', line: line.trim() };
     }).filter(Boolean);
+}
+
+/** 애착 아티팩트 스킬 수치 → `라벨 : 값` 줄 배열 (2026-11-24, 사용자 결정 — 스킬 슬라이더를 따라간다)
+ *  - 저학년·고학년 애착은 `stat_template` 이 자리표이고 값은 `Lv.1`~`Lv.13` 칸 (저학년 표와 같은 꼴). 출처는 트릭컬 노트
+ *  - 일반 공격 애착은 레벨이 없다 — 값이 박힌 그대로 (`Lv.1` 칸이 비어 있다). `fixed: true`
+ *  - 그 레벨 칸이 없으면 **그 아래 가장 가까운 레벨** (레비는 Lv.10 까지다)
+ *  - `pvp` 면 `pvp_diff` 의 같은 라벨 줄로 갈아 끼운다 (제이드 `SP 회복 : 0%`)
+ *  ⚠ 아티팩트 모달은 Lv.1 고정 — 다른 아티팩트 수치도 전부 Lv.1 이라서 (사용자 결정). `artifact.js` 는 이 파일을 안 싣고 같은 일을 따로 한다 */
+export function attachStat(row, lv = 1, pvp = false) {
+    const tpl = String(row?.stat_template || '');
+    let use = 0;
+    for (let i = 1; i <= Math.min(13, +lv || 1); i++) if (String(row?.['Lv.' + i] || '').trim()) use = i;
+    const v = use ? vals(row['Lv.' + use]) : [];
+    const lab = l => (l.includes(':') ? l.slice(0, l.indexOf(':')) : l).trim();
+    const diff = pvp ? new Map(String(row?.pvp_diff || '').split(NL).filter(l => l.trim()).map(l => [lab(l), l.trim()])) : new Map();
+    const lines = tpl.split(NL).map(l => l.trim()).filter(Boolean)
+        .map(l => diff.get(lab(l)) || l.replace(/\{(\d+)\}/g, (m, k) => v[+k] ?? m));
+    return { lines, lv: use, fixed: !use };
 }
 
 /* 띄어쓰기는 무시하고 비교한다 — `이동속도 증가` = `이동 속도 증가` */
@@ -119,6 +137,8 @@ function prefixed(label, eff) {
 /* 앞말 가운데 화면에 붙일 조건 — 뜻이 없는 낱말은 뗀다. 남는 게 없으면 '' (사용자 결정 2026-11-22: 조건부 값은 `계수 19% (중첩마다)`)
  *   `HP` · `총` · `주는` · `기본` → 뗀다   /   `초당` · `중첩마다` · `적 1명당` · `거대화 시` · `아군` → 붙인다 */
 const PLAIN = new Set(['HP', '총', '주는', '기본',
+    /* 노트 꼴 `현재 고학년 스킬 재사용 대기시간 즉시 감소` 의 `현재` — 조건이 아니다 (리스티 강화 공격 애착, 2026-11-25) */
+    '현재',
     /* 보호막에 이름만 붙인 것 — 특별한 효과가 아니다 (사용자 확인 2026-11-22: 화산 · 야광 · 은방울). 존재의 보호막도 같은 꼴 */
     '화산', '야광', '은방울', '존재의',
     /* 대상 — 대상 칩(buff/debuff_DB 의 _target)이 이미 보여 준다 (사용자 지적 2026-11-22) */
@@ -138,7 +158,9 @@ const COND_STOP = new Set(['배치', '시', '이상', '이하', '미만', '상�
 /* 이름이 다른 같은 효과 — 자리표 줄 이름 쪽 (2026-11-24) */
 function aliasesOf(eff) {
     const out = [];
-    if (eff === '고학년 쿨타임 감소') out.push('재사용 대기시간 감소', '고학년 스킬 재사용 대기시간 감소', '대기시간 감소');   // 티그(영웅) `… 고학년 스킬 대기 시간 감소`
+    /* 노트(2026-11-19 데이터)는 즉시 줄어드는 쿨을 `재사용 대기시간 즉시 감소` 로 적는다 */
+    if (eff === '고학년 쿨타임 감소') out.push('재사용 대기시간 감소', '재사용 대기시간 즉시 감소', '고학년 스킬 재사용 대기시간 감소',
+        '고학년 스킬 재사용 대기시간 즉시 감소', '대기시간 감소');   // 티그(영웅) `… 고학년 스킬 대기 시간 감소`
     if (eff === '고학년 쿨타임 증가') out.push('재사용 대기시간 증가', '재사용 대기시간 즉시 증가');
     if (eff === '모든 행동 가속') out.push('가속');                               // 리뉴아 고학년 `아군 가속`
     if (/^주는\s/.test(eff)) out.push(eff.replace(/^주는\s+/, ''));            // 셰럼 ★2 `피해량 감소` ← 주는 피해량 감소
@@ -327,17 +349,39 @@ export function effectNumbers(ctx, name, slot, effRaw, cond = '', target = '') {
     }
 
     const { sibs, taken } = slotNames(ctx, name, slot, eff);
+    /* 효과 이름 → 안 되면 다른 이름(aliasesOf)으로. 스킬 표와 애착 표가 같이 쓴다 */
+    const findIn = (ls, sb, tk, passive = false) => {
+        const o = { cond, slot, passive };
+        let r = pickLines(ls, eff, sb, tk, target, o);
+        for (const al of aliasesOf(eff)) {
+            if (r.val || r.dur) break;
+            r = pickLines(ls, al, sb, tk, target, o);
+            if (r.val || r.dur) {
+                r.notes.push('다른 이름으로 찾음: ' + al);
+                if (/쿨타임/.test(eff)) r.valCond = String(r.valCond || '').replace(/고학년(\s*스킬)?/, '').trim();
+            }
+        }
+        return r;
+    };
 
     /* 애착 아티팩트 — 값이 박힌 설명에서 */
     if (String(cond).includes('애착')) {
         const art = (ctx.artifactDB || []).find(a => split(a.attach).includes(name));
         const row = art && (ctx.attachDB || []).find(x => (x.name || '').trim() === (art.name || '').trim());
         if (!row) return { miss: true, cd, src: 'attach', notes: ['애착 아티팩트 표에 없음'], lines: [] };
-        const lines = String(row.stat_template || '').split(NL).map(l => {
+        /* 조건이 `3레벨` 이면 Lv.3 능력치 문장에서 — 셀리네 `고학년 스킬 재사용 대기시간이 10초 감소한다` (2026-11-25).
+           문장을 `고학년 스킬 재사용 대기시간 감소 : 10초` 꼴로 푼다 */
+        const src = /3레벨/.test(cond)
+            ? String(row.lv3_desc || '').split(/\.\s*/).map(t => /^(?:\S+의\s+)?(.+?)[이가]\s+(-?\d[\d.]*\s*(?:%|초)?)\s*(?:로\s*)?(증가|감소)/.exec(t.trim()))
+                .filter(Boolean).map(m => `${m[1]} ${m[3]} : ${m[2]}`)
+            : attachStat(row, EFFECT_LV).lines;
+        const lines = src.map(l => {
             const i = l.indexOf(':');
-            return i < 0 ? null : { label: l.slice(0, i).trim(), value: l.slice(i + 1).trim(), line: l.trim() };
+            /* 값은 끝의 숫자만 — 노트 꼴은 `보호막 : 최대 HP의 89%` 처럼 기준이 값 쪽에 붙어 있다 (스킬 표 자리표와 같게) */
+            const v = l.slice(i + 1).trim(), m = /(-?\d[\d.,]*\s*(?:%|초|개)?)\s*$/.exec(v);
+            return i < 0 ? null : { label: l.slice(0, i).trim(), value: m ? m[1].replace(/\s+/g, '') : v, line: l.trim() };
         }).filter(Boolean);
-        const p = pickLines(lines, eff, [], [], target, { cond, slot });
+        const p = findIn(lines, [], []);     // 리스티 `고학년 쿨타임 감소` ← `현재 고학년 스킬 재사용 대기시간 즉시 감소`
         if (!p.val && !p.dur) return { miss: true, cd, src: 'attach', notes: ['애착 아티팩트 설명에 수치 없음'], lines: [] };
         return { val: p.val?.value || '', valCond: p.valCond, alts: [], dur: p.dur?.value || '', pvpVal: '', pvpDur: '', cd, src: 'attach',
                  notes: p.notes, lines: [p.val?.line, p.dur?.line].filter(Boolean) };
@@ -367,20 +411,7 @@ export function effectNumbers(ctx, name, slot, effRaw, cond = '', target = '') {
         const r = byName(ctx.asideDB, name);
         tpl = r?.aside2_stat_template; pve = vals(r?.aside2_stat_value);
     }
-    /* 효과 이름 → 안 되면 다른 이름(aliasesOf)으로 */
-    const find = (t, tk, passive = false) => {
-        const ls = templateSlots(t), o = { cond, slot, passive };
-        let r = pickLines(ls, eff, sibs, tk, target, o);
-        for (const al of aliasesOf(eff)) {
-            if (r.val || r.dur) break;
-            r = pickLines(ls, al, sibs, tk, target, o);
-            if (r.val || r.dur) {
-                r.notes.push('다른 이름으로 찾음: ' + al);
-                if (/쿨타임/.test(eff)) r.valCond = String(r.valCond || '').replace(/고학년(\s*스킬)?/, '').trim();
-            }
-        }
-        return r;
-    };
+    const find = (t, tk, passive = false) => findIn(templateSlots(t), sibs, tk, passive);
     let p = { val: null, dur: null, notes: [] };
     /* 조건에 A2 가 있으면 **어사이드 ★2 표를 먼저** 본다 — ★2 가 그 스킬에 더하는 효과의 값은 ★2 표에 있다.
        스킬 표를 먼저 보면 같은 이름의 기본 값(코미 거대화 공속 250% · 비비 자신 보호막 45%)을 집는다 (2026-11-24).
@@ -415,7 +446,8 @@ export function effectNumbers(ctx, name, slot, effRaw, cond = '', target = '') {
             const d = d0 && d0 !== get(pve, p.dur) ? d0 : '';
             return { val: get(pve, a.line), pvpVal: pvp.length ? get(pvp, a.line) : '', cond: [a.cond, d].filter(Boolean).join(', '), line: a.line.line, ally: a.ally };
         }).map(a => (a.pvpVal === a.val ? { ...a, pvpVal: '' } : a))
-          .filter(a => a.val && !(a.ally && a.val === get(pve, p.val) && !a.cond.includes(','))),
+          /* 아군 값이 첫 값과 같고 지속도 같으면 뺀다 — 기준 글자(`최대 HP` / `대상 최대 HP`)만 다른 건 같은 값이다 */
+          .filter(a => a.val && !(a.ally && a.val === get(pve, p.val) && !(a.durLine && get(pve, a.durLine) !== get(pve, p.dur)))),
         pvpVal: pvp.length ? get(pvp, p.val) : '', pvpDur: pvp.length ? get(pvp, p.dur) : '',
         cd, src, notes: [...notes, ...p.notes], lines: [p.val?.line, p.dur?.line].filter(Boolean),
     };

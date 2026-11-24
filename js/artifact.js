@@ -240,6 +240,10 @@ function effectHTML(name, lv) {
 
 /* ── 모달 ── */
 let lastFocus = null;
+/* 애착 스킬 수치 — **Lv.1 고정** (다른 아티팩트 수치도 전부 Lv.1 이라서, 사용자 결정 2026-11-24).
+   저 · 고학년 애착은 `stat_template` 이 자리표이고 값이 `Lv.1`~ 칸에 있다. 일반 공격 애착은 값이 박혀 있다.
+   상세 모달은 스킬 슬라이더를 따라간다 — 그쪽은 effect-values.js 의 `attachStat` (이 페이지는 그 파일을 안 싣는다) */
+const attachLv1 = att => { const v = lvVals(att, 1); return lines(att.stat_template).map(l => l.trim()).filter(Boolean).map(l => l.replace(/\{(\d+)\}/g, (m, k) => v[+k] ?? m)); };
 function attachHTML(a, att) {
     const skt = SKT[att.skill_type];
     const chk = 'assets/icons/common_icons/애착 아티팩트_체크_';
@@ -250,7 +254,7 @@ function attachHTML(a, att) {
             <div class="ar-step" data-step="1"><div class="ar-step-l"><img class="ar-chk" src="${chk}true.webp" alt=""><span class="ar-leaf">1</span><b>Lv.1</b></div>
                 <div class="ar-step-r"><div class="ar-attach-skill">애착 아티팩트 스킬 : <em>${esc(att.skill_name)}</em>${skt ? `<span class="ar-skt">${skt.icon ? `<img src="assets/icons/skill_type/${skt.icon}" alt="">` : ''}${skt.label}</span>` : ''}</div>
                     <div>${termify(lines(att.skill_desc).map(esc).join('<br>'))}</div>
-                    <div class="ar-kv">${lines(att.stat_template).filter(Boolean).map(l => { const [k, v] = l.split(/\s*:\s*/); return `<div>${esc(k)} : <b>${esc(v ?? '')}</b></div>`; }).join('')}</div></div></div>
+                    <div class="ar-kv">${attachLv1(att).map(l => { const [k, v] = l.split(/\s*:\s*/); return `<div>${esc(k)} : <b>${esc(v ?? '')}</b></div>`; }).join('')}</div></div></div>
             <div class="ar-step" data-step="3"><div class="ar-step-l"><img class="ar-chk" src="${chk}true.webp" data-on="${chk}true.webp" data-off="${chk}false.webp" alt=""><span class="ar-leaf">2</span><b>Lv.3</b></div>
                 <div class="ar-step-r"><div>${esc(att.lv3_desc).replace(/(\d+(?:\.\d+)?%?)/g, '<b>$1</b>')}</div></div></div>
         </div></div>`;
