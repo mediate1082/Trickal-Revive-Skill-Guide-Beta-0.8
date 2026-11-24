@@ -434,11 +434,12 @@ function splitUnlock(cond) {
     const parts = String(cond || '').split('+').map(s => s.trim()).filter(Boolean);
     let unlock = '';
     const rest = parts.map(p => {
-        /* `애착 아티팩트 Lv.3 이상` — 아티팩트 레벨이 붙은 꼴 (셀리네). 탭은 「애착」, 칩에 `Lv.3 이상` 이 남는다 */
+        /* `애착 아티팩트 Lv.3 이상` — 아티팩트 레벨이 붙은 꼴 (셀리네). 탭은 「애착」, 칩에는 **글자 그대로 전부** 남긴다 (사용자 결정 2026-11-25).
+           `Lv.3 이상` 만 남기거나 탭을 `애착 Lv.3` 으로 하면 아티팩트 레벨인지 호감도인지 안 읽혔다 */
         const k = !unlock && Object.keys(UNLOCK).find(k => p === UNLOCK[k].word || p.startsWith(UNLOCK[k].word + ' Lv.'));
         if (!k) return p;
         unlock = k;
-        return p.slice(UNLOCK[k].word.length).trim();
+        return p === UNLOCK[k].word ? '' : p;
     }).filter(Boolean);
     return { unlock, rest: rest.join('+') };
 }
