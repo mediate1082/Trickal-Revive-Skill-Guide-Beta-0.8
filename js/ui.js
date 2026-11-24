@@ -1,3 +1,5 @@
+/* 부가 효과 수치(계수 · 지속 · 쿨) — 스킬 가이드 · 사도 추천 · 검수 페이지 공용 규칙. ?v= 를 달려고 동적으로 싣는다 */
+const { effectNumbers, EFFECT_LV } = await import('./effect-values.js?v=' + (window.APP_VERSION || ''));
 let currentSkillMode = 'PvE'; // PvE로 고정
 let currentApostle = null;
 let currentDataContext = null;
@@ -461,10 +463,38 @@ function renderEffectItems(effectString, condString, targetString, allStateDB, d
                     ${targets[index] ? `<span class="tg-effect-item-chip" data-kind="target">${_escAttr(targets[index])}</span>` : ''}
                 </div>
                 <div class="tg-effect-item-desc">${immDesc || (info ? info.description : "상세 정보가 없습니다.")}</div>
+                ${renderEffectStats(immCtx, raw, conds[index] || '', targets[index] || '')}
                 ${renderBattleItems(info)}
             </div>
         </div>`;
     }).join('');
+}
+
+/* 부가 효과 수치 띠 — `계수 65% ⚔50%` · `◕ 7초 동안` · `⏰ 41초` (2026-11-21, 시안 tools/effect-values-trial/)
+ *  - 수치는 `effect-values.js` 가 효과 이름으로 스킬 표 자리표에서 찾는다. 못 찾으면 띠를 안 그린다
+ *  - Lv.10 고정. PvP 는 PvE 와 다를 때만 ⚔ 와 함께. 쿨은 고학년만 (스킬 정보 탭과 같은 자명종)
+ *  - 지속 아이콘은 그림 파일 없이 SVG 파이 — 글자색(currentColor)을 따라 다크에서도 보인다
+ *  - 출처(어사이드 ★2 · 애착 아티팩트)는 적지 않는다. 조건 칩이 이미 말해 준다 */
+let _statsFolded = false;   // 「상세 정보 접기」 (toggleEffectStats)
+try { _statsFolded = localStorage.getItem('tgEffectStatsFolded') === '1'; } catch { }
+const _PVP_ICON = './assets/icons/content/PvP2.webp';
+const _CD_ICON = './assets/icons/common_icons/재사용 대기시간.webp';
+const _DUR_PIE = `<svg class="tg-effect-stat-icon is-pie" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.3" fill="var(--modal-card-bg)" stroke="currentColor" stroke-width="1.6"/><path d="M10 10 L10 3.6 A6.4 6.4 0 1 1 3.6 10 Z" fill="currentColor"/></svg>`;
+function renderEffectStats(immCtx, raw, cond, target = '') {
+    if (!immCtx?.name || !immCtx?.type || !currentDataContext) return '';
+    let n;
+    try { n = effectNumbers(currentDataContext, immCtx.name, immCtx.type, raw, cond, target); } catch { return ''; }
+    if (!n || n.miss) return '';
+    const pvp = v => v ? `<img class="tg-effect-stat-icon is-pvp" src="${_PVP_ICON}" alt="PvP" data-tooltip="PvP"><b class="is-pvp">${_escAttr(v)}</b>` : '';
+    const cells = [];
+    /* 앞말 붙은 줄에서 찾은 계수는 조건을 괄호로 — `계수 19% (중첩마다)` */
+    const vc = n.valCond ? `<span class="tg-effect-stat-tail">(${_escAttr(n.valCond)})</span>` : '';
+    /* 조건에 따라 세지는 값은 이어서 — `계수 15% · 30% (부유함 30중첩)` (2026-11-24) */
+    const alts = (n.alts || []).map(a => `<span class="tg-effect-stat-tail">·</span><b class="is-val">${_escAttr(a.val)}</b>${pvp(a.pvpVal)}${a.cond ? `<span class="tg-effect-stat-tail">(${_escAttr(a.cond)})</span>` : ''}`).join('');
+    if (n.val) cells.push(`<div class="tg-effect-stat"><span class="tg-effect-stat-label">계수</span><b class="is-val">${_escAttr(n.val)}</b>${pvp(n.pvpVal)}${vc}${alts}</div>`);
+    if (n.dur) cells.push(`<div class="tg-effect-stat" data-tooltip="지속시간">${_DUR_PIE}<b>${_escAttr(n.dur)}</b><span class="tg-effect-stat-tail">동안</span>${pvp(n.pvpDur)}</div>`);
+    if (n.cd) cells.push(`<div class="tg-effect-stat"><img class="tg-effect-stat-icon" src="${_CD_ICON}" alt="재사용 대기시간" data-tooltip="재사용 대기시간"><b>${_escAttr(n.cd.pve)}초</b>${pvp(n.cd.pvp ? n.cd.pvp + '초' : '')}</div>`);
+    return cells.length ? `<div class="tg-effect-stats">${cells.join('')}</div>` : '';
 }
 
 /* 설명문의 `{이뮨}` 자리에 면역 문장을 끼운다. **자리표가 있을 때만** 손댄다.
@@ -1173,7 +1203,7 @@ export function openDetailModal(char, dataContext) {
     };
 
     // [Tab 1 준비]
-    let hasEffects = false;
+    let hasEffects = false, hasStats = false;
     const buildTab1 = () => `
                             ${(() => {
         const types = ['low', 'high', 'normal', 'power'];
@@ -1195,6 +1225,12 @@ export function openDetailModal(char, dataContext) {
                 </div>`;
         }
         hasEffects = true;
+        hasStats = html.includes('tg-effect-stats');
+        /* 수치 띠가 하나라도 있으면 맨 위에 기준과 범례를 한 번만 — 터치 기기는 아이콘 말풍선이 안 뜬다 */
+        if (hasStats) html = `
+                <div class="tg-effect-stats-legend">수치는 스킬 Lv.${EFFECT_LV} 기준
+                    <span>${_DUR_PIE}지속시간</span><span><img class="tg-effect-stat-icon" src="${_CD_ICON}" alt="">재사용 대기시간</span><span><img class="tg-effect-stat-icon is-pvp" src="${_PVP_ICON}" alt="">PvP</span>
+                </div>` + html;
         return html;
     })()}
                         `;
@@ -1298,6 +1334,9 @@ export function openDetailModal(char, dataContext) {
                     <button class="tg-quickfilter-chip" id="flag-self" onclick="window.toggleQuickFilter('self')">
                         <span>자신 대상 제외</span><span class="tg-qf-suffix"> 됨<span class="tg-quickfilter-chip-check">✓</span></span>
                     </button>
+                    <button class="tg-quickfilter-chip${_statsFolded ? ' is-active' : ''}" id="flag-stats" onclick="window.toggleEffectStats()">
+                        <span>상세 정보 접기</span><span class="tg-qf-suffix"><span class="tg-quickfilter-chip-check">✓</span></span>
+                    </button>
                 </div>
                 <div class="tg-scroll-area is-at-top">
                     <div class="tg-detail-scroll">
@@ -1322,8 +1361,10 @@ export function openDetailModal(char, dataContext) {
        ⚠ 채운 결과는 예전에 한 번에 넣던 것과 **글자까지 같다** (탭 안 줄바꿈·들여쓰기까지 함수가 들고 있다) */
     const fills = overlay._tabFill = eager ? [] : [null, 1, 2, 3].map(i => i && (() => {
         overlay.querySelector('#tab-' + i).innerHTML = tabInner[i]();
-        if (i === 1) overlay.querySelector('#detail-quickfilters').dataset.hasEffects = hasEffects;
+        if (i === 1) Object.assign(overlay.querySelector('#detail-quickfilters').dataset, { hasEffects, hasStats });
     }));
+    if (eager) { const q = overlay.querySelector('#detail-quickfilters'); if (q) q.dataset.hasStats = hasStats; }
+    overlay.classList.toggle('is-stats-folded', _statsFolded);
 
     // 육성 포인트의 추천 콘텐츠 · 추천 아티팩트 (표를 받은 뒤 채운다)
     fillGrowthExtras(char);
@@ -1964,6 +2005,16 @@ window.closeAsideFilter = () => {
     });
 })();
 
+
+/* 「상세 정보 접기」 — 부가 효과 수치 띠(계수 · 지속 · 쿨)와 범례 줄을 접는다.
+   모달 껍데기(#modal-detail)에 클래스를 달아, 다른 사도로 넘겨도 · 새로고침해도 그대로 둔다 (localStorage) */
+function toggleEffectStats() {
+    _statsFolded = !_statsFolded;
+    try { localStorage.setItem('tgEffectStatsFolded', _statsFolded ? '1' : ''); } catch { }
+    document.getElementById('modal-detail')?.classList.toggle('is-stats-folded', _statsFolded);
+    document.getElementById('flag-stats')?.classList.toggle('is-active', _statsFolded);
+}
+window.toggleEffectStats = toggleEffectStats;
 
 // 플래그 토글 및 블러 처리 함수
 export function toggleQuickFilter(type) {

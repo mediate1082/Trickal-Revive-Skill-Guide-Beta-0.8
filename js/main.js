@@ -32,6 +32,7 @@ let db = [],
     asideDB = [],
     spDB = [],
     battleItemDB = [],
+    artifactDB = [], attachDB = [],   // 부가 효과 수치의 애착 아티팩트 출처 (effect-values.js)
     immunityDB = [];   // 제어 면역 표 (Immunity_DB.csv). 쉼표로 연결하여 let 선언 공유
     
 
@@ -51,7 +52,9 @@ window.openDetailModal = (char) => {
         asideDB,
         spDB,
         battleItemDB,
-        immunityDB
+        immunityDB,
+        artifactDB,
+        attachDB
     });
 };
 
@@ -129,7 +132,7 @@ async function loadExternalData() {
     try {
         const v = window.APP_VERSION || '';
         // info.txt 는 도움말 모달이 HTML 로 옮겨가면서 폐기됨 (v1.4.13)
-        const [res1, res2, res3, res4, res6, res7, res8, res9, res10, res11, res12, res13, res14, res15] = await Promise.all([
+        const [res1, res2, res3, res4, res6, res7, res8, res9, res10, res11, res12, res13, res14, res15, res16, res17] = await Promise.all([
             fetch(`./data/DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_DB.csv?v=${v}`).then(res => res.text()),
             fetch(`./data/debuff_desc_DB.csv?v=${v}`).then(res => res.text()),
@@ -145,6 +148,9 @@ async function loadExternalData() {
             fetch(`./data/Usage_DB.csv?v=${v}`).then(res => res.text()),
             // 별명 표는 없어도 검색만 본명으로 돌아가면 된다 — 실패해도 페이지를 세우지 않는다
             fetch(`./data/alias_DB.csv?v=${v}`).then(res => res.ok ? res.text() : '').catch(() => ''),
+            // 부가 효과 수치 — 조건이 `애착 아티팩트` 인 효과는 애착 아티팩트 표에서 찾는다 (effect-values.js). 없어도 띠만 안 그린다
+            fetch(`./data/artifact_DB.csv?v=${v}`).then(res => res.ok ? res.text() : '').catch(() => ''),
+            fetch(`./data/Artifact_Attach.csv?v=${v}`).then(res => res.ok ? res.text() : '').catch(() => ''),
         ]);
 
         const cfg = { header: true, skipEmptyLines: true, transformHeader: h => h.trim() };
@@ -162,6 +168,8 @@ async function loadExternalData() {
         battleItemDB = Papa.parse(res12, cfg).data;
         immunityDB = Papa.parse(res13, cfg).data;
         if (res15) aliasMap = buildAliasMap(Papa.parse(res15, cfg).data, '사도');
+        artifactDB = res16 ? Papa.parse(res16, cfg).data : [];
+        attachDB = res17 ? Papa.parse(res17, cfg).data : [];
 
         allStateDB = [...buffDescDB, ...debuffDescDB];
         window._battleItemDB = battleItemDB;

@@ -2223,7 +2223,8 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
                 'Crash2_Boss.csv', 'Crash2_Boss_Skills.csv', 'Crash2_Lines.csv',
                 'Crash2_Shards.csv', 'Crash2_Deck_Shards.csv', 'Usage_DB.csv', 'Artifact_Tags.csv',
                 'spell_DB.csv', 'Recommend_Deck_Spells.csv',
-                'Frontier_Patterns.csv', 'Frontier_Gimmicks.csv', 'Frontier_States.csv'];
+                'Frontier_Patterns.csv', 'Frontier_Gimmicks.csv', 'Frontier_States.csv',
+                'Artifact_Attach.csv'];   // 부가 효과 수치의 애착 아티팩트 출처 (effect-values.js)
         const reqs = files.map(get);
         /* 살아 있는(`sec_hide` 가 빈) 프론티어 분류가 있으면 **나머지 CSV 를 받는 동안** 모듈도 받기 시작한다.
            ⚠ 숨긴 시즌만 남으면 frontier.js · frontier.css 를 아예 안 받는다 */
@@ -2239,7 +2240,7 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
             .catch(() => null);
         const [secT, rec, chipT, deckT, swapT, memT, dbT, debuffT, debuffDescT, highT, buffT, buffDescT, normalT, lowT, asideT, spT, itemT, artT, immT,
                bossT, bossPartT, lineT, shardT, deckShardT, usageT, artTagT, spellT, deckSpellT,
-               frPatT, frGimT, frStT] =
+               frPatT, frGimT, frStT, attachT] =
             await Promise.all(reqs);
         /* 프론티어 모듈을 다 받을 때까지 기다린다 — render 의 `frontierFrom` 이 쓴다 */
         await frWait;
@@ -2265,7 +2266,8 @@ function syncBattleItemTags(allStateDB, battleItemDB) {
             lowSkillDB: P(lowT), highSkillDB: P(highT),
             allStateDB, debuffDescDB,
             normalAtkDB: P(normalT), asideDB: P(asideT),
-            spDB: P(spT), battleItemDB
+            spDB: P(spT), battleItemDB,
+            artifactDB: P(artT), attachDB: P(attachT)
         });
 
         /* 아티팩트 표 — 이름이 키다 (`art_*` 도 한글 이름으로 가리킨다) */

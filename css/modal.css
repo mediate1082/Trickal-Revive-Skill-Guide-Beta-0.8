@@ -631,6 +631,31 @@
 .tg-effect-item-chip[data-kind="target"] { background: #DCFCE7; color: #166534; }
 .tg-effect-item-desc { font-size: 0.85rem; color: var(--text-body); line-height: 1.5; word-break: keep-all; }
 
+/* 부가 효과 수치 띠 (ui.js renderEffectStats, 2026-11-21) — 음각 박스 안에 한 톤 내린 칸 */
+.tg-effect-stats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tg-effect-stat {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--stat-box-bg); border-radius: 8px; padding: 3px 9px 3px 7px;
+}
+.tg-effect-stat b { font-size: 0.9rem; font-weight: 800; color: var(--text-heading); font-variant-numeric: tabular-nums; }
+.tg-effect-stat b.is-val { color: var(--effect-color); }
+.tg-effect-stat b.is-pvp { color: #5B3CC4; }
+.tg-effect-stat-label, .tg-effect-stat-tail { font-size: 0.72rem; font-weight: 800; color: var(--text-muted); }
+.tg-effect-stat-tail { color: var(--text-body); margin-left: -1px; }
+.tg-effect-stat-icon { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
+.tg-effect-stat-icon.is-pie { width: 16px; height: 16px; color: var(--text-heading); }
+.tg-effect-stat-icon.is-pvp { width: 15px; height: 15px; margin-left: 4px; }
+.tg-effect-stats-legend {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
+    font-size: 0.75rem; font-weight: 800; color: var(--text-muted); padding: 0 4px;
+}
+.tg-effect-stats-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.tg-effect-stats-legend .tg-effect-stat-icon.is-pvp { margin-left: 0; }
+/* 「상세 정보 접기」 (ui.js toggleEffectStats) — 띠가 없는 사도에겐 버튼도 숨긴다 */
+#modal-detail.is-stats-folded .tg-effect-stats,
+#modal-detail.is-stats-folded .tg-effect-stats-legend { display: none; }
+#detail-quickfilters:not([data-has-stats="true"]) #flag-stats { display: none; }
+
 /* ── Grade Badge ───────────────────────── */
 .tg-grade-badge {
     display: inline-flex; align-items: center;
@@ -795,6 +820,7 @@
 [data-theme="dark"] .filter-label input[type="radio"] { border-color: #71717A; }
 [data-theme="dark"] .tg-effect-item-chip[data-kind="cond"]   { background: #4A3010; color: #FFB260; }
 [data-theme="dark"] .tg-effect-item-chip[data-kind="target"] { background: #1D3520; color: #76D093; }
+[data-theme="dark"] .tg-effect-stat b.is-pvp { color: #B9A6FF; }
 [data-theme="dark"] .tg-skill-card-icon-lv { background: #52525B; color: #F4F4F5; }
 
 
