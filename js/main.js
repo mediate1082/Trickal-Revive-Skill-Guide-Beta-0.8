@@ -252,7 +252,7 @@ async function loadExternalData() {
     } catch (e) { console.error("로드 실패:", e); }
 }
 
-/* ── 표시 필터 (티어 / 성격 / 역할 / 배치 / 성급) ──────────────
+/* ── 표시 필터 (티어 / 성격 / 역할 / 배치 / 공격 타입 / 엘다인 / 성급) ──────────────
  * 기본은 전부 켜짐. 체크를 끄면 그 값을 가진 사도가 목록에서 빠진다.
  * hiddenAttrs 에는 '숨길 값'만 담으므로, 비어 있으면 그 항목은 전체 표시.
  * 카테고리 간에는 AND (각 카테고리를 순서대로 통과해야 표시). */
@@ -265,6 +265,8 @@ const ATTR_COLORS = {
     role:        { '딜러': '#F1554C', '서포터': '#FDAD30', '탱커': '#4E86F0' },
     // 전체열은 인게임 기준 #FFFFFF 지만 흰 배경에서 안 보여 옅은 베이지로 대체
     line:        { '전열': '#E65A5B', '중열': '#57BD40', '후열': '#5493ED', '전체열': '#E3D2AC' },
+    // 공격 타입 아이콘(assets/icons/atk_type/공격 타입_*.webp)의 평균색
+    atk_type:    { '물리': '#FAB74C', '마법': '#8776FB' },
 };
 const ATTR_CATS = [
     { key: 'tier', label: '티어',
@@ -277,6 +279,8 @@ const ATTR_CATS = [
       mark: v => `<img class="tg-attr-ic" src="./assets/icons/role/${v}.webp" alt="">` },
     { key: 'line', label: '배치', order: ['전열', '중열', '후열', '전체열'],
       mark: v => `<img class="tg-attr-ic" src="./assets/icons/line/${v}.webp" alt="">` },
+    { key: 'atk_type', label: '공격 타입', order: ['물리', '마법'],   // 2026-11-25 추가 (사용자 요청)
+      mark: v => `<img class="tg-attr-ic" src="./assets/icons/atk_type/공격 타입_${v}.webp" alt="">` },
     { key: 'Eldyne', label: '엘다인',
       // 값이 비어 있으면 '일반 사도'. 이 카테고리만 빈 값도 선택지로 노출한다
       allowEmpty: true,
