@@ -643,9 +643,11 @@
 :root[data-theme="dark"] .tg-effect-item.is-unlock                         { --ux-bg: #2A2734; --ux-line: #463D5E; }
 :root[data-theme="dark"] .tg-effect-item.is-unlock[data-unlock="attach"] { --ux-bg: #2E2C22; --ux-line: #5A5030; }
 .tg-effect-item.is-unlock .tg-effect-item-head { gap: 6px 8px; padding-right: 46px; }
-.tg-effect-item.is-unlock .tg-effect-item-chip { box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 40%, transparent); }
-:root[data-theme="dark"] .tg-effect-item.is-unlock .tg-effect-item-chip { box-shadow: 0 0 0 1px color-mix(in srgb, currentColor 50%, transparent); }
-.tg-effect-item.is-unlock .tg-effect-stat { background: color-mix(in srgb, var(--ux-c) 10%, var(--modal-card-bg)); }
+/* 칩 테두리는 **안쪽**(inset) — 바깥에 두르면 사방 1px 씩 커져 뚱뚱해 보였다 (사용자 지적). 여백도 1px 줄인다 */
+.tg-effect-item.is-unlock .tg-effect-item-chip { padding: 1px 6px; box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 40%, transparent); }
+:root[data-theme="dark"] .tg-effect-item.is-unlock .tg-effect-item-chip { box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 50%, transparent); }
+/* 수치 칸 — 색조를 섞으면 박스 바탕에 묻혔다. 카드 바탕(흰색)에 박스 테두리 색 선으로 띄운다 */
+.tg-effect-item.is-unlock .tg-effect-stat { background: var(--modal-card-bg); box-shadow: inset 0 0 0 1px var(--ux-line); }
 .tg-effect-unlock { position: absolute; top: 0; right: 0; z-index: 1; padding: 2px 9px 3px 8px; border-bottom-left-radius: 10px;
                     background: var(--ux-c); color: #fff; font-size: .68rem; font-weight: 800; line-height: 1.35; letter-spacing: .02em; cursor: help; }
 .tg-effect-item[data-unlock="attach"] .tg-effect-unlock {
