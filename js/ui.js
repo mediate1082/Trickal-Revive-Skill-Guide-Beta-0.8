@@ -516,7 +516,15 @@ function renderEffectStats(immCtx, raw, cond, target = '') {
     const vc = n.valCond ? `<span class="tg-effect-stat-tail">(${_escAttr(n.valCond)})</span>` : '';
     /* 조건에 따라 세지는 값은 이어서 — `계수 15% · 30% (부유함 30중첩)` (2026-11-24) */
     const alts = (n.alts || []).map(a => `<span class="tg-effect-stat-tail">·</span><b class="is-val">${_escAttr(a.val)}</b>${pvp(a.pvpVal)}${a.cond ? `<span class="tg-effect-stat-tail">(${_escAttr(a.cond)})</span>` : ''}`).join('');
-    if (n.val) cells.push(`<div class="tg-effect-stat"><span class="tg-effect-stat-label">계수</span><b class="is-val">${_escAttr(n.val)}</b>${pvp(n.pvpVal)}${vc}${alts}</div>`);
+    /* 중첩되는 효과 — 조건 `최대 N중첩` 이면 한 번 값 × N 을 최대치로 붙인다 (2026-11-25, 셰럼 · 바리에 · 클로에 …).
+       한 번 값만 보이면 `받는 피해량 감소 4%` 처럼 지나치게 낮아 보였다 (사용자 지적). 값이 숫자가 아니면(범위 등) 붙이지 않는다 */
+    const stk = /최대\s*(\d+)\s*중첩/.exec(cond || '');
+    const one = stk && /^(-?\d+(?:\.\d+)?)(%|초|개)?$/.exec(String(n.val || ''));
+    const maxv = one ? `${+(parseFloat(one[1]) * +stk[1]).toFixed(2)}${one[2] || ''}` : '';
+    const mx = maxv ? `<span class="tg-effect-stat-tail">× ${stk[1]}중첩 → 최대</span><b class="is-val">${_escAttr(maxv)}</b>` : '';
+    /* 표 쪽 꼬리가 `(중첩마다)` · `(1중첩시)` 면 최대치와 말이 겹친다 — 그때는 꼬리를 뺀다 (바리에 · 우로스) */
+    const vc2 = mx && /중첩/.test(n.valCond || '') ? '' : vc;
+    if (n.val) cells.push(`<div class="tg-effect-stat"><span class="tg-effect-stat-label">계수</span><b class="is-val">${_escAttr(n.val)}</b>${pvp(n.pvpVal)}${vc2}${mx}${alts}</div>`);
     if (n.dur) cells.push(`<div class="tg-effect-stat" data-tooltip="지속시간">${_DUR_PIE}<b>${_escAttr(n.dur)}</b><span class="tg-effect-stat-tail">동안</span>${pvp(n.pvpDur)}</div>`);
     if (n.cd) cells.push(`<div class="tg-effect-stat"><img class="tg-effect-stat-icon" src="${_CD_ICON}" alt="재사용 대기시간" data-tooltip="재사용 대기시간"><b>${_escAttr(n.cd.pve)}초</b>${pvp(n.cd.pvp ? n.cd.pvp + '초' : '')}</div>`);
     return cells.length ? `<div class="tg-effect-stats">${cells.join('')}</div>` : '';
